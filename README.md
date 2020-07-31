@@ -3,6 +3,7 @@
 <b>O</b>f spa<b>C</b>e-based see<b>K</b>ers
 
 Current Contributors & Maintainers: <i>Pozuelos, Dévora & Thuillier</i> 
+
 Old contributors: <i>García</i>
 
 # Dependencies
