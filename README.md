@@ -3,14 +3,15 @@
 <b>O</b>f spa<b>C</b>e-based see<b>K</b>ers
 
 ## Contributors
-Current: <i>Pozuelos, Dévora & Thuillier</i> 
+Active: <i>[Pozuelos](https://github.com/franpoz), 
+[Dévora](https://github.com/martindevora) & Thuillier</i> 
 
 Past: <i>García</i>
 
-# Dependencies
-The next python libraries are <b>required</b> for <i>SHERLOCK</i> to be run:
+## Dependencies
+The next Python libraries are <b>required</b> for <i>SHERLOCK</i> to be run:
 * numpy
-    * sudo apt-get install libblas-dev liblapack-dev
+    * sudo apt-get install libblas-dev  liblapack-dev
     * sudo apt-get install gfortran
 * cython (for lightkurve and pandas dependencies)
 * pandas
@@ -27,8 +28,8 @@ The next libraries are <b>required</b> for <i>SHERLOCK Explorer</i> to be run:
 
 ## Integration
 SHERLOCK integrates with several third party services. Some of them are listed below:
-* TODO lightkurve services
-* TODO Mast catalog services
+* TESS, Kepler and K2 databases through [Lightkurve](https://github.com/KeplerGO/lightkurve) and 
+[ELEANOR](https://adina.feinste.in/eleanor/)
+* MAST and Vizier catalogs through [Lightkurve](https://github.com/KeplerGO/lightkurve)
 * [NASA Exoplanet Archive API](https://exoplanetarchive.ipac.caltech.edu/docs/program_interfaces.html)
 * [TESS ExoFOP](https://exofop.ipac.caltech.edu/tess/view_toi.php)
-
