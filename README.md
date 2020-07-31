@@ -2,9 +2,10 @@
 <b>S</b>earching for <b>H</b>ints of <b>E</b>xoplanets f<b>R</b>om <b>L</b>ightcurves 
 <b>O</b>f spa<b>C</b>e-based see<b>K</b>ers
 
-Current Contributors & Maintainers: <i>Pozuelos, Dévora & Thuillier</i> 
+## Contributors
+Current: <i>Pozuelos, Dévora & Thuillier</i> 
 
-Old contributors: <i>García</i>
+Past: <i>García</i>
 
 # Dependencies
 The next python libraries are <b>required</b> for <i>SHERLOCK</i> to be run:
