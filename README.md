@@ -1,4 +1,6 @@
-# <img src="logo/sherlock.png"  alt="SHERLOCK"  style="float: left; margin-right: 5px;" />
+<p align="center">
+  <img width="200" src="logo/sherlock.png">
+</p>
 
 # The SHERLOCK PIPEline
 
