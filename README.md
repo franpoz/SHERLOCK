@@ -15,7 +15,7 @@ Active: <i>[Pozuelos](https://github.com/franpoz),
 [Dévora](https://github.com/martindevora)</i> 
 
 ## Additional contributors 
-<i>Antoine Thuillier</i> & <i>Lionel García</i>
+<i>Thuillier</i> & <i>[García](https://github.com/LionelGarcia)</i>
 
 ## Dependencies
 The next Python libraries are <b>required</b> for <i>SHERLOCK</i> to be run:
