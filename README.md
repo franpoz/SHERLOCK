@@ -11,11 +11,11 @@ In most of cases the user only needs to provide with a KOI-ID, EPIC-ID, TIC-ID o
 
 
 ## Main Developers
-Active: <i>[Pozuelos](https://github.com/franpoz), 
-[Dévora](https://github.com/martindevora)</i> 
+Active: <i>[F.J. Pozuelos](https://github.com/franpoz), 
+[M. Dévora](https://github.com/martindevora)</i> 
 
 ## Additional contributors 
-<i>Thuillier</i> & <i>[García](https://github.com/LionelGarcia)</i>
+<i>A. Thuillier</i> & <i>[L. García](https://github.com/LionelGarcia)</i>
 
 ## Dependencies
 The next Python libraries are <b>required</b> for <i>SHERLOCK</i> to be run:
