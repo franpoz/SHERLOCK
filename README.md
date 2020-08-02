@@ -1,5 +1,5 @@
 <p align="center">
-  <img width="200" src="logo/sherlock.png">
+  <img width="200" src="logo/sherlock2.png">
 </p>
 
 # The SHERLOCK PIPEline
