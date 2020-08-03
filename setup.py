@@ -4,10 +4,10 @@ with open("README.md", "r") as fh:
     long_description = fh.read()
 
 setuptools.setup(
-    name="sherlock_pipeline-mdevora", # Replace with your own username
+    name="sherlockpipe", # Replace with your own username
     version="0.0.1",
     author="Pozuelos",
-    author_email="author@example.com",
+    author_email="fjpozuelos@uliege.be",
     description="Search for Hints of Exoplanets fRom Lightcurves Of spaCe based seeKers",
     long_description=long_description,
     long_description_content_type="text/markdown",
