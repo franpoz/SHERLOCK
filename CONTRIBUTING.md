@@ -6,6 +6,13 @@ email, or any other method with the owners of this repository before.
 You can freely open any new issue related to bugs you found, enhancements you wish or doubts you have
 about anything related to the project's code and its usage.
 
+### Bug reporting
+* Specify a clear title which summarizes the bug
+* Add a code snippet which reproduces the error.
+* Add the version of SHERLOCK you are running
+* Add the OS in which you're running SHERLOCK.
+* If the bug is related to a SHERLOCK dependency, please provide the dependency's version.
+
 ## Pull Request Process
 1. Ensure any install or build dependencies are removed before the end of the layer when doing a 
    build.
