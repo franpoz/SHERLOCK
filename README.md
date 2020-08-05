@@ -1,5 +1,5 @@
 <p align="center">
-  <img width="350" src="logo/sherlock3.png">
+  <img width="350" src="images/sherlock3.png">
 </p>
 
 The <b>SHERLOCK</b> (<b>S</b>earching for <b>H</b>ints of <b>E</b>xoplanets f<b>R</b>om <b>L</b>ightcurves 
@@ -31,12 +31,12 @@ In many cases we will find light curves which contain several systematics like n
 beside the borders, intense periodicities caused by pulsators, fast rotators, etc. SHERLOCK PIPEline
 provides three methods to reduce these most important systematics.
 
-#### Local noise reduction.
+#### Local noise reduction
 For local noise, where very close measurements show high deviation from the local trend, we apply a
 Savitzky-Golay filter. This has proved a highly increment of the SNR of found transits. This feature 
 can be disabled with a flag.
 
-#### High RMS areas masking.
+#### High RMS areas masking
 Sometimes the spacecrafts have to perform reaction wheels momentum dumps by firing thrusters,
 sometimes there is high light scattering and sometimes the spacecraft can infer some jitter into
 the signal. For all of those systematics we found that in many cases the data from those regions
@@ -44,10 +44,18 @@ should be discarded. Thus, SHERLOCK PIPEline includes a binned RMS computation w
 RMS value is higher than a configurable factor multiplied by the median get automatically masked.
 This feature can be disabled with a flag. 
 
-#### Detrend of intense periodicities. 
+#### Input time ranges masking
+If enabled, this feature automatically disables High RMS areas masking for the assigned object.
+The user can input an array of time ranges to be masked into the original signal.
+
+#### Detrend of intense periodicities.
 Our most common foes with high periodicties are fast-rotators, which infer a high sinusoidal-like
 trend in the PDCSAP signal. This is why SHERLOCK PIPEline includes an automatic intense periodicities
 detection and detrending during its preparation stage. This feature can be disabled with a flag.
+
+#### Input period detrend
+If enabled, this feature automatically disables Detrend of intense periodicities for the assigned
+object. The user can input a period to be used for an initial detrend of the original signal. 
 
 ### Main execution (run)
 After the preparation stage, the SHERLOCK PIPEline will execute what we call `runs` iteratively:
@@ -73,16 +81,52 @@ SHERLOCK PIPEline produces several information items under a new directory for e
 object:
 * Object report log: The entire log of the object run is written here.
 * Most Promising Candidates log: A summary of the parameters of the best transits found for each
-run is written at the end of the object execution.
-* Runs directory: Containing png images of the detrended fluxes and their suggested transits
+run is written at the end of the object execution. Example content:
+```
+Listing most promising candidates for ID MIS_TIC 470381900_all:
+Detrend no. Period  Duration  T0      SNR     SDE     FAP       Border_score  Matching OI   Semi-major axis   Habitability Zone   
+1           2.5013  50.34     1816.69 13.30   14.95   0.000080  1.00          TOI 1696.01   0.02365           I                   
+4           0.5245  29.65     1816.56 8.34    6.26    0.036255  1.00          nan           0.00835           I                   
+5           0.6193  29.19     1816.43 8.76    6.57    0.019688  1.00          nan           0.00933           I                   
+1           0.8111  29.04     1816.10 9.08    5.88    0.068667  0.88          nan           0.01116           I                   
+2           1.0093  32.41     1817.05 8.80    5.59    nan       0.90          nan           0.01291           I                   
+6           3.4035  45.05     1819.35 6.68    5.97    0.059784  1.00          nan           0.02904           I      
+```
+* Runs directory: Containing png images of the detrended fluxes and their suggested transits.
+Example of one detrended flux transit selection image:
+<p align="center">
+  <img width="350" src="images/example_run.png">
+</p>
+
 * Light curve csv file: The original (before pre-processing) PDCSAP signal in three columns: 
-`#TBJD`, `flux` and `flux_err`.
+`#TBJD`, `flux` and `flux_err`. Example content:
+```
+#TBJD,flux,flux_err
+1816.0895073542242,0.9916135,0.024114653
+1816.0908962630185,1.0232307,0.024185425
+1816.0922851713472,1.0293404,0.024151148
+1816.0936740796774,1.000998,0.024186047
+1816.0950629880074,1.0168158,0.02415397
+1816.0964518968017,1.0344968,0.024141008
+1816.0978408051305,1.0061758,0.024101004
+```
 * Candidates csv file: Containing the same information than the Most Promising Candidates log but
 in a csv format so it can be read by future additions to the pipeline like vetting or fitting
 endpoints.
-* Lomb-Scargle periodogram plot: Showing the period strengths. 
-* RMS masking plot: In case the High RMS masking pre-processing is enabled.
-* Phase-folded period plot: In case auto-detrend is enabled.
+* Lomb-Scargle periodogram plot: Showing the period strengths. Example:
+<p align="center">
+  <img width="350" src="images/periodogram.png">
+</p>
+
+* RMS masking plot: In case the High RMS masking pre-processing is enabled. Example:
+<p align="center">
+  <img width="350" src="images/rms.png">
+</p>
+
+* Phase-folded period plot: In case auto-detrend or manual period detrend is enabled.
+<p align="center">
+  <img width="350" src="images/autodetrend.png">
+</p>
 
 ## Installation
 The package can be installed from the PyPi repositories:
