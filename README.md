@@ -69,11 +69,20 @@ different algorithms for the selection:
 * Measurements matching the chosen transit are masked in the original PDCSAP signal.
 
 ### Reporting
-SHERLOCK PIPEline produces several information logs:
+SHERLOCK PIPEline produces several information items under a new directory for every analysed
+object:
 * Object report log: The entire log of the object run is written here.
 * Most Promising Candidates log: A summary of the parameters of the best transits found for each
 run is written at the end of the object execution.
-* 
+* Runs directory: Containing png images of the detrended fluxes and their suggested transits
+* Light curve csv file: The original (before pre-processing) PDCSAP signal in three columns: 
+`#TBJD`, `flux` and `flux_err`.
+* Candidates csv file: Containing the same information than the Most Promising Candidates log but
+in a csv format so it can be read by future additions to the pipeline like vetting or fitting
+endpoints.
+* Lomb-Scargle periodogram plot: Showing the period strengths. 
+* RMS masking plot: In case the High RMS masking pre-processing is enabled.
+* Phase-folded period plot: In case auto-detrend is enabled.
 
 ## Installation
 The package can be installed from the PyPi repositories:
