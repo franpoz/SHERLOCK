@@ -78,7 +78,8 @@ different algorithms for the selection:
     (same ephemerids). The more detrended fluxes agree, the more SNR they get. This algorithm 
     can be slightly tuned by changing the stregth or weight of every detrend vote. It is currently 
     in testing stage and hasn't been used intensively.
-* Measurements matching the chosen transit are masked in the original PDCSAP signal.
+* Measurements matching the chosen transit are masked in the original PDCSAP signal so they will
+not be found by subsequent runs.
 
 ### Reporting
 SHERLOCK PIPEline produces several information items under a new directory for every analysed
