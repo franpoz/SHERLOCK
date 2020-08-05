@@ -56,7 +56,7 @@ for the assigned object. The user can input an array of time ranges to be masked
 original signal.
 
 #### Detrend of intense periodicities
-Our most common foes with high periodicties are fast-rotators, which infer a high sinusoidal-like
+Our most common foes with high periodicities are fast-rotators, which infer a high sinusoidal-like
 trend in the PDCSAP signal. This is why SHERLOCK PIPEline includes an automatic intense periodicities
 detection and detrending during its preparation stage. This feature can be disabled with a flag.
 
