@@ -14,6 +14,11 @@ Active: <i>[F.J. Pozuelos](https://github.com/franpoz),
 ## Additional contributors 
 <i>A. Thuillier</i> & <i>[L. García](https://github.com/LionelGarcia) </i>
 
+## Installation
+The package can be installed from the PyPi repositories:
+
+```python3 -m pip install sherlockpipe```
+
 ## SHERLOCK PIPEline Workflow
 It is important to note that SHERLOCK PIPEline uses some csv files with TOIs, KOIs and EPIC IDs
 from the TESS, Kepler and K2 missions. Therefore your first execution of the pipeline might
@@ -133,11 +138,6 @@ endpoints.
 <p align="center">
   <img width="350" src="images/autodetrend.png">
 </p>
-
-## Installation
-The package can be installed from the PyPi repositories:
-
-```python3 -m pip install sherlockpipe```
 
 ### Dependencies
 All the needed dependencies should be included by your `pip` installation of SHERLOCK. 
