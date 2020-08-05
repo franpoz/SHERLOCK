@@ -92,7 +92,7 @@ Detrend no. Period  Duration  T0      SNR     SDE     FAP       Border_score  Ma
 2           1.0093  32.41     1817.05 8.80    5.59    nan       0.90          nan           0.01291           I                   
 6           3.4035  45.05     1819.35 6.68    5.97    0.059784  1.00          nan           0.02904           I      
 ```
-* Runs directory: Containing png images of the detrended fluxes and their suggested transits.
+* Runs directories: Containing png images of the detrended fluxes and their suggested transits.
 Example of one detrended flux transit selection image:
 <p align="center">
   <img width="350" src="images/example_run.png">
