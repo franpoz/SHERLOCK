@@ -21,7 +21,7 @@ class SherlockTests(unittest.TestCase):
     def test_setup_files(self):
         sherlock = Sherlock(None)
         sherlock.setup_files("inner/")
-        self.assertEquals("inner/", sherlock.results_dir)
+        self.assertEqual("inner/", sherlock.results_dir)
 
     def test_setup_detrend(self):
         sherlock = Sherlock(None)
@@ -29,33 +29,33 @@ class SherlockTests(unittest.TestCase):
                                initial_rms_bin_hours=9, n_detrends=2, detrend_method="gp", cores=3,
                                auto_detrend_periodic_signals=True, auto_detrend_ratio=1 / 2,
                                auto_detrend_method="cosine")
-        self.assertEquals(False, sherlock.initial_smooth)
-        self.assertEquals(False, sherlock.initial_rms_mask)
-        self.assertEquals(3, sherlock.initial_rms_threshold)
-        self.assertEquals(9, sherlock.initial_rms_bin_hours)
-        self.assertEquals(2, sherlock.n_detrends)
-        self.assertEquals("gp", sherlock.detrend_method)
-        self.assertEquals(3, sherlock.detrend_cores)
-        self.assertEquals(True, sherlock.auto_detrend_periodic_signals)
-        self.assertEquals(1 / 2, sherlock.auto_detrend_ratio)
-        self.assertEquals("cosine", sherlock.auto_detrend_method)
+        self.assertEqual(False, sherlock.initial_smooth)
+        self.assertEqual(False, sherlock.initial_rms_mask)
+        self.assertEqual(3, sherlock.initial_rms_threshold)
+        self.assertEqual(9, sherlock.initial_rms_bin_hours)
+        self.assertEqual(2, sherlock.n_detrends)
+        self.assertEqual("gp", sherlock.detrend_method)
+        self.assertEqual(3, sherlock.detrend_cores)
+        self.assertEqual(True, sherlock.auto_detrend_periodic_signals)
+        self.assertEqual(1 / 2, sherlock.auto_detrend_ratio)
+        self.assertEqual("cosine", sherlock.auto_detrend_method)
 
     def test_setup_transit_adjust_params(self):
         sherlock = Sherlock(None)
         sherlock.setup_transit_adjust_params(max_runs=5, period_protec=5, period_min=1, period_max=2, bin_minutes=5,
                                              run_cores=3, snr_min=6, sde_min=5, fap_max=0.05, mask_mode="subtract",
                                              best_signal_algorithm="quorum", quorum_strength=2)
-        self.assertEquals(5, sherlock.max_runs)
-        self.assertEquals(5, sherlock.period_protec)
-        self.assertEquals(1, sherlock.period_min)
-        self.assertEquals(2, sherlock.period_max)
-        self.assertEquals(5, sherlock.bin_minutes)
-        self.assertEquals(3, sherlock.run_cores)
-        self.assertEquals(6, sherlock.snr_min)
-        self.assertEquals(5, sherlock.sde_min)
-        self.assertEquals(0.05, sherlock.fap_max)
-        self.assertEquals("subtract", sherlock.mask_mode)
-        self.assertEquals("quorum", sherlock.best_signal_algorithm)
+        self.assertEqual(5, sherlock.max_runs)
+        self.assertEqual(5, sherlock.period_protec)
+        self.assertEqual(1, sherlock.period_min)
+        self.assertEqual(2, sherlock.period_max)
+        self.assertEqual(5, sherlock.bin_minutes)
+        self.assertEqual(3, sherlock.run_cores)
+        self.assertEqual(6, sherlock.snr_min)
+        self.assertEqual(5, sherlock.sde_min)
+        self.assertEqual(0.05, sherlock.fap_max)
+        self.assertEqual("subtract", sherlock.mask_mode)
+        self.assertEqual("quorum", sherlock.best_signal_algorithm)
         # TODO test quorum strength
 
     def test_scoring_algorithm(self):
@@ -91,45 +91,45 @@ class SherlockTests(unittest.TestCase):
         sherlock = Sherlock(None)
         sherlock.ois_manager.update_tic_csvs()
         try:
-            self.assertTrue(os.path.isfile("tois.csv"))
+            self.assertTrue(os.path.isfile(sherlock.ois_manager.tois_csv))
         finally:
-            os.remove("tois.csv")
+            os.remove(sherlock.ois_manager.tois_csv)
 
     def test_refresh_kois(self):
         sherlock = Sherlock(None)
         sherlock.ois_manager.update_kic_csvs()
         try:
-            self.assertTrue(os.path.isfile("kic_star.csv"))
+            self.assertTrue(os.path.isfile(sherlock.ois_manager.kic_star_csv))
         finally:
-            os.remove("kic_star.csv")
+            os.remove(sherlock.ois_manager.kic_star_csv)
         try:
-            self.assertTrue(os.path.isfile("kois.csv"))
+            self.assertTrue(os.path.isfile(sherlock.ois_manager.kois_csv))
         finally:
-            os.remove("kois.csv")
+            os.remove(sherlock.ois_manager.kois_csv)
 
     def test_refresh_epicois(self):
         sherlock = Sherlock(None)
         sherlock.ois_manager.update_epic_csvs()
         try:
-            self.assertTrue(os.path.isfile("epic_ois.csv"))
+            self.assertTrue(os.path.isfile(sherlock.ois_manager.epic_csv))
         finally:
-            os.remove("epic_ois.csv")
+            os.remove(sherlock.ois_manager.epic_csv)
 
     def test_ois_loaded(self):
         sherlock = Sherlock(None)
-        sherlock.refresh_ois()
         sherlock.load_ois()
         sherlock.filter_hj_ois()
         try:
             self.assertGreater(len(sherlock.ois.index), 100)
             sherlock.limit_ois(0, 5)
-            self.assertEquals(len(sherlock.ois.index), 5)
+            self.assertEqual(len(sherlock.ois.index), 5)
             self.assertTrue(sherlock.use_ois)
         finally:
-            os.remove("tois.csv")
-            os.remove("kic_star.csv")
-            os.remove("kois.csv")
-            os.remove("epic_ois.csv")
+            os.remove(sherlock.ois_manager.tois_csv)
+            os.remove(sherlock.ois_manager.ctois_csv)
+            os.remove(sherlock.ois_manager.kic_star_csv)
+            os.remove(sherlock.ois_manager.kois_csv)
+            os.remove(sherlock.ois_manager.epic_csv)
 
     def test_run_empty(self):
         sherlock = Sherlock([])
