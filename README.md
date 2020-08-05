@@ -29,7 +29,7 @@ always use the PDCSAP signal from the ones provided by any of those two packages
 ### Pre-processing of light curve
 In many cases we will find light curves which contain several systematics like noise, high dispersion
 beside the borders, intense periodicities caused by pulsators, fast rotators, etc. SHERLOCK PIPEline
-provides three methods to reduce these most important systematics.
+provides some methods to reduce these most important systematics.
 
 #### Local noise reduction
 For local noise, where very close measurements show high deviation from the local trend, we apply a
