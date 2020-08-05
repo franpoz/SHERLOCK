@@ -154,7 +154,7 @@ The next libraries are <b>required</b> for <i>SHERLOCK Explorer</i> to be run:
 
 ## Testing
 SHERLOCK Pipeline comes with a light automated tests suite which can be executed with:
-```python3 -m unittest sherlock_tests.py```
+```python3 -m unittest sherlock_tests.py```.
 This suite tests several points from the pipeline:
 * The construction of the Sherlock object.
 * The parameters setup of the Sherlock object.
