@@ -103,7 +103,7 @@ Example of one detrended flux transit selection image:
   <img width="350" src="images/example_run.png">
 </p>
 
-* Light curve csv file: The original (before pre-processing) PDCSAP signal in three columns: 
+* Light curve csv file: The original (before pre-processing) PDCSAP signal stored in three columns: 
 `#TBJD`, `flux` and `flux_err`. Example content:
 ```
 #TBJD,flux,flux_err
@@ -114,6 +114,7 @@ Example of one detrended flux transit selection image:
 1816.0950629880074,1.0168158,0.02415397
 1816.0964518968017,1.0344968,0.024141008
 1816.0978408051305,1.0061758,0.024101004
+...
 ```
 * Candidates csv file: Containing the same information than the Most Promising Candidates log but
 in a csv format so it can be read by future additions to the pipeline like vetting or fitting
