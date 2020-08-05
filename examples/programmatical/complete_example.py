@@ -1,11 +1,11 @@
 from contextlib import contextmanager
 from timeit import default_timer
 import sherlock_class
-from objectinfo.InputObjectInfo import InputObjectInfo
-from objectinfo.MissionFfiCoordsObjectInfo import MissionFfiCoordsObjectInfo
-from objectinfo.MissionFfiIdObjectInfo import MissionFfiIdObjectInfo
-from objectinfo.MissionInputObjectInfo import MissionInputObjectInfo
-from objectinfo.MissionObjectInfo import MissionObjectInfo
+from sherlockpipe.objectinfo.InputObjectInfo import InputObjectInfo
+from sherlockpipe.objectinfo.MissionFfiCoordsObjectInfo import MissionFfiCoordsObjectInfo
+from sherlockpipe.objectinfo.MissionFfiIdObjectInfo import MissionFfiIdObjectInfo
+from sherlockpipe.objectinfo.MissionInputObjectInfo import MissionInputObjectInfo
+from sherlockpipe.objectinfo.MissionObjectInfo import MissionObjectInfo
 
 
 @contextmanager
@@ -18,8 +18,10 @@ def elapsed_timer():
 
 
 with elapsed_timer() as elapsed:
-    # We will use one FFI object from TESS, one short cadence object from Kepler and one short cadence object from K2.
-    # We will also provide two objects whose light curve info source are input files.
+    # We will use one FFI object from TESS, one short cadence object from TESS restricted to one sector, one short
+    # cadence object from Kepler and one short cadence object from K2.
+    # We will also provide two objects whose light curve info source are input files. For the first one, we will mask
+    # two time intervals and for the second one we will add an initial detrend period.
     # We will:
     # 1 Enable the initial smooth function, which reduces local noise in the signal.
     # 2 Enable the initial High RMS areas masking. This procedure will mask all the lightcurve time binned ranges by
@@ -48,8 +50,9 @@ with elapsed_timer() as elapsed:
                                         MissionObjectInfo("TIC 259168516", [15]),
                                         MissionObjectInfo('KIC 10905746', 'all'),
                                         MissionObjectInfo('EPIC 249631677', 'all'),
-                                        MissionInputObjectInfo("TIC 181804752", 'example_lc.csv'),
-                                        InputObjectInfo("example_lc.csv")]) \
+                                        MissionInputObjectInfo("TIC 181804752", 'example_lc.csv',
+                                                               initial_mask=[[1625, 1626], [1645, 1646]]),
+                                        InputObjectInfo("example_lc.csv", initial_detrend_period=0.8)]) \
         .setup_detrend(initial_smooth=True, initial_rms_mask=True, initial_rms_threshold=2.5, initial_rms_bin_hours=3,
                        n_detrends=12, detrend_method="gp", cores=2, auto_detrend_periodic_signals=True,
                        auto_detrend_ratio=1 / 3, auto_detrend_method="cosine") \
