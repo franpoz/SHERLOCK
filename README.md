@@ -69,7 +69,7 @@ original signal.
 ### Main execution (run)
 After the preparation stage, the SHERLOCK PIPEline will execute what we call `runs` iteratively:
 * Several detrended fluxes with increasing window sizes will be extracted from the original 
-PDCSAP light curve.
+PDCSAP light curve by using [wotan](https://github.com/hippke/wotan)
 * For each detrended flux, the [TransitLeastSquares](https://github.com/hippke/tls) utility will 
 be executed to find the most prominent transit.
 * The best transit is chosen from all the ones found in the detrended fluxes. Here we have three 
