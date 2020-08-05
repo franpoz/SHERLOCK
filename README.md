@@ -45,8 +45,10 @@ RMS value is higher than a configurable factor multiplied by the median get auto
 This feature can be disabled with a flag. 
 
 #### Input time ranges masking
-If enabled, this feature automatically disables High RMS areas masking for the assigned object.
-The user can input an array of time ranges to be masked into the original signal.
+If enabled, this feature automatically disables 
+[High RMS areas masking](https://github.com/franpoz/SHERLOCK#high-rms-areas-masking) 
+for the assigned object. The user can input an array of time ranges to be masked into the 
+original signal.
 
 #### Detrend of intense periodicities
 Our most common foes with high periodicties are fast-rotators, which infer a high sinusoidal-like
@@ -54,8 +56,10 @@ trend in the PDCSAP signal. This is why SHERLOCK PIPEline includes an automatic 
 detection and detrending during its preparation stage. This feature can be disabled with a flag.
 
 #### Input period detrend
-If enabled, this feature automatically disables Detrend of intense periodicities for the assigned
-object. The user can input a period to be used for an initial detrend of the original signal. 
+If enabled, this feature automatically disables 
+[Detrend of intense periodicities](https://github.com/franpoz/SHERLOCK#detrend-of-intense-periodicities) 
+for the assigned object. The user can input a period to be used for an initial detrend of the 
+original signal. 
 
 ### Main execution (run)
 After the preparation stage, the SHERLOCK PIPEline will execute what we call `runs` iteratively:
