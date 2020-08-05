@@ -16,7 +16,7 @@ Active: <i>[F.J. Pozuelos](https://github.com/franpoz),
 
 ## SHERLOCK PIPEline Workflow
 It is important to note that SHERLOCK PIPEline uses some csv files with TOIs, KOIs and EPIC IDs
-from the TESS, Kepler and K2 missions. Therefore in your first execution of the pipeline it might
+from the TESS, Kepler and K2 missions. Therefore your first execution of the pipeline might
 take longer because it will download the information.
 
 ### Provisioning of light curve
@@ -48,7 +48,7 @@ This feature can be disabled with a flag.
 If enabled, this feature automatically disables High RMS areas masking for the assigned object.
 The user can input an array of time ranges to be masked into the original signal.
 
-#### Detrend of intense periodicities.
+#### Detrend of intense periodicities
 Our most common foes with high periodicties are fast-rotators, which infer a high sinusoidal-like
 trend in the PDCSAP signal. This is why SHERLOCK PIPEline includes an automatic intense periodicities
 detection and detrending during its preparation stage. This feature can be disabled with a flag.
