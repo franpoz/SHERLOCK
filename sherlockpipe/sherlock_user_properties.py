@@ -1,0 +1,122 @@
+import multiprocessing
+
+######################################################################################################################
+### GLOBAL OBJECTS RUN SETUP - All sectors analysed at once
+######################################################################################################################
+# TESS/Kepler/K2 ids array. E.g: ["TIC 123456", "KIC 234567", "EPIC 345678"]
+# Depth > 2500 TICS:
+# 396720998 19025965 1884091865 343628284 427654774 104208182 261108236 27649847 299798795 138819293 35009898 165551882
+# 396562848 410153553 231702397 259962054 2760710 305048087 92226327 153077621 89256802 146406806 145879095 101955023
+# 36724087 181804752 429358906
+# 161032923 299798795 343628284 420112589
+# 243185500 396562848 470381900 138819293 166648874 368287008 142748283
+# Curiosity:
+# gj273 318686860
+GLOBAL_TWO_MIN_IDS = {'TIC 396562848': 'all'}
+# TESS ONLY ids array. E.g: ["TIC 123456", "TIC 234567", "TIC 345678"]
+GLOBAL_FFI_IDS = {}
+# A list of RA/DEC pairs (IN DEGREES UNITS). E.g: [[15.0, -23.1], [45.0, 54.3]]
+GLOBAL_FFI_COORDINATES = {}
+# A list of file csvs containing light curve information. E.g: ["model1.csv", "model2.csv"]
+INPUT_FILES = {}
+# A dict of file csvs containing light curve information, each of them associated to a TESS, Kepler or K2 id.
+# E.g: {"TIC 123456": "model1.csv", "KIC 234567": "model2.csv", "EPIC 345678": "model3.csv"}
+INPUT_FILES_WITH_IDS = {}
+
+######################################################################################################################
+### SECTOR OBJECTS RUN SETUP - All sectors analysed independently
+######################################################################################################################
+# TESS/Kepler/K2 ids array. E.g: ["TIC 123456", "KIC 234567", "EPIC 345678"]
+# 36724087 181804752 243185500 318022259 54962195
+SECTOR_TWO_MIN_IDS = {}
+# TESS ONLY ids array. E.g: ["TIC 123456", "TIC 234567", "TIC 345678"]
+SECTOR_FFI_IDS = {}
+# A list of RA/DEC pairs (IN DEGREES UNITS). E.g: [[15.0, -23.1], [45.0, 54.3]]
+SECTOR_FFI_COORDINATES = {}
+
+######################################################################################################################
+### DETRENDS SETUP
+######################################################################################################################
+# If enabled, an initial mask for high RMS areas is applied ONLY to SHORT CADENCE light curves (no FFI).
+INITIAL_HIGH_RMS_MASK = True
+# If enabled, an initial Savinsky-Golay filter is applied ONLY to SHORT CADENCE light curves (no FFI).
+INITIAL_SMOOTH_ENABLED = True
+# Multiplier factor to select high RMS hours areas
+INITIAL_HIGH_RMS_THRESHOLD = 2
+# Hours for RMS binning
+INITIAL_HIGH_RMS_BIN_HOURS = 4
+# Accepted detrend methods are 'biweight' and 'gp'
+DETREND_METHOD = 'biweight'
+# Number of detrend models to be generated from the original light curve
+DETRENDS_NUMBER = 6
+# Number of cpu cores to be used for parallel detrend model creation
+DETREND_CORES = multiprocessing.cpu_count() - 1
+# Auto-detrend is a feature allowing an initial detrend execution against the original light curve to remove strong
+# periodic trends which might considerably affect the entire execution of SHERLOCK. The best example where auto-detrend
+# performs well are 'fast rotators' and the worst example might be stars with 'hot jupiters', where auto-detrend usage
+# is completely discouraged. USE CAREFULLY.
+AUTO_DETREND_ENABLED = True
+# Two auto-detrend methods are enabled: 'biweight' and 'cosine'. 'cosine' has proven to work well for 'fast rotators'
+# though it needs to be tested better and deeper
+AUTO_DETREND_METHOD = 'cosine'
+# The auto-detrend ratio is the factor which will be multiplied to the stronger period found in the auto-detrend
+# process. The result is the window size to be used in the auto-detrend procedure.
+AUTO_DETREND_RATIO = 1/4
+# Use this property for single object runs because it will affect the entire Sherlock instance. If set, this property
+# will enable an initial detrend for the given period and will ignore all the auto-detrend configs.
+AUTO_DETREND_PERIOD = None
+
+######################################################################################################################
+### TRANSIT ADJUST SETUP
+######################################################################################################################
+MAX_RUNS = 10
+SNR_MIN = 7
+SDE_MIN = 5
+FAP_MAX = 0.1
+CPU_CORES = multiprocessing.cpu_count() - 1
+PERIOD_MIN = 0.5
+PERIOD_MAX = 33
+PERIOD_PROTECT = 10
+BIN_MINUTES = 10
+# Found transits can be masked or can be reduced to 1. Thus 'mask' and 'subtract' methods are provided. 'subtract' is
+# discouraged as it is partially implemented and hasn't been tested properly.
+MASK_MODE = 'mask'
+# Three modes are available: basic (best SNR), border-correct (best SNR*border_score) and quorum (agreement based
+# on every valid signal best fit). Careful, quorum is already awaiting for testing so it is not advised.
+BEST_SIGNAL_ALGORITHM = 'border-correct'
+# If BEST_SIGNAL_ALGORITHM is set to 'quorum', this value is used as a scale factor for the quorum voting.
+QUORUM_STRENGTH = 1
+
+######################################################################################################################
+### INITIAL MASK
+######################################################################################################################
+# The initial mask of time ranges to be applied to short cadence light curves with mission id.
+# TESS/Kepler/K2 ids array. E.g: {"TIC 181804752": [[1546.25, 1550.5], [1561, 1563]]}
+# 36724087 181804752 243185500 318022259 54962195
+TWO_MIN_MASKS = {}
+# TESS ONLY ids dictionary with mask ranges. E.g: {"TIC 181804752": [[1546.25, 1550.5]]}
+FFI_IDS_MASKS = {}
+# A dict of RA_Dec (degrees) keys with mask ranges. E.g: {"15.0_24.2": [[1546.25, 1550.5]]}
+FFI_COORDINATES_MASKS = {}
+# A dict of file names (degrees) keys with mask ranges. E.g: {"model1.csv": [[1546.25, 1550.5]]}
+INPUT_FILES_MASKS = {}
+# The initial mask of time ranges to be applied to input light curves with mission id.
+# TESS/Kepler/K2 ids array. E.g: {"TIC 181804752": [[1546.25, 1550.5]]}
+INPUT_FILES_WITH_IDS_MASKS = {}
+
+######################################################################################################################
+### INITIAL DETREND PERIOD - If any value of this section overlaps any auto-detrend setup, auto-detrend will be
+# disabled for the overlapping objects.
+######################################################################################################################
+# The detrend period to be used as an initial detrend to the PDCSAP_FLUX short cadence light curves with mission id.
+# TESS/Kepler/K2 ids array. E.g: {"TIC 181804752": 0.19}
+TWO_MIN_INITIAL_DETREND_PERIOD = {}
+# TESS ONLY ids dictionary with initial detrend periods. E.g: {"TIC 181804752": 0.19}
+FFI_IDS_INITIAL_DETREND_PERIOD = {}
+# A dict of RA_Dec (degrees) keys with initial detrend periods. E.g: {"15.0_24.2": 0.19}
+FFI_COORDINATES_INITIAL_DETREND_PERIOD = {}
+# A dict of file names (degrees) keys with initial detrend periods. E.g: {"model1.csv": 0.19}
+INPUT_FILES_INITIAL_DETREND_PERIOD = {}
+# The initial detrend period to be applied to input light curves with mission id.
+# TESS/Kepler/K2 ids array. E.g: {"TIC 181804752": 0.19}
+INPUT_FILES_WITH_IDS_INITIAL_DETREND_PERIOD = {}
