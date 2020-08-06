@@ -1,4 +1,6 @@
+# You might import a different local sherlock_user_properties
 import sherlockpipe.sherlock_user_properties as sherlock_user_properties
+
 from sherlockpipe.sherlock import Sherlock
 from sherlockpipe.objectinfo.InputObjectInfo import InputObjectInfo
 from sherlockpipe.objectinfo.MissionFfiCoordsObjectInfo import MissionFfiCoordsObjectInfo
