@@ -1,0 +1,114 @@
+import numpy as np
+import time
+import matplotlib.pyplot as plt
+import os
+
+#
+# Script para calcular las HZ basado en las ecuaciones de
+# kopparapu et al (2013)
+#
+# Estas ecuaciones son validas para estrellas entre 2600<Teff<7200k
+# Hay que dar la Teff y la L de la estrella en cuestion
+#
+'''Calculates the Habitability Zone of a star based on the Kopparapu et al (2003) equations. These equations are only
+valid for stars between 2600 K < Teff < 7200 K.'''
+class HabitabilityCalculator:
+    sun_luminosity = 1.
+    G = 6.674e-11  # m3 kg-1 s-2
+    ##
+    ## Stellar flux coefficients (table 3 from kopparapu et al 2013)
+    ##
+    e_end = 1.00
+    Nout = 10000
+    e = np.linspace(0.0001, e_end, Nout, endpoint=False)
+
+    def __init__(self):
+        pass
+
+    # equation (2) from kopparapu et al 2013, for non ecentric orbits
+    def __seff(self, Seff_sun, a, b, c, d, t_star):
+        Seff = Seff_sun + a * t_star + b * t_star ** 2 + c * t_star ** 3 + d * t_star ** 4
+        return Seff
+
+    # equation (3) from kopparapu et al 2013, for non ecentric orbits
+    def __dis(self, Seff, luminosity):
+        return (luminosity / self.sun_luminosity / Seff) ** 0.5
+
+    # having equations (3) y (4) for eccentric orbits from kopparapu et al 2013
+    def __seff_prime(self, A, e):
+        return A / np.sqrt(1. - e ** 2)
+
+    def calculate_hz(self, t_eff, star_mass, luminosity):
+        t_star = t_eff - 5700
+        # Recent Venus
+        s_eff_rv = 1.7763
+        a_rv = 1.4335e-4
+        b_rv = 3.3954e-9
+        c_rv = -7.6364e-12
+        d_rv = -1.1950e-15
+        Seff_rv = self.__seff(s_eff_rv, a_rv, b_rv, c_rv, d_rv, t_star)
+        Dis_rv = self.__dis(Seff_rv, luminosity)
+        Seff_prime_rv = self.__seff_prime(Seff_rv, self.e)
+        Dis_prime_rv = self.__dis(Seff_prime_rv, t_star)
+        # Runaway Greenhouse
+        s_eff_rg = 1.0385
+        a_rg = 1.2456e-4
+        b_rg = 1.4612e-8
+        c_rg = -7.6345e-12
+        d_rg = -1.7511e-15
+        Seff_rg = self.__seff(s_eff_rg, a_rg, b_rg, c_rg, d_rg, t_star)
+        Dis_rg = self.__dis(Seff_rg, luminosity)
+        Seff_prime_rg = self.__seff_prime(Seff_rg, self.e)
+        Dis_prime_rg = self.__dis(Seff_prime_rg, luminosity)
+        # Moist Greenhouse
+        s_eff_mog = 1.0146
+        a_mog = 8.1884e-5
+        b_mog = 1.9394e-9
+        c_mog = -4.3618e-12
+        d_mog = -6.8260e-16
+        Seff_mog = self.__seff(s_eff_mog, a_mog, b_mog, c_mog, d_mog, t_star)
+        Dis_mog = self.__dis(Seff_mog, luminosity)
+        Seff_prime_mog = self.__seff_prime(Seff_mog, self.e)
+        Dis_prime_mog = self.__dis(Seff_prime_mog, luminosity)
+        # Maximun Greenhouse
+        s_eff_mag = 0.3507
+        a_mag = 5.9578e-5
+        b_mag = 1.6707e-9
+        c_mag = -3.0058e-12
+        d_mag = -5.1925e-16
+        Seff_mag = self.__seff(s_eff_mag, a_mag, b_mag, c_mag, d_mag, t_star)
+        Dis_mag = self.__dis(Seff_mag, luminosity)
+        Seff_prime_mag = self.__seff_prime(Seff_mag, self.e)
+        Dis_prime_mag = self.__dis(Seff_prime_mag, luminosity)
+        # Early Mars
+        s_eff_em = 0.3207
+        a_em = 5.4471e-5
+        b_em = 1.5275e-9
+        c_em = -2.1709e-12
+        d_em = -3.8282e-16
+        Seff_em = self.__seff(s_eff_em, a_em, b_em, c_em, d_em, t_star)
+        Dis_em = self.__dis(Seff_em, luminosity)
+        Seff_prime_em = self.__seff_prime(Seff_em, self.e)
+        Dis_prime_em = self.__dis(Seff_prime_em, luminosity)
+        return [Dis_rv, Dis_mog, Dis_mag, Dis_em]
+
+    '''Returns the semi-major axis and the HZ Area [I=Inner, HZ-IO=Habitable Zone (Inner Optimistic),
+    HZ=Habitable Zone, HZ-OO=Habitable Zone (Outer Optimistic)'''
+    def calculate_hz_score(self, t_eff, star_mass, luminosity, period):
+        hz = self.calculate_hz(t_eff, star_mass, luminosity)
+        period_seconds = period * 24. * 3600.
+        mass_kg = star_mass * 2.e30
+        a1 = (self.G * mass_kg*period_seconds ** 2/4. / (np.pi ** 2)) ** (1. / 3.)
+        a1_au = a1 / 1.496e11
+        if a1_au < hz[0]:
+            hz_position = 'I'
+        elif a1_au >= hz[0] and a1_au < hz[1]:
+            hz_position = 'HZ-IO'
+        elif a1_au >= hz[1] and a1_au < hz[2]:
+            hz_position = 'HZ'
+        elif a1_au >= hz[2] and a1_au < hz[3]:
+            hz_position = 'HZ-OC'
+        else:
+            hz_position = 'O'
+        return a1_au, hz_position
+
