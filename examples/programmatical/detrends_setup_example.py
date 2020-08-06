@@ -1,11 +1,7 @@
 from contextlib import contextmanager
 from timeit import default_timer
-import sherlock_class
-from objectinfo.InputObjectInfo import InputObjectInfo
-from objectinfo.MissionFfiCoordsObjectInfo import MissionFfiCoordsObjectInfo
-from objectinfo.MissionFfiIdObjectInfo import MissionFfiIdObjectInfo
-from objectinfo.MissionInputObjectInfo import MissionInputObjectInfo
-from objectinfo.MissionObjectInfo import MissionObjectInfo
+from sherlockpipe.sherlock import Sherlock
+from sherlockpipe.objectinfo.MissionObjectInfo import MissionObjectInfo
 
 
 @contextmanager
@@ -30,7 +26,7 @@ with elapsed_timer() as elapsed:
     # initial detrend for it based on the selected 'auto_detrend_method' method and the value of the
     # 'auto_detrend_ratio' value, which ensures that we are detrending the light curve at 'auto_detrend_ratio' times
     # the stronger period.
-    sherlock = sherlock_class.Sherlock([MissionObjectInfo("TIC 181804752", 'all')])\
+    sherlock = Sherlock([MissionObjectInfo("TIC 181804752", 'all')])\
         .setup_detrend(initial_smooth=True, initial_rms_mask=True, initial_rms_threshold=2.5, initial_rms_bin_hours=3,
                        n_detrends=12, detrend_method="gp", cores=2, auto_detrend_periodic_signals=True,
                        auto_detrend_ratio=1/3, auto_detrend_method="cosine")\

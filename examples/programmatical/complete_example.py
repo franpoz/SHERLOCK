@@ -1,8 +1,7 @@
 from contextlib import contextmanager
 from timeit import default_timer
-import sherlock_class
+from sherlockpipe.sherlock import Sherlock
 from sherlockpipe.objectinfo.InputObjectInfo import InputObjectInfo
-from sherlockpipe.objectinfo.MissionFfiCoordsObjectInfo import MissionFfiCoordsObjectInfo
 from sherlockpipe.objectinfo.MissionFfiIdObjectInfo import MissionFfiIdObjectInfo
 from sherlockpipe.objectinfo.MissionInputObjectInfo import MissionInputObjectInfo
 from sherlockpipe.objectinfo.MissionObjectInfo import MissionObjectInfo
@@ -46,7 +45,7 @@ with elapsed_timer() as elapsed:
     # signals is the stronger one to be selected.
     # 10 Set the strength of the quorum algorithm votes, which makes every vote that is found to increase the SNR by
     # a factor of 1.2 for our selection.
-    sherlock = sherlock_class.Sherlock([MissionFfiIdObjectInfo("TIC 181804752", 'all'),
+    sherlock = Sherlock([MissionFfiIdObjectInfo("TIC 181804752", 'all'),
                                         MissionObjectInfo("TIC 259168516", [15]),
                                         MissionObjectInfo('KIC 10905746', 'all'),
                                         MissionObjectInfo('EPIC 249631677', 'all'),
