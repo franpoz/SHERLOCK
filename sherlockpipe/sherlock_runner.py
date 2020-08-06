@@ -1,11 +1,10 @@
-import sherlock
-import sherlock_user_properties
-from objectinfo.InputObjectInfo import InputObjectInfo
-from objectinfo.MissionFfiIdObjectInfo import MissionFfiIdObjectInfo
-from objectinfo.MissionFfiCoordsObjectInfo import MissionFfiCoordsObjectInfo
-from objectinfo.MissionInputObjectInfo import MissionInputObjectInfo
-from objectinfo.MissionObjectInfo import MissionObjectInfo
-from objectinfo.ObjectInfo import ObjectInfo
+import sherlockpipe.sherlock_user_properties as sherlock_user_properties
+from sherlockpipe.sherlock import Sherlock
+from sherlockpipe.objectinfo.InputObjectInfo import InputObjectInfo
+from sherlockpipe.objectinfo.MissionFfiCoordsObjectInfo import MissionFfiCoordsObjectInfo
+from sherlockpipe.objectinfo.MissionFfiIdObjectInfo import MissionFfiIdObjectInfo
+from sherlockpipe.objectinfo.MissionInputObjectInfo import MissionInputObjectInfo
+from sherlockpipe.objectinfo.MissionObjectInfo import MissionObjectInfo
 
 # Build ObjectInfos from properties
 object_infos = []
@@ -79,7 +78,7 @@ object_infos.extend(ffi_object_infos)
 object_infos.extend(ffi_coords_object_infos)
 object_infos.extend(input_object_infos)
 object_infos.extend(input_id_object_infos)
-sherlock.Sherlock(object_infos)\
+Sherlock(object_infos)\
     .setup_detrend(sherlock_user_properties.INITIAL_SMOOTH_ENABLED, sherlock_user_properties.INITIAL_HIGH_RMS_MASK,
                    sherlock_user_properties.INITIAL_HIGH_RMS_THRESHOLD, sherlock_user_properties.INITIAL_HIGH_RMS_BIN_HOURS,
                    sherlock_user_properties.DETRENDS_NUMBER,
