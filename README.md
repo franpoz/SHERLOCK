@@ -1,5 +1,5 @@
 <p align="center">
-  <img width="350" src="images/sherlock3.png">
+  <img width="350" src="https://github.com/franpoz/SHERLOCK/blob/master/images/sherlock3.png?raw=true">
 </p>
 
 The <b>SHERLOCK</b> (<b>S</b>earching for <b>H</b>ints of <b>E</b>xoplanets f<b>R</b>om <b>L</b>ightcurves 
