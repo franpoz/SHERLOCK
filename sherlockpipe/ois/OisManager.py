@@ -1,7 +1,7 @@
 import os
+from pathlib import Path
 import pandas as pd
 import requests
-import numpy as np
 
 
 class OisManager:
@@ -20,28 +20,37 @@ class OisManager:
     KIC_STAR_CSV = 'kic_star.csv'
     ois = None
 
-    def __init__(self, tois_csv=TOIS_CSV, ctois_csv=CTOIS_CSV, kois_csv=KOIS_CSV, epic_csv=EPIC_CSV,
-                 kic_star_csv=KIC_STAR_CSV):
-        self.tois_csv = tois_csv
-        self.ctois_csv = ctois_csv
-        self.kois_csv = kois_csv
-        self.epic_csv = epic_csv
-        self.kic_star_csv = kic_star_csv
+    def __init__(self):
+        home = str(Path.home()) + "/.sherlockpipe/"
+        if not os.path.exists(home):
+            os.mkdir(home)
+        self.tois_csv = home + self.TOIS_CSV
+        self.ctois_csv = home + self.CTOIS_CSV
+        self.kois_csv = home + self.KOIS_CSV
+        self.epic_csv = home + self.EPIC_CSV
+        self.kic_star_csv = home + self.KIC_STAR_CSV
 
     def load_ois(self):
-        ois = None
-        if os.path.isfile(self.tois_csv):
-            toi_data = pd.read_csv(self.tois_csv)
-            ois = toi_data
-        if os.path.isfile(self.ctois_csv):
-            ctoi_data = pd.read_csv(self.ctois_csv)
-            ois = pd.concat([ois, ctoi_data])
-        if os.path.isfile(self.kois_csv):
-            koi_data = pd.read_csv(self.kois_csv)
-            ois = pd.concat([ois, koi_data])
-        if os.path.isfile(self.epic_csv):
-            epic_data = pd.read_csv(self.epic_csv)
-            ois = pd.concat([ois, epic_data])
+        if not os.path.isfile(self.tois_csv) or not os.path.isfile(self.ctois_csv):
+            print("TOIs files are not found. Downloading...")
+            self.update_tic_csvs()
+            print("TOIs files download is finished!")
+        toi_data = pd.read_csv(self.tois_csv)
+        ois = toi_data
+        ctoi_data = pd.read_csv(self.ctois_csv)
+        ois = pd.concat([ois, ctoi_data])
+        if not os.path.isfile(self.kois_csv):
+            print("KOIs files are not found. Downloading...")
+            self.update_kic_csvs()
+            print("KOIs files download is finished!")
+        koi_data = pd.read_csv(self.kois_csv)
+        ois = pd.concat([ois, koi_data])
+        if not os.path.isfile(self.epic_csv):
+            print("EPIC IDs files are not found. Downloading...")
+            self.update_epic_csvs()
+            print("EPIC IDs files download is finished!")
+        epic_data = pd.read_csv(self.epic_csv)
+        ois = pd.concat([ois, epic_data])
         return ois
 
     def update_tic_csvs(self):

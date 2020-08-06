@@ -11,8 +11,9 @@ class ObjectInfo(ABC):
     initial_detrend_period = None
     initial_mask = None
 
-    def __init__(self):
-        pass
+    def __init__(self, initial_mask=None, initial_detrend_period=None):
+        self.initial_mask = initial_mask
+        self.initial_detrend_period = initial_detrend_period
 
     @abstractmethod
     def sherlock_id(self):
