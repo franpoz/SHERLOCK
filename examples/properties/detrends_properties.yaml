@@ -1,0 +1,11 @@
+# We will add one mission id with all sectors and then select detrending setup like number of detrends per run, initial
+# high RMS detection and masking threshold and bin sizes, method to be used for the detrending and CPU cores to be used
+# for the detrending
+GLOBAL_TWO_MIN_IDS:
+  'TIC 181804752': 'all'
+
+INITIAL_HIGH_RMS_THRESHOLD: 1.5
+INITIAL_HIGH_RMS_BIN_HOURS: 3
+DETREND_METHOD: 'biweight'
+DETRENDS_NUMBER: 4
+DETREND_CORES: 4

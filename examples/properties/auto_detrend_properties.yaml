@@ -1,0 +1,7 @@
+# We will add one mission id with all sectors and then modify the high periodicities auto-detrend parameters: we select
+# cosine detrend method, we change the ratio to scale the window size 0.33.
+GLOBAL_TWO_MIN_IDS:
+  'TIC 181804752': 'all'
+
+AUTO_DETREND_METHOD: 'cosine'
+AUTO_DETREND_RATIO: 0.33

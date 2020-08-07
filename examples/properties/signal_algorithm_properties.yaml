@@ -1,0 +1,7 @@
+# We will add one mission id with all sectors and then change the best signal selection for every run to 'quorum',
+# which will modify the SNRs with a voting system where the votes weights are modified with the selected strength.
+GLOBAL_TWO_MIN_IDS:
+  'TIC 181804752': 'all'
+
+BEST_SIGNAL_ALGORITHM: 'quorum'
+QUORUM_STRENGTH: 1.2

@@ -1,0 +1,12 @@
+# We will add one mission id with all sectors and then select new limits for the execution to be finished like min
+# SNR, SDE, number of runs and so on. We'll also configure the min and max periods to be searched into the signal.
+# High RMS detection and masking will be disabled for the selected TIC as a fixed range has been provided.
+GLOBAL_TWO_MIN_IDS:
+  'TIC 181804752': 'all'
+
+MAX_RUNS: 8
+SNR_MIN: 9
+SDE_MIN: 6
+CPU_CORES: 4
+PERIOD_MIN: 1
+PERIOD_MAX: 15
