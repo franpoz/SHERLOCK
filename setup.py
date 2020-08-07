@@ -6,7 +6,7 @@ with open("README.md", "r") as fh:
 setuptools.setup(
     name="sherlockpipe", # Replace with your own username
     version="0.9.3",
-    author="Pozuelos",
+    author="F.J. Pozuelos & M. Dévora",
     author_email="fjpozuelos@uliege.be",
     description="Search for Hints of Exoplanets fRom Lightcurves Of spaCe based seeKers",
     long_description=long_description,
@@ -20,7 +20,7 @@ setuptools.setup(
     ],
     python_requires='>=3.6',
     include_package_data=True,
-    install_requires = ["numpy",
+    install_requires=["numpy",
                         "cython",
                         "pandas",
                         "lightkurve",
