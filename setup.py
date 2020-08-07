@@ -5,7 +5,7 @@ with open("README.md", "r") as fh:
 
 setuptools.setup(
     name="sherlockpipe", # Replace with your own username
-    version="0.9.0",
+    version="0.9.2",
     author="Pozuelos",
     author_email="fjpozuelos@uliege.be",
     description="Search for Hints of Exoplanets fRom Lightcurves Of spaCe based seeKers",
