@@ -1,5 +1,5 @@
 import numpy as np
-from star.StarCatalog import StarCatalog
+from sherlockpipe.star.StarCatalog import StarCatalog
 from astroquery.mast import Catalogs
 import transitleastsquares as tls
 
