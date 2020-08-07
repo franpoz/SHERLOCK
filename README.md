@@ -27,7 +27,7 @@ You can run SHERLOCK PIPEline as a standalone package by using:
 You only need to provide a YAML file with any of the properties contained in the internal 
 [properties.yaml](https://github.com/franpoz/SHERLOCK/blob/master/sherlockpipe/properties.yaml)
 provided by the pipeline. The most important keys to be defined in your YAML file are those under
-the `GLOBAL OBJECTS RUN SETUP` and `SECTOR OBJECTS RUN SETUP` because they contain the object ids
+the `GLOBAL OBJECTS RUN SETUP` and `SECTOR OBJECTS RUN SETUP` sections because they contain the object ids
 or files to be analysed in the execution. You'd need to fill at least one of those keys for the
 pipeline to do anything. If you still have any doubts please refer to the 
 [examples/properties](https://github.com/franpoz/SHERLOCK/tree/master/examples/properties.) directory 
