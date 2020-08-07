@@ -1,5 +1,3 @@
-import yaml
-
 from sherlockpipe import sherlock
 from sherlockpipe.objectinfo.InputObjectInfo import InputObjectInfo
 from sherlockpipe.objectinfo.MissionFfiIdObjectInfo import MissionFfiIdObjectInfo
@@ -8,6 +6,7 @@ from sherlockpipe.objectinfo.MissionInputObjectInfo import MissionInputObjectInf
 from sherlockpipe.objectinfo.MissionObjectInfo import MissionObjectInfo
 from argparse import ArgumentParser
 from os import path
+import yaml
 
 if __name__ == '__main__':
     ap = ArgumentParser(description='Lightcurve Analysis Tool for Transiting Exoplanets')

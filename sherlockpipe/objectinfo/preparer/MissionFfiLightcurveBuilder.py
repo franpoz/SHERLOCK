@@ -1,15 +1,14 @@
 import logging
 import eleanor
-from star import starinfo
 import re
 import transitleastsquares as tls
 import numpy as np
 from astropy.coordinates import SkyCoord
-from objectinfo.MissionFfiCoordsObjectInfo import MissionFfiCoordsObjectInfo
-from objectinfo.preparer.LightcurveBuilder import LightcurveBuilder
+from sherlockpipe.star import starinfo
+from sherlockpipe.objectinfo.MissionFfiCoordsObjectInfo import MissionFfiCoordsObjectInfo
+from sherlockpipe.objectinfo.preparer.LightcurveBuilder import LightcurveBuilder
+from sherlockpipe.star.TicStarCatalog import TicStarCatalog
 from astropy import units as u
-
-from star.TicStarCatalog import TicStarCatalog
 
 
 class MissionFfiLightcurveBuilder(LightcurveBuilder):

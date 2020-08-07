@@ -1,5 +1,5 @@
 from astroquery.vizier import Vizier
-from star.StarCatalog import StarCatalog
+from sherlockpipe.star.StarCatalog import StarCatalog
 import transitleastsquares as tls
 
 

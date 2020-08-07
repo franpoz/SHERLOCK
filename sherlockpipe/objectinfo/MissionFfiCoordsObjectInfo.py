@@ -1,4 +1,4 @@
-from objectinfo.ObjectInfo import ObjectInfo
+from sherlockpipe.objectinfo.ObjectInfo import ObjectInfo
 
 class MissionFfiCoordsObjectInfo(ObjectInfo):
     def __init__(self, ra, dec, sectors, initial_mask=None, initial_detrend_period=None):

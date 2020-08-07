@@ -1,7 +1,7 @@
 import numpy as np
 
-from scoring.BasicSignalSelector import BasicSignalSelector
-from scoring.SnrBorderCorrectedSignalSelector import CorrectedBorderSignalSelection
+from sherlockpipe.scoring.BasicSignalSelector import BasicSignalSelector
+from sherlockpipe.scoring.SnrBorderCorrectedSignalSelector import CorrectedBorderSignalSelection
 
 
 class QuorumSnrBorderCorrectedSignalSelector(BasicSignalSelector):

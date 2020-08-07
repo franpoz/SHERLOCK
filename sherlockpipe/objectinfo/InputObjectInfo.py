@@ -1,5 +1,5 @@
 import os
-from objectinfo.ObjectInfo import ObjectInfo
+from sherlockpipe.objectinfo.ObjectInfo import ObjectInfo
 
 class InputObjectInfo(ObjectInfo):
     def __init__(self, input_file, initial_mask=None, initial_detrend_period=None):

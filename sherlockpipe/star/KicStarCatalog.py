@@ -1,4 +1,4 @@
-from star.StarCatalog import StarCatalog
+from sherlockpipe.star.StarCatalog import StarCatalog
 from astroquery.vizier import Vizier
 import transitleastsquares as tls
 

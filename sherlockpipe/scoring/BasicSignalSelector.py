@@ -1,6 +1,6 @@
 import numpy as np
 
-from scoring.SignalSelector import SignalSelector, SignalSelection
+from sherlockpipe.scoring.SignalSelector import SignalSelector, SignalSelection
 
 
 class BasicSignalSelector(SignalSelector):

@@ -1,7 +1,7 @@
 import numpy as np
 
-from scoring.BasicSignalSelector import BasicSignalSelector
-from scoring.SignalSelector import SignalSelection
+from sherlockpipe.scoring.BasicSignalSelector import BasicSignalSelector
+from sherlockpipe.scoring.SignalSelector import SignalSelection
 
 
 class SnrBorderCorrectedSignalSelector(BasicSignalSelector):

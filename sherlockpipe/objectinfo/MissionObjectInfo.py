@@ -1,4 +1,4 @@
-from objectinfo.ObjectInfo import ObjectInfo
+from sherlockpipe.objectinfo.ObjectInfo import ObjectInfo
 
 
 class MissionObjectInfo(ObjectInfo):

@@ -1,8 +1,8 @@
 import logging
-from star import starinfo
+from sherlockpipe.star import starinfo
+from sherlockpipe.objectinfo.ObjectProcessingError import ObjectProcessingError
+from sherlockpipe.objectinfo.preparer.LightcurveBuilder import LightcurveBuilder
 import lightkurve as lk
-from objectinfo.ObjectProcessingError import ObjectProcessingError
-from objectinfo.preparer.LightcurveBuilder import LightcurveBuilder
 
 
 class MissionLightcurveBuilder(LightcurveBuilder):

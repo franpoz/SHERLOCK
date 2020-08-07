@@ -1,8 +1,8 @@
 import re
 from abc import ABC, abstractmethod
-from star.EpicStarCatalog import EpicStarCatalog
-from star.KicStarCatalog import KicStarCatalog
-from star.TicStarCatalog import TicStarCatalog
+from sherlockpipe.star.EpicStarCatalog import EpicStarCatalog
+from sherlockpipe.star.KicStarCatalog import KicStarCatalog
+from sherlockpipe.star.TicStarCatalog import TicStarCatalog
 
 
 class LightcurveBuilder(ABC):
