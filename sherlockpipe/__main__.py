@@ -1,12 +1,11 @@
 import yaml
 
-import sherlock
-import sherlock_user_properties
-from objectinfo.InputObjectInfo import InputObjectInfo
-from objectinfo.MissionFfiIdObjectInfo import MissionFfiIdObjectInfo
-from objectinfo.MissionFfiCoordsObjectInfo import MissionFfiCoordsObjectInfo
-from objectinfo.MissionInputObjectInfo import MissionInputObjectInfo
-from objectinfo.MissionObjectInfo import MissionObjectInfo
+from sherlockpipe import sherlock
+from sherlockpipe.objectinfo.InputObjectInfo import InputObjectInfo
+from sherlockpipe.objectinfo.MissionFfiIdObjectInfo import MissionFfiIdObjectInfo
+from sherlockpipe.objectinfo.MissionFfiCoordsObjectInfo import MissionFfiCoordsObjectInfo
+from sherlockpipe.objectinfo.MissionInputObjectInfo import MissionInputObjectInfo
+from sherlockpipe.objectinfo.MissionObjectInfo import MissionObjectInfo
 from argparse import ArgumentParser
 from os import path
 
@@ -15,9 +14,10 @@ if __name__ == '__main__':
     ap.add_argument('--properties', help="Additional properties to be loaded into Sherlock run ", required=True)
     args = ap.parse_args()
     resources_dir = path.join(path.dirname(__file__))
-    sherlock_properties = yaml.load(open(resources_dir + "/" + 'properties.yaml'))
+    sherlock_user_properties = yaml.load(open(resources_dir + "/" + 'properties.yaml'))
     user_properties = yaml.load(open(args.properties))
-    sherlock_properties.update(user_properties)
+    sherlock_user_properties.update(user_properties)
+
     # Build ObjectInfos from properties
     object_infos = []
     mission_object_infos = []
@@ -78,26 +78,22 @@ if __name__ == '__main__':
     if sherlock_user_properties["INPUT_FILES_WITH_IDS_MASKS"]:
         for object_info in input_id_object_infos:
             if object_info.mission_id() in sherlock_user_properties["INPUT_FILES_WITH_IDS_MASKS"].keys():
-                object_info.initial_mask = sherlock_user_properties["INPUT_FILES_WITH_IDS_MASKS"][
-                    object_info.mission_id()]
+                object_info.initial_mask = sherlock_user_properties["INPUT_FILES_WITH_IDS_MASKS"][object_info.mission_id()]
 
     ## Set detrend period to object infos
     if sherlock_user_properties["TWO_MIN_INITIAL_DETREND_PERIOD"]:
         for object_info in mission_object_infos:
             if object_info.mission_id() in sherlock_user_properties["TWO_MIN_INITIAL_DETREND_PERIOD"].keys():
-                object_info.initial_detrend_period = sherlock_user_properties["TWO_MIN_INITIAL_DETREND_PERIOD"][
-                    object_info.mission_id()]
+                object_info.initial_detrend_period = sherlock_user_properties["TWO_MIN_INITIAL_DETREND_PERIOD"][object_info.mission_id()]
     if sherlock_user_properties["FFI_IDS_INITIAL_DETREND_PERIOD"]:
         for object_info in ffi_object_infos:
             if object_info.mission_id() in sherlock_user_properties["FFI_IDS_INITIAL_DETREND_PERIOD"].keys():
-                object_info.initial_detrend_period = sherlock_user_properties["FFI_IDS_INITIAL_DETREND_PERIOD"][
-                    object_info.mission_id()]
+                object_info.initial_detrend_period = sherlock_user_properties["FFI_IDS_INITIAL_DETREND_PERIOD"][object_info.mission_id()]
     if sherlock_user_properties["FFI_COORDINATES_INITIAL_DETREND_PERIOD"]:
         for object_info in ffi_coords_object_infos:
             key = str(object_info.ra) + "_" + str(object_info.dec)
             if key in sherlock_user_properties["FFI_COORDINATES_INITIAL_DETREND_PERIOD"].keys():
-                object_info.initial_detrend_period = sherlock_user_properties["FFI_COORDINATES_INITIAL_DETREND_PERIOD"][
-                    key]
+                object_info.initial_detrend_period = sherlock_user_properties["FFI_COORDINATES_INITIAL_DETREND_PERIOD"][key]
     if sherlock_user_properties["INPUT_FILES_INITIAL_DETREND_PERIOD"]:
         for object_info in input_object_infos:
             if object_info.input_file in sherlock_user_properties["INPUT_FILES_INITIAL_DETREND_PERIOD"].keys():
@@ -105,8 +101,7 @@ if __name__ == '__main__':
                     object_info.input_file]
     if sherlock_user_properties["INPUT_FILES_WITH_IDS_INITIAL_DETREND_PERIOD"]:
         for object_info in input_id_object_infos:
-            if object_info.mission_id() in sherlock_user_properties[
-                "INPUT_FILES_WITH_IDS_INITIAL_DETREND_PERIOD"].keys():
+            if object_info.mission_id() in sherlock_user_properties["INPUT_FILES_WITH_IDS_INITIAL_DETREND_PERIOD"].keys():
                 object_info.initial_detrend_period = \
                 sherlock_user_properties["INPUT_FILES_WITH_IDS_INITIAL_DETREND_PERIOD"][object_info.mission_id()]
 
