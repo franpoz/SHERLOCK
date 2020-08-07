@@ -1,0 +1,13 @@
+# This properties file is an example of how to launch Sherlock with a list of mission ids by searching their short
+# cadence light curves. We will be analyzing all the given sectors at once.
+
+######################################################################################################################
+### GLOBAL OBJECTS RUN SETUP - All sectors analysed at once
+######################################################################################################################
+# We will add three mission ids to the pipeline: One from the TESS mission, one from Kepler and the last one from K2.
+# Note that we can select 'all' the sectors or quarters or specify a subset of them. In this case, the TESS object will
+# be processed only using its 13th sector.
+GLOBAL_TWO_MIN_IDS:
+  'TIC 299798795': [13]
+  'KIC 10905746': 'all'
+  'EPIC 249631677': 'all'
