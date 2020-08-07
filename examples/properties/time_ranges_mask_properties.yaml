@@ -1,0 +1,11 @@
+# We will add one mission id with all sectors and then provide a time ranges mask to be excluded from the analysis.
+# High RMS detection and masking will be disabled for the selected TIC as a fixed range has been provided.
+GLOBAL_TWO_MIN_IDS:
+  'TIC 181804752': 'all'
+
+TWO_MIN_MASKS:
+  'TIC 181804752': [[1550, 1551], [1560, 1561]]
+
+
+
+
