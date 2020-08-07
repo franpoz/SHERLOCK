@@ -131,8 +131,8 @@ dmypy.json
 /.idea/
 *.iml
 /run_tests/
-/MIS*
-/FFI*
-/INP*
-/COORD*
-/user-properties.yaml
+/**/MIS*
+/**/FFI*
+/**/INP*
+/**/COORD*
+/**/user-properties.yaml
