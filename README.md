@@ -139,17 +139,17 @@ in a csv format so it can be read by future additions to the pipeline like vetti
 endpoints.
 * Lomb-Scargle periodogram plot: Showing the period strengths. Example:
 <p align="center">
-  <img width="350" src="https://github.com/franpoz/SHERLOCK/blob/master/images/periodogram.png">
+  <img width="80%" src="https://github.com/franpoz/SHERLOCK/blob/master/images/periodogram.png">
 </p>
 
 * RMS masking plot: In case the High RMS masking pre-processing is enabled. Example:
 <p align="center">
-  <img width="350" src="https://github.com/franpoz/SHERLOCK/blob/master/images/rms.png">
+  <img width="80%" src="https://github.com/franpoz/SHERLOCK/blob/master/images/rms.png">
 </p>
 
 * Phase-folded period plot: In case auto-detrend or manual period detrend is enabled.
 <p align="center">
-  <img width="350" src="https://github.com/franpoz/SHERLOCK/blob/master/images/autodetrend.png">
+  <img width="80%" src="https://github.com/franpoz/SHERLOCK/blob/master/images/autodetrend.png">
 </p>
 
 ### Dependencies
