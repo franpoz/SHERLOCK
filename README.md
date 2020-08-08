@@ -118,7 +118,7 @@ Detrend no. Period  Duration  T0      SNR     SDE     FAP       Border_score  Ma
 * Runs directories: Containing png images of the detrended fluxes and their suggested transits.
 Example of one detrended flux transit selection image:
 <p align="center">
-  <img width="350" src="https://github.com/franpoz/SHERLOCK/blob/master/images/example_run.png">
+  <img width="80%" src="https://github.com/franpoz/SHERLOCK/blob/master/images/example_run.png">
 </p>
 
 * Light curve csv file: The original (before pre-processing) PDCSAP signal stored in three columns: 
