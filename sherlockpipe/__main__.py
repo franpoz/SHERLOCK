@@ -119,7 +119,9 @@ if __name__ == '__main__':
                        sherlock_user_properties["DETREND_METHOD"], sherlock_user_properties["DETREND_CORES"],
                        sherlock_user_properties["AUTO_DETREND_ENABLED"], sherlock_user_properties["AUTO_DETREND_RATIO"],
                        sherlock_user_properties["AUTO_DETREND_METHOD"]) \
-        .setup_transit_adjust_params(sherlock_user_properties["MAX_RUNS"], sherlock_user_properties["PERIOD_PROTECT"],
+        .setup_transit_adjust_params(sherlock_user_properties["MAX_RUNS"], sherlock_user_properties["MIN_SECTORS"],
+                                     sherlock_user_properties["MAX_SECTORS"],
+                                     sherlock_user_properties["PERIOD_PROTECT"],
                                      sherlock_user_properties["PERIOD_MIN"], sherlock_user_properties["PERIOD_MAX"],
                                      sherlock_user_properties["BIN_MINUTES"], sherlock_user_properties["CPU_CORES"],
                                      sherlock_user_properties["SNR_MIN"], sherlock_user_properties["SDE_MIN"],

@@ -19,6 +19,7 @@ from sherlockpipe.objectinfo.MissionFfiCoordsObjectInfo import MissionFfiCoordsO
 from sherlockpipe.objectinfo.preparer.MissionFfiLightcurveBuilder import MissionFfiLightcurveBuilder
 from sherlockpipe.objectinfo.preparer.MissionInputLightcurveBuilder import MissionInputLightcurveBuilder
 from sherlockpipe.objectinfo.preparer.MissionLightcurveBuilder import MissionLightcurveBuilder
+from sherlockpipe.objectinfo.InvalidNumberOfSectorsError import InvalidNumberOfSectorsError
 from sherlockpipe.scoring.BasicSignalSelector import BasicSignalSelector
 from sherlockpipe.scoring.SnrBorderCorrectedSignalSelector import SnrBorderCorrectedSignalSelector
 from sherlockpipe.scoring.QuorumSnrBorderCorrectedSignalSelector import QuorumSnrBorderCorrectedSignalSelector
@@ -105,14 +106,17 @@ class Sherlock:
         self.detrend_plot_axis.append([3,1])
         return self
 
-    def setup_transit_adjust_params(self, max_runs=10, period_protec=10, period_min=0.5, period_max=20, bin_minutes=10,
-                                    run_cores=NUM_CORES, snr_min=5, sde_min=5, fap_max=0.1, mask_mode="mask",
-                                    best_signal_algorithm='border-correct', quorum_strength=1):
+    def setup_transit_adjust_params(self, max_runs=10, min_sectors=1, max_sectors=999999, period_protec=10,
+                                    period_min=0.5, period_max=20, bin_minutes=10, run_cores=NUM_CORES, snr_min=5,
+                                    sde_min=5, fap_max=0.1, mask_mode="mask", best_signal_algorithm='border-correct',
+                                    quorum_strength=1):
         if mask_mode not in self.MASK_MODES:
             raise ValueError("Provided mask mode '" + mask_mode + "' is not allowed.")
         if best_signal_algorithm not in self.VALID_SIGNAL_SELECTORS:
             raise ValueError("Provided best signal algorithm '" + best_signal_algorithm + "' is not allowed.")
         self.max_runs = max_runs
+        self.min_sectors = min_sectors
+        self.max_sectors = max_sectors
         self.run_cores = run_cores
         self.mask_mode = mask_mode
         self.period_protec = period_protec
@@ -175,10 +179,10 @@ class Sherlock:
             self.__run_object(object_info)
 
     def __run_object(self, object_info):
+        sherlock_id = object_info.sherlock_id()
+        mission_id = object_info.mission_id()
         try:
             time, flux, star_info, transits_min_count, cadence = self.__prepare(object_info)
-            sherlock_id = object_info.sherlock_id()
-            mission_id = object_info.mission_id()
             id_run = 1
             best_signal_score = 1
             self.report[sherlock_id] = []
@@ -221,7 +225,6 @@ class Sherlock:
                 else:
                     logging.info('New best signal does not look very promising. End')
                 self.report[sherlock_id].append(object_report)
-            sherlock_id = object_info.sherlock_id()
             self.__setup_object_report_logging(sherlock_id)
             object_dir = self.__init_object_dir(object_info.sherlock_id())
             logging.info("Listing most promising candidates for ID %s:", sherlock_id)
@@ -243,17 +246,26 @@ class Sherlock:
                                  report["border_score"], report["oi"], a, habitability_zone)
                     candidates_df = candidates_df.append(report, ignore_index=True)
                 candidates_df.to_csv(object_dir + "candidates.csv", index=False)
+        except InvalidNumberOfSectorsError as e:
+            logging.exception(str(e))
+            print(e)
+            self.__remove_object_dir(sherlock_id)
         except Exception as e:
             logging.exception(str(e))
             print(e)
 
     def __init_object_dir(self, object_id, clean_dir=False):
         dir = self.results_dir + str(object_id)
-        if clean_dir and os.path.exists(dir) and os.path.isdir(dir):
-            shutil.rmtree(dir, ignore_errors=True)
+        if clean_dir:
+            self.__remove_object_dir(object_id)
         if not os.path.exists(dir):
             os.makedirs(dir)
         return dir + "/"
+
+    def __remove_object_dir(self, object_id):
+        dir = self.results_dir + str(object_id)
+        if os.path.exists(dir) and os.path.isdir(dir):
+            shutil.rmtree(dir, ignore_errors=True)
 
     def __init_object_run_dir(self, object_id, run_no, clean_dir=False):
         dir = self.results_dir + str(object_id) + "/" + str(run_no)
@@ -343,16 +355,26 @@ class Sherlock:
             logging.info('radius_min = %.6f', star_info.radius_min)
             logging.info('radius_max = %.6f', star_info.radius_max)
         if sectors is not None:
+            sectors_count = len(sectors)
             logging.info('================================================')
             logging.info('SECTORS INFO')
             logging.info('================================================')
             logging.info('Sectors : %s', sectors)
             logging.info('No of sectors available: %s', len(sectors))
+            if sectors_count < self.min_sectors or sectors_count > self.max_sectors:
+                raise InvalidNumberOfSectorsError("The object " + sherlock_id + " contains " + str(sectors_count) +
+                                                  " sectors and the min and max selected are [" +
+                                                  str(self.min_sectors) + ", " + str(self.max_sectors) + "].")
         if quarters is not None:
+            sectors_count = len(quarters)
             logging.info('================================================')
             logging.info('QUARTERS INFO')
             logging.info('================================================')
             logging.info('Quarters : %s', quarters)
+            if sectors_count < self.min_sectors or sectors_count > self.max_sectors:
+                raise InvalidNumberOfSectorsError("The object " + sherlock_id + " contains " + str(sectors_count) +
+                                                  " quarters and the min and max selected are [" +
+                                                  str(self.min_sectors) + ", " + str(self.max_sectors) + "].")
         flux = lc.flux
         flux_err = lc.flux_err
         time = lc.time

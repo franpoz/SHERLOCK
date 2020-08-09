@@ -68,6 +68,8 @@ AUTO_DETREND_PERIOD: None
 ### TRANSIT ADJUST SETUP
 ######################################################################################################################
 MAX_RUNS: 10
+MIN_SECTORS: 1
+MAX_SECTORS: 999999
 SNR_MIN: 7
 SDE_MIN: 5
 FAP_MAX: 0.1
