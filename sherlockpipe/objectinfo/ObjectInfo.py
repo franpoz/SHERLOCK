@@ -3,6 +3,9 @@ from abc import ABC, abstractmethod
 
 
 class ObjectInfo(ABC):
+    """
+    Root class to be extended to characterize the input object to be analysed by Sherlock.
+    """
     OBJECT_ID_REGEX = "^(KIC|TIC|EPIC)[-_ ]([0-9]+)$"
     NUMBERS_REGEX = "[0-9]+$"
     MISSION_ID_KEPLER = "KIC"
@@ -17,8 +20,14 @@ class ObjectInfo(ABC):
 
     @abstractmethod
     def sherlock_id(self):
+        """
+        Returns the unique name generated for Sherlock processing
+        """
         pass
 
     @abstractmethod
     def mission_id(self):
+        """
+        Returns the real mission identifier
+        """
         pass
