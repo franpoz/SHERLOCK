@@ -34,6 +34,10 @@ from wotan import flatten
 from astropy.stats import sigma_clip
 
 class Sherlock:
+    """
+    Main SHERLOCK PIPEline class to be used for loading input, setting up the running parameters and launch the
+    analysis of the desired TESS, Kepler, K2 or csv objects light curves.
+    """
     TOIS_CSV_URL = 'https://exofop.ipac.caltech.edu/tess/download_toi.php?sort=toi&output=csv'
     CTOIS_CSV_URL = 'https://exofop.ipac.caltech.edu/tess/download_ctoi.php?sort=ctoi&output=csv'
     KOIS_LIST_URL = 'https://exofop.ipac.caltech.edu/kepler/targets.php?sort=num-pc&page1=1&ipp1=100000&koi1=&koi2='
@@ -64,7 +68,14 @@ class Sherlock:
     ois_manager = OisManager()
     use_ois = False
 
-    def __init__(self, object_infos):
+    def __init__(self, object_infos: list):
+        """
+        Initializes a Sherlock object, loading the OIs from the csvs, setting up the detrend and transit configurations,
+        storing the provided object_infos list and initializing the builders to be used to prepare the light curves for
+        the provided object_infos.
+        @param object_infos: a list of objects information to be analysed
+        @type object_infos: a list of ObjectInfo implementations to be resolved and analysed
+        """
         self.setup_files()
         self.setup_detrend()
         self.setup_transit_adjust_params()
@@ -77,6 +88,13 @@ class Sherlock:
         self.lightcurve_builders[MissionFfiCoordsObjectInfo] = MissionFfiLightcurveBuilder()
 
     def setup_files(self, results_dir=RESULTS_DIR):
+        """
+        Loads the objects of interest data from the downloaded CSVs.
+        @param results_dir:
+        @type results_dir:
+        @return: the Sherlock object itself
+        @rtype: Sherlock
+        """
         self.results_dir = results_dir
         self.load_ois()
         return self
@@ -84,6 +102,24 @@ class Sherlock:
     def setup_detrend(self, initial_smooth=True, initial_rms_mask=True, initial_rms_threshold=1.5,
                       initial_rms_bin_hours=3, n_detrends=6, detrend_method="biweight", cores=1,
                       auto_detrend_periodic_signals=False, auto_detrend_ratio=1/4, auto_detrend_method="biweight"):
+        """
+        Configures the values for the detrends steps.
+        @param initial_smooth: whether to execute an initial local noise reduction before the light curve analysis
+        @param initial_rms_mask: whether to execute high RMS areas masking before the light curve analysis
+        @param initial_rms_threshold: the high RMS areas limit to be applied multiplied by the RMS median
+        @param initial_rms_bin_hours: the high RMS areas binning
+        @param n_detrends: the number of detrends to be applied to the PDCSAP_FLUX curve for each run.
+        @param detrend_method: the type of algorithm to be used for the detrending
+        @param cores: the number of CPU cores to be used for the detrending process
+        @param auto_detrend_periodic_signals: whether to search for intense periodicities from the LS periodogram and
+        perform an initial detrending based on them.
+        @param auto_detrend_ratio: the factor to apply to the highest periodicity found in the LS periodogram which will
+        be used for the initial detrend.
+        @param auto_detrend_method: the detrend method to be applied with the highest periodicity found in the LS
+        periodogram
+        @return: the Sherlock object itself
+        @rtype: Sherlock
+        """
         if detrend_method not in self.VALID_DETREND_METHODS:
             raise ValueError("Provided detrend method '" + detrend_method + "' is not allowed.")
         if auto_detrend_method not in self.VALID_PERIODIC_DETREND_METHODS:
@@ -110,6 +146,28 @@ class Sherlock:
                                     period_min=0.5, period_max=20, bin_minutes=10, run_cores=NUM_CORES, snr_min=5,
                                     sde_min=5, fap_max=0.1, mask_mode="mask", best_signal_algorithm='border-correct',
                                     quorum_strength=1):
+        """
+        Configures the values to be used for the transit fitting and the main run loop.
+        @param max_runs: the max number of runs to be executed for each object.
+        @param min_sectors: the minimum number of sectors/quarters for an object to be analysed
+        @param max_sectors: the maximum number of sectors/quarters for an object to be analysed
+        @param period_protec: the maximum period to be used to calculate the minimum transit duration
+        @param period_min: the minimum period to search transits for
+        @param period_max: the maximum period to search transits for
+        @param bin_minutes:
+        @param run_cores: the number of CPU cores to use for the transit fitting
+        @param snr_min: the minimum SNR accepted to continue the analysis for an object
+        @param sde_min: the minimum SDE accepted to continue the analysis for an object
+        @param fap_max: the maximum FAP accepted to continue the analysis for an object
+        @param mask_mode: the way to remove every run-selected transit influence in the light curve. 'mask' and
+        'subtract' are available
+        @param best_signal_algorithm: the way to calculate the best signal for each object run. 'basic', 'border-correct'
+        and 'quorum' are available.
+        @param quorum_strength: if quorum is selected as best_signal_algorithm this value will be used for the votes
+        weight.
+        @return: the Sherlock object itself
+        @rtype: Sherlock
+        """
         if mask_mode not in self.MASK_MODES:
             raise ValueError("Provided mask mode '" + mask_mode + "' is not allowed.")
         if best_signal_algorithm not in self.VALID_SIGNAL_SELECTORS:
@@ -126,24 +184,40 @@ class Sherlock:
         self.snr_min = snr_min
         self.sde_min = sde_min
         self.fap_max = fap_max
-        self.signal_score_selectors = {}
-        self.signal_score_selectors[self.VALID_SIGNAL_SELECTORS[0]] = BasicSignalSelector()
-        self.signal_score_selectors[self.VALID_SIGNAL_SELECTORS[1]] = SnrBorderCorrectedSignalSelector()
-        self.signal_score_selectors[self.VALID_SIGNAL_SELECTORS[2]] = QuorumSnrBorderCorrectedSignalSelector(quorum_strength)
+        self.signal_score_selectors = {self.VALID_SIGNAL_SELECTORS[0]: BasicSignalSelector(),
+                                       self.VALID_SIGNAL_SELECTORS[1]: SnrBorderCorrectedSignalSelector(),
+                                       self.VALID_SIGNAL_SELECTORS[2]: QuorumSnrBorderCorrectedSignalSelector(
+                                           quorum_strength)}
         self.best_signal_algorithm = best_signal_algorithm
         return self
 
     def refresh_ois(self):
+        """
+        Downloads the TOIs, KOIs and EPIC OIs into csv files.
+        @return: the Sherlock object itself
+        @rtype: Sherlock
+        """
         self.ois_manager.update_tic_csvs()
         self.ois_manager.update_kic_csvs()
         self.ois_manager.update_epic_csvs()
         return self
 
     def load_ois(self):
+        """
+        Loads the csv OIs files into memory
+        @return: the Sherlock object itself
+        @rtype: Sherlock
+        """
         self.ois = self.ois_manager.load_ois()
         return self
 
     def filter_hj_ois(self):
+        """
+        Filters the in-memory OIs given some basic filters associated to hot jupiters properties. This method is added
+        as an example
+        @return: the Sherlock object itself
+        @rtype: Sherlock
+        """
         self.use_ois = True
         self.ois = self.ois[self.ois["Disposition"].notnull()]
         self.ois = self.ois[self.ois["Period (days)"].notnull()]
@@ -158,17 +232,34 @@ class Sherlock:
         return self
 
     def filter_ois(self, function):
+        """
+        Applies a function accepting the Sherlock objects of interests dataframe and stores the result into the
+        Sherlock same ois dataframe.
+        @param function: the function to be applied to filter the Sherlock OIs.
+        @return: the Sherlock object itself
+        @rtype: Sherlock
+        """
         self.use_ois = True
         self.ois = function(self.ois)
         return self
 
     def limit_ois(self, offset=0, limit=0):
+        """
+        Limits the in-memory loaded OIs given an offset and a limit (like a pagination)
+        @param offset:
+        @param limit:
+        @return: the Sherlock object itself
+        @rtype: Sherlock
+        """
         if limit == 0:
             limit = len(self.ois.index)
         self.ois = self.ois[offset:limit]
         return self
 
     def run(self):
+        """
+        Entrypoint of Sherlock which launches the main execution for all the input object_infos
+        """
         self.__setup_logging()
         logging.info('SHERLOCK (Searching for Hints of Exoplanets fRom Lightcurves Of spaCe-base seeKers)')
         logging.info('Version %s', self.VERSION)
@@ -179,6 +270,11 @@ class Sherlock:
             self.__run_object(object_info)
 
     def __run_object(self, object_info):
+        """
+        Performs the analysis for one object_info
+        @param object_info: The object to be analysed.
+        @type object_info: ObjectInfo
+        """
         sherlock_id = object_info.sherlock_id()
         mission_id = object_info.mission_id()
         try:
@@ -387,8 +483,8 @@ class Sherlock:
             self.wl_min[sherlock_id] = 3 * transit_duration  # minimum transit duration
             self.wl_max[sherlock_id] = 20 * transit_duration  # maximum transit duration
         lc = lk.LightCurve(time=time, flux=flux, flux_err=flux_err)
-        lc_df = pandas.DataFrame(columns=['#TBJD', 'flux', 'flux_err'])
-        lc_df['#TBJD'] = lc.time
+        lc_df = pandas.DataFrame(columns=['#time', 'flux', 'flux_err'])
+        lc_df['#time'] = lc.time
         lc_df['flux'] = lc.flux
         lc_df['flux_err'] = lc.flux_err
         lc_df.to_csv(object_dir + "lc.csv", index=False)

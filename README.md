@@ -122,9 +122,9 @@ Example of one detrended flux transit selection image:
 </p>
 
 * Light curve csv file: The original (before pre-processing) PDCSAP signal stored in three columns: 
-`#TBJD`, `flux` and `flux_err`. Example content:
+`#time`, `flux` and `flux_err`. Example content:
 ```
-#TBJD,flux,flux_err
+#time,flux,flux_err
 1816.0895073542242,0.9916135,0.024114653
 1816.0908962630185,1.0232307,0.024185425
 1816.0922851713472,1.0293404,0.024151148
