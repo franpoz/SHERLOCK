@@ -446,11 +446,19 @@ class Sherlock:
         logging.info('No of detrend models applied: %s', self.n_detrends)
         logging.info('Minimum number of transits: %s', transits_min_count)
         logging.info('Period planet protected: %.1f', self.period_protec)
+        lightcurve_timespan = lc.time[len(lc.time) - 1] - lc.time[0]
         if self.search_zone is not None and not (star_info.mass_assumed or star_info.radius_assumed):
             logging.info("Selected search zone: %s. Minimum and maximum periods will be calculated.", self.search_zone)
-            self.period_min, self.period_max = self.search_zone[self.search_zone].calculate_period_range(star_info)
+            period_min, period_max = self.search_zones_resolvers[self.search_zone].calculate_period_range(star_info)
+            logging.info("Selected search zone periods are [%.2f, %.2f] days", period_min, period_max)
+            if period_min > lightcurve_timespan or period_max > lightcurve_timespan:
+                logging.info("Selected search zone period values are greater than lightcurve dataset. " +
+                             "Defaulting to minimum and maximum input periods.")
+            else:
+                self.period_min = period_min
+                self.period_max = period_max
         elif self.search_zone is not None:
-            logging.info("Selected search zone was %s but star catalog info was not found or wasn't complete. "
+            logging.info("Selected search zone was %s but star catalog info was not found or wasn't complete. " +
                          "Defaulting to minimum and maximum input periods.", self.search_zone)
         logging.info('Minimum Period (d): %.1f', self.period_min)
         logging.info('Maximum Period (d): %.1f', self.period_max)

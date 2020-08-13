@@ -109,7 +109,8 @@ class HabitabilityCalculator:
         @return: the period in days
         """
         mass_kg = mass * 2.e30
-        return ((au ** 3) * 4 * (np.pi ** 2) / self.G / mass_kg) ** (1. / 2.) / 3600 / 24
+        a = au * 1.496e11
+        return ((a ** 3) * 4 * (np.pi ** 2) / self.G / mass_kg) ** (1. / 2.) / 3600 / 24
 
     def calculate_hz_score(self, t_eff, star_mass, luminosity, period):
         """
