@@ -60,9 +60,6 @@ AUTO_DETREND_METHOD: 'cosine'
 # The auto-detrend ratio is the factor which will be multiplied to the stronger period found in the auto-detrend
 # process. The result is the window size to be used in the auto-detrend procedure.
 AUTO_DETREND_RATIO: 0.25
-# Use this property for single object runs because it will affect the entire Sherlock instance. If set, this property
-# will enable an initial detrend for the given period and will ignore all the auto-detrend configs.
-AUTO_DETREND_PERIOD:
 
 ######################################################################################################################
 ### TRANSIT ADJUST SETUP
