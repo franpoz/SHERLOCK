@@ -24,6 +24,8 @@ from sherlockpipe.scoring.BasicSignalSelector import BasicSignalSelector
 from sherlockpipe.scoring.SnrBorderCorrectedSignalSelector import SnrBorderCorrectedSignalSelector
 from sherlockpipe.scoring.QuorumSnrBorderCorrectedSignalSelector import QuorumSnrBorderCorrectedSignalSelector
 from sherlockpipe.ois.OisManager import OisManager
+from sherlockpipe.search_zones.HabitableSearchZone import HabitableSearchZone
+from sherlockpipe.search_zones.OptimisticHabitableSearchZone import OptimisticHabitableSearchZone
 from sherlockpipe.star.HabitabilityCalculator import HabitabilityCalculator
 from sherlockpipe.transitresult import TransitResult
 from multiprocessing import Pool
@@ -80,12 +82,13 @@ class Sherlock:
         self.setup_detrend()
         self.setup_transit_adjust_params()
         self.object_infos = object_infos
-        self.lightcurve_builders = {}
-        self.lightcurve_builders[InputObjectInfo] = MissionInputLightcurveBuilder()
-        self.lightcurve_builders[MissionInputObjectInfo] = MissionInputLightcurveBuilder()
-        self.lightcurve_builders[MissionObjectInfo] = MissionLightcurveBuilder()
-        self.lightcurve_builders[MissionFfiIdObjectInfo] = MissionFfiLightcurveBuilder()
-        self.lightcurve_builders[MissionFfiCoordsObjectInfo] = MissionFfiLightcurveBuilder()
+        self.lightcurve_builders = {InputObjectInfo: MissionInputLightcurveBuilder(),
+                                    MissionInputObjectInfo: MissionInputLightcurveBuilder(),
+                                    MissionObjectInfo: MissionLightcurveBuilder(),
+                                    MissionFfiIdObjectInfo: MissionFfiLightcurveBuilder(),
+                                    MissionFfiCoordsObjectInfo: MissionFfiLightcurveBuilder()}
+        self.search_zones_resolvers = {'hz': HabitableSearchZone(),
+                                       'ohz': OptimisticHabitableSearchZone()}
 
     def setup_files(self, results_dir=RESULTS_DIR):
         """
@@ -143,7 +146,7 @@ class Sherlock:
         return self
 
     def setup_transit_adjust_params(self, max_runs=10, min_sectors=1, max_sectors=999999, period_protec=10,
-                                    period_min=0.5, period_max=20, bin_minutes=10, run_cores=NUM_CORES, snr_min=5,
+                                    search_zone=None, period_min=0.5, period_max=20, bin_minutes=10, run_cores=NUM_CORES, snr_min=5,
                                     sde_min=5, fap_max=0.1, mask_mode="mask", best_signal_algorithm='border-correct',
                                     quorum_strength=1):
         """
@@ -152,6 +155,8 @@ class Sherlock:
         @param min_sectors: the minimum number of sectors/quarters for an object to be analysed
         @param max_sectors: the maximum number of sectors/quarters for an object to be analysed
         @param period_protec: the maximum period to be used to calculate the minimum transit duration
+        @param search_zone: the zone where sherlock should be searching transits for. If set, period_min and period_max
+        are to be ignored because they will be generated for the selected zone.
         @param period_min: the minimum period to search transits for
         @param period_max: the maximum period to search transits for
         @param bin_minutes:
@@ -184,6 +189,7 @@ class Sherlock:
         self.snr_min = snr_min
         self.sde_min = sde_min
         self.fap_max = fap_max
+        self.search_zone = search_zone
         self.signal_score_selectors = {self.VALID_SIGNAL_SELECTORS[0]: BasicSignalSelector(),
                                        self.VALID_SIGNAL_SELECTORS[1]: SnrBorderCorrectedSignalSelector(),
                                        self.VALID_SIGNAL_SELECTORS[2]: QuorumSnrBorderCorrectedSignalSelector(
@@ -303,6 +309,7 @@ class Sherlock:
                 object_report["period"] = transit_results[signal_selection.curve_index].period
                 object_report["duration"] = transit_results[signal_selection.curve_index].duration * 60 * 24
                 object_report["t0"] = transit_results[signal_selection.curve_index].t0
+                object_report["depth"] = transit_results[signal_selection.curve_index].depth
                 if self.ois is not None:
                     existing_period_in_object = self.ois[(self.ois["Object Id"] == mission_id) &
                                                          (0.95 < self.ois["Period (days)"] / object_report["period"]) &
@@ -324,11 +331,12 @@ class Sherlock:
             self.__setup_object_report_logging(sherlock_id)
             object_dir = self.__init_object_dir(object_info.sherlock_id())
             logging.info("Listing most promising candidates for ID %s:", sherlock_id)
-            logging.info("%-12s%-8s%-10s%-8s%-8s%-8s%-10s%-14s%-14s%-18s%-20s", "Detrend no.", "Period", "Duration", "T0", "SNR",
-                         "SDE", "FAP", "Border_score", "Matching OI", "Semi-major axis", "Habitability Zone")
+            logging.info("%-12s%-8s%-10s%-8s%-8s%-8s%-8s%-10s%-14s%-14s%-18s%-18s%-20s", "Detrend no.", "Period",
+                         "Duration", "T0", "Depth", "SNR", "SDE", "FAP", "Border_score", "Matching OI", "Planet radius",
+                         "Semi-major axis", "Habitability Zone")
             if sherlock_id in self.report:
-                candidates_df = pandas.DataFrame(columns=['curve', 'period', 'duration', 't0', 'snr', 'sde', 'fap',
-                                                  'border_score', 'oi', 'a', 'hz'])
+                candidates_df = pandas.DataFrame(columns=['curve', 'period', 'duration', 't0', 'depth', 'snr', 'sde',
+                                                          'fap', 'border_score', 'oi', 'planet_radius', 'a', 'hz'])
                 for report in self.report[sherlock_id]:
                     a, habitability_zone = HabitabilityCalculator()\
                         .calculate_hz_score(star_info.teff, star_info.mass, star_info.lum, report["period"]) \
@@ -336,10 +344,12 @@ class Sherlock:
                         else "-"
                     report['a'] = a
                     report['hz'] = habitability_zone
-                    logging.info("%-12s%-8.4f%-10.2f%-8.2f%-8.2f%-8.2f%-10.6f%-14.2f%-14s%-18.5f%-20s",
+                    report['rad_p'] = star_info.radius * math.sqrt(report["depth"] / 1000) / 0.0091577
+                    logging.info("%-12s%-8.4f%-10.2f%-8.2f%-8.3f%-8.2f%-8.2f%-10.6f%-14.2f%-14s%-18.5f%-18.5f%-20s",
                                  report["curve"], report["period"],
-                                 report["duration"], report["t0"], report["snr"], report["sde"], report["fap"],
-                                 report["border_score"], report["oi"], a, habitability_zone)
+                                 report["duration"], report["t0"], report["depth"], report["snr"], report["sde"],
+                                 report["fap"], report["border_score"], report["oi"], report['rad_p'], a,
+                                 habitability_zone)
                     candidates_df = candidates_df.append(report, ignore_index=True)
                 candidates_df.to_csv(object_dir + "candidates.csv", index=False)
         except InvalidNumberOfSectorsError as e:
@@ -408,30 +418,6 @@ class Sherlock:
         object_dir = self.__setup_object_logging(sherlock_id)
         logging.info('ID: %s', sherlock_id)
         lc, star_info, transits_min_count, sectors, quarters = self.lightcurve_builders[type(object_info)].build(object_info)
-        logging.info('================================================')
-        logging.info('USER DEFINITIONS')
-        logging.info('================================================')
-        if self.detrend_method == "gp":
-            logging.info('Detrend method: Gaussian Process Matern 2/3')
-        else:
-            logging.info('Detrend method: Bi-Weight')
-        logging.info('No of detrend models applied: %s', self.n_detrends)
-        logging.info('Minimum number of transits: %s', transits_min_count)
-        logging.info('Period planet protected: %.1f', self.period_protec)
-        logging.info('Minimum Period (d): %.1f', self.period_min)
-        logging.info('Maximum Period (d): %.1f', self.period_max)
-        logging.info('Binning size (min): %.1f', self.bin_minutes)
-        if object_info.initial_mask is not None:
-            logging.info('Mask: yes')
-        else:
-            logging.info('Mask: no')
-        logging.info('Threshold limit for SNR: %.1f', self.snr_min)
-        logging.info('Threshold limit for SDE: %.1f', self.sde_min)
-        logging.info('Threshold limit for FAP: %.1f', self.fap_max)
-        logging.info('Signal scoring algorithm: %s', self.best_signal_algorithm)
-        if self.best_signal_algorithm == self.VALID_SIGNAL_SELECTORS[2]:
-            logging.info('Quorum algorithm vote strength: %.0f',
-                         self.signal_score_selectors[self.VALID_SIGNAL_SELECTORS[2]].strength)
         if star_info is not None:
             logging.info('================================================')
             logging.info('STELLAR PROPERTIES FOR THE SIGNAL SEARCH')
@@ -450,6 +436,36 @@ class Sherlock:
             logging.info('radius = %.6f', star_info.radius)
             logging.info('radius_min = %.6f', star_info.radius_min)
             logging.info('radius_max = %.6f', star_info.radius_max)
+        logging.info('================================================')
+        logging.info('USER DEFINITIONS')
+        logging.info('================================================')
+        if self.detrend_method == "gp":
+            logging.info('Detrend method: Gaussian Process Matern 2/3')
+        else:
+            logging.info('Detrend method: Bi-Weight')
+        logging.info('No of detrend models applied: %s', self.n_detrends)
+        logging.info('Minimum number of transits: %s', transits_min_count)
+        logging.info('Period planet protected: %.1f', self.period_protec)
+        if self.search_zone is not None and not (star_info.mass_assumed or star_info.radius_assumed):
+            logging.info("Selected search zone: %s. Minimum and maximum periods will be calculated.", self.search_zone)
+            self.period_min, self.period_max = self.search_zone[self.search_zone].calculate_period_range(star_info)
+        elif self.search_zone is not None:
+            logging.info("Selected search zone was %s but star catalog info was not found or wasn't complete. "
+                         "Defaulting to minimum and maximum input periods.", self.search_zone)
+        logging.info('Minimum Period (d): %.1f', self.period_min)
+        logging.info('Maximum Period (d): %.1f', self.period_max)
+        logging.info('Binning size (min): %.1f', self.bin_minutes)
+        if object_info.initial_mask is not None:
+            logging.info('Mask: yes')
+        else:
+            logging.info('Mask: no')
+        logging.info('Threshold limit for SNR: %.1f', self.snr_min)
+        logging.info('Threshold limit for SDE: %.1f', self.sde_min)
+        logging.info('Threshold limit for FAP: %.1f', self.fap_max)
+        logging.info('Signal scoring algorithm: %s', self.best_signal_algorithm)
+        if self.best_signal_algorithm == self.VALID_SIGNAL_SELECTORS[2]:
+            logging.info('Quorum algorithm vote strength: %.0f',
+                         self.signal_score_selectors[self.VALID_SIGNAL_SELECTORS[2]].strength)
         if sectors is not None:
             sectors_count = len(sectors)
             logging.info('================================================')
@@ -489,8 +505,12 @@ class Sherlock:
         lc_df['flux_err'] = lc.flux_err
         lc_df.to_csv(object_dir + "lc.csv", index=False)
         lc = lc.remove_outliers(sigma_lower=float('inf'), sigma_upper=3)  # remove outliers over 3sigma
+        cadence_array = np.diff(lc.time) * 24 * 60
+        cadence_array = cadence_array[~np.isnan(cadence_array)]
+        cadence_array = cadence_array[cadence_array > 0]
+        cadence = np.nanmedian(cadence_array)
         clean_time, flatten_flux, clean_flux_err = self.__clean_initial_flux(object_info, lc.time, lc.flux, lc.flux_err,
-                                                                             star_info)
+                                                                             star_info, cadence)
         lc = lk.LightCurve(time=clean_time, flux=flatten_flux, flux_err=clean_flux_err)
         period = None
         periodogram = lc.to_periodogram(minimum_period=self.wl_min[sherlock_id], oversample_factor=10)
@@ -526,17 +546,14 @@ class Sherlock:
                         (clean_time > mask_range[1] if not math.isnan(mask_range[1]) else False)]
                 clean_time = clean_time[mask]
                 flatten_flux = flatten_flux[mask]
-        cadence_array = np.diff(clean_time) * 24 * 60
-        cadence_array = cadence_array[~np.isnan(cadence_array)]
-        cadence_array = cadence_array[cadence_array > 0]
-        cadence = np.nanmedian(cadence_array)
         return clean_time, flatten_flux, star_info, transits_min_count, cadence
 
-    def __clean_initial_flux(self, object_info, time, flux, flux_err, star_info):
+    def __clean_initial_flux(self, object_info, time, flux, flux_err, star_info, cadence):
         clean_time = time
         clean_flux = flux
         clean_flux_err = flux_err
-        if self.initial_smooth or (self.initial_rms_mask and object_info.initial_mask is None):
+        is_short_cadence = round(cadence) <= 5
+        if (is_short_cadence and self.initial_smooth) or (self.initial_rms_mask and object_info.initial_mask is None):
             logging.info('================================================')
             logging.info('INITIAL FLUX CLEANING')
             logging.info('================================================')
@@ -570,13 +587,12 @@ class Sherlock:
             plot_dir = self.__init_object_dir(star_info.object_id)
             fig.savefig(plot_dir + 'High_RMS_Mask_' + str(star_info.object_id) + '.png', dpi=200)
             fig.clf()
-        if self.initial_smooth:
+        if is_short_cadence and self.initial_smooth:
             logging.info('Applying Savitzky-Golay filter')
             clean_flux = savgol_filter(clean_flux, 11, 3)
         return clean_time, clean_flux, clean_flux_err
 
     def __calculate_max_significant_period(self, lc, periodogram):
-        #TODO improve selection of max period
         #max_accepted_period = (lc.time[len(lc.time) - 1] - lc.time[0]) / 4
         max_accepted_period = np.float64(10)
         accepted_power_indexes = np.transpose(np.argwhere(periodogram.power > 0.0008))[0]
@@ -585,7 +601,7 @@ class Sherlock:
         accepted_indexes = [i for i in accepted_period_indexes if i in accepted_power_indexes]
         local_extrema = argrelextrema(periodogram.power[accepted_indexes], np.greater)[0]
         accepted_indexes = np.array(accepted_indexes)[local_extrema]
-        # TODO check whether this fits better
+        # TODO related to https://github.com/franpoz/SHERLOCK/issues/29 check whether this fits better
         #  periodogram.period[np.argmax(periodogram.power)]
         period = None
         if len(accepted_indexes) > 0:
@@ -841,7 +857,7 @@ class Sherlock:
             bin_centers = bin_edges[1:] - bin_width / 2
             bin_size = int(round(bin_width * 60 * 24 * transit_result.period))
             ax2.errorbar(bin_centers, bin_means, yerr=bin_stds / 2, xerr=bin_width / 2, marker='o', markersize=4,
-                         color='teal', alpha=1, linestyle='none', label='Bin size: ' + str(bin_size) + "m")
+                         color='darkorange', alpha=1, linestyle='none', label='Bin size: ' + str(bin_size) + "m")
             ax2.legend(loc="upper right")
         ax3 = plt.gca()
         ax3.axvline(transit_result.period, alpha=0.4, lw=3)
