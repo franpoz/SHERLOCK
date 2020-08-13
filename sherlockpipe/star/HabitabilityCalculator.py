@@ -38,7 +38,7 @@ class HabitabilityCalculator:
     def __seff_prime(self, A, e):
         return A / np.sqrt(1. - e ** 2)
 
-    def calculate_hz(self, t_eff, star_mass, luminosity):
+    def calculate_hz(self, t_eff, luminosity):
         t_star = t_eff - 5700
         # Recent Venus
         s_eff_rv = 1.7763
@@ -95,7 +95,7 @@ class HabitabilityCalculator:
     '''Returns the semi-major axis and the HZ Area [I=Inner, HZ-IO=Habitable Zone (Inner Optimistic),
     HZ=Habitable Zone, HZ-OO=Habitable Zone (Outer Optimistic)'''
     def calculate_hz_score(self, t_eff, star_mass, luminosity, period):
-        hz = self.calculate_hz(t_eff, star_mass, luminosity)
+        hz = self.calculate_hz(t_eff, luminosity)
         period_seconds = period * 24. * 3600.
         mass_kg = star_mass * 2.e30
         a1 = (self.G * mass_kg*period_seconds ** 2/4. / (np.pi ** 2)) ** (1. / 3.)
