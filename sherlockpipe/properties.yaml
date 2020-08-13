@@ -62,7 +62,7 @@ AUTO_DETREND_METHOD: 'cosine'
 AUTO_DETREND_RATIO: 0.25
 # Use this property for single object runs because it will affect the entire Sherlock instance. If set, this property
 # will enable an initial detrend for the given period and will ignore all the auto-detrend configs.
-AUTO_DETREND_PERIOD: None
+AUTO_DETREND_PERIOD:
 
 ######################################################################################################################
 ### TRANSIT ADJUST SETUP
@@ -74,6 +74,9 @@ SNR_MIN: 7
 SDE_MIN: 5
 FAP_MAX: 0.1
 CPU_CORES: 7
+# Search zone can be 'hz' or 'ohz' for habitable and optimistic habitable zones. This will override period_min and
+# period_max values
+SEARCH_ZONE:
 PERIOD_MIN: 0.5
 PERIOD_MAX: 33
 PERIOD_PROTECT: 10
