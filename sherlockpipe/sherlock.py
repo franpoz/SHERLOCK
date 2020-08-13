@@ -284,7 +284,7 @@ class Sherlock:
         sherlock_id = object_info.sherlock_id()
         mission_id = object_info.mission_id()
         try:
-            time, flux, star_info, transits_min_count, cadence = self.__prepare(object_info)
+            time, flux, star_info, transits_min_count, cadence, sectors = self.__prepare(object_info)
             id_run = 1
             best_signal_score = 1
             self.report[sherlock_id] = []
@@ -310,6 +310,12 @@ class Sherlock:
                 object_report["duration"] = transit_results[signal_selection.curve_index].duration * 60 * 24
                 object_report["t0"] = transit_results[signal_selection.curve_index].t0
                 object_report["depth"] = transit_results[signal_selection.curve_index].depth
+                real_transit_args = np.argwhere(~np.isnan(transit_results[signal_selection.curve_index]
+                                                          .results.transit_depths))
+                object_report["transit_times"] = np.array(transit_results[signal_selection.curve_index]
+                                                          .results.transit_times)[real_transit_args.flatten()]
+                object_report["transit_times"] = '-'.join(map(str, object_report["transit_times"]))
+                object_report["sectors"] = '-'.join(map(str, sectors))
                 if self.ois is not None:
                     existing_period_in_object = self.ois[(self.ois["Object Id"] == mission_id) &
                                                          (0.95 < self.ois["Period (days)"] / object_report["period"]) &
@@ -554,7 +560,8 @@ class Sherlock:
                         (clean_time > mask_range[1] if not math.isnan(mask_range[1]) else False)]
                 clean_time = clean_time[mask]
                 flatten_flux = flatten_flux[mask]
-        return clean_time, flatten_flux, star_info, transits_min_count, cadence
+        return clean_time, flatten_flux, star_info, transits_min_count, cadence, \
+               sectors if sectors is not None else quarters
 
     def __clean_initial_flux(self, object_info, time, flux, flux_err, star_info, cadence):
         clean_time = time
