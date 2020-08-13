@@ -1,15 +1,5 @@
 import numpy as np
-import time
-import matplotlib.pyplot as plt
-import os
 
-#
-# Script para calcular las HZ basado en las ecuaciones de
-# kopparapu et al (2013)
-#
-# Estas ecuaciones son validas para estrellas entre 2600<Teff<7200k
-# Hay que dar la Teff y la L de la estrella en cuestion
-#
 '''Calculates the Habitability Zone of a star based on the Kopparapu et al (2003) equations. These equations are only
 valid for stars between 2600 K < Teff < 7200 K.'''
 class HabitabilityCalculator:
@@ -39,6 +29,13 @@ class HabitabilityCalculator:
         return A / np.sqrt(1. - e ** 2)
 
     def calculate_hz(self, t_eff, luminosity):
+        """
+        Calculates the habitable zone ranges in astronomical units
+        @param t_eff: the stellar effective temperature
+        @param luminosity: the stellar luminosity in sun luminosities
+        @return: a tuple of size 4 with the recent venus, moist greenhouse, maximum greenhouse and early mars orbital
+        semi-major axises for the given star parameters.
+        """
         t_star = t_eff - 5700
         # Recent Venus
         s_eff_rv = 1.7763
@@ -92,9 +89,38 @@ class HabitabilityCalculator:
         Dis_prime_em = self.__dis(Seff_prime_em, luminosity)
         return [Dis_rv, Dis_mog, Dis_mag, Dis_em]
 
-    '''Returns the semi-major axis and the HZ Area [I=Inner, HZ-IO=Habitable Zone (Inner Optimistic),
-    HZ=Habitable Zone, HZ-OO=Habitable Zone (Outer Optimistic)'''
+    def calculate_hz_periods(self, t_eff, luminosity, mass):
+        """
+        Calculates the habitable zone ranges in periods
+        @param t_eff: the stellar effective temperature
+        @param luminosity: the stellar luminosity in sun luminosities
+        @param mass: the stellar mass in sun masses
+        @return: a tuple of size 4 with the recent venus, moist greenhouse, maximum greenhouse and early mars orbital
+        periods for the given star parameters.
+        """
+        aus = self.calculate_hz(t_eff, luminosity)
+        return [self.au_to_period(mass, au) for au in aus]
+
+    def au_to_period(self, mass, au):
+        """
+        Calculates the orbital period for the semi-major axis assuming a circular orbit.
+        @param mass: the stellar mass
+        @param au: the semi-major axis in astronomical units.
+        @return: the period in days
+        """
+        mass_kg = mass * 2.e30
+        return ((au ** 3) * 4 * (np.pi ** 2) / self.G / mass_kg) ** (1. / 2.) / 3600 / 24
+
     def calculate_hz_score(self, t_eff, star_mass, luminosity, period):
+        """
+        Returns the semi-major axis and the HZ Area [I=Inner, HZ-IO=Habitable Zone (Inner Optimistic),
+        HZ=Habitable Zone, HZ-OO=Habitable Zone (Outer Optimistic)
+        @param t_eff: the star effective temperature
+        @param star_mass: the star mass in sun masses
+        @param luminosity: the star luminosity in sun luminosities
+        @param period: the period to guess the semi-major axis
+        @return: a tuple of semi-major axis and hz position string.
+        """
         hz = self.calculate_hz(t_eff, luminosity)
         period_seconds = period * 24. * 3600.
         mass_kg = star_mass * 2.e30
