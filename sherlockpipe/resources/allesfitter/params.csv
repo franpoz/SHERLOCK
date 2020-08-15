@@ -1,7 +1,7 @@
 #name,value,fit,bounds,label,unit
 #companion b astrophysical params,,,,,
-b_rr,0.1,1,trunc_normal 0 1 0.1 0.05,$R_b / R_\star$,
-b_rsuma,0.2,1,trunc_normal 0 1 0.2 1.5,$(R_\star + R_b) / a_b$,
+b_rr,${sherlock:rp_rs},1,trunc_normal 0 1 0.1 0.05,$R_b / R_\star$,
+b_rsuma,${sherlock:sum_rp_rs_a},1,trunc_normal 0 1 0.2 1.5,$(R_\star + R_b) / a_b$,
 b_cosi,0.0,1,uniform 0.0 0.03,$\cos{i_b}$,
 b_epoch,${sherlock:t0},1,trunc_normal -1000000000000.0 1000000000000.0 ${sherlock:t0} 0.05,$T_{0;b}$,$\mathrm{BJD}$
 b_period,${sherlock:period},1,trunc_normal -1000000000000.0 1000000000000.0 ${sherlock:period} 0.05,$P_b$,$\mathrm{d}$
