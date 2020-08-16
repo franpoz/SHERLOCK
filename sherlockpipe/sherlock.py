@@ -383,6 +383,7 @@ class Sherlock:
 
     def __init_object_dir(self, object_id, clean_dir=False):
         dir = self.results_dir + str(object_id)
+        dir = dir.replace(" ", "_")
         if clean_dir:
             self.__remove_object_dir(object_id)
         if not os.path.exists(dir):
@@ -391,11 +392,13 @@ class Sherlock:
 
     def __remove_object_dir(self, object_id):
         dir = self.results_dir + str(object_id)
+        dir = dir.replace(" ", "_")
         if os.path.exists(dir) and os.path.isdir(dir):
             shutil.rmtree(dir, ignore_errors=True)
 
     def __init_object_run_dir(self, object_id, run_no, clean_dir=False):
         dir = self.results_dir + str(object_id) + "/" + str(run_no)
+        dir = dir.replace(" ", "_")
         if clean_dir and os.path.exists(dir) and os.path.isdir(dir):
             shutil.rmtree(dir, ignore_errors=True)
         if not os.path.exists(dir):
