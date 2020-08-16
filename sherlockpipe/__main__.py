@@ -9,7 +9,7 @@ from os import path
 import yaml
 
 if __name__ == '__main__':
-    ap = ArgumentParser(description='Lightcurve Analysis Tool for Transiting Exoplanets')
+    ap = ArgumentParser(description='Searching for Hints of Exoplanets fRom Lightcurves Of spaCe-based seeKers')
     ap.add_argument('--properties', help="Additional properties to be loaded into Sherlock run ", required=True)
     args = ap.parse_args()
     resources_dir = path.join(path.dirname(__file__))
