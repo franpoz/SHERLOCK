@@ -73,6 +73,7 @@ class Fitter:
         shutil.copyfile(resources_dir + "/resources/allesfitter/params.csv", params_file)
         shutil.copyfile(resources_dir + "/resources/allesfitter/settings.csv", settings_file)
         # TODO replace sherlock properties from allesfitter files
+        # TODO only use params_star when the star mass or radius was not assumed
         with open(settings_file, 'r+') as f:
             text = f.read()
             text = re.sub('\\${sherlock:cores}', str(cpus), text)
@@ -125,19 +126,22 @@ if __name__ == '__main__':
         candidate = pd.DataFrame(columns=['id', 'period', 't0', 'cpus', 'rp_rs', 'a'])
         candidate = candidate.append(user_properties["planet"], ignore_index=True)
         user_star_df = pd.DataFrame(columns=['R_star', 'M_star'])
-        user_star_df = user_star_df.append(user_properties["star"], ignore_index=True)
-        if user_star_df.iloc[0]["R_star"] is not None:
-            star_df.at[0, "R_star"] = user_star_df.iloc[0]["R_star"]
-        if user_star_df.iloc[0]["M_star"] is not None:
-            star_df.at[0, "M_star"] = user_star_df.iloc[0]["M_star"]
-        if ("a" not in user_properties["planet"] or user_properties["planet"]["a"] is None)\
-                and star_df.iloc[0]["M_star"] is not None and not np.isnan(star_df.iloc[0]["M_star"]):
-            candidate.at[0, "a"] = HabitabilityCalculator() \
-                .calculate_semi_major_axis(user_properties["planet"]["period"],
-                                           user_properties["star"]["M_star"])
-        elif ("a" not in user_properties["planet"] or user_properties["planet"]["a"] is None)\
-                and (star_df.iloc[0]["M_star"] is None or np.isnan(star_df.iloc[0]["M_star"])):
-            raise ValueError("Cannot guess semi-major axis without star mass.")
+        if "star" in user_properties and user_properties["star"] is not None:
+            user_star_df = user_star_df.append(user_properties["star"], ignore_index=True)
+            if user_star_df.iloc[0]["R_star"] is not None:
+                star_df.at[0, "R_star"] = user_star_df.iloc[0]["R_star"]
+            if user_star_df.iloc[0]["M_star"] is not None:
+                star_df.at[0, "M_star"] = user_star_df.iloc[0]["M_star"]
+            if ("a" not in user_properties["planet"] or user_properties["planet"]["a"] is None)\
+                    and star_df.iloc[0]["M_star"] is not None and not np.isnan(star_df.iloc[0]["M_star"]):
+                candidate.at[0, "a"] = HabitabilityCalculator() \
+                    .calculate_semi_major_axis(user_properties["planet"]["period"],
+                                               user_properties["star"]["M_star"])
+            elif ("a" not in user_properties["planet"] or user_properties["planet"]["a"] is None)\
+                    and (star_df.iloc[0]["M_star"] is None or np.isnan(star_df.iloc[0]["M_star"])):
+                raise ValueError("Cannot guess semi-major axis without star mass.")
+        if candidate.iloc[0]["a"] is None or np.isnan(candidate.iloc[0]["a"]):
+            raise ValueError("Semi-major axis is neither provided nor inferred.")
         cpus = user_properties["settings"]["cpus"]
     else:
         candidate_selection = int(args.candidate)
