@@ -108,9 +108,9 @@ class Vetter:
             with open('{}/manifest.csv'.format(str(indir)), 'w') as f:  # save in the photometry folder
                 writer = csv.writer(f, delimiter=',')
                 writer.writerow(metadata_header)
-        return indir, candidate_df, TIC_wanted
+        return indir, candidate_df, TIC_wanted, candidate_df.iloc[0]["ffi"]
 
-    def __process(self, indir, tic, sectors_in, transit_list):
+    def __process(self, indir, tic, sectors_in, transit_list, ffi):
         """
         Performs the LATTE analysis to generate PNGs and also the TPFPlotter analysis to get the field of view
         information.
@@ -129,9 +129,16 @@ class Vetter:
                 sectors = sectors_all
         except:
             sectors = sectors_all
-        alltime, allflux, allflux_err, all_md, alltimebinned, allfluxbinned, allx1, allx2, ally1, ally2, alltime12, allfbkg, start_sec, end_sec, in_sec, tessmag, teff, srad = LATTEutils.download_data(
-            indir, sectors, tic)
 
+        if not ffi:
+            alltime, allflux, allflux_err, all_md, alltimebinned, allfluxbinned, allx1, allx2, ally1, ally2, alltime12, allfbkg, start_sec, end_sec, in_sec, tessmag, teff, srad = LATTEutils.download_data(
+                indir, sectors, tic)
+        else:
+            alltime_list, allflux, allflux_small, allflux_flat, all_md, allfbkg, allfbkg_t, start_sec, end_sec, in_sec, X1_list, X4_list, apmask_list, arrshape_list, tpf_filt_list, t_list, bkg_list, tpf_list = LATTEutils.download_data_FFI(indir, sectors, syspath, sectors_all, tic, True)
+            srad = "-"
+            tessmag = "-"
+            teff = "-"
+            alltime = "-"
         # in my input file the the times start at 0 for each sector so I need the line below
         # transit_list = list(np.array(transit_list) + np.nanmin(alltime))
         # ------------
@@ -141,18 +148,24 @@ class Vetter:
         save = True
         DV = True
         try:
-            LATTEbrew.brew_LATTE(tic, indir, syspath, transit_list, simple, BLS, model, save, DV, sectors,
-                                 sectors_all,
-                                 alltime, allflux, allflux_err, all_md, alltimebinned, allfluxbinned, allx1, allx2,
-                                 ally1, ally2, alltime12, allfbkg, start_sec, end_sec, in_sec, tessmag, teff, srad, ra,
-                                 dec, self.args)
+            if not ffi:
+                LATTEbrew.brew_LATTE(tic, indir, syspath, transit_list, simple, BLS, model, save, DV, sectors,
+                                     sectors_all,
+                                     alltime, allflux, allflux_err, all_md, alltimebinned, allfluxbinned, allx1, allx2,
+                                     ally1, ally2, alltime12, allfbkg, start_sec, end_sec, in_sec, tessmag, teff, srad, ra,
+                                     dec, self.args)
+            else:
+                LATTEbrew.brew_LATTE_FFI(tic, indir, syspath, transit_list, simple, BLS, model, save, DV, sectors,
+                                         sectors_all, alltime, allflux_flat, allflux_small, allflux_err, all_md, allfbkg,
+                                         allfbkg_t, start_sec, end_sec, in_sec, X1_list, X4_list, apmask_list,
+                                         arrshape_list, tpf_filt_list, t_list, bkg_list, tpf_list, ra, dec, self.args)
             # LATTE_DV.LATTE_DV(tic, indir, syspath, transit_list, sectors_all, simple, BLS, model, save, DV, sectors,
             #                      sectors_all,
             #                      alltime, allflux, allflux_err, all_md, alltimebinned, allfluxbinned, allx1, allx2,
             #                      ally1, ally2, alltime12, allfbkg, start_sec, end_sec, in_sec, tessmag, teff, srad, ra,
             #                      dec, self.args)
             tp_downloaded = True
-        except:
+        except Exception as e:
             # see if it made any plots - often it just fails on the TPs as they are very large
             if exists("{}/{}/{}_fullLC_md.png".format(indir, tic, tic)):
                 print("couldn't download TP but continue anyway")
@@ -225,11 +238,11 @@ class Vetter:
         mnd['InoutFlux'] = " "
         mnd['Keep'] = " "
         mnd['Comment'] = " "
-        mnd['starttime'] = np.nanmin(alltime)
+        mnd['starttime'] = np.nanmin(alltime) if not isinstance(alltime, str) else "-"
         return mnd
 
     def vetting(self, candidate):
-        indir, df, TIC_wanted = self.__prepare(candidate)
+        indir, df, TIC_wanted, ffi = self.__prepare(candidate)
         for tic in TIC_wanted:
             # check the existing manifest to see if I've processed this file!
             manifest_table = pd.read_csv('{}/manifest.csv'.format(str(indir)))
@@ -245,7 +258,7 @@ class Vetter:
                     sectors = list(sectors_in)
             except:
                 sectors = [0]
-            res = self.__process(indir, tic, sectors, transit_list)
+            res = self.__process(indir, tic, sectors, transit_list, ffi)
             if res['TICID'] == -99:
                 print('something went wrong')
                 continue
