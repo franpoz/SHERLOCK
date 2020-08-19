@@ -30,7 +30,55 @@ provided by the pipeline. The most important keys to be defined in your YAML fil
 the `GLOBAL OBJECTS RUN SETUP` and `SECTOR OBJECTS RUN SETUP` sections because they contain the object ids
 or files to be analysed in the execution. You'd need to fill at least one of those keys for the
 pipeline to do anything. If you still have any doubts please refer to the 
-[examples/properties](https://github.com/franpoz/SHERLOCK/tree/master/examples/properties.) directory 
+[examples/properties](https://github.com/franpoz/SHERLOCK/tree/master/examples/properties) directory 
+
+### Vetting
+SHERLOCK PIPEline comes with a submodule to examine the most promising transit candidates
+found by any of its executions. Please note that this feature is only enabled for TESS candidates.
+As this module has dependencies versions collides with the main ones used by the pipeline, you will 
+need to set up a clean Python virtualenv. Once you have it activated, you should download the dependencies
+file provided under [vetting_requirements.txt](https://github.com/franpoz/SHERLOCK/tree/master/vetting_requirements.txt) 
+directory. Finally, you'll install the needed dependencies for vetting into your virtualenv with:
+
+```pip3 install -r vetting_requirements.txt```
+
+At this point you should be able to execute the vetting by calling:
+
+```python3 -m sherlockpipe.vet --properties my_properties.yaml```
+
+Through that command you will run the vetting process for the given parameters within your provided YAML file. 
+You could watch the generated results under `$your_sherlock_object_results_dir/vetting` directory.
+Please go to 
+[examples/vetting/](https://github.com/franpoz/SHERLOCK/tree/master/examples/vetting.)
+to learn how to inject the proper properties for the vetting process.
+
+There is an additional simplified option which can be used to run the vetting. In case you are sure
+there is a candidate from the Sherlock results which matches your desired parameters, you can run
+
+```python3 -m sherlockpipe.vet --candidate ${theCandidateNumber}``` 
+
+from the sherlock results directory. This execution will automatically read the transit
+parameters from the Sherlock generated files.
+
+### Fitting
+SHERLOCK PIPEline comes with another submodule to fit the most promising transit candidates
+found by any of its executions. By calling:
+
+```python3 -m sherlockpipe.fit --properties my_properties.yaml```
+
+you will run the fitting process for the given parameters within your provided YAML file. 
+You could watch the generated results under `$your_sherlock_object_results_dir/fit` directory.
+Please go to 
+[examples/fitting/](https://github.com/franpoz/SHERLOCK/tree/master/examples/fitting)
+to learn how to inject the proper properties for the fitting process.
+
+There is an additional simplified option which can be used to run the fit. In case you are sure
+there is a candidate from the Sherlock results which matches your desired parameters, you can run
+
+```python3 -m sherlockpipe.fit --candidate ${theCandidateNumber}``` 
+
+from the sherlock results directory. This execution will automatically read the transit and star
+parameters from the Sherlock generated files.
 
 ## SHERLOCK PIPEline Workflow
 It is important to note that SHERLOCK PIPEline uses some csv files with TOIs, KOIs and EPIC IDs
