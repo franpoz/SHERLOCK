@@ -4,7 +4,7 @@ import re
 import shutil
 import types
 from pathlib import Path
-
+import traceback
 import allesfitter
 import lightkurve
 import numpy as np
@@ -50,6 +50,7 @@ class Vetter:
         self.args.noshow = True
         self.args.north = False
         self.args.o = True
+        self.args.mpi = False
         self.args.auto = True
         self.args.save = True
         self.args.nickname = ""  # TODO do we set the sherlock id?
@@ -138,7 +139,7 @@ class Vetter:
             srad = "-"
             tessmag = "-"
             teff = "-"
-            alltime = "-"
+            alltime = alltime_list
         # in my input file the the times start at 0 for each sector so I need the line below
         # transit_list = list(np.array(transit_list) + np.nanmin(alltime))
         # ------------
@@ -156,7 +157,7 @@ class Vetter:
                                      dec, self.args)
             else:
                 LATTEbrew.brew_LATTE_FFI(tic, indir, syspath, transit_list, simple, BLS, model, save, DV, sectors,
-                                         sectors_all, alltime, allflux_flat, allflux_small, allflux_err, all_md, allfbkg,
+                                         sectors_all, alltime, allflux_flat, allflux_small, allflux, all_md, allfbkg,
                                          allfbkg_t, start_sec, end_sec, in_sec, X1_list, X4_list, apmask_list,
                                          arrshape_list, tpf_filt_list, t_list, bkg_list, tpf_list, ra, dec, self.args)
             # LATTE_DV.LATTE_DV(tic, indir, syspath, transit_list, sectors_all, simple, BLS, model, save, DV, sectors,
@@ -166,6 +167,7 @@ class Vetter:
             #                      dec, self.args)
             tp_downloaded = True
         except Exception as e:
+            traceback.print_exc()
             # see if it made any plots - often it just fails on the TPs as they are very large
             if exists("{}/{}/{}_fullLC_md.png".format(indir, tic, tic)):
                 print("couldn't download TP but continue anyway")
@@ -259,10 +261,10 @@ class Vetter:
             except:
                 sectors = [0]
             res = self.__process(indir, tic, sectors, transit_list, ffi)
+            self.vetting_field_of_view(indir, res['TICID'], res['RA'], res['DEC'], sectors)
             if res['TICID'] == -99:
                 print('something went wrong')
                 continue
-            self.vetting_field_of_view(indir, res['TICID'], res['RA'], res['DEC'], sectors)
             # TODO improve this condition to check whether tic, sectors and transits exist
             if not np.isin(tic, urls_exist):
                 # make sure the file is opened as append only
