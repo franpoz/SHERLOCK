@@ -35,6 +35,7 @@ from scipy import stats
 from wotan import flatten
 from astropy.stats import sigma_clip
 
+
 class Sherlock:
     """
     Main SHERLOCK PIPEline class to be used for loading input, setting up the running parameters and launch the
@@ -313,9 +314,9 @@ class Sherlock:
                 object_report['rp_rs'] = transit_results[signal_selection.curve_index].results.rp_rs
                 real_transit_args = np.argwhere(~np.isnan(transit_results[signal_selection.curve_index]
                                                           .results.transit_depths))
-                object_report["transit_times"] = np.array(transit_results[signal_selection.curve_index]
+                object_report["transits"] = np.array(transit_results[signal_selection.curve_index]
                                                           .results.transit_times)[real_transit_args.flatten()]
-                object_report["transit_times"] = ','.join(map(str, object_report["transit_times"]))
+                object_report["transits"] = ','.join(map(str, object_report["transits"]))
                 object_report["sectors"] = ','.join(map(str, sectors))
                 object_report["ffi"] = isinstance(object_info, MissionFfiIdObjectInfo) or \
                                        isinstance(object_info, MissionFfiCoordsObjectInfo)
@@ -330,7 +331,8 @@ class Sherlock:
                     object_report["oi"] = ""
                 if best_signal_score == 1:
                     logging.info('New best signal is good enough to keep searching. Going to the next run.')
-                    time, flux = self.__apply_mask_from_transit_results(time, flux, transit_results, signal_selection.curve_index)
+                    time, flux = self.__apply_mask_from_transit_results(time, flux, transit_results,
+                                                                        signal_selection.curve_index)
                     id_run += 1
                     if id_run > self.max_runs:
                         logging.info("Max runs limit of %.0f is reached. Stopping.", self.max_runs)
@@ -340,12 +342,12 @@ class Sherlock:
             self.__setup_object_report_logging(sherlock_id)
             object_dir = self.__init_object_dir(object_info.sherlock_id())
             logging.info("Listing most promising candidates for ID %s:", sherlock_id)
-            logging.info("%-12s%-8s%-10s%-8s%-8s%-8s%-8s%-10s%-14s%-14s%-18s%-18s%-20s", "Detrend no.", "Period",
+            logging.info("%-12s%-8s%-10s%-8s%-8s%-8s%-8s%-10s%-14s%-14s%-18s%-10s%-18s%-20s", "Detrend no.", "Period",
                          "Duration", "T0", "Depth", "SNR", "SDE", "FAP", "Border_score", "Matching OI", "Planet radius",
-                         "Semi-major axis", "Habitability Zone")
+                         "Rp/Rs", "Semi-major axis", "Habitability Zone")
             if sherlock_id in self.report:
                 candidates_df = pandas.DataFrame(columns=['curve', 'period', 'duration', 't0', 'depth', 'snr', 'sde',
-                                                          'fap', 'border_score', 'oi', 'planet_radius', 'a', 'hz'])
+                                                          'fap', 'border_score', 'oi', 'rad_p', 'rp_rs', 'a', 'hz'])
                 i = 1
                 for report in self.report[sherlock_id]:
                     a, habitability_zone = HabitabilityCalculator()\
@@ -359,18 +361,12 @@ class Sherlock:
                         report['rp_rs'] = "-"
                     else:
                         report['rad_p'] = star_info.radius * math.sqrt(report["depth"] / 1000) / 0.0091577
-                    logging.info("%-12s%-8.4f%-10.2f%-8.2f%-8.3f%-8.2f%-8.2f%-10.6f%-14.2f%-14s%-18.5f%-18.5f%-20s",
+                    logging.info("%-12s%-8.4f%-10.2f%-8.2f%-8.3f%-8.2f%-8.2f%-10.6f%-14.2f%-14s%-18.5f%-10.5f%-18.5f%-20s",
                                  report["curve"], report["period"],
                                  report["duration"], report["t0"], report["depth"], report["snr"], report["sde"],
-                                 report["fap"], report["border_score"], report["oi"], report['rad_p'], a,
-                                 habitability_zone)
+                                 report["fap"], report["border_score"], report["oi"], report['rad_p'], report['rp_rs'],
+                                 a, habitability_zone)
                     candidates_df = candidates_df.append(report, ignore_index=True)
-                    latte_input_df = pandas.DataFrame(columns=['TICID', 'sectors', 'transits', 'BLS', 'model', 'FFI'])
-                    latte_input_df = latte_input_df.append({"TICID": report["Object Id"], "sectors": report["sectors"],
-                                           "transits": report["transit_times"], "BLS": False, "model": 0,
-                                           "FFI": report["ffi"]}, ignore_index=True)
-                    run_dir = self.__init_object_run_dir(sherlock_id, i)
-                    latte_input_df.to_csv(run_dir + "best_signal_latte_input.csv", index=False)
                     i = i + 1
                 candidates_df.to_csv(object_dir + "candidates.csv", index=False)
         except InvalidNumberOfSectorsError as e:
