@@ -136,3 +136,4 @@ dmypy.json
 **/INP*
 **/COORD*
 **/user-properties.yaml
+/pip_installer.sh
