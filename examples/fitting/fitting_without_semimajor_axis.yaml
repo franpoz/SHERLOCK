@@ -1,0 +1,13 @@
+# This example YAML file illustrates the provisioning of planet and star parameters. The star mass here is important
+# because the semi-major axis is not being provided and thus, it'd need to be calculated from the period and the M_star.
+settings:
+  cpus: 7
+planet:
+  id: 231663901
+  period: 1.4309133565904666
+  t0: 1326.004206688168
+  rp_rs: 0.10455530183261129
+star:
+  R_star: 1.02
+  M_star: 1.05
+
