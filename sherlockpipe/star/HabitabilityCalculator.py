@@ -112,6 +112,12 @@ class HabitabilityCalculator:
         a = au * 1.496e11
         return ((a ** 3) * 4 * (np.pi ** 2) / self.G / mass_kg) ** (1. / 2.) / 3600 / 24
 
+    def calculate_semi_major_axis(self, period, star_mass):
+        period_seconds = period * 24. * 3600.
+        mass_kg = star_mass * 2.e30
+        a1 = (self.G * mass_kg*period_seconds ** 2/4. / (np.pi ** 2)) ** (1. / 3.)
+        return a1 / 1.496e11
+
     def calculate_hz_score(self, t_eff, star_mass, luminosity, period):
         """
         Returns the semi-major axis and the HZ Area [I=Inner, HZ-IO=Habitable Zone (Inner Optimistic),
@@ -123,10 +129,7 @@ class HabitabilityCalculator:
         @return: a tuple of semi-major axis and hz position string.
         """
         hz = self.calculate_hz(t_eff, luminosity)
-        period_seconds = period * 24. * 3600.
-        mass_kg = star_mass * 2.e30
-        a1 = (self.G * mass_kg*period_seconds ** 2/4. / (np.pi ** 2)) ** (1. / 3.)
-        a1_au = a1 / 1.496e11
+        a1_au = self.calculate_semi_major_axis(period, star_mass)
         if a1_au < hz[0]:
             hz_position = 'I'
         elif a1_au >= hz[0] and a1_au < hz[1]:
