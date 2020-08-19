@@ -1,49 +1,22 @@
 # from __future__ import print_function, absolute_import, division
-import multiprocessing
 import re
 import shutil
 import types
 from pathlib import Path
 
 import allesfitter
-import lightkurve
 import numpy as np
 import matplotlib
-import matplotlib.pyplot as plt
-import matplotlib.gridspec as gridspec
 import yaml
-from matplotlib.colorbar import Colorbar
-from matplotlib import patches
-from astropy.visualization.mpl_normalize import ImageNormalize
-from astropy.table import Table
-from astropy.io import ascii
-import astropy.visualization as stretching
 from argparse import ArgumentParser
-
-from sherlockpipe import tpfplotter
 from sherlockpipe.star.HabitabilityCalculator import HabitabilityCalculator
-
-matplotlib.use('Agg')
 import pandas as pd
 import os
-from os.path import exists
-import ast
-import csv
-from LATTE import LATTEutils, LATTEbrew, LATTE_DV
 from os import path
-import sherlockpipe.tpfplotter
 
-'''WATSON: Verboseless Vetting and Adjustments of Transits for Sherlock Objects of iNterest
-This class intends to provide a inspection and transit fitting tool for SHERLOCK Candidates.
-'''
-# get the system path
-syspath = str(os.path.abspath(LATTEutils.__file__))[0:-14]
-# ---------
 
-# --- IMPORTANT TO SET THIS ----
-out = 'pipeline'  # or TALK or 'pipeline'
-ttran = 0.1
 resources_dir = path.join(path.dirname(__file__))
+
 
 class Fitter:
     def __init__(self, object_dir, only_initial):
