@@ -57,7 +57,7 @@ cases the user only needs to provide with a KOI-ID, EPIC-ID, TIC-ID or coordinat
 ``SHERLOCK`` makes use of ``LIGHTKURVE`` [@lightkurve:2018], ``WOTAN`` [@wotan:2019], ``ELEONOR`` [@eleonor:2019], and ``TRANSIT LEAST SQUARES`` [@tls:2019] packages to download, process, and search for exoplanets in any of the thousands of public light curves provided by *Kepler* and *TESS* missions. As output of the usage of ``SHERLOCK``, it is printed a collection of
 plots and log files which allow the user to explore the most promising signals. 
 
-The basic usage consists on the fill of a [properties.yaml] (https://github.com/franpoz/SHERLOCK/blob/master/sherlockpipe/properties.yaml) 
+The basic usage consists on the fill of a [properties.yaml](https://github.com/franpoz/SHERLOCK/blob/master/sherlockpipe/properties.yaml) 
 file, where the user needs to specify some basic parameters. We encourage the read of this file, as long as the examples provided, to get a firmly understanding of the usage.
 
 Then, to run ``SHERLOCK``, one only needs to execute: 
