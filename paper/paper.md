@@ -48,7 +48,7 @@ photometric precision, which allows the detection of exoplanets radii down to ~1
 Here we are presenting an open-source pipeline, which aimns to help the data explorarion of the aforementioned missions, in the search of new exoplanets. 
 
 
-# (1) The ``SHERLOCK PIPEline`` 
+# 1. The SHERLOCK PIPEline 
 
 The ``SHERLOCK`` (Searching for Hints of Exoplanets fRom Light curves Of spaCe-based seeKers) ``PIPEline`` is a ready-to-use and user-friendly pipeline, which
 minimizes the interaction of the user to the minimum. ``SHERLOCK`` is based on previous well-known and well-tested codes which allow the exoplanets community 
@@ -71,7 +71,7 @@ python3 -m sherlockpipe --properties properties.yaml
 ``SHERLOCK`` has been successfully tested for first time in [@pozuelos:2020] and [@demory:2020]. 
 
 
-# (2) Scientific cases 
+# 2. Scientific cases 
 
 The ``SHERLOCK PIPEline`` is specially devoted for: 
 
@@ -83,9 +83,9 @@ That is, ``SHERLOCK`` might be used for a number of projects which need to explo
 in the SPECULOOS-TESS alliance [@sebastian:2020].
 
 
-# (3) The ``SHERLOCK PIPEline`` workflow  
+# 3. The SHERLOCK PIPEline workflow  
 
-## (3.1) Data download
+## 3.1 Data download
 The light curve where the user wants to search for exoplanets it is downloaded from the NASA Mikulski Archive for Space Telescope (MAST). In the case of the TESS data, it is used the 
 Pre-search Data Conditioning Simple APerture (PDC-SAP) flux given by the SPOC (Science Process-ing  Operations  Center). For Kepler data, the Pre-search Data
 Conditioning (PDC) given by SOC (Science Operations Center). In both cases, these light curves are corrected of systematic error sources such as pointing drift,
@@ -94,17 +94,17 @@ flux provided by eleonor, but the user can choose among the different data produ
 more details). 
 
 
-## (3.2) Pre-processing of light curve
+## 3.2 Pre-processing of light curve
 In many cases we will find light curves which contain several systematics like noise, high dispersion
 beside the borders, intense periodicities caused by pulsators, fast rotators, etc. ``SHERLOCK`` 
 provides some methods to reduce these most important systematics.
 
-### (3.2.1) Local noise reduction
+### 3.2.1 Local noise reduction
 For local noise, where very close measurements show high deviation from the local trend, we apply a
 Savitzky-Golay filter. This feature, while is still experimental, has proved a highly increment of the SNR of found transits. 
-This feature can be enabled/disabled in the "INITIAL SMOOTH ENABLED" flag in the [properties.yaml] (https://github.com/franpoz/SHERLOCK/blob/master/sherlockpipe/properties.yaml) file.
+This feature can be enabled/disabled in the "INITIAL SMOOTH ENABLED" flag in the [properties.yaml](https://github.com/franpoz/SHERLOCK/blob/master/sherlockpipe/properties.yaml) file.
 
-### (3.2.2) High RMS selfmasking
+### 3.2.2 High RMS selfmasking
 It happens sometimes that a particular region of a given light curve is very noisy and it is not possible to correct by a simple detrend, mainly due to a jitter induced by 
 the spacecraft, high-light scattering, momentum dumps etc. These noisy regions have all high RMS in comparison with the running mean and
 might have a strong-negative impact in the performance of the pipeline, provoking that all the potential planets remain undetected. To overcome this issue 
@@ -112,32 +112,32 @@ might have a strong-negative impact in the performance of the pipeline, provokin
 RMS value are higher than a configurable factor multiplied by the running mean get automatically masked. 
 From our experience, appropiate thresholds ranges from (1.1-2.5)x over the running mean (see \autoref{fig:rms}).
 This feature can be enable/disabled by the "INITIAL HIGH RMS MASK: True/False" flag. The threshold can be set in the "INITIAL HIGH RMS THRESHOLD" flag. 
-Both in the [properties.yaml] (https://github.com/franpoz/SHERLOCK/blob/master/sherlockpipe/properties.yaml) file.
+Both in the [properties.yaml](https://github.com/franpoz/SHERLOCK/blob/master/sherlockpipe/properties.yaml) file.
 
-### (3.2.3) Input time ranges masking
+### 3.2.3 Input time ranges masking
 The user may indentify a region with low-quality data where the authomatic [High RMS selfmasking](https://github.com/franpoz/SHERLOCK#high-rms-selfmasking) 
 function is not acting properly. In this situation, the user can manually gives the time which should be masked. 
 If enabled, this feature automatically disables the authomatic [High RMS selfmasking](https://github.com/franpoz/SHERLOCK#high-rms-selfmasking)
-See some of the examples in the [properties.yaml] (https://github.com/franpoz/SHERLOCK/blob/master/sherlockpipe/properties.yaml) file, in the 
+See some of the examples in the [properties.yaml](https://github.com/franpoz/SHERLOCK/blob/master/sherlockpipe/properties.yaml) file, in the 
 INITIAL MASK module.
 
-### (3.2.4) Automatic detrend of intense periodicities
+### 3.2.4 Automatic detrend of intense periodicities
 Our most common foes with high periodicities are fast-rotators, which infer a high sinusoidal-like
 trend in the PDCSAP signal. This is why ``SHERLOCK PIPEline`` includes an automatic intense periodicities
 detection and detrending during its preparation stage. This feature is controled by several flags in the 
-[properties.yaml] (https://github.com/franpoz/SHERLOCK/blob/master/sherlockpipe/properties.yaml) file:
+[properties.yaml](https://github.com/franpoz/SHERLOCK/blob/master/sherlockpipe/properties.yaml) file:
 AUTO DETREND ENABLED, AUTO DETREND METHOD, AUTO DETREND RATIO, AUTO DETREND PERIOD. Read the examples given 
-in [properties.yaml] (https://github.com/franpoz/SHERLOCK/blob/master/sherlockpipe/properties.yaml) for further 
+in [properties.yaml](https://github.com/franpoz/SHERLOCK/blob/master/sherlockpipe/properties.yaml) for further 
 details and examples.
 
-### (3.2.5) Input period detrend
+### 3.2.5 Input period detrend
 If the user already knows, for example, that a given target is a fast rotator, and knows its period, this can be directly provided.
-This input have to be included in the INITIAL DETREND PERIOD module in the [properties.yaml] (https://github.com/franpoz/SHERLOCK/blob/master/sherlockpipe/properties.yaml) file.
+This input have to be included in the INITIAL DETREND PERIOD module in the [properties.yaml](https://github.com/franpoz/SHERLOCK/blob/master/sherlockpipe/properties.yaml) file.
 If enabled, this feature automatically disables 
 [Automatic detrend of intense periodicities](https://github.com/franpoz/SHERLOCK#automatic-detrend-of-intense-periodicities) 
 for the assigned object. 
 
-## (3.3) Detrending process
+## 3.3 Detrending process
 
 Once the pre-processing is done, ``SHERLOCK`` makes use of ``WOTAN`` package to remove stellar noise and instrumental drifts. Two different detrendings methods are implemented: 
 bi-weight and Gaussian process with a Matern 3/2-kernel. To optimize the search for transits, the pipeline is run for a number of trials in which the window and kernel sizes 
@@ -148,11 +148,11 @@ and DETRENDS_NUMBER.
 show the PDC-SAP Fluxes, the solid-orange line are the indentified trends, the teal points are the detrended data, which finally will be used as imput to search
 the planetary candidates.\label{fig:rms}](detrends.png)
 
-## (3.4) The search
+## 3.4 The search
 
 For each light curve, ``SHERLOCK`` searches for planet candidates making use ``TRANSIT LEAST SQUARES`` package, which uses an analytical transit model based on
 stellar parameters, and is optimized for the detection of shallow periodic transits [@tls:2019]. ``SHERLOCK`` executes iteratively what we call `runs`. Hence, in each run, are examinated
-the PDC-SAP Flux and the $x$-detrended light curves that the user indicated in the [properties.yaml] (https://github.com/franpoz/SHERLOCK/blob/master/sherlockpipe/properties.yaml)
+the PDC-SAP Flux and the $x$-detrended light curves that the user indicated in the [properties.yaml](https://github.com/franpoz/SHERLOCK/blob/master/sherlockpipe/properties.yaml)
 file. For each light curve, it is plotted the best periodic signal found jointly with the corresponding periodogram. That is, if the user used 6 detrended models, in each run will 
 be printed 7 (6-detrended and the PDC-SAP Flux light curves) `runs plots`, which are saved in specific folders. Moreover, for each light curve, it is printed in a log file the main 
 results obtained: period (days), period_err (days), number of transits detected, mean depths (ppt), transit duration (min), Epoch (TBJD), SNR, SDE, FAP, Border-score. This information
@@ -186,7 +186,7 @@ in the reports.
 This part of the code is paralelized, so, making use of ``SHERLOCK`` in a cluster with several cores will speed up considerable the time of execution. 
 
 
-## Exploring the by products and results 
+## 3.5 Exploring the by products and results 
 
 ``SHERLOCK PIPEline`` produces several information items under a new directory for every analysed object:
 
@@ -248,24 +248,24 @@ where is shown the period strengths. Example:
 ![Selfmasking function evaluates the RMS of the light curve in blocks of four hours and mask these regions with high RMS.\label{fig:rms}](rms.png)
 
 
-# Future implementations  
+# 4. Future implementations  
 
 While the ``SHERLOCK PIPEline``'s goal is to search-and-find planets, there is still a number of improvements which will make the user's life easier. In particular, we have identified some of them
 and we are continuosly working in their implementation. Here the most urgents ones at this point: 
 
-## Vetting of the candidates
+## 4.1 Vetting of the candidates
 
 Once the user has found a promissing candidate, the next step would be to perform some diagnostic tests to check whether the identified signal has not an instrumental origin and to rule out alternative astrophisical sources. For *TESS* candidates we recommend the usage of ``LATTE`` [@eisner:2020], a friendly-user package which examinates different aspects such as momentum dumps, background
 flux, $x$-$y$ centroid positions, photometric apperture effect, pixel-level centroid analysis, nearby companion stars, nearest neighbour ligtcurves, and pixel level lightcurves. 
 In future releases we will incorporate to ``SHERLOCK`` a modified version of ``LATTE`` where all these diagnotics test will be done for the promissing candidates found by the user. 
 
-## Proper fitting
+## 4.2 Proper fitting
 
 After the vetting process, the next step would be to schedule an ground-based observation to firmly confirm the event in the target star or to identify potential false postives due to variable stars
 such as Eclipsing Binaries (EBs) up to 2.5 arcmin. To this aim, it is critical to have the most accurate ephemerids as possible. Unfortunately, solution given by ``TLS`` is not always optimal, and it is desirable to perform a proper fitting of the transits. There are a number of available public codes which might be used to this end: ``Juliet`` [@espinoza:2019], ``Exofast`` [@eastman:2019], and ``Allesfitter`` [@gunther:2020] are some examples. In our case, we chose ``Allesfitter``. In future releases we will implement this fitting inside ``SHERLOCK``. 
 
 
-## Pulsating stars
+## 4.3 Pulsating stars
 
 While [Automatic detrend of intense periodicities](https://github.com/franpoz/SHERLOCK#automatic-detrend-of-intense-periodicities) allows the user to remove pulsation-like features, it is 
 very common that stars pulse in different modes, which is more complex than a simple variability. To handle this issue, we will implemente a more robust characterizarion of the stellar pulsations.
