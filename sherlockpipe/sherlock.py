@@ -634,21 +634,12 @@ class Sherlock:
     def __calculate_max_significant_period(self, lc, periodogram):
         #max_accepted_period = (lc.time[len(lc.time) - 1] - lc.time[0]) / 4
         max_accepted_period = np.float64(10)
-        accepted_power_indexes = np.transpose(np.argwhere(periodogram.power > 0.0008))[0]
-        period_values = [p.value for p in periodogram.period]
-        accepted_period_indexes = np.transpose(np.argwhere(period_values < max_accepted_period))[0]
-        accepted_indexes = [i for i in accepted_period_indexes if i in accepted_power_indexes]
-        local_extrema = argrelextrema(periodogram.power[accepted_indexes], np.greater)[0]
-        accepted_indexes = np.array(accepted_indexes)[local_extrema]
         # TODO related to https://github.com/franpoz/SHERLOCK/issues/29 check whether this fits better
-        #  periodogram.period[np.argmax(periodogram.power)]
-        period = None
-        if len(accepted_indexes) > 0:
-            relevant_periods = periodogram.period[accepted_indexes]
-            period = min(relevant_periods)
+        max_power_index = np.argmax(periodogram.power)
+        period = periodogram.period[max_power_index]
+        if max_power_index > 0.0008:
             period = period.value
-            logging.info("Auto-Detrend found the next important periods: " + str(relevant_periods) + ". Period used " +
-                         "for auto-detrend will be " + str(period) + " days")
+            logging.info("Auto-Detrend found the strong period: " + str(period) + ".")
         else:
             logging.info("Auto-Detrend did not find relevant periods.")
         return period
