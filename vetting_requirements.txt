@@ -55,7 +55,6 @@ scipy==1.5.2
 seaborn==0.10.1
 SecretStorage==3.1.2
 setuptools-scm==4.1.2
-sherlockpipe
 six==1.15.0
 sklearn==0.0
 soupsieve==2.0.1
@@ -71,3 +70,4 @@ urllib3==1.25.10
 webencodings==0.5.1
 wotan==1.7
 zipp==3.1.0
+sherlockpipe
