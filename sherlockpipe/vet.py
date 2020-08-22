@@ -201,11 +201,11 @@ class Vetter:
         # TOI -----
         TOI_planets = pd.read_csv('{}/data/TOI_list.txt'.format(indir), comment="#")
         TOIpl = TOI_planets.loc[TOI_planets['TIC'] == float(tic)]
-        if len(TOIpl) == 0:
-            TOI = False
-        else:
-            TOI = True
-            TOI_name = (float(TOIpl["Full TOI ID"]))
+        TOI = False
+        # TODO check why TOI is useful
+        # else:
+        #     TOI = True
+        #     TOI_name = (float(TOIpl["Full TOI ID"]))
         # -------------
         # return the tic so that it can be stored in the manifest to keep track of which files have already been produced
         # and to be able to skip the ones that have already been processed if the code has to be restarted.
@@ -251,7 +251,15 @@ class Vetter:
             # get a list of the current URLs that exist in the manifest
             urls_exist = manifest_table['TICID']
             # get the transit time list
-            transit_list = ast.literal_eval(((df.loc[df['TICID'] == tic]['transits']).values)[0])
+            period = df.loc[df['TICID'] == tic]['period'][0]
+            t0 = df.loc[df['TICID'] == tic]['t0'][0]
+            transit_list = []
+            for i in range(0, 4):
+                transit = t0 + (i * period)
+                if transit < (t0 + 20):
+                    transit_list.append(float(transit))
+            # TODO flag to use transits instead of period
+            #transit_list = ast.literal_eval(((df.loc[df['TICID'] == tic]['transits']).values)[0])
             try:
                 sectors_in = ast.literal_eval(str(((df.loc[df['TICID'] == tic]['sectors']).values)[0]))
                 if (type(sectors_in) == int) or (type(sectors_in) == float):
