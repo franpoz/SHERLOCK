@@ -1,11 +1,13 @@
 import setuptools
+import os
 
 with open("README.md", "r") as fh:
     long_description = fh.read()
+version = os.popen('git tag').read().split('\n', 1)[0]
 
 setuptools.setup(
     name="sherlockpipe", # Replace with your own username
-    version="0.10.3",
+    version=version,
     author="F.J. Pozuelos & M. Dévora",
     author_email="fjpozuelos@uliege.be",
     description="Search for Hints of Exoplanets fRom Lightcurves Of spaCe based seeKers",
