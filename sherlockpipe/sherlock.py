@@ -11,6 +11,9 @@ import lightkurve as lk
 import numpy as np
 import os
 import sys
+
+from scipy.ndimage import uniform_filter1d
+
 from sherlockpipe.objectinfo.MissionObjectInfo import MissionObjectInfo
 from sherlockpipe.objectinfo.InputObjectInfo import InputObjectInfo
 from sherlockpipe.objectinfo.MissionFfiIdObjectInfo import MissionFfiIdObjectInfo
@@ -342,18 +345,16 @@ class Sherlock:
             self.__setup_object_report_logging(sherlock_id)
             object_dir = self.__init_object_dir(object_info.sherlock_id())
             logging.info("Listing most promising candidates for ID %s:", sherlock_id)
-            logging.info("%-12s%-8s%-10s%-8s%-8s%-8s%-8s%-10s%-14s%-14s%-18s%-10s%-18s%-20s", "Detrend no.", "Period",
-                         "Duration", "T0", "Depth", "SNR", "SDE", "FAP", "Border_score", "Matching OI", "Planet radius",
-                         "Rp/Rs", "Semi-major axis", "Habitability Zone")
+            logging.info("%-12s%-8s%-10s%-8s%-8s%-8s%-8s%-10s%-14s%-14s%-25s%-10s%-18s%-20s", "Detrend no.", "Period",
+                         "Duration", "T0", "Depth", "SNR", "SDE", "FAP", "Border_score", "Matching OI",
+                         "Planet radius (R_Earth)", "Rp/Rs", "Semi-major axis", "Habitability Zone")
             if sherlock_id in self.report:
                 candidates_df = pandas.DataFrame(columns=['curve', 'period', 'duration', 't0', 'depth', 'snr', 'sde',
                                                           'fap', 'border_score', 'oi', 'rad_p', 'rp_rs', 'a', 'hz'])
                 i = 1
                 for report in self.report[sherlock_id]:
                     a, habitability_zone = HabitabilityCalculator()\
-                        .calculate_hz_score(star_info.teff, star_info.mass, star_info.lum, report["period"]) \
-                        if star_info.teff is not None and star_info.lum is not None and star_info.mass is not None \
-                        else "-"
+                        .calculate_hz_score(star_info.teff, star_info.mass, star_info.lum, report["period"])
                     report['a'] = a
                     report['hz'] = habitability_zone
                     if star_info.radius_assumed:
@@ -361,7 +362,7 @@ class Sherlock:
                         report['rp_rs'] = "-"
                     else:
                         report['rad_p'] = star_info.radius * math.sqrt(report["depth"] / 1000) / 0.0091577
-                    logging.info("%-12s%-8.4f%-10.2f%-8.2f%-8.3f%-8.2f%-8.2f%-10.6f%-14.2f%-14s%-18.5f%-10.5f%-18.5f%-20s",
+                    logging.info("%-12s%-8.4f%-10.2f%-8.2f%-8.3f%-8.2f%-8.2f%-10.6f%-14.2f%-14s%-25.5f%-10.5f%-18.5f%-20s",
                                  report["curve"], report["period"],
                                  report["duration"], report["t0"], report["depth"], report["snr"], report["sde"],
                                  report["fap"], report["border_score"], report["oi"], report['rad_p'], report['rp_rs'],
@@ -623,11 +624,16 @@ class Sherlock:
             axs[1].legend(loc="upper right")
             axs[1].set_title("Total and masked high RMS flux")
             fig.suptitle(str(star_info.object_id) + " High RMS Mask")
+            axs[0].set_xlabel('Time')
+            axs[0].set_ylabel('Flux RMS')
+            axs[1].set_xlabel('Time')
+            axs[1].set_ylabel('Flux')
             plot_dir = self.__init_object_dir(star_info.object_id)
             fig.savefig(plot_dir + 'High_RMS_Mask_' + str(star_info.object_id) + '.png', dpi=200)
             fig.clf()
         if is_short_cadence and self.initial_smooth:
             logging.info('Applying Savitzky-Golay filter')
+            #clean_flux = uniform_filter1d(clean_flux, 11)
             clean_flux = savgol_filter(clean_flux, 11, 3)
         return clean_time, clean_flux, clean_flux_err
 
@@ -686,8 +692,6 @@ class Sherlock:
         rows = self.detrend_plot_axis[self.n_detrends - 1][0]
         cols = self.detrend_plot_axis[self.n_detrends - 1][1]
         shift = 2 * (1.0 - (np.min(lc)))  # shift in the between the raw and detrended data
-        ylim_max = 1.0 + 3 * (np.max(lc) - 1.0)  # shift in the between the raw and detrended data
-        ylim_min = 1.0 - 2.0 * shift  # shift in the between the raw and detrended data
         fig, axs = plt.subplots(rows, cols, figsize=figsize, constrained_layout=True)
         if self.n_detrends > 1:
             axs = self.__trim_axs(axs, len(wl))
@@ -720,10 +724,6 @@ class Sherlock:
                 plot_axs.set_title('ws=%s' % str(np.around(flatten_wl, decimals=4)))
             plot_axs.plot(time, lc, linewidth=0.05, color='black', alpha=0.75, rasterized=True)
             plot_axs.plot(time, lc_trend, linewidth=1, color='orange', alpha=1.0)
-            plot_axs.plot(time, flatten_lc_detrended - shift, linewidth=0.05, color='teal', alpha=0.75, rasterized=True)
-            plot_axs.plot(bin_centers, bin_means - shift, marker='.', markersize=2, color='firebrick', alpha=0.5,
-                    linestyle='none', rasterized=True)
-            plot_axs.set_ylim(ylim_min, ylim_max)
             i = i + 1
 
         plot_dir = self.__init_object_run_dir(star_info.object_id, id_run)
@@ -801,7 +801,8 @@ class Sherlock:
         model = tls.transitleastsquares(time, lc)
         power_args = {"period_min": self.period_min, "period_max": self.period_max,
                       "n_transits_min": transits_min_count,
-                      "show_progress_bar": False, "use_threads": self.run_cores}
+                      "show_progress_bar": False, "use_threads": self.run_cores,
+                      "T0_fit_margin": 0.05}
         if star_info.ld_coefficients is not None:
             power_args["u"] = star_info.ld_coefficients
         if not star_info.radius_assumed:
