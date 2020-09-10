@@ -128,9 +128,12 @@ class HabitabilityCalculator:
         @param period: the period to guess the semi-major axis
         @return: a tuple of semi-major axis and hz position string.
         """
-        hz = self.calculate_hz(t_eff, luminosity)
-        a1_au = self.calculate_semi_major_axis(period, star_mass)
-        if a1_au < hz[0]:
+        hz = self.calculate_hz(t_eff, luminosity) if t_eff is not None and not np.isnan(t_eff) else None
+        a1_au = self.calculate_semi_major_axis(period, star_mass) if star_mass is not None and not np.isnan(star_mass)\
+                else np.nan
+        if np.isnan(a1_au) or hz is None:
+            hz_position = "-"
+        elif a1_au < hz[0]:
             hz_position = 'I'
         elif a1_au >= hz[0] and a1_au < hz[1]:
             hz_position = 'HZ-IO'
@@ -141,4 +144,3 @@ class HabitabilityCalculator:
         else:
             hz_position = 'O'
         return a1_au, hz_position
-
