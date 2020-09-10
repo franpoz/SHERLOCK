@@ -111,7 +111,7 @@ class Vetter:
                 writer.writerow(metadata_header)
         return indir, candidate_df, TIC_wanted, candidate_df.iloc[0]["ffi"]
 
-    def __process(self, indir, tic, sectors_in, transit_list, ffi):
+    def __process(self, indir, tic, sectors_in, transit_list, t0, period, ffi):
         """
         Performs the LATTE analysis to generate PNGs and also the TPFPlotter analysis to get the field of view
         information.
@@ -140,42 +140,47 @@ class Vetter:
             tessmag = "-"
             teff = "-"
             alltime = alltime_list
-        # in my input file the the times start at 0 for each sector so I need the line below
-        # transit_list = list(np.array(transit_list) + np.nanmin(alltime))
-        # ------------
         simple = False
         BLS = False
         model = False
         save = True
         DV = True
-        try:
-            if not ffi:
-                LATTEbrew.brew_LATTE(tic, indir, syspath, transit_list, simple, BLS, model, save, DV, sectors,
-                                     sectors_all,
-                                     alltime, allflux, allflux_err, all_md, alltimebinned, allfluxbinned, allx1, allx2,
-                                     ally1, ally2, alltime12, allfbkg, start_sec, end_sec, in_sec, tessmag, teff, srad, ra,
-                                     dec, self.args)
-            else:
-                LATTEbrew.brew_LATTE_FFI(tic, indir, syspath, transit_list, simple, BLS, model, save, DV, sectors,
-                                         sectors_all, alltime, allflux_flat, allflux_small, allflux, all_md, allfbkg,
-                                         allfbkg_t, start_sec, end_sec, in_sec, X1_list, X4_list, apmask_list,
-                                         arrshape_list, tpf_filt_list, t_list, bkg_list, tpf_list, ra, dec, self.args)
-            # LATTE_DV.LATTE_DV(tic, indir, syspath, transit_list, sectors_all, simple, BLS, model, save, DV, sectors,
-            #                      sectors_all,
-            #                      alltime, allflux, allflux_err, all_md, alltimebinned, allfluxbinned, allx1, allx2,
-            #                      ally1, ally2, alltime12, allfbkg, start_sec, end_sec, in_sec, tessmag, teff, srad, ra,
-            #                      dec, self.args)
-            tp_downloaded = True
-        except Exception as e:
-            traceback.print_exc()
-            # see if it made any plots - often it just fails on the TPs as they are very large
-            if exists("{}/{}/{}_fullLC_md.png".format(indir, tic, tic)):
-                print("couldn't download TP but continue anyway")
-                tp_downloaded = False
-            else:
-                mnd = {}
-                mnd['TICID'] = -99
-                return mnd
+        # TODO decide whether to use transit_list or period
+        transit_list = []
+        last_time = alltime[len(alltime) - 1]
+        num_of_transits = int((last_time - t0) / period)
+        transit_lists = t0 + period * range(0, num_of_transits)
+        transit_lists = [transit_lists[x:x + 3] for x in range(0, len(transit_lists), 3)]
+        for index, transit_list in enumerate(transit_lists):
+            transit_results_dir = self.data_dir + "/" + str(index)
+            try:
+                if not ffi:
+                    LATTEbrew.brew_LATTE(tic, indir, syspath, transit_list, simple, BLS, model, save, DV, sectors,
+                                         sectors_all,
+                                         alltime, allflux, allflux_err, all_md, alltimebinned, allfluxbinned, allx1, allx2,
+                                         ally1, ally2, alltime12, allfbkg, start_sec, end_sec, in_sec, tessmag, teff, srad, ra,
+                                         dec, self.args)
+                else:
+                    LATTEbrew.brew_LATTE_FFI(tic, indir, syspath, transit_list, simple, BLS, model, save, DV, sectors,
+                                             sectors_all, alltime, allflux_flat, allflux_small, allflux, all_md, allfbkg,
+                                             allfbkg_t, start_sec, end_sec, in_sec, X1_list, X4_list, apmask_list,
+                                             arrshape_list, tpf_filt_list, t_list, bkg_list, tpf_list, ra, dec, self.args)
+                # LATTE_DV.LATTE_DV(tic, indir, syspath, transit_list, sectors_all, simple, BLS, model, save, DV, sectors,
+                #                      sectors_all,
+                #                      alltime, allflux, allflux_err, all_md, alltimebinned, allfluxbinned, allx1, allx2,
+                #                      ally1, ally2, alltime12, allfbkg, start_sec, end_sec, in_sec, tessmag, teff, srad, ra,
+                #                      dec, self.args)
+                tp_downloaded = True
+                shutil.move(vetter.latte_dir + "/" + tic, transit_results_dir)
+            except Exception as e:
+                traceback.print_exc()
+                # see if it made any plots - often it just fails on the TPs as they are very large
+                if exists("{}/{}/{}_fullLC_md.png".format(indir, tic, tic)):
+                    print("couldn't download TP but continue anyway")
+                    tp_downloaded = False
+                    shutil.move(vetter.latte_dir + "/" + tic, transit_results_dir)
+                else:
+                    continue
         # check again whether the TPs downloaded - depending on where the code failed it might still have worked.
         if exists("{}/{}/{}_aperture_size.png".format(indir, tic, tic)):
             tp_downloaded = True
@@ -251,15 +256,9 @@ class Vetter:
             # get a list of the current URLs that exist in the manifest
             urls_exist = manifest_table['TICID']
             # get the transit time list
-            period = df.loc[df['TICID'] == tic]['period'][0]
-            t0 = df.loc[df['TICID'] == tic]['t0'][0]
-            transit_list = []
-            for i in range(0, 4):
-                transit = t0 + (i * period)
-                if transit < (t0 + 20):
-                    transit_list.append(float(transit))
-            # TODO flag to use transits instead of period
-            #transit_list = ast.literal_eval(((df.loc[df['TICID'] == tic]['transits']).values)[0])
+            period = df.loc[df['TICID'] == tic]['period'].iloc[0]
+            t0 = df.loc[df['TICID'] == tic]['t0'].iloc[0]
+            transit_list = ast.literal_eval(((df.loc[df['TICID'] == tic]['transits']).values)[0])
             try:
                 sectors_in = ast.literal_eval(str(((df.loc[df['TICID'] == tic]['sectors']).values)[0]))
                 if (type(sectors_in) == int) or (type(sectors_in) == float):
@@ -268,11 +267,19 @@ class Vetter:
                     sectors = list(sectors_in)
             except:
                 sectors = [0]
-            res = self.__process(indir, tic, sectors, transit_list, ffi)
-            self.vetting_field_of_view(indir, res['TICID'], res['RA'], res['DEC'], sectors)
+            index = 0
+            vetting_dir = self.data_dir + "/vetting_" + str(index)
+            while os.path.exists(vetting_dir) or os.path.isdir(vetting_dir):
+                vetting_dir = self.data_dir + "/vetting_" + str(index)
+                index = index + 1
+            os.mkdir(vetting_dir)
+            self.data_dir = vetting_dir
+            res = self.__process(indir, tic, sectors, transit_list, t0, period, ffi)
             if res['TICID'] == -99:
                 print('something went wrong')
                 continue
+            self.vetting_field_of_view(indir, tic, res['RA'], res['DEC'], sectors)
+            shutil.move(vetter.latte_dir + "/tpfplot", vetting_dir + "/tpfplot")
             # TODO improve this condition to check whether tic, sectors and transits exist
             if not np.isin(tic, urls_exist):
                 # make sure the file is opened as append only
@@ -305,7 +312,11 @@ class Vetter:
 
     def vetting_field_of_view(self, indir, tic, ra, dec, sectors):
         maglim = 6
-        tpf = lightkurve.search_tesscut(str(ra) + " " + str(dec), sector=sectors).download(cutout_size=(12, 12))
+        tpf = lightkurve.search_tesscut(tic, sector=sectors).download(cutout_size=(12, 12))
+        if tpf is None:
+            ra_str = str(ra)
+            dec_str = "+" + str(dec) if dec >= 0 else str(dec)
+            tpf = lightkurve.search_tesscut(ra_str + " " + dec_str, sector=sectors).download(cutout_size=(12, 12))
         pipeline = "False"
         fig = plt.figure(figsize=(6.93, 5.5))
         gs = gridspec.GridSpec(1, 3, height_ratios=[1], width_ratios=[1, 0.05, 0.01])
@@ -444,14 +455,4 @@ if __name__ == '__main__':
         candidate = candidates.iloc[[candidate_selection - 1]]
         vetter.data_dir = vetter.object_dir
         print("Selected signal number " + str(candidate_selection))
-    index = 0
-    vetting_dir = vetter.data_dir + "/vetting_" + str(index)
-    while os.path.exists(vetting_dir) or os.path.isdir(vetting_dir):
-        vetting_dir = vetter.data_dir + "/vetting_" + str(index)
-        index = index + 1
-    os.mkdir(vetting_dir)
-    tics_processed = vetter.vetting(candidate)
-    if os.path.exists(vetting_dir) and os.path.isdir(vetting_dir):
-        shutil.rmtree(vetting_dir, ignore_errors=True)
-    [shutil.move(vetter.latte_dir + "/" + tic, vetting_dir) for tic in tics_processed]
-    shutil.move(vetter.latte_dir + "/tpfplot", vetting_dir + "/tpfplot")
+        vetter.vetting(candidate)
