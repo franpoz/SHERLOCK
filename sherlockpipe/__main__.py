@@ -13,7 +13,10 @@ if __name__ == '__main__':
     ap.add_argument('--properties', help="Additional properties to be loaded into Sherlock run ", required=True)
     args = ap.parse_args()
     resources_dir = path.join(path.dirname(__file__))
-    sherlock_user_properties = yaml.load(open(resources_dir + "/" + 'properties.yaml'))
+    file_dir = resources_dir + "/" + 'properties.yaml' if resources_dir != "" and resources_dir is not None \
+        else 'properties.yaml'
+    print(resources_dir)
+    sherlock_user_properties = yaml.load(open(file_dir))
     user_properties = yaml.load(open(args.properties))
     sherlock_user_properties.update(user_properties)
 
