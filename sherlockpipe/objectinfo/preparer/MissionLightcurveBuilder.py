@@ -40,5 +40,6 @@ class MissionLightcurveBuilder(LightcurveBuilder):
             sectors = [file.sector for file in lcf]
         if mission_prefix == self.MISSION_ID_KEPLER_2:
             logging.info("Correcting K2 motion in light curve...")
+            quarters = [lcfile.quarter for lcfile in lcf]
             lc = lc.to_corrector("sff").correct(windows=20)
         return lc, star_info, transits_min_count, sectors, quarters
