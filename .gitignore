@@ -135,5 +135,8 @@ dmypy.json
 **/FFI*
 **/INP*
 **/COORD*
+**/TIC*
+**/KIC*
+**/EPIC*
 **/user-properties.yaml
 /pip_installer.sh
