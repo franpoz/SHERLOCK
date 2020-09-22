@@ -1,4 +1,5 @@
 # from __future__ import print_function, absolute_import, division
+import multiprocessing
 import re
 import shutil
 import types
@@ -124,7 +125,7 @@ if __name__ == '__main__':
         candidates = candidates.rename(columns={'Object Id': 'TICID'})
         candidate = candidates.iloc[[candidate_selection - 1]]
         if args.cpus is None:
-            cpus = 1
+            cpus = multiprocessing.cpu_count() - 1
         else:
             cpus = args.cpus
         print("Selected signal number " + str(candidate_selection))
