@@ -358,8 +358,8 @@ class Sherlock:
                     report['a'] = a
                     report['hz'] = habitability_zone
                     if star_info.radius_assumed:
-                        report['rad_p'] = "-"
-                        report['rp_rs'] = "-"
+                        report['rad_p'] = np.nan
+                        report['rp_rs'] = np.nan
                     else:
                         report['rad_p'] = star_info.radius * math.sqrt(report["depth"] / 1000) / 0.0091577
                     logging.info("%-12s%-8.4f%-10.2f%-8.2f%-8.3f%-8.2f%-8.2f%-10.6f%-14.2f%-14s%-25.5f%-10.5f%-18.5f%-20s",
@@ -633,8 +633,9 @@ class Sherlock:
             fig.clf()
         if is_short_cadence and self.initial_smooth:
             logging.info('Applying Savitzky-Golay filter')
-            #clean_flux = uniform_filter1d(clean_flux, 11)
             clean_flux = savgol_filter(clean_flux, 11, 3)
+            #clean_flux = uniform_filter1d(clean_flux, 11)
+            #clean_flux = self.flatten_bw(self.FlattenInput(clean_time, clean_flux, 0.02))[0]
         return clean_time, clean_flux, clean_flux_err
 
     def __calculate_max_significant_period(self, lc, periodogram):
