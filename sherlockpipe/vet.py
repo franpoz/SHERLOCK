@@ -312,11 +312,12 @@ class Vetter:
 
     def vetting_field_of_view(self, indir, tic, ra, dec, sectors):
         maglim = 6
-        tpf = lightkurve.search_tesscut(tic, sector=sectors).download(cutout_size=(12, 12))
+        sectors_search = None if sectors is not None and len(sectors) == 0 else sectors
+        tpf = lightkurve.search_tesscut(tic, sector=sectors_search).download(cutout_size=(12, 12))
         if tpf is None:
             ra_str = str(ra)
             dec_str = "+" + str(dec) if dec >= 0 else str(dec)
-            tpf = lightkurve.search_tesscut(ra_str + " " + dec_str, sector=sectors).download(cutout_size=(12, 12))
+            tpf = lightkurve.search_tesscut(ra_str + " " + dec_str, sector=sectors_search).download(cutout_size=(12, 12))
         pipeline = "False"
         fig = plt.figure(figsize=(6.93, 5.5))
         gs = gridspec.GridSpec(1, 3, height_ratios=[1], width_ratios=[1, 0.05, 0.01])
