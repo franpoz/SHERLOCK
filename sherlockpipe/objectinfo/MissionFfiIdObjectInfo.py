@@ -17,7 +17,7 @@ class MissionFfiIdObjectInfo(ObjectInfo):
         self.sectors = sectors
 
     def sherlock_id(self):
-        return "FFI_" + self.id + "_" + str(self.sectors)
+        return self.id.replace(" ", "") + "_FFI_" + str(self.sectors)
 
     def mission_id(self):
         return self.id

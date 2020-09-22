@@ -19,7 +19,7 @@ class MissionFfiCoordsObjectInfo(ObjectInfo):
         self.sectors = sectors
 
     def sherlock_id(self):
-        return "FFI_" + str(self.ra) + "_" + str(self.dec) + "_" + str(self.sectors)
+        return str(self.ra) + "_" + str(self.dec) + "_FFI_" + str(self.sectors)
 
     def mission_id(self):
         return None

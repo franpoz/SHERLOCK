@@ -18,7 +18,7 @@ class MissionInputObjectInfo(ObjectInfo):
         self.input_file = input_file
 
     def sherlock_id(self):
-        return "INP_" + self.id
+        return self.id.replace(" ", "") + "_INP"
 
     def mission_id(self):
         return self.id

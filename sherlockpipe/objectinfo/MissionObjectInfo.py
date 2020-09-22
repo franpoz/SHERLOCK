@@ -18,9 +18,7 @@ class MissionObjectInfo(ObjectInfo):
         self.sectors = sectors
 
     def sherlock_id(self):
-        return "MIS_" + self.id + "_" + str(self.sectors)
+        return self.id.replace(" ", "") + "_" + str(self.sectors)
 
     def mission_id(self):
         return self.id
-
-
