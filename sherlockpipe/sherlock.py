@@ -824,7 +824,10 @@ class Sherlock:
         in_transit = tls.transit_mask(time, results.period, results.duration, results.T0)
         transit_count = results.distinct_transit_count
         border_score = self.__compute_border_score(time, results, in_transit)
-        return TransitResult(results, results.period, results.period_uncertainty, results.duration,
+        # Recalculating duration because of tls issue https://github.com/hippke/tls/issues/83
+        intransit_folded_model = np.where( results['model_folded_model'] < 1. )[0]
+        duration = results['period'] * (results['model_folded_phase'][intransit_folded_model[-1]] - results['model_folded_phase'][intransit_folded_model[0]])
+        return TransitResult(results, results.period, results.period_uncertainty, duration,
                              results.T0, depths, depth, transit_count, results.snr,
                              results.SDE, results.FAP, border_score, in_transit)
 
