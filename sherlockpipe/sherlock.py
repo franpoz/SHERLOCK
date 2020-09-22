@@ -93,6 +93,7 @@ class Sherlock:
                                     MissionFfiCoordsObjectInfo: MissionFfiLightcurveBuilder()}
         self.search_zones_resolvers = {'hz': HabitableSearchZone(),
                                        'ohz': OptimisticHabitableSearchZone()}
+        self.habitability_calculator = HabitabilityCalculator()
 
     def setup_files(self, results_dir=RESULTS_DIR):
         """
@@ -299,7 +300,7 @@ class Sherlock:
                 object_report = {}
                 logging.info("________________________________ run %s________________________________", id_run)
                 transit_results, signal_selection = \
-                    self.__analyse(time, flux, star_info, id_run, transits_min_count, cadence)
+                    self.__analyse(object_info, time, flux, star_info, id_run, transits_min_count, cadence)
                 best_signal_score = signal_selection.score
                 object_report["Object Id"] = mission_id
                 object_report["run"] = id_run
@@ -323,15 +324,8 @@ class Sherlock:
                 object_report["sectors"] = ','.join(map(str, sectors))
                 object_report["ffi"] = isinstance(object_info, MissionFfiIdObjectInfo) or \
                                        isinstance(object_info, MissionFfiCoordsObjectInfo)
-                if self.ois is not None:
-                    existing_period_in_object = self.ois[(self.ois["Object Id"] == mission_id) &
-                                                         (0.95 < self.ois["Period (days)"] / object_report["period"]) &
-                                                         (self.ois["Period (days)"] / object_report["period"] < 1.05)]
-                    existing_period_in_oi = existing_period_in_object[existing_period_in_object["OI"].notnull()]
-                    object_report["oi"] = existing_period_in_oi["OI"].iloc[0] if len(
-                        existing_period_in_oi.index) > 0 else np.nan
-                else:
-                    object_report["oi"] = ""
+
+                object_report["oi"]  = self.__find_matching_oi(object_info, object_report["period"])
                 if best_signal_score == 1:
                     logging.info('New best signal is good enough to keep searching. Going to the next run.')
                     time, flux = self.__apply_mask_from_transit_results(time, flux, transit_results,
@@ -353,7 +347,7 @@ class Sherlock:
                                                           'fap', 'border_score', 'oi', 'rad_p', 'rp_rs', 'a', 'hz'])
                 i = 1
                 for report in self.report[sherlock_id]:
-                    a, habitability_zone = HabitabilityCalculator()\
+                    a, habitability_zone = self.habitability_calculator\
                         .calculate_hz_score(star_info.teff, star_info.mass, star_info.lum, report["period"])
                     report['a'] = a
                     report['hz'] = habitability_zone
@@ -660,14 +654,14 @@ class Sherlock:
                                            method=self.auto_detrend_method, break_tolerance=0.5)
         return flatten_lc, lc_trend
 
-    def __analyse(self, time, lc, star_info, id_run, transits_min_count, cadence):
+    def __analyse(self, object_info, time, lc, star_info, id_run, transits_min_count, cadence):
         detrend_lcs, wl = self.__detrend(time, lc, star_info, id_run)
         lcs = np.concatenate(([lc], detrend_lcs), axis=0)
         wl = np.concatenate(([0], wl), axis=0)
         logging.info('=================================')
         logging.info('SEARCH OF SIGNALS - Run %s', id_run)
         logging.info('=================================')
-        transit_results = self.__identify_signals(time, lcs, star_info, transits_min_count, wl, id_run, cadence)
+        transit_results = self.__identify_signals(object_info, time, lcs, star_info, transits_min_count, wl, id_run, cadence)
         signal_selection = self.signal_score_selectors[self.best_signal_algorithm]\
             .select(transit_results, self.snr_min, self.detrend_method, wl)
         logging.info(signal_selection.get_message())
@@ -757,18 +751,25 @@ class Sherlock:
         bin_centers_i = bin_edges_i[1:] - bin_width_i / 2
         return bin_centers_i, bin_means_i, bin_width_i, bin_edges_i, bin_stds_i
 
-    def __identify_signals(self, time, lcs, star_info, transits_min_count, wl, id_run, cadence):
+    def __identify_signals(self, object_info, time, lcs, star_info, transits_min_count, wl, id_run, cadence):
         detrend_logging_customs = 'ker_size' if self.detrend_method == 'gp' else "win_size"
-        logging.info("%-12s%-10s%-10s%-8s%-18s%-14s%-14s%-14s%-14s%-14s%-18s", detrend_logging_customs, "Period",
-                     "Per_err", "N.Tran", "Mean Depth (ppt)", "T. dur (min)", "T0", "SNR", "SDE", "FAP", "Border_score")
+        logging.info("%-12s%-10s%-10s%-8s%-18s%-14s%-14s%-12s%-12s%-14s%-16s%-14s%-25s%-10s%-18s%-20s",
+                     detrend_logging_customs, "Period", "Per_err", "N.Tran", "Mean Depth (ppt)", "T. dur (min)", "T0",
+                     "SNR", "SDE", "FAP", "Border_score", "Matching OI", "Planet radius (R_Earth)", "Rp/Rs",
+                     "Semi-major axis", "Habitability Zone")
         transit_results = {}
         transit_result = self.__adjust_transit(time, lcs[0], star_info, transits_min_count)
         transit_results[0] = transit_result
-        logging.info('%-12s%-10.5f%-10.6f%-8s%-18.3f%-14.1f%-14.4f%-14.3f%-14.3f%-14s%-18.2f',
+        r_planet = self.__calculate_planet_radius(star_info, transit_result.depth)
+        rp_rs = transit_result.results.rp_rs
+        a, habitability_zone = self.habitability_calculator \
+            .calculate_hz_score(star_info.teff, star_info.mass, star_info.lum, transit_result.period)
+        oi = self.__find_matching_oi(object_info, transit_result.period)
+        logging.info('%-12s%-10.5f%-10.6f%-8s%-18.3f%-14.1f%-14.4f%-12.3f%-12.3f%-14s%-16.2f%-14s%-25.5f%-10.5f%-18.5f%-20s',
                      "PDCSAP_FLUX", transit_result.period,
                      transit_result.per_err, transit_result.count, transit_result.depth,
                      transit_result.duration * 24 * 60, transit_result.t0, transit_result.snr, transit_result.sde,
-                     transit_result.fap, transit_result.border_score)
+                     transit_result.fap, transit_result.border_score, oi, r_planet, rp_rs, a, habitability_zone)
         plot_title = 'Run ' + str(id_run) + 'PDCSAP_FLUX # P=' + \
                      format(transit_result.period, '.2f') + 'd # T0=' + format(transit_result.t0, '.2f') + \
                      ' # Depth=' + format(transit_result.depth, '.4f') + ' # Dur=' + \
@@ -781,10 +782,16 @@ class Sherlock:
         for i in range(1, len(wl)):
             transit_result = self.__adjust_transit(time, lcs[i], star_info, transits_min_count)
             transit_results[i] = transit_result
-            logging.info('%-12.4f%-10.5f%-10.6f%-8s%-18.3f%-14.1f%-14.4f%-14.3f%-14.3f%-14s%-18.2f',  wl[i], transit_result.period,
+            r_planet = self.__calculate_planet_radius(star_info, transit_result.depth)
+            rp_rs = transit_result.results.rp_rs
+            a, habitability_zone = self.habitability_calculator \
+                .calculate_hz_score(star_info.teff, star_info.mass, star_info.lum, transit_result.period)
+            oi = self.__find_matching_oi(object_info, transit_result.period)
+            logging.info('%-12.4f%-10.5f%-10.6f%-8s%-18.3f%-14.1f%-14.4f%-12.3f%-12.3f%-14s%-16.2f%-14s%-25.5f%-10.5f%-18.5f%-20s',
+                         wl[i], transit_result.period,
                      transit_result.per_err, transit_result.count, transit_result.depth,
                      transit_result.duration * 24 * 60, transit_result.t0, transit_result.snr, transit_result.sde,
-                     transit_result.fap, transit_result.border_score)
+                     transit_result.fap, transit_result.border_score, oi, r_planet, rp_rs, a, habitability_zone)
             detrend_file_title_customs = 'ker_size' if self.detrend_method == 'gp' else 'win_size'
             detrend_file_name_customs = 'ks' if self.detrend_method == 'gp' else 'ws'
             title = 'Run ' + str(id_run) + '# ' + detrend_file_title_customs + ':' + str(format(wl[i], '.4f')) + \
@@ -797,6 +804,18 @@ class Sherlock:
                    str(star_info.object_id) + '.png'
             self.__save_transit_plot(star_info.object_id, title, file, time, lcs[i], transit_result, cadence, id_run)
         return transit_results
+
+    def __find_matching_oi(self, object_info, period):
+        if self.ois is not None:
+            existing_period_in_object = self.ois[(self.ois["Object Id"] == object_info.mission_id()) &
+                                                 (0.95 < self.ois["Period (days)"] / period) &
+                                                 (self.ois["Period (days)"] / period < 1.05)]
+            existing_period_in_oi = existing_period_in_object[existing_period_in_object["OI"].notnull()]
+            oi = existing_period_in_oi["OI"].iloc[0] if len(
+                existing_period_in_oi.index) > 0 else np.nan
+        else:
+            oi = ""
+        return oi
 
     def __adjust_transit(self, time, lc, star_info, transits_min_count):
         model = tls.transitleastsquares(time, lc)
@@ -830,6 +849,9 @@ class Sherlock:
         return TransitResult(results, results.period, results.period_uncertainty, duration,
                              results.T0, depths, depth, transit_count, results.snr,
                              results.SDE, results.FAP, border_score, in_transit)
+
+    def __calculate_planet_radius(self, star_info, depth):
+        return star_info.radius * math.sqrt(depth / 1000) / 0.0091577
 
     def __compute_border_score(self, time, result, intransit):
         transit_depths = np.nan_to_num(result.transit_depths)
