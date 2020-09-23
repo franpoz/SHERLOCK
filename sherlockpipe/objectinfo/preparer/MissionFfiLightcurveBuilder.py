@@ -35,7 +35,7 @@ class MissionFfiLightcurveBuilder(LightcurveBuilder):
         for s in star:
             datum = eleanor.TargetData(s, height=15, width=15, bkg_size=31, do_pca=True)
             data.append(datum)
-        quality_bitmask = np.bitwise_and(data[0].quality, 175)
+        quality_bitmask = np.bitwise_and(data[0].quality.astype(int), 175)
         lc = data[0].to_lightkurve(data[0].pca_flux, quality_mask=quality_bitmask).remove_nans().flatten()
         sectors = [datum.source_info.sector for datum in data]
         if len(data) > 1:
