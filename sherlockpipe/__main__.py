@@ -31,16 +31,25 @@ if __name__ == '__main__':
     ## Adding by-sector analysis objects
     if sherlock_user_properties["SECTOR_TWO_MIN_IDS"]:
         for two_min_id, sectors in sherlock_user_properties["SECTOR_TWO_MIN_IDS"].items():
-            for sector in sectors:
-                mission_object_infos.append(MissionObjectInfo(two_min_id, sector))
+            if sectors == 'all':
+                ffi_object_infos.append(MissionFfiIdObjectInfo(two_min_id, sectors))
+            else:
+                for sector in sectors:
+                    mission_object_infos.append(MissionObjectInfo(two_min_id, sector))
     if sherlock_user_properties["SECTOR_FFI_IDS"]:
         for ffi_id, sectors in sherlock_user_properties["SECTOR_FFI_IDS"].items():
-            for sector in sectors:
-                ffi_object_infos.append(MissionFfiIdObjectInfo(ffi_id, sector))
+            if sectors == 'all':
+                ffi_object_infos.append(MissionFfiIdObjectInfo(ffi_id, sectors))
+            else:
+                for sector in sectors:
+                    ffi_object_infos.append(MissionFfiIdObjectInfo(ffi_id, sector))
     if sherlock_user_properties["SECTOR_FFI_COORDINATES"]:
         for coords, sectors in sherlock_user_properties["SECTOR_FFI_COORDINATES"].items():
-            for sector in sectors:
-                ffi_coords_object_infos.append(MissionFfiCoordsObjectInfo(coords[0], coords[1], sector))
+            if sectors == 'all':
+                ffi_object_infos.append(MissionFfiIdObjectInfo(two_min_id, sectors))
+            else:
+                for sector in sectors:
+                    ffi_coords_object_infos.append(MissionFfiCoordsObjectInfo(coords[0], coords[1], sector))
 
     ## Adding global analysis objects
     if sherlock_user_properties["GLOBAL_TWO_MIN_IDS"]:
