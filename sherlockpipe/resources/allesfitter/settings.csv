@@ -2,7 +2,7 @@
 ###############################################################################,
 # General settings,
 ###############################################################################,
-companions_phot,b
+companions_phot,${sherlock:name}
 companions_rv,
 inst_phot,lc
 inst_rv,
@@ -16,7 +16,7 @@ fast_fit_width,0.3333333333333333
 secondary_eclipse,False
 phase_curve,False
 shift_epoch,True
-inst_for_b_epoch,all
+inst_for_${sherlock:name}_epoch,all
 ###############################################################################,
 # MCMC settings,
 ###############################################################################,

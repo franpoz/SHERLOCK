@@ -1,12 +1,12 @@
 #name,value,fit,bounds,label,unit
 #companion b astrophysical params,,,,,
-b_rr,${sherlock:rp_rs},1,trunc_normal 0 1 0.1 0.05,$R_b / R_\star$,
-b_rsuma,${sherlock:sum_rp_rs_a},1,trunc_normal 0 1 0.2 1.5,$(R_\star + R_b) / a_b$,
-b_cosi,0.0,1,uniform 0.0 0.03,$\cos{i_b}$,
-b_epoch,${sherlock:t0},1,trunc_normal -1000000000000.0 1000000000000.0 ${sherlock:t0} 0.05,$T_{0;b}$,$\mathrm{BJD}$
-b_period,${sherlock:period},1,trunc_normal -1000000000000.0 1000000000000.0 ${sherlock:period} 0.05,$P_b$,$\mathrm{d}$
-b_f_c,0.0,0,trunc_normal -1 1 0.0 0.0,$\sqrt{e_b} \cos{\omega_b}$,
-b_f_s,0.0,0,trunc_normal -1 1 0.0 0.0,$\sqrt{e_b} \sin{\omega_b}$,
+${sherlock:name}_rr,${sherlock:rp_rs},1,trunc_normal 0 1 0.1 0.05,$R_b / R_\star$,
+${sherlock:name}_rsuma,${sherlock:sum_rp_rs_a},1,trunc_normal 0 1 0.2 1.5,$(R_\star + R_b) / a_b$,
+${sherlock:name}_cosi,0.0,1,uniform 0.0 0.03,$\cos{i_b}$,
+${sherlock:name}_epoch,${sherlock:t0},1,trunc_normal -1000000000000.0 1000000000000.0 ${sherlock:t0} 0.05,$T_{0;b}$,$\mathrm{BJD}$
+${sherlock:name}_period,${sherlock:period},1,trunc_normal -1000000000000.0 1000000000000.0 ${sherlock:period} 0.05,$P_b$,$\mathrm{d}$
+${sherlock:name}_f_c,0.0,0,trunc_normal -1 1 0.0 0.0,$\sqrt{e_b} \cos{\omega_b}$,
+${sherlock:name}_f_s,0.0,0,trunc_normal -1 1 0.0 0.0,$\sqrt{e_b} \sin{\omega_b}$,
 
 #dilution per instrument,,,,,
 dil_lc,0.0,0,trunc_normal 0 1 0.0 0.0,$D_\mathrm{0; lc}$,
@@ -14,10 +14,10 @@ dil_lc,0.0,0,trunc_normal 0 1 0.0 0.0,$D_\mathrm{0; lc}$,
 host_ldc_q1_lc,0.5,1,uniform 0.0 1.0,$q_{1; \mathrm{lc}}$,
 host_ldc_q2_lc,0.5,1,uniform 0.0 1.0,$q_{2; \mathrm{lc}}$,
 #surface brightness per instrument and companion,,,,,
-b_sbratio_lc,0.0,0,trunc_normal 0 1 0.0 0.0,$J_{b; \mathrm{lc}}$,
+${sherlock:name}_sbratio_lc,0.0,0,trunc_normal 0 1 0.0 0.0,$J_{b; \mathrm{lc}}$,
 #albedo per instrument and companion,,,,,
 host_geom_albedo_lc,0.0,0,trunc_normal 0 1 0.0 0.0,$A_{\mathrm{geom}; host; \mathrm{lc}}$,
-b_geom_albedo_lc,0.0,0,trunc_normal 0 1 0.0 0.0,$A_{\mathrm{geom}; b; \mathrm{lc}}$,
+${sherlock:name}_geom_albedo_lc,0.0,0,trunc_normal 0 1 0.0 0.0,$A_{\mathrm{geom}; b; \mathrm{lc}}$,
 #gravity darkening per instrument and companion,,,,,
 host_gdc_lc,0.0,0,trunc_normal 0 1 0.0 0.0,$Grav. dark._{b; \mathrm{lc}}$,
 #spots per instrument and companion,,,,,
