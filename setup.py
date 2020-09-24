@@ -31,6 +31,6 @@ setuptools.setup(
                         "eleanor",
                         "wotan",
                         "matplotlib",
-                        "yaml"
+                        "pyyaml"
     ]
 )
