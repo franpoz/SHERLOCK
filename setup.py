@@ -30,6 +30,7 @@ setuptools.setup(
                         "requests",
                         "eleanor",
                         "wotan",
-                        "matplotlib"
+                        "matplotlib",
+                        "yaml"
     ]
 )
