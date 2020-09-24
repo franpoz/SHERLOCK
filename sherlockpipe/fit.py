@@ -39,10 +39,15 @@ class Fitter:
         self.only_initial = only_initial
 
     def fit(self, candidate_df, star_df, cpus, allesfit_dir):
+        candidate_row = candidate_df.iloc[0]
         star_file = allesfit_dir + "/params_star.csv"
         params_file = allesfit_dir + "/params.csv"
         settings_file = allesfit_dir + "/settings.csv"
-        shutil.copyfile(self.object_dir + "/lc.csv", allesfit_dir + "/lc.csv")
+        if candidate_row["number"] is None or np.isnan(candidate_row["number"]):
+            lc_file = "/lc.csv"
+        else:
+            lc_file = "/" + str(candidate_row["number"]) + "/lc_" + str(candidate_row["curve"]) + ".csv"
+        shutil.copyfile(self.object_dir + lc_file, allesfit_dir + "/lc.csv")
         shutil.copyfile(self.object_dir + "/params_star.csv", star_file)
         shutil.copyfile(resources_dir + "/resources/allesfitter/params.csv", params_file)
         shutil.copyfile(resources_dir + "/resources/allesfitter/settings.csv", settings_file)
@@ -51,11 +56,11 @@ class Fitter:
         with open(settings_file, 'r+') as f:
             text = f.read()
             text = re.sub('\\${sherlock:cores}', str(cpus), text)
+            text = re.sub('\\${sherlock:name}', str(candidate_row["name"]), text)
             f.seek(0)
             f.write(text)
             f.truncate()
         with open(params_file, 'r+') as f:
-            candidate_row = candidate_df.iloc[0]
             text = f.read()
             text = re.sub('\\${sherlock:t0}', str(candidate_row["t0"]), text)
             text = re.sub('\\${sherlock:period}', str(candidate_row["period"]), text)
@@ -64,6 +69,7 @@ class Fitter:
             sum_rp_rs_a = (candidate_row["rp_rs"] + star_df.iloc[0]['R_star']) / candidate_row["a"] * 0.00465047 \
                 if candidate_row["rp_rs"] != "-" else 0.2
             text = re.sub('\\${sherlock:sum_rp_rs_a}', str(sum_rp_rs_a), text)
+            text = re.sub('\\${sherlock:name}', str(candidate_row["name"]), text)
             f.seek(0)
             f.write(text)
             f.truncate()
@@ -97,7 +103,7 @@ if __name__ == '__main__':
     star_df = pd.read_csv(fitter.data_dir + "/params_star.csv")
     if args.candidate is None:
         user_properties = yaml.load(open(args.properties))
-        candidate = pd.DataFrame(columns=['id', 'period', 't0', 'cpus', 'rp_rs', 'a'])
+        candidate = pd.DataFrame(columns=['id', 'period', 't0', 'cpus', 'rp_rs', 'a', 'number', 'name'])
         candidate = candidate.append(user_properties["planet"], ignore_index=True)
         user_star_df = pd.DataFrame(columns=['R_star', 'M_star'])
         if "star" in user_properties and user_properties["star"] is not None:
@@ -116,6 +122,8 @@ if __name__ == '__main__':
                 raise ValueError("Cannot guess semi-major axis without star mass.")
         if candidate.iloc[0]["a"] is None or np.isnan(candidate.iloc[0]["a"]):
             raise ValueError("Semi-major axis is neither provided nor inferred.")
+        if candidate.iloc[0]["name"] is None or np.isnan(candidate.iloc[0]["name"]):
+            raise ValueError("You need to provide a name for your candidate.")
         cpus = user_properties["settings"]["cpus"]
     else:
         candidate_selection = int(args.candidate)
@@ -124,6 +132,8 @@ if __name__ == '__main__':
             raise SystemExit("User selected a wrong candidate number.")
         candidates = candidates.rename(columns={'Object Id': 'TICID'})
         candidate = candidates.iloc[[candidate_selection - 1]]
+        candidate['number'] = [candidate_selection]
+        candidate['name'] = 'SOI_' + candidate['number'].astype(str)
         if args.cpus is None:
             cpus = multiprocessing.cpu_count() - 1
         else:
