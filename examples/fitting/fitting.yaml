@@ -1,11 +1,11 @@
 # This example YAML file illustrates the provisioning of planet parameters, ignoring star ones. This can be done only
 # when the semimajor axis is being provided. If not, at least the star mass is required.
 settings:
-  cpus: 4
+  cpus: 7
 planet:
-  id: 231663901
-  period: 1.4309133565904666
-  t0: 1326.004206688168
-  rp_rs: 0.10455530183261129
-  a: 0.023956743942126872
-
+  id: 8527476
+  period: 4.3225
+  t0: 2014.50
+  rp_rs: 0.08012
+  a: 0.02745
+  name: myCandidate
