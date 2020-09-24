@@ -63,7 +63,7 @@ parameters from the Sherlock generated files.
 
 ### Fitting
 SHERLOCK PIPEline comes with another submodule to fit the most promising transit candidates
-found by any of its executions. This fit is done via [ALLESFITTER](https://github.com/MNGuenther/allesfitter) code By calling:
+found by any of its executions. This fit is done via [ALLESFITTER](https://github.com/MNGuenther/allesfitter) code. By calling:
 
 ```python3 -m sherlockpipe.fit --properties my_properties.yaml```
 
