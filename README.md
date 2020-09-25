@@ -34,7 +34,8 @@ pipeline to do anything. If you still have any doubts please refer to the
 
 ### Vetting
 SHERLOCK PIPEline comes with a submodule to examine the most promising transit candidates
-found by any of its executions. Please note that this feature is only enabled for TESS candidates.
+found by any of its executions. This is done via [LATTE](https://github.com/noraeisner/LATTE).
+Please note that this feature is only enabled for TESS candidates.
 As this module has dependencies versions collides with the main ones used by the pipeline, you will 
 need to set up a clean Python virtualenv. Once you have it activated, you should download the dependencies
 file provided under [vetting_requirements.txt](https://github.com/franpoz/SHERLOCK/tree/master/vetting_requirements.txt) 
@@ -62,7 +63,7 @@ parameters from the Sherlock generated files.
 
 ### Fitting
 SHERLOCK PIPEline comes with another submodule to fit the most promising transit candidates
-found by any of its executions. By calling:
+found by any of its executions. This fit is done via [ALLESFITTER](https://github.com/MNGuenther/allesfitter) code. By calling:
 
 ```python3 -m sherlockpipe.fit --properties my_properties.yaml```
 
