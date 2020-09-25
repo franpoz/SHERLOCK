@@ -31,6 +31,7 @@ setuptools.setup(
                         "eleanor",
                         "wotan",
                         "matplotlib",
-                        "pyyaml"
+                        "pyyaml",
+                        "allesfitter"
     ]
 )
