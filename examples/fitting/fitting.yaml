@@ -9,3 +9,4 @@ planet:
   rp_rs: 0.08012
   a: 0.02745
   name: myCandidate
+  lc: 1/lc_0.csv
