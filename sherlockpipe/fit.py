@@ -44,7 +44,7 @@ class Fitter:
         params_file = allesfit_dir + "/params.csv"
         settings_file = allesfit_dir + "/settings.csv"
         if candidate_row["number"] is None or np.isnan(candidate_row["number"]):
-            lc_file = "/lc.csv"
+            lc_file = "/" + candidate_row["lc"]
         else:
             lc_file = "/" + str(candidate_row["number"]) + "/lc_" + str(candidate_row["curve"]) + ".csv"
         shutil.copyfile(self.object_dir + lc_file, allesfit_dir + "/lc.csv")
@@ -103,7 +103,7 @@ if __name__ == '__main__':
     star_df = pd.read_csv(fitter.data_dir + "/params_star.csv")
     if args.candidate is None:
         user_properties = yaml.load(open(args.properties))
-        candidate = pd.DataFrame(columns=['id', 'period', 't0', 'cpus', 'rp_rs', 'a', 'number', 'name'])
+        candidate = pd.DataFrame(columns=['id', 'period', 't0', 'cpus', 'rp_rs', 'a', 'number', 'name', 'lc'])
         candidate = candidate.append(user_properties["planet"], ignore_index=True)
         user_star_df = pd.DataFrame(columns=['R_star', 'M_star'])
         if "star" in user_properties and user_properties["star"] is not None:
@@ -122,8 +122,10 @@ if __name__ == '__main__':
                 raise ValueError("Cannot guess semi-major axis without star mass.")
         if candidate.iloc[0]["a"] is None or np.isnan(candidate.iloc[0]["a"]):
             raise ValueError("Semi-major axis is neither provided nor inferred.")
-        if candidate.iloc[0]["name"] is None or np.isnan(candidate.iloc[0]["name"]):
+        if candidate.iloc[0]["name"] is None:
             raise ValueError("You need to provide a name for your candidate.")
+        if candidate.iloc[0]["lc"] is None:
+            raise ValueError("You need to provide a light curve relative path for your candidate.")
         cpus = user_properties["settings"]["cpus"]
     else:
         candidate_selection = int(args.candidate)
