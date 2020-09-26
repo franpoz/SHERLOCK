@@ -20,7 +20,7 @@ resources_dir = path.join(path.dirname(__file__))
 
 
 class Fitter:
-    def __init__(self, object_dir, only_initial):
+    def __init__(self, object_dir, only_initial, mcmc = False):
         self.args = types.SimpleNamespace()
         self.args.noshow = True
         self.args.north = False
@@ -37,6 +37,7 @@ class Fitter:
             os.mkdir(self.latte_dir)
         self.data_dir = self.object_dir
         self.only_initial = only_initial
+        self.mcmc = mcmc
 
     def fit(self, candidate_df, star_df, cpus, allesfit_dir):
         candidate_row = candidate_df.iloc[0]
@@ -74,9 +75,12 @@ class Fitter:
             f.write(text)
             f.truncate()
         allesfitter.show_initial_guess(allesfit_dir)
-        if not self.only_initial:
+        if not self.only_initial and not self.mcmc:
             allesfitter.ns_fit(allesfit_dir)
             allesfitter.ns_output(allesfit_dir)
+        elif not self.only_initial and self.mcmc:
+            allesfitter.mcmc_fit(allesfit_dir)
+            allesfitter.mcmc_output(allesfit_dir)
 
 
 if __name__ == '__main__':
@@ -85,14 +89,14 @@ if __name__ == '__main__':
                     help="If the object directory is not your current one you need to provide the ABSOLUTE path",
                     required=False)
     ap.add_argument('--candidate', type=int, default=None, help="The candidate signal to be used.", required=False)
-
     ap.add_argument('--only_initial', dest='only_initial', action='store_true',
                         help="Whether to only run an initial guess of the transit")
     ap.set_defaults(only_initial=False)
     ap.add_argument('--cpus', type=int, default=None, help="The number of CPU cores to be used.", required=False)
+    ap.add_argument('--mcmc', dest='mcmc', action='store_false', help="Whether to run using mcmc or ns. Default is ns.")
     ap.add_argument('--properties', help="The YAML file to be used as input.", required=False)
     args = ap.parse_args()
-    fitter = Fitter(args.object_dir, args.only_initial)
+    fitter = Fitter(args.object_dir, args.only_initial, args.mcmc)
     index = 0
     fitting_dir = fitter.data_dir + "/fit_" + str(index)
     while os.path.exists(fitting_dir) or os.path.isdir(fitting_dir):
