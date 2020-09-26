@@ -22,7 +22,7 @@ ${sherlock:name}_geom_albedo_lc,0.0,0,trunc_normal 0 1 0.0 0.0,$A_{\mathrm{geom}
 host_gdc_lc,0.0,0,trunc_normal 0 1 0.0 0.0,$Grav. dark._{b; \mathrm{lc}}$,
 #spots per instrument and companion,,,,,
 #errors per instrument,
-log_err_flux_lc,-7.0,1,uniform -15.0 0.0,$\log{\sigma_\mathrm{lc}}$,$\log{ \mathrm{rel. flux.} }$
+ln_err_flux_lc,-7.0,1,uniform -15.0 0.0,$\log{\sigma_\mathrm{lc}}$,$\log{ \mathrm{rel. flux.} }$
 #baseline per instrument,
 baseline_gp_matern32_lnsigma_flux_lc,0.0,1,uniform -15.0 15.0,$\mathrm{gp: \ln{\sigma} (lc)}$,
 baseline_gp_matern32_lnrho_flux_lc,0.0,1,uniform -15.0 15.0,$\mathrm{gp: \ln{\rho} (lc)}$,
