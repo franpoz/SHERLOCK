@@ -20,7 +20,7 @@ resources_dir = path.join(path.dirname(__file__))
 
 
 class Fitter:
-    def __init__(self, object_dir, only_initial, mcmc = False):
+    def __init__(self, object_dir, only_initial, mcmc = False, detrend = False):
         self.args = types.SimpleNamespace()
         self.args.noshow = True
         self.args.north = False
@@ -38,6 +38,7 @@ class Fitter:
         self.data_dir = self.object_dir
         self.only_initial = only_initial
         self.mcmc = mcmc
+        self.detrend = detrend
 
     def fit(self, candidate_df, star_df, cpus, allesfit_dir):
         candidate_row = candidate_df.iloc[0]
@@ -58,6 +59,9 @@ class Fitter:
             text = f.read()
             text = re.sub('\\${sherlock:cores}', str(cpus), text)
             text = re.sub('\\${sherlock:name}', str(candidate_row["name"]), text)
+            detrend_param = "baseline_flux_lc,hybrid_offset"
+            detrend_param = detrend_param if self.detrend else "#" + detrend_param
+            text = re.sub('\\${sherlock:detrend}', detrend_param, text)
             f.seek(0)
             f.write(text)
             f.truncate()
@@ -94,9 +98,11 @@ if __name__ == '__main__':
     ap.set_defaults(only_initial=False)
     ap.add_argument('--cpus', type=int, default=None, help="The number of CPU cores to be used.", required=False)
     ap.add_argument('--mcmc', dest='mcmc', action='store_false', help="Whether to run using mcmc or ns. Default is ns.")
+    ap.add_argument('--detrend', dest='detrend', action='store_false', help="Whether to execute detrending in the "
+                                                                            "allesfitter runs.")
     ap.add_argument('--properties', help="The YAML file to be used as input.", required=False)
     args = ap.parse_args()
-    fitter = Fitter(args.object_dir, args.only_initial, args.mcmc)
+    fitter = Fitter(args.object_dir, args.only_initial, args.mcmc, args.detrend)
     index = 0
     fitting_dir = fitter.data_dir + "/fit_" + str(index)
     while os.path.exists(fitting_dir) or os.path.isdir(fitting_dir):

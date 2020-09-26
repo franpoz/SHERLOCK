@@ -46,7 +46,7 @@ host_ld_law_lc,quad
 # if 'sample_linear' two corresponding parameters called 'baseline_a_key_inst' and 'baseline_b_key_inst' have to be given in params.csv,
 # if 'sample_GP' two corresponding parameters called 'baseline_gp1_key_inst' and 'baseline_gp2_key_inst' have to be given in params.csv,
 ###############################################################################,
-#baseline_flux_lc,hybrid_offset
+${sherlock:detrend}
 ###############################################################################,
 # Error settings per instrument,
 # errors (overall scaling) per instrument: sample / hybrid,
