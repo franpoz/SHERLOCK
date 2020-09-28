@@ -114,8 +114,10 @@ In fact, the last candidate is identified as TOI-270.01, because it has a simila
 
 This is the plot: 
     
+<p align="center">
+  <img width="80%" src="https://github.com/franpoz/SHERLOCK/tree/master/examples/TOI-270/Run_4_ws=0.7097_TIC 259377017_[5].png">
+</p>
     
-![ \label{fig:run}](Run_4_ws=0.7097_TIC 259377017_[5].png)
 
 It does not look bad. Let us now have a look at the full set of results from RUN 4, where this candidate was found (available in the `TIC259377017_[5]_report.log`): 
     
