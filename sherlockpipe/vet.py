@@ -27,7 +27,7 @@ import os
 from os.path import exists
 import ast
 import csv
-from sherlockpipe.LATTE.LATTE import LATTEutils, LATTEbrew, LATTE_DV
+from sherlockpipe.LATTEsub import LATTEutils, LATTEbrew
 from os import path
 
 '''WATSON: Verboseless Vetting and Adjustments of Transits for Sherlock Objects of iNterest
