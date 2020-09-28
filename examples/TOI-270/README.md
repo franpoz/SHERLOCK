@@ -115,7 +115,7 @@ In fact, the last candidate is identified as TOI-270.01, because it has a simila
 This is the plot: 
     
 <p align="center">
-  <img width="80%" src="https://github.com/franpoz/SHERLOCK/tree/master/examples/TOI-270/Run_4_ws=0.7097_TIC 259377017_[5].png">
+  <img width="80%" src="https://github.com/franpoz/SHERLOCK/blob/master/examples/TOI-270/Run_4_ws=0.7097_TIC 259377017_[5].png">
 </p>
     
 
