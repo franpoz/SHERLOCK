@@ -36,7 +36,7 @@ SECTOR_FFI_COORDINATES:
 ### DETRENDS SETUP
 ######################################################################################################################
 # If enabled, an initial mask for high RMS areas is applied ONLY to SHORT CADENCE light curves (no FFI).
-INITIAL_HIGH_RMS_MASK: True
+INITIAL_HIGH_RMS_MASK: False
 # If enabled, an initial Savinsky-Golay filter is applied ONLY to SHORT CADENCE light curves (no FFI).
 INITIAL_SMOOTH_ENABLED: True
 # Multiplier factor to select high RMS hours areas
@@ -53,7 +53,7 @@ DETREND_CORES: 7
 # periodic trends which might considerably affect the entire execution of SHERLOCK. The best example where auto-detrend
 # performs well are 'fast rotators' and the worst example might be stars with 'hot jupiters', where auto-detrend usage
 # is completely discouraged. USE CAREFULLY.
-AUTO_DETREND_ENABLED: True
+AUTO_DETREND_ENABLED: False
 # Two auto-detrend methods are enabled: 'biweight' and 'cosine'. 'cosine' has proven to work well for 'fast rotators'
 # though it needs to be tested better and deeper
 AUTO_DETREND_METHOD: 'cosine'
