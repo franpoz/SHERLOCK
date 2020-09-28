@@ -1,3 +1,6 @@
 [submodule "sherlockpipe/tpfplotter"]
 	path = sherlockpipe/tpfplotter
 	url = https://github.com/jlillo/tpfplotter
+[submodule "sherlockpipe/LATTE"]
+	path = sherlockpipe/LATTE
+	url = https://github.com/noraeisner/LATTE
