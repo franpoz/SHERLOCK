@@ -36,14 +36,7 @@ pipeline to do anything. If you still have any doubts please refer to the
 SHERLOCK PIPEline comes with a submodule to examine the most promising transit candidates
 found by any of its executions. This is done via [LATTE](https://github.com/noraeisner/LATTE).
 Please note that this feature is only enabled for TESS candidates.
-As this module has dependencies versions collides with the main ones used by the pipeline, you will 
-need to set up a clean Python virtualenv. Once you have it activated, you should download the dependencies
-file provided under [vetting_requirements.txt](https://github.com/franpoz/SHERLOCK/tree/master/vetting_requirements.txt) 
-directory. Finally, you'll install the needed dependencies for vetting into your virtualenv with:
-
-```pip3 install -r vetting_requirements.txt```
-
-At this point you should be able to execute the vetting by calling:
+You should be able to execute the vetting by calling:
 
 ```python3 -m sherlockpipe.vet --properties my_properties.yaml```
 
