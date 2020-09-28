@@ -1,11 +1,8 @@
 # from __future__ import print_function, absolute_import, division
-import multiprocessing
-import re
 import shutil
 import types
 from pathlib import Path
 import traceback
-import allesfitter
 import lightkurve
 import numpy as np
 import matplotlib
@@ -19,8 +16,10 @@ from astropy.table import Table
 from astropy.io import ascii
 import astropy.visualization as stretching
 from argparse import ArgumentParser
-
 from sherlockpipe import tpfplotter
+import six
+import sys
+sys.modules['astropy.extern.six'] = six
 
 matplotlib.use('Agg')
 import pandas as pd
@@ -28,9 +27,8 @@ import os
 from os.path import exists
 import ast
 import csv
-from LATTE import LATTEutils, LATTEbrew, LATTE_DV
+from sherlockpipe.LATTE.LATTE import LATTEutils, LATTEbrew, LATTE_DV
 from os import path
-import sherlockpipe.tpfplotter
 
 '''WATSON: Verboseless Vetting and Adjustments of Transits for Sherlock Objects of iNterest
 This class intends to provide a inspection and transit fitting tool for SHERLOCK Candidates.
