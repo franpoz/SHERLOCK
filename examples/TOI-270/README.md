@@ -45,7 +45,7 @@ existence of up to five planets in the system. Of course, the larger this value,
 given by the SPOC (Science Process-ing Operations Center). As you may know, the bi-weight (by default) or Gaussian Process methods used to detrend in SHERLOCK are time-windowed sliders,
 where shorter windows (or kernels) can efficiently remove stellar variability, instrumental drifts etc. But there is an associate risk of removing an actual transit signal.
 To prevent this issue, our pipeline explores a number of cases, which is chosen by the user with the flag `DETRENDS_NUMBER`, which in the case here, we ahve set to 12. 
-Finally, the ideal environment to run SHERLOCK is in a cluster, where a number of cores are available (of course you can run it on your laptop, but it will be slower)
+Finally, the ideal environment to run SHERLOCK is in a cluster, where a number of cores are available (of course you can run it on your laptop, but it will be slower).
 In our case, we have it installed on a cluster in our research institute at the University of Liege (Belgium). 
 
 Then, we only need to launch the .yaml file from our working folder as: 
