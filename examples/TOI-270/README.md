@@ -43,7 +43,7 @@ Here, we have disabled the `AUTO_DETREND_ENABLED` (used to remove stellar variab
 flags. We also set the `BEST_SIGNAL_ALGORITHM` to "quorum", which helps the user decide which is likely the most realistic signal(s). We set `MAX_RUNS` to 5, which means that we are going to search for the 
 existence of up to five planets in the system. Of course, the larger this value, the larger the computational cost. Then, we detrend the PDCSAP flux lightcurve, 
 given by the SPOC (Science Process-ing Operations Center). As you may know, the bi-weight (by default) or Gaussian Process methods used to detrend in SHERLOCK are time-windowed sliders,
-where shorter windows (or kernels) can efficiently remove stellar variability, but there is an associate risk of removing an actual transit signal.
+where shorter windows (or kernels) can efficiently remove stellar variability, instrumental drifts etc. But there is an associate risk of removing an actual transit signal.
 To prevent this issue, our pipeline explores a number of cases, which is chosen by the user with the flag `DETRENDS_NUMBER`, which in the case here, we ahve set to 12. 
 Finally, the ideal environment to run SHERLOCK is in a cluster, where a number of cores are available (of course you can run it on your laptop, but it will be slower)
 In our case, we have it installed on a cluster in our research institute at the University of Liege (Belgium). 
