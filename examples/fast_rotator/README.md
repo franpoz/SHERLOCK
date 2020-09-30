@@ -24,7 +24,7 @@ Let us go through a full example.
 
 We prepare our user parameter file to search for planetary candidates around TIC 200322593 (around which TOI-540b was found) as: 
     
-
+```shell
 ######################################################################################################################
 ### GLOBAL OBJECTS RUN SETUP - All sectors analysed at once
 ######################################################################################################################
@@ -40,6 +40,8 @@ DETRENDS_NUMBER: 12
 DETREND_CORES: 80
 CPU_CORES: 80
 MAX_RUNS: 2
+
+```
 
 The parameter `AUTO_DETREND_ENABLED: True` allows SHERLOCK to search for the modulation and correct for it.
 The star has been observed in three sectors, but for simplicity here we focus only in one of them (Sector 6). 
