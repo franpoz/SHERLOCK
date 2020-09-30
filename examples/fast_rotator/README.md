@@ -2,9 +2,7 @@
 
 In your search for exoplanets, it is likely that you will find some lightcurves which show a clear modulation. A typical example is a fast rotator, 
 that is, a star which rotation period is less than a few days. An interesting example is TOI-540, which has an orbiting sub-Earth planet. The 
-discovery paper can be consulted here: 
-
-[TOI-540](https://ui.adsabs.harvard.edu/abs/2020arXiv200913623M/abstract)  
+discovery paper can be consulted here: [TOI-540](https://ui.adsabs.harvard.edu/abs/2020arXiv200913623M/abstract)  
 
 <p align="center">
   <img width="80%" src="https://github.com/franpoz/SHERLOCK/blob/master/examples/fast_rotator/TOI-540.png">
@@ -59,6 +57,7 @@ Here you can see that SHERLOCK has detected a prominent period of ~0.73 days (in
   <img width="80%" src="https://github.com/franpoz/SHERLOCK/blob/master/examples/fast_rotator/Periodogram_TIC200322593_[6].png">
 </p>
 
+#
 
 <p align="center">
   <img width="80%" src="https://github.com/franpoz/SHERLOCK/blob/master/examples/fast_rotator/Phase_detrend_period_TIC200322593_[6]_0.73_days.png">
