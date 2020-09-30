@@ -88,7 +88,7 @@ class Fitter:
 
 
 if __name__ == '__main__':
-    ap = ArgumentParser(description='Vetting of Sherlock objects of interest')
+    ap = ArgumentParser(description='Fitting of Sherlock objects of interest')
     ap.add_argument('--object_dir',
                     help="If the object directory is not your current one you need to provide the ABSOLUTE path",
                     required=False)
@@ -97,8 +97,8 @@ if __name__ == '__main__':
                         help="Whether to only run an initial guess of the transit")
     ap.set_defaults(only_initial=False)
     ap.add_argument('--cpus', type=int, default=None, help="The number of CPU cores to be used.", required=False)
-    ap.add_argument('--mcmc', dest='mcmc', action='store_false', help="Whether to run using mcmc or ns. Default is ns.")
-    ap.add_argument('--detrend', dest='detrend', action='store_false', help="Whether to execute detrending in the "
+    ap.add_argument('--mcmc', dest='mcmc', action='store_true', help="Whether to run using mcmc or ns. Default is ns.")
+    ap.add_argument('--detrend', dest='detrend', action='store_true', help="Whether to execute detrending in the "
                                                                             "allesfitter runs.")
     ap.add_argument('--properties', help="The YAML file to be used as input.", required=False)
     args = ap.parse_args()
