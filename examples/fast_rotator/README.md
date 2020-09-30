@@ -7,7 +7,7 @@ discovery paper can be consulted here:
 [TOI-540](https://ui.adsabs.harvard.edu/abs/2020arXiv200913623M/abstract)  
 
 <p align="center">
-  <img width="80%" src="https://github.com/franpoz/SHERLOCK/tree/master/examples/fast_rotator/TOI-540.png">
+  <img width="80%" src="https://github.com/franpoz/SHERLOCK/blob/master/examples/fast_rotator/TOI-540.png">
 From Ment et al. (2020).
 </p>
     
@@ -56,12 +56,12 @@ Here you can see that SHERLOCK has detected a prominent period of ~0.73 days (in
 
 
 <p align="center">
-  <img width="80%" src="https://github.com/franpoz/SHERLOCK/tree/master/examples/fast_rotator/Periodogram_TIC200322593_[6].png">
+  <img width="80%" src="https://github.com/franpoz/SHERLOCK/blob/master/examples/fast_rotator/Periodogram_TIC200322593_[6].png">
 </p>
 
 
 <p align="center">
-  <img width="80%" src="https://github.com/franpoz/SHERLOCK/tree/master/examples/fast_rotator/Phase_detrend_period_TIC200322593_[6]_0.73_days.png">
+  <img width="80%" src="https://github.com/franpoz/SHERLOCK/blob/master/examples/fast_rotator/Phase_detrend_period_TIC200322593_[6]_0.73_days.png">
 </p>
 
 
@@ -79,7 +79,7 @@ i.e. 13.7. Good for SHERLOCK!
 
 
 <p align="center">
-  <img width="80%" src="https://github.com/franpoz/SHERLOCK/tree/master/examples/fast_rotator/Run_1_ws=0.3372_TIC200322593_[6].png">
+  <img width="80%" src="https://github.com/franpoz/SHERLOCK/blob/master/examples/fast_rotator/Run_1_ws=0.3372_TIC200322593_[6].png">
 </p>
     
 
