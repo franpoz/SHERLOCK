@@ -312,6 +312,7 @@ class Sherlock:
                 object_report["fap"] = transit_results[signal_selection.curve_index].fap
                 object_report["border_score"] = transit_results[signal_selection.curve_index].border_score
                 object_report["period"] = transit_results[signal_selection.curve_index].period
+                object_report["per_err"] = transit_results[signal_selection.curve_index].per_err
                 object_report["duration"] = transit_results[signal_selection.curve_index].duration * 60 * 24
                 object_report["t0"] = transit_results[signal_selection.curve_index].t0
                 object_report["depth"] = transit_results[signal_selection.curve_index].depth
@@ -339,12 +340,13 @@ class Sherlock:
             self.__setup_object_report_logging(sherlock_id)
             object_dir = self.__init_object_dir(object_info.sherlock_id())
             logging.info("Listing most promising candidates for ID %s:", sherlock_id)
-            logging.info("%-12s%-8s%-10s%-8s%-8s%-8s%-8s%-10s%-14s%-14s%-25s%-10s%-18s%-20s", "Detrend no.", "Period",
-                         "Duration", "T0", "Depth", "SNR", "SDE", "FAP", "Border_score", "Matching OI",
+            logging.info("%-12s%-8s%-10s%-10s%-8s%-8s%-8s%-8s%-10s%-14s%-14s%-25s%-10s%-18s%-20s", "Detrend no.", "Period",
+                         "Per_err", "Duration", "T0", "Depth", "SNR", "SDE", "FAP", "Border_score", "Matching OI",
                          "Planet radius (R_Earth)", "Rp/Rs", "Semi-major axis", "Habitability Zone")
             if sherlock_id in self.report:
-                candidates_df = pandas.DataFrame(columns=['curve', 'period', 'duration', 't0', 'depth', 'snr', 'sde',
-                                                          'fap', 'border_score', 'oi', 'rad_p', 'rp_rs', 'a', 'hz'])
+                candidates_df = pandas.DataFrame(columns=['curve', 'period', 'per_err', 'duration', 't0', 'depth',
+                                                          'snr', 'sde', 'fap', 'border_score', 'oi', 'rad_p', 'rp_rs',
+                                                          'a', 'hz'])
                 i = 1
                 for report in self.report[sherlock_id]:
                     a, habitability_zone = self.habitability_calculator\
@@ -356,8 +358,8 @@ class Sherlock:
                         report['rp_rs'] = np.nan
                     else:
                         report['rad_p'] = star_info.radius * math.sqrt(report["depth"] / 1000) / 0.0091577
-                    logging.info("%-12s%-8.4f%-10.2f%-8.2f%-8.3f%-8.2f%-8.2f%-10.6f%-14.2f%-14s%-25.5f%-10.5f%-18.5f%-20s",
-                                 report["curve"], report["period"],
+                    logging.info("%-12s%-8.4f%-10.5f%-10.2f%-8.2f%-8.3f%-8.2f%-8.2f%-10.6f%-14.2f%-14s%-25.5f%-10.5f%-18.5f%-20s",
+                                 report["curve"], report["period"], report["per_err"],
                                  report["duration"], report["t0"], report["depth"], report["snr"], report["sde"],
                                  report["fap"], report["border_score"], report["oi"], report['rad_p'], report['rp_rs'],
                                  a, habitability_zone)
