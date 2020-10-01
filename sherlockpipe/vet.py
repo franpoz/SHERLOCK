@@ -61,6 +61,31 @@ class Vetter:
             os.mkdir(self.latte_dir)
         self.data_dir = self.object_dir
 
+    def update(self):
+        indir = self.latte_dir
+        if os.path.exists(indir) and os.path.isdir(indir):
+            shutil.rmtree(indir, ignore_errors=True)
+        os.makedirs(indir)
+        with open("{}/_config.txt".format(indir), 'w') as f:
+            f.write(str(indir))
+        print("\n Download the text files required ... ")
+        print("\n Only the manifest text files (~325 M) will be downloaded and no TESS data.")
+        print("\n This step may take a while but luckily it only has to run once... \n")
+        if not os.path.exists("{}".format(indir)):
+            os.makedirs(indir)
+        if not os.path.exists("{}/data".format(indir)):
+            os.makedirs("{}/data".format(indir))
+        outF = open(indir + "/data/temp.txt", "w")
+        outF.write("#all LC file links")
+        outF.close()
+        outF = open(indir + "/data/temp_tp.txt", "w+")
+        outF.write("#all LC file links")
+        outF.close()
+        LATTEutils.data_files(indir)
+        LATTEutils.tp_files(indir)
+        LATTEutils.TOI_TCE_files(indir)
+        LATTEutils.momentum_dumps_info(indir)
+
     def __prepare(self, candidate_df):
         """
         Downloads and fills files to be used by LATTE analysis.
@@ -70,27 +95,7 @@ class Vetter:
         indir = self.latte_dir
         # SAVE the new output path
         if not os.path.exists("{}/_config.txt".format(indir)):
-            with open("{}/_config.txt".format(indir), 'w') as f:
-                f.write(str(indir))
-            # TODO force this every time so new data is downloaded?
-            # this is also the first time that the program is being run, so download all the data that is required.
-            print("\n Download the text files required ... ")
-            print("\n Only the manifest text files (~325 M) will be downloaded and no TESS data.")
-            print("\n This step may take a while but luckily it only has to run once... \n")
-            if not os.path.exists("{}".format(indir)):
-                os.makedirs(indir)
-            if not os.path.exists("{}/data".format(indir)):
-                os.makedirs("{}/data".format(indir))
-            outF = open(indir + "/data/temp.txt", "w")
-            outF.write("#all LC file links")
-            outF.close()
-            outF = open(indir + "/data/temp_tp.txt", "w+")
-            outF.write("#all LC file links")
-            outF.close()
-            LATTEutils.data_files(indir)
-            LATTEutils.tp_files(indir)
-            LATTEutils.TOI_TCE_files(indir)
-            LATTEutils.momentum_dumps_info(indir)
+            self.update()
         candidate_df['TICID'] = candidate_df['TICID'].str.replace("TIC ", "")
         TIC_wanted = list(set(candidate_df['TICID']))
         nlc = len(TIC_wanted)

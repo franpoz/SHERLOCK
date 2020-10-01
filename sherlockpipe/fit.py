@@ -7,7 +7,6 @@ from pathlib import Path
 
 import allesfitter
 import numpy as np
-import matplotlib
 import yaml
 from argparse import ArgumentParser
 from sherlockpipe.star.HabitabilityCalculator import HabitabilityCalculator
