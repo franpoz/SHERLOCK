@@ -9,10 +9,22 @@ from sherlockpipe.ois.OisManager import OisManager
 
 
 class Updater:
+    """
+    This class should be used to download SHERLOCK data as objects of interest, ELEANOR or LATTE metadata. It stores
+    timestamps to remind when was the last time it updated and if called again, it could do nothing if it reads very
+    recent operations.
+    """
     def __init__(self):
         pass
 
     def update(self, clean, ois, force):
+        """
+        The main method of the update task. Reloads OIs, ELEANOR and LATTE metadata.
+        @param clean: Specifies whether the ELEANOR data should be wiped and downloaded again.
+        @param ois: Specifies whether the OIs metadata is the only one to be refreshed (ignoring ELEANOR and LATTE)
+        @param force: Specifies whether the last download timestamp should be ignored and proceed as if a refresh was
+        needed.
+        """
         ois_manager = OisManager()
         timestamp_ois_path = os.path.join(os.path.expanduser('~'), '.sherlockpipe/timestamp_ois.txt')
         timestamp_eleanor_path = os.path.join(os.path.expanduser('~'), '.sherlockpipe/timestamp_eleanor.txt')
