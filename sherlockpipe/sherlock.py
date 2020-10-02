@@ -38,6 +38,8 @@ from scipy import stats
 from wotan import flatten
 from astropy.stats import sigma_clip
 
+from sherlockpipe.update import Updater
+
 
 class Sherlock:
     """
@@ -74,15 +76,16 @@ class Sherlock:
     ois_manager = OisManager()
     use_ois = False
 
-    def __init__(self, object_infos: list):
+    def __init__(self, update_ois: bool, object_infos: list):
         """
         Initializes a Sherlock object, loading the OIs from the csvs, setting up the detrend and transit configurations,
         storing the provided object_infos list and initializing the builders to be used to prepare the light curves for
         the provided object_infos.
+        @param update_ois: Flag to signal SHERLOCK for updating the TOIs, KOIs and EPICs
         @param object_infos: a list of objects information to be analysed
         @type object_infos: a list of ObjectInfo implementations to be resolved and analysed
         """
-        self.setup_files()
+        self.setup_files(update_ois)
         self.setup_detrend()
         self.setup_transit_adjust_params()
         self.object_infos = object_infos
@@ -95,16 +98,15 @@ class Sherlock:
                                        'ohz': OptimisticHabitableSearchZone()}
         self.habitability_calculator = HabitabilityCalculator()
 
-    def setup_files(self, results_dir=RESULTS_DIR):
+    def setup_files(self, refresh_ois, results_dir=RESULTS_DIR):
         """
         Loads the objects of interest data from the downloaded CSVs.
-        @param results_dir:
-        @type results_dir:
+        @param refresh_ois: Flag update the TOIs, KOIs and EPICs
+        @param results_dir: Stores the directory to be used for the execution.
         @return: the Sherlock object itself
-        @rtype: Sherlock
         """
         self.results_dir = results_dir
-        self.load_ois()
+        self.load_ois(refresh_ois)
         return self
 
     def setup_detrend(self, initial_smooth=True, initial_rms_mask=True, initial_rms_threshold=1.5,
@@ -213,12 +215,14 @@ class Sherlock:
         self.ois_manager.update_epic_csvs()
         return self
 
-    def load_ois(self):
+    def load_ois(self, refresh_ois):
         """
         Loads the csv OIs files into memory
         @return: the Sherlock object itself
         @rtype: Sherlock
         """
+        if refresh_ois:
+            Updater().update(False, True, True)
         self.ois = self.ois_manager.load_ois()
         return self
 

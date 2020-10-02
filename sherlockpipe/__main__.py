@@ -122,7 +122,7 @@ if __name__ == '__main__':
     object_infos.extend(ffi_coords_object_infos)
     object_infos.extend(input_object_infos)
     object_infos.extend(input_id_object_infos)
-    sherlock.Sherlock(object_infos) \
+    sherlock.Sherlock(sherlock_user_properties["UPDATE_OIS"], object_infos) \
         .setup_detrend(sherlock_user_properties["INITIAL_SMOOTH_ENABLED"],
                        sherlock_user_properties["INITIAL_HIGH_RMS_MASK"],
                        sherlock_user_properties["INITIAL_HIGH_RMS_THRESHOLD"],

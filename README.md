@@ -52,6 +52,11 @@ in wiping all the metadata and build it again. That's why you could execute:
 
 This last command implies a `force` statement and the last executed time will be ignored too.
 
+You can additionally let SHERLOCK refresh the OIs list before running your current execution by adding to the
+YAML file the next line:
+
+```UPDATE_OIS=True``` 
+
 ### Vetting
 SHERLOCK PIPEline comes with a submodule to examine the most promising transit candidates
 found by any of its executions. This is done via [LATTE](https://github.com/noraeisner/LATTE).

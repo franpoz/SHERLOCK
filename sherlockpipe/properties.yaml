@@ -120,3 +120,6 @@ INPUT_FILES_INITIAL_DETREND_PERIOD:
 # The initial detrend period to be applied to input light curves with mission id.
 # TESS/Kepler/K2 ids array. E.g: {"TIC 181804752": 0.19}
 INPUT_FILES_WITH_IDS_INITIAL_DETREND_PERIOD:
+
+# Flag to signal SHERLOCK for updating the TOIs, KOIs and EPICs
+UPDATE_OIS: False
