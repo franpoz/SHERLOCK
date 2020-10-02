@@ -32,6 +32,7 @@ class Updater:
         ois_timestamp = 0
         eleanor_timestamp = 0
         latte_timestamp = 0
+        force = force or clean
         if os.path.exists(timestamp_ois_path):
             with open(timestamp_ois_path, 'r+') as f:
                 ois_timestamp = f.read()

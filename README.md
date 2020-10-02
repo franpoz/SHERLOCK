@@ -32,6 +32,26 @@ or files to be analysed in the execution. You'd need to fill at least one of tho
 pipeline to do anything. If you still have any doubts please refer to the 
 [examples/properties](https://github.com/franpoz/SHERLOCK/tree/master/examples/properties) directory 
 
+## Updates
+SHERLOCK uses third party data to know TOIs, KOIs, EPICs and to handle FFIs and the vetting process.
+This data gets frequently updated from the active missions and therefore SHERLOCK will perform better
+if the metadata gets refreshed. You can simply run:
+
+```python3 -m sherlockpipe.update```
+
+and SHERLOCK will download the dependencies. It will store a timestamp to remember the last time it was
+refreshed to prevent several unneeded calls. However, if you find that there are more updates and you need
+them now, you can call:
+
+```python3 -m sherlockpipe.update --force``` 
+
+and SHERLOCK will ignore the timestamps and perform the update process. In addition, you could be interested
+in wiping all the metadata and build it again. That's why you could execute:
+
+```python3 -m sherlockpipe.update --clean```
+
+This last command implies a `force` statement and the last executed time will be ignored too.
+
 ### Vetting
 SHERLOCK PIPEline comes with a submodule to examine the most promising transit candidates
 found by any of its executions. This is done via [LATTE](https://github.com/noraeisner/LATTE).
