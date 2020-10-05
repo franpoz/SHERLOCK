@@ -309,8 +309,7 @@ class Sherlock:
                 object_report["Object Id"] = mission_id
                 object_report["run"] = id_run
                 object_report["score"] = best_signal_score
-                object_report["curve"] = "PDCSAP" if signal_selection.curve_index == 0 \
-                    else str(signal_selection.curve_index)
+                object_report["curve"] = str(signal_selection.curve_index)
                 object_report["snr"] = transit_results[signal_selection.curve_index].snr
                 object_report["sde"] = transit_results[signal_selection.curve_index].sde
                 object_report["fap"] = transit_results[signal_selection.curve_index].fap
