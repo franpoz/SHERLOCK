@@ -648,6 +648,7 @@ class Sherlock:
             logging.info("Auto-Detrend found the strong period: " + str(period) + ".")
         else:
             logging.info("Auto-Detrend did not find relevant periods.")
+            period = None
         return period
 
     def __detrend_by_period(self, time, flux, period_window):
