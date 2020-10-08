@@ -2,7 +2,7 @@ from sherlockpipe.objectinfo.ObjectInfo import ObjectInfo
 
 class MissionFfiIdObjectInfo(ObjectInfo):
     """
-    Implementation of ObjectInfo to be used to characterize long-cadence objects from TESS.
+    Implementation of ObjectInfo to be used to characterize long-cadence objects.
     """
     def __init__(self, mission_id, sectors, initial_mask=None, initial_detrend_period=None):
         """
