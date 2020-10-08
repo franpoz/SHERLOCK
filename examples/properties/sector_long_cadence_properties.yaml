@@ -4,9 +4,11 @@
 ######################################################################################################################
 ### SECTOR OBJECTS RUN SETUP - All sectors analysed independently
 ######################################################################################################################
-# We will add two mission ids to the pipeline: Only TESS objects can be introduced here.
-# Note that we can select 'all' the sectors or quarters or specify a subset of them. In this case, the first object will
-# be processed only using its 13th sector.
+# We will add several mission ids to the pipeline.
+# Note that we can select 'all' the sectors, quarters or campaigns or specify a subset of them. In this case, the TIC
+# 299798795 will be processed only using its 13th sector and the EPIC 220641886 using its 8th campaign.
 SECTOR_FFI_IDS:
-  'TIC 299798795': [13]
-  'TIC 231663901': 'all'
+  TIC 299798795: [13]
+  TIC 231663901: 'all',
+  EPIC 220641886: [8],
+  EPIC 201912552: 'all'
