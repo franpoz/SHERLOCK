@@ -70,6 +70,7 @@ class Updater:
                         eleanor.Update(sector)
                     except:
                         os.rmdir(sectorpath)
+                        break
             with open(os.path.join(os.path.expanduser('~'), '.sherlockpipe/timestamp_eleanor.txt'), 'w+') as f:
                 f.write(str(time.time()))
         if (force or time.time() - float(latte_timestamp) > 3600 * 24 * 7) and not ois:
