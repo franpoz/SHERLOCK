@@ -63,6 +63,8 @@ class Updater:
                 os.mkdir(eleanormetadata)
             for sector in range(1, 52):
                 sectorpath = eleanorpath + '/metadata/s{:04d}'.format(sector)
+                if os.path.exists(sectorpath) and os.path.isdir(sectorpath) and not os.listdir(sectorpath):
+                    os.rmdir(sectorpath)
                 if not os.path.exists(sectorpath) or not os.path.isdir(sectorpath) or not os.listdir(sectorpath):
                     try:
                         eleanor.Update(sector)
