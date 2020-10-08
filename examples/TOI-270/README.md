@@ -71,7 +71,9 @@ PDCSAP      3.3605  85.30     1440.85 0.733   8.92    15.67   0.000080  1.00    
 
 As one can see, we have well recovered the three planets identified by TESS. Well done SHERLOCK!. We can also see that there is an extra candidate, with a period of ~8.39 days, which needs visual inspection and vetting to verify/refute it as a real planetary candidate. For the vetting process you might employ our vetting tool which makes use of [LATTE](https://github.com/noraeisner/LATTE).
 
-Let us now turn our attention to the SNRs of the detections made by SHERLOCK. If we compare them with the ones provided by [EXOFOP](https://exofop.ipac.caltech.edu/tess/target.php?id=259377017), we can notice that in fact we have weaker results. Let us do a trial using the algorithm, which helps to reduce the local noise via the parameter `INITIAL_SMOOTH_ENABLED`. In this case, our `user-properties.yaml` looks like: 
+Let us now turn our attention to the SNRs of the detections made by SHERLOCK. If we compare them with the ones provided by [EXOFOP](https://exofop.ipac.caltech.edu/tess/target.php?id=259377017), we can notice that in fact we have weaker results. This is not a complete surprise since 
+in this example we are using only the data from Sector 5, while TESS result is using three sectors (3,4,5).
+Let us do a trial using the algorithm, which helps to reduce the local noise via the parameter `INITIAL_SMOOTH_ENABLED`. In this case, our `user-properties.yaml` looks like: 
 
 
 ```shell
@@ -107,7 +109,7 @@ Detrend no. Period  Duration  T0      Depth   SNR     SDE     FAP       Border_s
  ```
  
  
-Look these SNRs: we have recovered very prominent results! But we must be careful, because with great power comes great responsibility. Indeed, using this algorithm, you may obtain more false positives, 
+Look these SNRs: we have recovered very prominent results (even only considering one sector!) But we must be careful, because with great power comes great responsibility. Indeed, using this algorithm, you may obtain more false positives, 
 so you will need to perform an in-depth vetting analysis (something that is always recommended) to better confirm/refute their nature. In this case, we obtained two extra candidates which need further inspection.  
 In fact, the last candidate is identified as TOI-270.01, because it has a similar period, so likely this is a false positive (spoiler: it is). The other candidate has a period of 
 8.39 days, i.e. the same signal as detected in our first trial. Let us have a look at the full results concerning this signal. 
