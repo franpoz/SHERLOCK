@@ -16,8 +16,8 @@ if __name__ == '__main__':
     file_dir = resources_dir + "/" + 'properties.yaml' if resources_dir != "" and resources_dir is not None \
         else 'properties.yaml'
     print(resources_dir)
-    sherlock_user_properties = yaml.load(open(file_dir))
-    user_properties = yaml.load(open(args.properties))
+    sherlock_user_properties = yaml.load(open(file_dir), yaml.SafeLoader)
+    user_properties = yaml.load(open(args.properties), yaml.SafeLoader)
     sherlock_user_properties.update(user_properties)
 
     # Build ObjectInfos from properties

@@ -445,7 +445,7 @@ if __name__ == '__main__':
     args = ap.parse_args()
     vetter = Vetter(args.object_dir)
     if args.candidate is None:
-        user_properties = yaml.load(open(args.properties))
+        user_properties = yaml.load(open(args.properties), yaml.SafeLoader)
         candidate = pd.DataFrame(columns=['id', 'transits', 'sectors', 'FFI'])
         candidate = candidate.append(user_properties, ignore_index=True)
         candidate = candidate.rename(columns={'id': 'TICID'})

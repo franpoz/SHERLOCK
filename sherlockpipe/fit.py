@@ -111,7 +111,7 @@ if __name__ == '__main__':
     fitter.data_dir = fitter.object_dir
     star_df = pd.read_csv(fitter.data_dir + "/params_star.csv")
     if args.candidate is None:
-        user_properties = yaml.load(open(args.properties))
+        user_properties = yaml.load(open(args.properties), yaml.SafeLoader)
         candidate = pd.DataFrame(columns=['id', 'period', 't0', 'cpus', 'rp_rs', 'a', 'number', 'name', 'lc'])
         candidate = candidate.append(user_properties["planet"], ignore_index=True)
         user_star_df = pd.DataFrame(columns=['R_star', 'M_star'])
