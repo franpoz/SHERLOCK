@@ -41,6 +41,7 @@ class Fitter:
 
     def fit(self, candidate_df, star_df, cpus, allesfit_dir):
         candidate_row = candidate_df.iloc[0]
+        sherlock_star_file = self.object_dir + "/params_star.csv"
         star_file = allesfit_dir + "/params_star.csv"
         params_file = allesfit_dir + "/params.csv"
         settings_file = allesfit_dir + "/settings.csv"
@@ -49,7 +50,8 @@ class Fitter:
         else:
             lc_file = "/" + str(candidate_row["number"]) + "/lc_" + str(candidate_row["curve"]) + ".csv"
         shutil.copyfile(self.object_dir + lc_file, allesfit_dir + "/lc.csv")
-        shutil.copyfile(self.object_dir + "/params_star.csv", star_file)
+        if os.path.exists(sherlock_star_file) and os.path.isfile(sherlock_star_file):
+            shutil.copyfile(sherlock_star_file, star_file)
         shutil.copyfile(resources_dir + "/resources/allesfitter/params.csv", params_file)
         shutil.copyfile(resources_dir + "/resources/allesfitter/settings.csv", settings_file)
         # TODO replace sherlock properties from allesfitter files
@@ -74,6 +76,12 @@ class Fitter:
                 if candidate_row["rp_rs"] != "-" else 0.2
             text = re.sub('\\${sherlock:sum_rp_rs_a}', str(sum_rp_rs_a), text)
             text = re.sub('\\${sherlock:name}', str(candidate_row["name"]), text)
+            if os.path.exists(sherlock_star_file) and os.path.isfile(sherlock_star_file):
+                text = re.sub('\\${sherlock:ld_a}', star_df["ld_a"] + ",0", text)
+                text = re.sub('\\${sherlock:ld_b}', star_df["ld_b"] + ",0", text)
+            else:
+                text = re.sub('\\${sherlock:ld_a}', "0.5,1", text)
+                text = re.sub('\\${sherlock:ld_b}', "0.5,1", text)
             f.seek(0)
             f.write(text)
             f.truncate()
@@ -121,6 +129,10 @@ if __name__ == '__main__':
                 star_df.at[0, "R_star"] = user_star_df.iloc[0]["R_star"]
             if user_star_df.iloc[0]["M_star"] is not None:
                 star_df.at[0, "M_star"] = user_star_df.iloc[0]["M_star"]
+            if user_star_df.iloc[0]["ld_a"] is not None:
+                star_df.at[0, "ld_a"] = user_star_df.iloc[0]["ld_a"]
+            if user_star_df.iloc[0]["ld_b"] is not None:
+                star_df.at[0, "ld_b"] = user_star_df.iloc[0]["ld_b"]
             if ("a" not in user_properties["planet"] or user_properties["planet"]["a"] is None)\
                     and star_df.iloc[0]["M_star"] is not None and not np.isnan(star_df.iloc[0]["M_star"]):
                 candidate.at[0, "a"] = HabitabilityCalculator() \
