@@ -77,8 +77,8 @@ class Fitter:
             text = re.sub('\\${sherlock:sum_rp_rs_a}', str(sum_rp_rs_a), text)
             text = re.sub('\\${sherlock:name}', str(candidate_row["name"]), text)
             if os.path.exists(sherlock_star_file) and os.path.isfile(sherlock_star_file):
-                text = re.sub('\\${sherlock:ld_a}', star_df["ld_a"] + ",0", text)
-                text = re.sub('\\${sherlock:ld_b}', star_df["ld_b"] + ",0", text)
+                text = re.sub('\\${sherlock:ld_a}', str(star_df.iloc[0]["ld_a"]) + ",0", text)
+                text = re.sub('\\${sherlock:ld_b}', str(star_df.iloc[0]["ld_b"]) + ",0", text)
             else:
                 text = re.sub('\\${sherlock:ld_a}', "0.5,1", text)
                 text = re.sub('\\${sherlock:ld_b}', "0.5,1", text)
