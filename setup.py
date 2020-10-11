@@ -33,6 +33,15 @@ setuptools.setup(
                         "matplotlib",
                         "pyyaml",
                         "allesfitter",
-                        "reproject"
+                        "seaborn",
+                        "astroplan",
+                        "astroquery",
+                        "sklearn",
+                        "scipy",
+                        "tess-point",
+                        "reproject==0.4",
+                        "reportlab",
+                        "astropy==3.1.1",
+                        "mock > 2.0.0"
     ]
 )
