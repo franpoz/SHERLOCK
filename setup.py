@@ -32,6 +32,7 @@ setuptools.setup(
                         "wotan",
                         "matplotlib",
                         "pyyaml",
-                        "allesfitter"
+                        "allesfitter",
+                        "reproject"
     ]
 )
