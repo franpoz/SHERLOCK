@@ -34,7 +34,7 @@ from sherlockpipe.transitresult import TransitResult
 from multiprocessing import Pool
 from scipy.signal import argrelextrema, savgol_filter
 from scipy.ndimage.interpolation import shift
-from scipy import stats
+from scipy import stats, signal
 from wotan import flatten
 from astropy.stats import sigma_clip
 
@@ -155,7 +155,7 @@ class Sherlock:
     def setup_transit_adjust_params(self, max_runs=10, min_sectors=1, max_sectors=999999, period_protec=10,
                                     search_zone=None, period_min=0.5, period_max=20, bin_minutes=10, run_cores=NUM_CORES, snr_min=5,
                                     sde_min=5, fap_max=0.1, mask_mode="mask", best_signal_algorithm='border-correct',
-                                    quorum_strength=1):
+                                    quorum_strength=1, min_quorum=0):
         """
         Configures the values to be used for the transit fitting and the main run loop.
         @param max_runs: the max number of runs to be executed for each object.
@@ -177,6 +177,8 @@ class Sherlock:
         and 'quorum' are available.
         @param quorum_strength: if quorum is selected as best_signal_algorithm this value will be used for the votes
         weight.
+        @param min_quorum: used to decide when SHERLOCK should be stopped because of lack of persistence in the found
+        signals of the last executed run.
         @return: the Sherlock object itself
         @rtype: Sherlock
         """
@@ -200,7 +202,7 @@ class Sherlock:
         self.signal_score_selectors = {self.VALID_SIGNAL_SELECTORS[0]: BasicSignalSelector(),
                                        self.VALID_SIGNAL_SELECTORS[1]: SnrBorderCorrectedSignalSelector(),
                                        self.VALID_SIGNAL_SELECTORS[2]: QuorumSnrBorderCorrectedSignalSelector(
-                                           quorum_strength)}
+                                           quorum_strength, min_quorum)}
         self.best_signal_algorithm = best_signal_algorithm
         return self
 
