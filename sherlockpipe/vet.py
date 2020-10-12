@@ -316,17 +316,13 @@ class Vetter:
     def vetting_field_of_view(self, indir, tic, ra, dec, sectors):
         maglim = 6
         sectors_search = None if sectors is not None and len(sectors) == 0 else sectors
-        tesscut = lightkurve.search_tesscut(tic, sector=sectors_search)
-        if tesscut is None or len(tesscut) == 0:
+        tpf_source = lightkurve.search_targetpixelfile("TIC " + str(tic), sector=sectors, mission='TESS')
+        if tpf_source is None or len(tpf_source) == 0:
             ra_str = str(ra)
             dec_str = "+" + str(dec) if dec >= 0 else str(dec)
-            tesscut = lightkurve.search_tesscut(ra_str + " " + dec_str, sector=sectors_search)
-        for i in range(0, len(tesscut)):
-            tpf = tesscut[i].download(cutout_size=(12, 12))
-            if tpf is None:
-                ra_str = str(ra)
-                dec_str = "+" + str(dec) if dec >= 0 else str(dec)
-                tpf = lightkurve.search_tesscut(ra_str + " " + dec_str, sector=sectors_search).download(cutout_size=(12, 12))
+            tpf_source = lightkurve.search_tesscut(ra_str + " " + dec_str, sector=sectors_search)
+        for i in range(0, len(tpf_source)):
+            tpf = tpf_source[i].download(cutout_size=(12, 12))
             pipeline = True
             fig = plt.figure(figsize=(6.93, 5.5))
             gs = gridspec.GridSpec(1, 3, height_ratios=[1], width_ratios=[1, 0.05, 0.01])
@@ -343,7 +339,7 @@ class Vetter:
             if pipeline:  #
                 aperture_mask = tpf.pipeline_mask
                 aperture = tpf._parse_aperture_mask(aperture_mask)
-                maskcolor = 'tomato'
+                maskcolor = 'lightgray'
                 print("    --> Using pipeline aperture...")
             else:
                 aperture_mask = tpf.create_threshold_mask(threshold=10, reference_pixel='center')
