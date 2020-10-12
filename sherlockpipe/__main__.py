@@ -140,5 +140,6 @@ if __name__ == '__main__':
                                      sherlock_user_properties["SNR_MIN"], sherlock_user_properties["SDE_MIN"],
                                      sherlock_user_properties["FAP_MAX"], sherlock_user_properties["MASK_MODE"],
                                      sherlock_user_properties["BEST_SIGNAL_ALGORITHM"],
-                                     sherlock_user_properties["QUORUM_STRENGTH"]) \
+                                     sherlock_user_properties["QUORUM_STRENGTH"],
+                                     sherlock_user_properties["MIN_QUORUM"]) \
         .run()

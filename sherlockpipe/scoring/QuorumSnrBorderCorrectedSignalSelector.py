@@ -5,9 +5,10 @@ from sherlockpipe.scoring.SnrBorderCorrectedSignalSelector import CorrectedBorde
 
 
 class QuorumSnrBorderCorrectedSignalSelector(BasicSignalSelector):
-    def __init__(self, strength=1):
+    def __init__(self, strength=1, min_quorum=0):
         super().__init__()
         self.strength = strength
+        self.min_quorum = min_quorum
 
     def select(self, transit_results, snr_min, detrend_method, wl):
         basic_signal_selection = super().select(transit_results, snr_min, detrend_method, wl)
@@ -39,7 +40,8 @@ class QuorumSnrBorderCorrectedSignalSelector(BasicSignalSelector):
         best_signal_snr = np.nanmax(corrected_snrs)
         best_signal_snr_index = np.nanargmax(corrected_snrs)
         best_signal = transit_results[best_signal_snr_index]
-        if best_signal_snr > snr_min:  # and SDE[a] > SDE_min and FAP[a] < FAP_max):
+        max_votes_rate = max(votes_counts) / len(votes)
+        if best_signal_snr > snr_min and max_votes_rate >= self.min_quorum:  # and SDE[a] > SDE_min and FAP[a] < FAP_max):
             best_signal_score = 1
         else:
             best_signal_score = 0

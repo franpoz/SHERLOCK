@@ -86,6 +86,9 @@ MASK_MODE: 'mask'
 BEST_SIGNAL_ALGORITHM: 'border-correct'
 # If BEST_SIGNAL_ALGORITHM is set to 'quorum', this value is used as a scale factor for the quorum voting.
 QUORUM_STRENGTH: 1
+# If QUORUM is used as BEST_SIGNAL_ALGORITHM, this variable is used to decide when SHERLOCK should be stopped because of
+# lack of persistence in the found signals of the last executed run.
+MIN_QUORUM: 0
 
 ######################################################################################################################
 ### INITIAL MASK
