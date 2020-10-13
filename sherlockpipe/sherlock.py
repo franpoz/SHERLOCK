@@ -14,6 +14,8 @@ import sys
 
 from scipy.ndimage import uniform_filter1d
 
+from sherlockpipe.curve_preparer.Flattener import Flattener
+from sherlockpipe.curve_preparer.Flattener import FlattenInput
 from sherlockpipe.objectinfo.MissionObjectInfo import MissionObjectInfo
 from sherlockpipe.objectinfo.InputObjectInfo import InputObjectInfo
 from sherlockpipe.objectinfo.MissionFfiIdObjectInfo import MissionFfiIdObjectInfo
@@ -36,7 +38,6 @@ from scipy.signal import argrelextrema, savgol_filter
 from scipy.ndimage.interpolation import shift
 from scipy import stats, signal
 from wotan import flatten
-from astropy.stats import sigma_clip
 
 from sherlockpipe.update import Updater
 
@@ -87,7 +88,6 @@ class Sherlock:
         """
         self.setup_files(update_ois)
         self.setup_detrend()
-        self.setup_transit_adjust_params()
         self.object_infos = object_infos
         self.lightcurve_builders = {InputObjectInfo: MissionInputLightcurveBuilder(),
                                     MissionInputObjectInfo: MissionInputLightcurveBuilder(),
@@ -97,6 +97,7 @@ class Sherlock:
         self.search_zones_resolvers = {'hz': HabitableSearchZone(),
                                        'ohz': OptimisticHabitableSearchZone()}
         self.habitability_calculator = HabitabilityCalculator()
+        self.setup_transit_adjust_params()
 
     def setup_files(self, refresh_ois, results_dir=RESULTS_DIR):
         """
@@ -111,7 +112,8 @@ class Sherlock:
 
     def setup_detrend(self, initial_smooth=True, initial_rms_mask=True, initial_rms_threshold=1.5,
                       initial_rms_bin_hours=3, n_detrends=6, detrend_method="biweight", cores=1,
-                      auto_detrend_periodic_signals=False, auto_detrend_ratio=1/4, auto_detrend_method="biweight"):
+                      auto_detrend_periodic_signals=False, auto_detrend_ratio=1/4, auto_detrend_method="biweight",
+                      user_prepare=None):
         """
         Configures the values for the detrends steps.
         @param initial_smooth: whether to execute an initial local noise reduction before the light curve analysis
@@ -127,6 +129,7 @@ class Sherlock:
         be used for the initial detrend.
         @param auto_detrend_method: the detrend method to be applied with the highest periodicity found in the LS
         periodogram
+        @param user_prepare: custom algorithm from user to be applied.
         @return: the Sherlock object itself
         @rtype: Sherlock
         """
@@ -150,12 +153,14 @@ class Sherlock:
         self.detrend_plot_axis.append([1, 1])
         self.detrend_plot_axis.append([2, 1])
         self.detrend_plot_axis.append([3, 1])
+        self.user_prepare = user_prepare
         return self
 
     def setup_transit_adjust_params(self, max_runs=10, min_sectors=1, max_sectors=999999, period_protec=10,
-                                    search_zone=None, period_min=0.5, period_max=20, bin_minutes=10, run_cores=NUM_CORES, snr_min=5,
-                                    sde_min=5, fap_max=0.1, mask_mode="mask", best_signal_algorithm='border-correct',
-                                    quorum_strength=1, min_quorum=0):
+                                    search_zone=None, user_search_zone=None, period_min=0.5, period_max=20,
+                                    bin_minutes=10, run_cores=NUM_CORES, snr_min=5, sde_min=5, fap_max=0.1,
+                                    mask_mode="mask", best_signal_algorithm='border-correct', quorum_strength=1,
+                                    min_quorum=0, user_selection_algorithm=None):
         """
         Configures the values to be used for the transit fitting and the main run loop.
         @param max_runs: the max number of runs to be executed for each object.
@@ -164,6 +169,7 @@ class Sherlock:
         @param period_protec: the maximum period to be used to calculate the minimum transit duration
         @param search_zone: the zone where sherlock should be searching transits for. If set, period_min and period_max
         are to be ignored because they will be generated for the selected zone.
+        @param user_search_zone: custom defined user class to be used for constraining the periods search.
         @param period_min: the minimum period to search transits for
         @param period_max: the maximum period to search transits for
         @param bin_minutes:
@@ -179,6 +185,7 @@ class Sherlock:
         weight.
         @param min_quorum: used to decide when SHERLOCK should be stopped because of lack of persistence in the found
         signals of the last executed run.
+        @param user_selection_algorithm: selection algorithm provided by the user to be used by SHERLOCK.
         @return: the Sherlock object itself
         @rtype: Sherlock
         """
@@ -198,12 +205,16 @@ class Sherlock:
         self.snr_min = snr_min
         self.sde_min = sde_min
         self.fap_max = fap_max
-        self.search_zone = search_zone
+        self.search_zone = search_zone if user_search_zone is None else "user"
+        if user_search_zone is not None:
+            self.search_zones_resolvers["user"] = user_search_zone
         self.signal_score_selectors = {self.VALID_SIGNAL_SELECTORS[0]: BasicSignalSelector(),
                                        self.VALID_SIGNAL_SELECTORS[1]: SnrBorderCorrectedSignalSelector(),
                                        self.VALID_SIGNAL_SELECTORS[2]: QuorumSnrBorderCorrectedSignalSelector(
-                                           quorum_strength, min_quorum)}
-        self.best_signal_algorithm = best_signal_algorithm
+                                           quorum_strength, min_quorum),
+                                       "user": user_selection_algorithm}
+        self.best_signal_algorithm = best_signal_algorithm if user_selection_algorithm is None else "user"
+        self.user_selection_algorithm = user_selection_algorithm
         return self
 
     def refresh_ois(self):
@@ -596,6 +607,8 @@ class Sherlock:
         clean_flux = flux
         clean_flux_err = flux_err
         is_short_cadence = round(cadence) <= 5
+        if self.user_prepare is not None:
+            clean_time, clean_flux, clean_flux_err = self.user_prepare.prepare(object_info, clean_time, clean_flux, clean_flux_err)
         if (is_short_cadence and self.initial_smooth) or (self.initial_rms_mask and object_info.initial_mask is None):
             logging.info('================================================')
             logging.info('INITIAL FLUX CLEANING')
@@ -701,20 +714,21 @@ class Sherlock:
         if self.n_detrends > 1:
             axs = self.__trim_axs(axs, len(wl))
         flatten_inputs = []
+        flattener = Flattener()
         if self.detrend_cores > 1:
             for i in range(0, len(wl)):
-                flatten_inputs.append(self.FlattenInput(time, lc, wl[i]))
+                flatten_inputs.append(FlattenInput(time, lc, wl[i], self.bin_minutes))
             if self.detrend_method == 'gp':
-                flatten_results = self.run_multiprocessing(self.run_cores, self.flatten_gp, flatten_inputs)
+                flatten_results = self.run_multiprocessing(self.run_cores, flattener.flatten_gp, flatten_inputs)
             else:
-                flatten_results = self.run_multiprocessing(self.run_cores, self.flatten_bw, flatten_inputs)
+                flatten_results = self.run_multiprocessing(self.run_cores, flattener.flatten_bw, flatten_inputs)
         else:
             flatten_results = []
             for i in range(0, len(wl)):
                 if self.detrend_method == 'gp':
-                    flatten_results.append(self.flatten_gp(self.FlattenInput(time, lc, wl[i])))
+                    flatten_results.append(flattener.flatten_gp(FlattenInput(time, lc, wl[i], self.bin_minutes)))
                 else:
-                    flatten_results.append(self.flatten_bw(self.FlattenInput(time, lc, wl[i])))
+                    flatten_results.append(flattener.flatten_bw(FlattenInput(time, lc, wl[i], self.bin_minutes)))
         i = 0
         plot_axs = axs
         for flatten_lc_detrended, lc_trend, bin_centers, bin_means, flatten_wl in flatten_results:
@@ -736,30 +750,6 @@ class Sherlock:
         fig.clf()
         plt.close(fig)
         return final_lcs, wl
-
-    def flatten_bw(self, flatten_input):
-        flatten_lc, trend = flatten(flatten_input.time, flatten_input.flux, window_length=flatten_input.wl,
-                                    return_trend=True, method=self.detrend_method, break_tolerance=0.5)
-        flatten_lc = sigma_clip(flatten_lc, sigma_lower=20, sigma_upper=3)
-        bin_centers_i, bin_means_i, bin_width_i, bin_edges_i, bin_stds_i = \
-            self.__compute_flatten_stats(flatten_input.time, flatten_lc)
-        return flatten_lc, trend, bin_centers_i, bin_means_i, flatten_input.wl
-
-    def flatten_gp(self, flatten_input):
-        flatten_lc, trend = flatten(flatten_input.time, flatten_input.flux, method=self.detrend_method, kernel='matern',
-                                               kernel_size=flatten_input.wl, return_trend=True, break_tolerance=0.5)
-        flatten_lc = sigma_clip(flatten_lc, sigma_lower=20, sigma_upper=3)
-        bin_centers_i, bin_means_i, bin_width_i, bin_edges_i, bin_stds_i = \
-            self.__compute_flatten_stats(flatten_input.time, flatten_lc)
-        return flatten_lc, trend, bin_centers_i, bin_means_i, flatten_input.wl
-
-    def __compute_flatten_stats(self, time, flux):
-        bins_i = len(time) * 2 / self.bin_minutes
-        bin_means_i, bin_edges_i, binnumber_i = stats.binned_statistic(time, flux, statistic='mean', bins=bins_i)
-        bin_stds_i, _, _ = stats.binned_statistic(time, flux, statistic='std', bins=bins_i)
-        bin_width_i = (bin_edges_i[1] - bin_edges_i[0])
-        bin_centers_i = bin_edges_i[1:] - bin_width_i / 2
-        return bin_centers_i, bin_means_i, bin_width_i, bin_edges_i, bin_stds_i
 
     def __identify_signals(self, object_info, time, lcs, flux_err, star_info, transits_min_count, wl, id_run, cadence):
         detrend_logging_customs = 'ker_size' if self.detrend_method == 'gp' else "win_size"
@@ -976,12 +966,6 @@ class Sherlock:
     def run_multiprocessing(self, n_processors, func, func_input):
         with Pool(processes=n_processors) as pool:
             return pool.map(func, func_input)
-
-    class FlattenInput:
-        def __init__(self, time, flux, wl):
-            self.time = time
-            self.flux = flux
-            self.wl = wl
 
     class KoiInput:
         def __init__(self, star_id, kic_id):
