@@ -342,7 +342,7 @@ class Sherlock:
                 object_report["ffi"] = isinstance(object_info, MissionFfiIdObjectInfo) or \
                                        isinstance(object_info, MissionFfiCoordsObjectInfo)
 
-                object_report["oi"]  = self.__find_matching_oi(object_info, object_report["period"])
+                object_report["oi"] = self.__find_matching_oi(object_info, object_report["period"])
                 if best_signal_score == 1:
                     logging.info('New best signal is good enough to keep searching. Going to the next run.')
                     time, flux = self.__apply_mask_from_transit_results(time, flux, transit_results,
