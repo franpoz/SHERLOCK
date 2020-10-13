@@ -1,0 +1,14 @@
+# We will provide external customized algorithms for light curve preparation, signal selection and search zone settings.
+# These algorithms are extensions from SHERLOCK abstract classes as you can inspect under the
+# examples/properties/custom_algorithms directory.
+
+GLOBAL_TWO_MIN_IDS:
+  'TIC 181804752': 'all'
+
+AUTO_DETREND_ENABLED: False
+INITIAL_HIGH_RMS_MASK: False
+INITIAL_SMOOTH_ENABLED: False
+PREPARE_ALGORITHM: "/home/user/pathToRepository/examples/properties/custom_algorithms/ButterworthCurvePreparer.py"
+CUSTOM_SEARCH_ZONE: "/home/user/pathToRepository/examples/properties/custom_algorithms/NeptunianDesertSearchZone.py"
+CUSTOM_SELECTION_ALGORITHM: "/home/user/pathToRepository/examples/properties/custom_algorithms/RandomSignalSelection.py"
+
