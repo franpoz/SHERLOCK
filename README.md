@@ -146,6 +146,13 @@ If enabled, this feature automatically disables
 for the assigned object. The user can input a period to be used for an initial detrend of the 
 original signal. 
 
+#### Custom curve preparation
+You can even inject your own python code to perform a custom signal preparation task by implementing the
+[CurvePreparer](https://github.com/franpoz/SHERLOCK/tree/master/sherlockpipe/curve_preparer/CurvePreparer.py)
+class that we provide. Then, inject your python file into the CUSTOM_PREPARER property and let SHERLOCK
+use your code (see 
+[example](https://github.com/franpoz/SHERLOCK/tree/master/examples/properties/custom_algorithms.yaml))!
+
 ### Main execution (run)
 After the preparation stage, the SHERLOCK PIPEline will execute what we call `runs` iteratively:
 * Several detrended fluxes with increasing window sizes will be extracted from the original 
@@ -163,6 +170,9 @@ different algorithms for the selection:
     (same ephemerids). The more detrended fluxes agree, the more SNR they get. This algorithm 
     can be slightly tuned by changing the stregth or weight of every detrend vote. It is currently 
     in testing stage and hasn't been used intensively.
+    * Custom: You can also inject your own signal selection algorithm by implementing the 
+    [SignalSelector](https://github.com/franpoz/SHERLOCK/tree/master/sherlockpipe/scoring/SignalSelector.py)
+    class. See the [example](https://github.com/franpoz/SHERLOCK/tree/master/examples/properties/custom_algorithms.yaml).
 * Measurements matching the chosen transit are masked in the original PDCSAP signal so they will
 not be found by subsequent runs.
 
