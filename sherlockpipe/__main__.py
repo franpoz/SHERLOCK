@@ -1,3 +1,5 @@
+import pickle
+import sys
 from sherlockpipe import sherlock
 from sherlockpipe.objectinfo.InputObjectInfo import InputObjectInfo
 from sherlockpipe.objectinfo.MissionFfiIdObjectInfo import MissionFfiIdObjectInfo
@@ -7,6 +9,17 @@ from sherlockpipe.objectinfo.MissionObjectInfo import MissionObjectInfo
 from argparse import ArgumentParser
 from os import path
 import yaml
+import importlib.util
+
+
+def load_module(module_path):
+    spec = importlib.util.spec_from_file_location("customs", module_path)
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+    sys.modules[spec.name] = module
+    spec.loader.exec_module(module)
+    return module
+
 
 if __name__ == '__main__':
     ap = ArgumentParser(description='Searching for Hints of Exoplanets fRom Lightcurves Of spaCe-based seeKers')
@@ -116,6 +129,30 @@ if __name__ == '__main__':
                 object_info.initial_detrend_period = \
                 sherlock_user_properties["INPUT_FILES_WITH_IDS_INITIAL_DETREND_PERIOD"][object_info.mission_id()]
 
+    user_search_zone = None
+    user_prepare = None
+    user_selection_algorithm = None
+    from pathlib import Path
+    if sherlock_user_properties["CUSTOM_SEARCH_ZONE"] is not None:
+        user_search_zone = load_module(sherlock_user_properties["CUSTOM_SEARCH_ZONE"])
+        class_name = Path(sherlock_user_properties["CUSTOM_SEARCH_ZONE"].replace(".py", "")).name
+        user_search_zone = getattr(user_search_zone, class_name)
+        globals()[class_name] = user_search_zone
+        pickle.dumps(user_search_zone)
+        user_search_zone = user_search_zone()
+    if sherlock_user_properties["PREPARE_ALGORITHM"] is not None:
+        user_prepare = load_module(sherlock_user_properties["PREPARE_ALGORITHM"])
+        class_name = Path(sherlock_user_properties["PREPARE_ALGORITHM"].replace(".py", "")).name
+        user_prepare = getattr(user_prepare, class_name)()
+        globals()[class_name] = user_prepare
+        pickle.dumps(user_prepare)
+    if sherlock_user_properties["CUSTOM_SELECTION_ALGORITHM"] is not None:
+        user_selection_algorithm = load_module(sherlock_user_properties["CUSTOM_SELECTION_ALGORITHM"])
+        class_name = Path(sherlock_user_properties["CUSTOM_SELECTION_ALGORITHM"].replace(".py", "")).name
+        user_selection_algorithm = getattr(user_selection_algorithm, class_name)()
+        globals()[class_name] = user_selection_algorithm
+        pickle.dumps(user_selection_algorithm)
+
     ## Adding all object infos to same array
     object_infos.extend(mission_object_infos)
     object_infos.extend(ffi_object_infos)
@@ -130,16 +167,18 @@ if __name__ == '__main__':
                        sherlock_user_properties["DETRENDS_NUMBER"],
                        sherlock_user_properties["DETREND_METHOD"], sherlock_user_properties["DETREND_CORES"],
                        sherlock_user_properties["AUTO_DETREND_ENABLED"], sherlock_user_properties["AUTO_DETREND_RATIO"],
-                       sherlock_user_properties["AUTO_DETREND_METHOD"]) \
+                       sherlock_user_properties["AUTO_DETREND_METHOD"],
+                       user_prepare) \
         .setup_transit_adjust_params(sherlock_user_properties["MAX_RUNS"], sherlock_user_properties["MIN_SECTORS"],
                                      sherlock_user_properties["MAX_SECTORS"],
                                      sherlock_user_properties["PERIOD_PROTECT"],
-                                     sherlock_user_properties["SEARCH_ZONE"],
+                                     sherlock_user_properties["SEARCH_ZONE"], user_search_zone,
                                      sherlock_user_properties["PERIOD_MIN"], sherlock_user_properties["PERIOD_MAX"],
                                      sherlock_user_properties["BIN_MINUTES"], sherlock_user_properties["CPU_CORES"],
                                      sherlock_user_properties["SNR_MIN"], sherlock_user_properties["SDE_MIN"],
                                      sherlock_user_properties["FAP_MAX"], sherlock_user_properties["MASK_MODE"],
                                      sherlock_user_properties["BEST_SIGNAL_ALGORITHM"],
                                      sherlock_user_properties["QUORUM_STRENGTH"],
-                                     sherlock_user_properties["MIN_QUORUM"]) \
+                                     sherlock_user_properties["MIN_QUORUM"],
+                                     user_selection_algorithm) \
         .run()

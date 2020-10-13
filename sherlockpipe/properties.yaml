@@ -60,7 +60,8 @@ AUTO_DETREND_METHOD: 'cosine'
 # The auto-detrend ratio is the factor which will be multiplied to the stronger period found in the auto-detrend
 # process. The result is the window size to be used in the auto-detrend procedure.
 AUTO_DETREND_RATIO: 0.25
-
+# User defined python class extending SHERLOCK Preparer abstract class. An absolute path to the file must be provided.
+PREPARE_ALGORITHM:
 ######################################################################################################################
 ### TRANSIT ADJUST SETUP
 ######################################################################################################################
@@ -74,6 +75,8 @@ CPU_CORES: 7
 # Search zone can be 'hz' or 'ohz' for habitable and optimistic habitable zones. This will override period_min and
 # period_max values
 SEARCH_ZONE:
+# User defined python class extending SHERLOCK SearchZone abstract class. An absolute path to the file must be provided.
+CUSTOM_SEARCH_ZONE:
 PERIOD_MIN: 0.5
 PERIOD_MAX: 33
 PERIOD_PROTECT: 10
@@ -89,7 +92,9 @@ QUORUM_STRENGTH: 1
 # If QUORUM is used as BEST_SIGNAL_ALGORITHM, this variable is used to decide when SHERLOCK should be stopped because of
 # lack of persistence in the found signals of the last executed run.
 MIN_QUORUM: 0
-
+# User defined python class extending SHERLOCK SignalSelector abstract class. An absolute path to the file must be
+# provided.
+CUSTOM_SELECTION_ALGORITHM:
 ######################################################################################################################
 ### INITIAL MASK
 ######################################################################################################################
