@@ -1,7 +1,5 @@
 import logging
-
 import numpy as np
-
 from sherlockpipe.star import starinfo
 from sherlockpipe.objectinfo.ObjectProcessingError import ObjectProcessingError
 from sherlockpipe.objectinfo.preparer.LightcurveBuilder import LightcurveBuilder
