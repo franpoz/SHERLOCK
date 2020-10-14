@@ -34,12 +34,19 @@ class MissionLightcurveBuilder(LightcurveBuilder):
         if lcf is None:
             raise ObjectProcessingError("Light curve not found for object id " + mission_id)
         lc = None
+        matching_objects = []
         for i in range(0, len(lcf.PDCSAP_FLUX)):
             if lcf.PDCSAP_FLUX[i].label == mission_id:
                 if lc is None:
                     lc = lcf.PDCSAP_FLUX[i]
                 else:
                     lc.append(lcf.PDCSAP_FLUX[i])
+            else:
+                matching_objects.append(lcf.PDCSAP_FLUX[i].label)
+        if len(matching_objects) > 0:
+            logging.warning("================================================")
+            logging.warning("TICS IN THE SAME PIXEL: " + str(matching_objects))
+            logging.warning("================================================")
         lc = lc.remove_nans()
         transits_min_count = 1 if len(lcf) == 0 else 2
         if mission_prefix == self.MISSION_ID_KEPLER or mission_id == self.MISSION_ID_KEPLER_2:
