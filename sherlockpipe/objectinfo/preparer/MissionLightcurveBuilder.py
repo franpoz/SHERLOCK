@@ -1,4 +1,7 @@
 import logging
+
+import numpy as np
+
 from sherlockpipe.star import starinfo
 from sherlockpipe.objectinfo.ObjectProcessingError import ObjectProcessingError
 from sherlockpipe.objectinfo.preparer.LightcurveBuilder import LightcurveBuilder
@@ -49,4 +52,4 @@ class MissionLightcurveBuilder(LightcurveBuilder):
             logging.info("Correcting K2 motion in light curve...")
             quarters = [lcfile.campaign for lcfile in lcf]
             lc = lc.to_corrector("sff").correct(windows=20)
-        return lc, star_info, transits_min_count, sectors, quarters
+        return lc, star_info, transits_min_count, np.unique(sectors), np.unique(quarters)
