@@ -41,7 +41,7 @@ setuptools.setup(
                         "tess-point",
                         "reproject==0.4",
                         "reportlab",
-                        "astropy==3.1.1",
+                        "astropy",
                         "mock > 2.0.0"
     ]
 )
