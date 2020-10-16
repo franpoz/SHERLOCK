@@ -2,6 +2,7 @@ import os
 import shutil
 import unittest
 
+
 from sherlockpipe.objectinfo.InputObjectInfo import InputObjectInfo
 from sherlockpipe.objectinfo.MissionFfiCoordsObjectInfo import MissionFfiCoordsObjectInfo
 from sherlockpipe.objectinfo.MissionFfiIdObjectInfo import MissionFfiIdObjectInfo
@@ -18,12 +19,12 @@ from sherlockpipe.sherlock import Sherlock
 
 class SherlockTests(unittest.TestCase):
     def test_setup_files(self):
-        sherlock = Sherlock(None)
-        sherlock.setup_files("inner/")
+        sherlock = Sherlock(False, None)
+        sherlock.setup_files(False, "inner/")
         self.assertEqual("inner/", sherlock.results_dir)
 
     def test_setup_detrend(self):
-        sherlock = Sherlock(None)
+        sherlock = Sherlock(False, None)
         sherlock.setup_detrend(initial_smooth=False, initial_rms_mask=False, initial_rms_threshold=3,
                                initial_rms_bin_hours=9, n_detrends=2, detrend_method="gp", cores=3,
                                auto_detrend_periodic_signals=True, auto_detrend_ratio=1 / 2,
@@ -40,7 +41,7 @@ class SherlockTests(unittest.TestCase):
         self.assertEqual("cosine", sherlock.auto_detrend_method)
 
     def test_setup_transit_adjust_params(self):
-        sherlock = Sherlock(None)
+        sherlock = Sherlock(False, None)
         sherlock.setup_transit_adjust_params(max_runs=5, period_protec=5, period_min=1, period_max=2, bin_minutes=5,
                                              run_cores=3, snr_min=6, sde_min=5, fap_max=0.05, mask_mode="subtract",
                                              best_signal_algorithm="quorum", quorum_strength=2)
@@ -58,7 +59,7 @@ class SherlockTests(unittest.TestCase):
         # TODO test quorum strength
 
     def test_scoring_algorithm(self):
-        sherlock = Sherlock(None)
+        sherlock = Sherlock(False, None)
         sherlock.setup_transit_adjust_params(best_signal_algorithm="basic")
         self.assertTrue(isinstance(sherlock.signal_score_selectors[sherlock.best_signal_algorithm],
                                    BasicSignalSelector))
@@ -71,23 +72,23 @@ class SherlockTests(unittest.TestCase):
 
     def test_preparer(self):
         object_info = MissionObjectInfo("TIC 1234567", 'all')
-        sherlock = Sherlock(object_info)
+        sherlock = Sherlock(False, object_info)
         self.assertTrue(isinstance(sherlock.lightcurve_builders[type(object_info)], MissionLightcurveBuilder))
         object_info = MissionFfiIdObjectInfo("TIC 1234567", 'all')
-        sherlock = Sherlock(object_info)
+        sherlock = Sherlock(False, object_info)
         self.assertTrue(isinstance(sherlock.lightcurve_builders[type(object_info)], MissionFfiLightcurveBuilder))
         object_info = MissionFfiCoordsObjectInfo(19, 15, 'all')
-        sherlock = Sherlock(object_info)
+        sherlock = Sherlock(False, object_info)
         self.assertTrue(isinstance(sherlock.lightcurve_builders[type(object_info)], MissionFfiLightcurveBuilder))
         object_info = MissionInputObjectInfo("TIC 1234567", "testfilename.csv")
-        sherlock = Sherlock(object_info)
+        sherlock = Sherlock(False, object_info)
         self.assertTrue(isinstance(sherlock.lightcurve_builders[type(object_info)], MissionInputLightcurveBuilder))
         object_info = InputObjectInfo("testfilename.csv")
-        sherlock = Sherlock(object_info)
+        sherlock = Sherlock(False, object_info)
         self.assertTrue(isinstance(sherlock.lightcurve_builders[type(object_info)], MissionInputLightcurveBuilder))
 
     def test_refresh_tois(self):
-        sherlock = Sherlock(None)
+        sherlock = Sherlock(False, None)
         sherlock.ois_manager.update_tic_csvs()
         try:
             self.assertTrue(os.path.isfile(sherlock.ois_manager.tois_csv))
@@ -95,7 +96,7 @@ class SherlockTests(unittest.TestCase):
             os.remove(sherlock.ois_manager.tois_csv)
 
     def test_refresh_kois(self):
-        sherlock = Sherlock(None)
+        sherlock = Sherlock(False, None)
         sherlock.ois_manager.update_kic_csvs()
         try:
             self.assertTrue(os.path.isfile(sherlock.ois_manager.kic_star_csv))
@@ -107,7 +108,7 @@ class SherlockTests(unittest.TestCase):
             os.remove(sherlock.ois_manager.kois_csv)
 
     def test_refresh_epicois(self):
-        sherlock = Sherlock(None)
+        sherlock = Sherlock(False, None)
         sherlock.ois_manager.update_epic_csvs()
         try:
             self.assertTrue(os.path.isfile(sherlock.ois_manager.epic_csv))
@@ -115,8 +116,8 @@ class SherlockTests(unittest.TestCase):
             os.remove(sherlock.ois_manager.epic_csv)
 
     def test_ois_loaded(self):
-        sherlock = Sherlock(None)
-        sherlock.load_ois()
+        sherlock = Sherlock(False, None)
+        sherlock.load_ois(True)
         sherlock.filter_hj_ois()
         try:
             self.assertGreater(len(sherlock.ois.index), 100)
@@ -131,23 +132,23 @@ class SherlockTests(unittest.TestCase):
             os.remove(sherlock.ois_manager.epic_csv)
 
     def test_run_empty(self):
-        sherlock = Sherlock([])
+        sherlock = Sherlock(False, [])
         self.assertFalse(sherlock.use_ois)
         sherlock.run()
-        object_dir = "FFI_TIC 181084752_all"
+        object_dir = "TIC181084752_FFI_all"
         self.assertFalse(os.path.exists(object_dir))
 
     def test_run(self):
-        sherlock = Sherlock([MissionFfiIdObjectInfo("TIC 181804752", 'all')])
+        sherlock = Sherlock(False, [MissionFfiIdObjectInfo("TIC 181804752", 'all')])
         sherlock.setup_detrend(n_detrends=1, initial_smooth=False, initial_rms_mask=False)\
             .setup_transit_adjust_params(max_runs=1).run()
-        self.__assert_run_files("FFI_TIC 181804752_all", assert_rms_mask=False)
+        self.__assert_run_files("TIC181804752_FFI_all", assert_rms_mask=False)
 
     def test_run_with_rms_mask(self):
-        sherlock = Sherlock([MissionFfiIdObjectInfo("TIC 181804752", 'all')])
+        sherlock = Sherlock(False, [MissionFfiIdObjectInfo("TIC 181804752", 'all')])
         sherlock.setup_detrend(n_detrends=2, initial_rms_mask=True)\
             .setup_transit_adjust_params(max_runs=1).run()
-        self.__assert_run_files("FFI_TIC 181804752_all")
+        self.__assert_run_files("TIC181804752_FFI_all")
 
     def __assert_run_files(self, object_dir, assert_rms_mask=True):
         run_dir = object_dir + "/1"
@@ -166,6 +167,7 @@ class SherlockTests(unittest.TestCase):
             self.assertTrue(os.path.isfile(candidates_csv_file))
         finally:
             shutil.rmtree(object_dir, ignore_errors=True)
+
 
 if __name__ == '__main__':
     unittest.main()
