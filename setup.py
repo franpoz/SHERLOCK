@@ -34,6 +34,7 @@ setuptools.setup(
                         "pyyaml",
                         "allesfitter",
                         "seaborn",
+                        "bokeh",
                         "astroplan",
                         "astroquery",
                         "sklearn",
