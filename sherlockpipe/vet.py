@@ -19,7 +19,9 @@ from argparse import ArgumentParser
 from sherlockpipe import tpfplotter
 import six
 import sys
+import sherlockpipe.LATTE
 sys.modules['astropy.extern.six'] = six
+sys.modules['LATTE'] = sherlockpipe.LATTE
 
 matplotlib.use('Agg')
 import pandas as pd
@@ -27,7 +29,7 @@ import os
 from os.path import exists
 import ast
 import csv
-from sherlockpipe.LATTEsub import LATTEutils, LATTEbrew
+from sherlockpipe.LATTE import LATTEutils, LATTEbrew
 from os import path
 
 '''WATSON: Verboseless Vetting and Adjustments of Transits for Sherlock Objects of iNterest
