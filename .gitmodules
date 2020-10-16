@@ -3,4 +3,4 @@
 	url = https://github.com/jlillo/tpfplotter
 [submodule "sherlockpipe/LATTEsub"]
 	path = sherlockpipe/LATTEsub
-	url = https://github.com/martindevora/LATTE
+	url = https://github.com/noraeisner/LATTE
