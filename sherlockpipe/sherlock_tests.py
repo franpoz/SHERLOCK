@@ -152,10 +152,10 @@ class SherlockTests(unittest.TestCase):
 
     def __assert_run_files(self, object_dir, assert_rms_mask=True):
         run_dir = object_dir + "/1"
-        periodogram_file = object_dir + "/Periodogram_FFI_TIC 181804752_all.png"
-        rms_mask_file = object_dir + "/High_RMS_Mask_FFI_TIC 181804752_all.png"
+        periodogram_file = object_dir + "/Periodogram_TIC181804752_FFI_all.png"
+        rms_mask_file = object_dir + "/High_RMS_Mask_TIC181804752_FFI_all.png"
         lc_file = object_dir + "/lc.csv"
-        report_file = object_dir + "/FFI_TIC 181804752_all_report.log"
+        report_file = object_dir + "/TIC181804752_FFI_all_report.log"
         candidates_csv_file = object_dir + "/candidates.csv"
         try:
             self.assertTrue(os.path.exists(run_dir))
