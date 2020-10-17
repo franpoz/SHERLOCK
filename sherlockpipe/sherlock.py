@@ -313,12 +313,15 @@ class Sherlock:
             logging.info('================================================')
             logging.info('SEARCH RUNS')
             logging.info('================================================')
+            lcs, wl = self.__detrend(time, flux, star_info)
+            lcs = np.concatenate(([flux], lcs), axis=0)
+            wl = np.concatenate(([0], wl), axis=0)
             while best_signal_score == 1 and id_run <= self.max_runs:
                 object_report = {}
                 logging.info("________________________________ run %s________________________________", id_run)
                 transit_results, signal_selection = \
-                    self.__analyse(object_info, time, flux, flux_err, star_info, id_run, transits_min_count, cadence,
-                                   self.report[sherlock_id])
+                    self.__analyse(object_info, time, lcs, flux_err, star_info, id_run, transits_min_count, cadence,
+                                   self.report[sherlock_id], wl)
                 best_signal_score = signal_selection.score
                 object_report["Object Id"] = mission_id
                 object_report["run"] = id_run
@@ -347,7 +350,7 @@ class Sherlock:
                 object_report["oi"] = self.__find_matching_oi(object_info, object_report["period"])
                 if best_signal_score == 1:
                     logging.info('New best signal is good enough to keep searching. Going to the next run.')
-                    time, flux = self.__apply_mask_from_transit_results(time, flux, transit_results,
+                    time, lcs = self.__apply_mask_from_transit_results(time, lcs, transit_results,
                                                                         signal_selection.curve_index)
                     id_run += 1
                     if id_run > self.max_runs:
@@ -679,10 +682,7 @@ class Sherlock:
                                            method=self.auto_detrend_method, break_tolerance=0.5)
         return flatten_lc, lc_trend
 
-    def __analyse(self, object_info, time, lc, flux_err, star_info, id_run, transits_min_count, cadence, report):
-        detrend_lcs, wl = self.__detrend(time, lc, star_info, id_run)
-        lcs = np.concatenate(([lc], detrend_lcs), axis=0)
-        wl = np.concatenate(([0], wl), axis=0)
+    def __analyse(self, object_info, time, lcs, flux_err, star_info, id_run, transits_min_count, cadence, report, wl):
         logging.info('=================================')
         logging.info('SEARCH OF SIGNALS - Run %s', id_run)
         logging.info('=================================')
@@ -692,17 +692,17 @@ class Sherlock:
         logging.info(signal_selection.get_message())
         return transit_results, signal_selection
 
-    def __detrend(self, time, lc, star_info, id_run):
+    def __detrend(self, time, lc, star_info):
         wl_min = self.wl_min[star_info.object_id]
         wl_max = self.wl_max[star_info.object_id]
         bins = len(time) * 2 / self.bin_minutes
         bin_means, bin_edges, binnumber = stats.binned_statistic(time, lc, statistic='mean', bins=bins)
         logging.info('=================================')
-        logging.info('MODELS IN THE DETRENDING - Run ' + str(id_run))
+        logging.info('MODELS IN THE DETRENDING')
         logging.info('=================================')
         logging.info("%-25s%-17s%-15s%-11s%-15s", "light_curve", "Detrend_method", "win/ker_size", "RMS (ppm)",
                      "RMS_10min (ppm)")
-        logging.info("%-25s%-17s%-15s%-11.2f%-15.2f", "PDCSAP_FLUX_" + str(id_run), "---", "---", np.std(lc) * 1e6,
+        logging.info("%-25s%-17s%-15s%-11.2f%-15.2f", "PDCSAP_FLUX", "---", "---", np.std(lc) * 1e6,
                      np.std(bin_means[~np.isnan(bin_means)]) * 1e6)
         wl_step = (wl_max - wl_min) / self.n_detrends
         wl = np.arange(wl_min, wl_max, wl_step)  # we define all the posibles window_length that we apply
@@ -747,8 +747,8 @@ class Sherlock:
             plot_axs.plot(time, lc_trend, linewidth=1, color='orange', alpha=1.0)
             i = i + 1
 
-        plot_dir = self.__init_object_run_dir(star_info.object_id, id_run)
-        plt.savefig(plot_dir + 'Detrends_' + 'run_' + str(id_run) + '_' + str(star_info.object_id) + '.png', dpi=200)
+        plot_dir = self.__init_object_dir(star_info.object_id)
+        plt.savefig(plot_dir + 'Detrends_' + str(star_info.object_id) + '.png', dpi=200)
         fig.clf()
         plt.close(fig)
         return final_lcs, wl
@@ -761,12 +761,13 @@ class Sherlock:
                      "Semi-major axis", "Habitability Zone")
         transit_results = {}
         object_dir = self.__init_object_dir(object_info.sherlock_id())
+        run_dir = self.__init_object_run_dir(object_info.sherlock_id(), id_run)
         lc_df = pandas.DataFrame(columns=['#time', 'flux', 'flux_err'])
         args = np.argwhere(~np.isnan(lcs[0])).flatten()
         lc_df['#time'] = time[args]
         lc_df['flux'] = lcs[0][args]
         lc_df['flux_err'] = flux_err[args]
-        lc_df.to_csv(object_dir + str(id_run) + "/lc_0.csv", index=False)
+        lc_df.to_csv(run_dir + "/lc_0.csv", index=False)
         transit_result = self.__adjust_transit(time, lcs[0], star_info, transits_min_count, transit_results, report)
         transit_results[0] = transit_result
         r_planet = self.__calculate_planet_radius(star_info, transit_result.depth)
@@ -795,7 +796,7 @@ class Sherlock:
             lc_df['#time'] = time[args]
             lc_df['flux'] = lcs[i][args]
             lc_df['flux_err'] = flux_err[args]
-            lc_df.to_csv(object_dir + str(id_run) + "/lc_" + str(i) + ".csv", index=False)
+            lc_df.to_csv(run_dir + "/lc_" + str(i) + ".csv", index=False)
             transit_result = self.__adjust_transit(time, lcs[i], star_info, transits_min_count, transit_results, report)
             transit_results[i] = transit_result
             r_planet = self.__calculate_planet_radius(star_info, transit_result.depth)
@@ -974,21 +975,25 @@ class Sherlock:
         fig.clf()
         plt.close(fig)
 
-    def __apply_mask_from_transit_results(self, time, flux, transit_results, best_signal_index):
+    def __apply_mask_from_transit_results(self, time, lcs, transit_results, best_signal_index):
         intransit = tls.transit_mask(time, transit_results[best_signal_index].period,
                                      2 * transit_results[best_signal_index].duration, transit_results[best_signal_index].t0)
         if self.mask_mode == 'subtract':
             model_flux, model_flux_edges, model_flux_binnumber = stats.binned_statistic(
                 transit_results[best_signal_index].results.model_lightcurve_time,
                 transit_results[best_signal_index].results.model_lightcurve_model, statistic='mean', bins=len(intransit))
-            flux[intransit] = flux[intransit] + np.full(len(flux[intransit]), 1) - model_flux[intransit]
-            flux[intransit] = np.full(len(flux[intransit]), 1)
+            for flux in lcs:
+                flux[intransit] = flux[intransit] + np.full(len(flux[intransit]), 1) - model_flux[intransit]
+                flux[intransit] = np.full(len(flux[intransit]), 1)
             clean_time = time
-            clean_flux = flux
+            clean_lcs = lcs
         else:
-            flux[intransit] = np.nan
-            clean_time, clean_flux = tls.cleaned_array(time, flux)
-        return clean_time, clean_flux
+            clean_lcs = []
+            for key, flux in enumerate(lcs):
+                flux[intransit] = np.nan
+                clean_time, clean_flux = tls.cleaned_array(time, flux)
+                clean_lcs.append(clean_flux)
+        return clean_time, np.array(clean_lcs)
 
     def run_multiprocessing(self, n_processors, func, func_input):
         with Pool(processes=n_processors) as pool:
