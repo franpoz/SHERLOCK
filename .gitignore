@@ -109,6 +109,7 @@ venv/
 ENV/
 env.bak/
 venv.bak/
+myenv/
 
 # Spyder project settings
 .spyderproject
@@ -139,4 +140,3 @@ dmypy.json
 **/KIC*
 **/EPIC*
 **/user-properties.yaml
-/pip_installer.sh
