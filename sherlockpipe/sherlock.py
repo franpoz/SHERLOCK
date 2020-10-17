@@ -767,7 +767,7 @@ class Sherlock:
         lc_df['flux'] = lcs[0][args]
         lc_df['flux_err'] = flux_err[args]
         lc_df.to_csv(object_dir + str(id_run) + "/lc_0.csv", index=False)
-        transit_result = self.__adjust_transit(time, lcs[0], star_info, transits_min_count, report)
+        transit_result = self.__adjust_transit(time, lcs[0], star_info, transits_min_count, transit_results, report)
         transit_results[0] = transit_result
         r_planet = self.__calculate_planet_radius(star_info, transit_result.depth)
         rp_rs = transit_result.results.rp_rs
@@ -796,7 +796,7 @@ class Sherlock:
             lc_df['flux'] = lcs[i][args]
             lc_df['flux_err'] = flux_err[args]
             lc_df.to_csv(object_dir + str(id_run) + "/lc_" + str(i) + ".csv", index=False)
-            transit_result = self.__adjust_transit(time, lcs[i], star_info, transits_min_count, report)
+            transit_result = self.__adjust_transit(time, lcs[i], star_info, transits_min_count, transit_results, report)
             transit_results[i] = transit_result
             r_planet = self.__calculate_planet_radius(star_info, transit_result.depth)
             rp_rs = transit_result.results.rp_rs
@@ -834,7 +834,7 @@ class Sherlock:
             oi = ""
         return oi
 
-    def __adjust_transit(self, time, lc, star_info, transits_min_count, report):
+    def __adjust_transit(self, time, lc, star_info, transits_min_count, run_results, report):
         model = tls.transitleastsquares(time, lc)
         power_args = {"period_min": self.period_min, "period_max": self.period_max,
                       "n_transits_min": transits_min_count,
@@ -867,7 +867,7 @@ class Sherlock:
                                             - results['model_folded_phase'][intransit_folded_model[0]])
         else:
             duration = results['duration']
-        harmonic = self.__is_harmonic(results, report)
+        harmonic = self.__is_harmonic(results, run_results, report)
         return TransitResult(results, results.period, results.period_uncertainty, duration,
                              results.T0, depths, depth, transit_count, results.snr,
                              results.SDE, results.FAP, border_score, in_transit, harmonic)
@@ -894,23 +894,27 @@ class Sherlock:
             border_score = 1 - transits_in_edge_count / len(transit_depths)
         return border_score
 
-    def __is_harmonic(self, tls_results, report):
+    def __is_harmonic(self, tls_results, run_results, report):
         scales = [0.25, 0.5, 1, 2, 4]
         if self.rotator_period is not None:
-            rotator_scale = round(self.rotator_period / tls_results.period, 2)
+            rotator_scale = round(tls_results.period / self.rotator_period, 2)
             rotator_harmonic = np.array(np.argwhere((np.array(scales) > rotator_scale - 0.02) & (np.array(scales) < rotator_scale + 0.02))).flatten()
             if len(rotator_harmonic) > 0:
                 return str(scales[rotator_harmonic[0]]) + "*source"
-        period_scales = [round(item["period"] / tls_results.period, 2) for item in report]
-        period_harmonics = []
-        for period_scale in period_scales:
+        period_scales = [tls_results.period / round(item["period"], 2) for item in report]
+        for key, period_scale in enumerate(period_scales):
             period_harmonic = np.array(np.argwhere((np.array(scales) > period_scale - 0.02) & (np.array(scales) < period_scale + 0.02))).flatten()
-            if len(period_harmonic) == 0:
-                period_harmonic = -1
-            period_harmonics.append(period_harmonic)
-        period_harmonics = np.array(period_harmonics).flatten()
-        harmonic = next((str(item) + "*" + str(key) for key, item in enumerate(period_harmonics) if item > -1), "-")
-        return harmonic
+            if len(period_harmonic) > 0:
+                period_harmonic = scales[period_harmonic[0]]
+                return str(period_harmonic) + "*" + str(key)
+        period_scales = [round(tls_results.period / run_results[key].period, 2) for key in run_results]
+        for key, period_scale in enumerate(period_scales):
+            period_harmonic = np.array(np.argwhere(
+                (np.array(scales) > period_scale - 0.02) & (np.array(scales) < period_scale + 0.02))).flatten()
+            if len(period_harmonic) > 0 and period_harmonic[0] != 2:
+                period_harmonic = scales[period_harmonic[0]]
+                return str(period_harmonic) + "*same(" + str(key) + ")"
+        return "-"
 
     def __trim_axs(self, axs, N):
         [axis.remove() for axis in axs.flat[N:]]
