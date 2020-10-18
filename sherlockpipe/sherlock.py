@@ -768,7 +768,7 @@ class Sherlock:
         lc_df['flux'] = lcs[0][args]
         lc_df['flux_err'] = flux_err[args]
         lc_df.to_csv(run_dir + "/lc_0.csv", index=False)
-        transit_result = self.__adjust_transit(time, lcs[0], star_info, transits_min_count, transit_results, report)
+        transit_result = self.__adjust_transit(time, lcs[0], star_info, transits_min_count, transit_results, report, cadence)
         transit_results[0] = transit_result
         r_planet = self.__calculate_planet_radius(star_info, transit_result.depth)
         rp_rs = transit_result.results.rp_rs
@@ -835,7 +835,7 @@ class Sherlock:
             oi = ""
         return oi
 
-    def __adjust_transit(self, time, lc, star_info, transits_min_count, run_results, report):
+    def __adjust_transit(self, time, lc, star_info, transits_min_count, run_results, report, cadence):
         model = tls.transitleastsquares(time, lc)
         power_args = {"period_min": self.period_min, "period_max": self.period_max,
                       "n_transits_min": transits_min_count,
@@ -860,7 +860,7 @@ class Sherlock:
             depth = results.transit_depths
         in_transit = tls.transit_mask(time, results.period, results.duration, results.T0)
         transit_count = results.distinct_transit_count
-        border_score = self.__compute_border_score(time, results, in_transit)
+        border_score = self.__compute_border_score(time, results, in_transit, cadence)
         # Recalculating duration because of tls issue https://github.com/hippke/tls/issues/83
         intransit_folded_model = np.where( results['model_folded_model'] < 1. )[0]
         if len(intransit_folded_model) > 0:
@@ -876,14 +876,15 @@ class Sherlock:
     def __calculate_planet_radius(self, star_info, depth):
         return star_info.radius * math.sqrt(depth / 1000) / 0.0091577
 
-    def __compute_border_score(self, time, result, intransit):
+    def __compute_border_score(self, time, result, intransit, cadence):
+        shift_cadences = 60 / cadence
         transit_depths = np.nan_to_num(result.transit_depths)
         transit_depths = np.zeros(1) if type(transit_depths) is not np.ndarray else transit_depths
         transit_depths = transit_depths[transit_depths > 0] if len(transit_depths) > 0 else []
         border_score = 0
         if len(transit_depths) > 0:
-            shifted_transit_points = shift(intransit, 30, cval=np.nan)
-            inverse_shifted_transit_points = shift(intransit, -30, cval=np.nan)
+            shifted_transit_points = shift(intransit, shift_cadences, cval=np.nan)
+            inverse_shifted_transit_points = shift(intransit, -shift_cadences, cval=np.nan)
             intransit_shifted = intransit | shifted_transit_points | inverse_shifted_transit_points
             time_edge_indexes = np.where(abs(time[:-1] - time[1:]) > 0.05)[0]
             time_edge = np.full(len(time), False)
