@@ -907,14 +907,14 @@ class Sherlock:
             period_harmonic = np.array(np.argwhere((np.array(scales) > period_scale - 0.02) & (np.array(scales) < period_scale + 0.02))).flatten()
             if len(period_harmonic) > 0:
                 period_harmonic = scales[period_harmonic[0]]
-                return str(period_harmonic) + "*" + str(key)
+                return str(period_harmonic) + "*SOI" + str(key + 1)
         period_scales = [round(tls_results.period / run_results[key].period, 2) for key in run_results]
         for key, period_scale in enumerate(period_scales):
             period_harmonic = np.array(np.argwhere(
                 (np.array(scales) > period_scale - 0.02) & (np.array(scales) < period_scale + 0.02))).flatten()
             if len(period_harmonic) > 0 and period_harmonic[0] != 2:
                 period_harmonic = scales[period_harmonic[0]]
-                return str(period_harmonic) + "*same(" + str(key) + ")"
+                return str(period_harmonic) + "*this(" + str(key) + ")"
         return "-"
 
     def __trim_axs(self, axs, N):
