@@ -797,7 +797,7 @@ class Sherlock:
             lc_df['flux'] = lcs[i][args]
             lc_df['flux_err'] = flux_err[args]
             lc_df.to_csv(run_dir + "/lc_" + str(i) + ".csv", index=False)
-            transit_result = self.__adjust_transit(time, lcs[i], star_info, transits_min_count, transit_results, report)
+            transit_result = self.__adjust_transit(time, lcs[i], star_info, transits_min_count, transit_results, report, cadence)
             transit_results[i] = transit_result
             r_planet = self.__calculate_planet_radius(star_info, transit_result.depth)
             rp_rs = transit_result.results.rp_rs
@@ -878,15 +878,17 @@ class Sherlock:
 
     def __compute_border_score(self, time, result, intransit, cadence):
         shift_cadences = 60 / cadence
+        edge_limit_days = 0.05
         transit_depths = np.nan_to_num(result.transit_depths)
         transit_depths = np.zeros(1) if type(transit_depths) is not np.ndarray else transit_depths
         transit_depths = transit_depths[transit_depths > 0] if len(transit_depths) > 0 else []
+        # a=a[np.where([i for i, j in groupby(intransit)])]
         border_score = 0
         if len(transit_depths) > 0:
             shifted_transit_points = shift(intransit, shift_cadences, cval=np.nan)
             inverse_shifted_transit_points = shift(intransit, -shift_cadences, cval=np.nan)
             intransit_shifted = intransit | shifted_transit_points | inverse_shifted_transit_points
-            time_edge_indexes = np.where(abs(time[:-1] - time[1:]) > 0.05)[0]
+            time_edge_indexes = np.where(abs(time[:-1] - time[1:]) > edge_limit_days)[0]
             time_edge = np.full(len(time), False)
             time_edge[time_edge_indexes] = True
             time_edge[0] = True
@@ -894,7 +896,7 @@ class Sherlock:
             transits_in_edge = intransit_shifted & time_edge
             transits_in_edge_count = len(transits_in_edge[transits_in_edge])
             border_score = 1 - transits_in_edge_count / len(transit_depths)
-        return border_score
+        return border_score if border_score >= 0 else 0
 
     def __is_harmonic(self, tls_results, run_results, report):
         scales = [0.25, 0.5, 1, 2, 4]
