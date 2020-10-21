@@ -20,7 +20,8 @@ The package can be installed from the PyPi repositories:
 ```python3 -m pip install sherlockpipe```
 
 You can also use our Docker image from [DockerHub](https://hub.docker.com/repository/docker/sherlockpipe/sherlockpipe) 
-or build it from our [Dockerfile](https://github.com/franpoz/SHERLOCK/blob/master/docker/Dockerfile).
+or build it from our [Dockerfile](https://github.com/franpoz/SHERLOCK/blob/master/docker/Dockerfile). Therefore, you
+can also use as a Singularity container meanwhile they support Docker.
 
 ## Launch
 You can run SHERLOCK PIPEline as a standalone package by using:
