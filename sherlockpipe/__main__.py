@@ -165,8 +165,8 @@ if __name__ == '__main__':
                        sherlock_user_properties["INITIAL_HIGH_RMS_THRESHOLD"],
                        sherlock_user_properties["INITIAL_HIGH_RMS_BIN_HOURS"],
                        sherlock_user_properties["DETRENDS_NUMBER"],
-                       sherlock_user_properties["DETREND_METHOD"], sherlock_user_properties["DETREND_WL_MIN"],
-                       sherlock_user_properties["DETREND_WL_MAX"], sherlock_user_properties["DETREND_CORES"],
+                       sherlock_user_properties["DETREND_METHOD"], sherlock_user_properties["DETREND_L_MIN"],
+                       sherlock_user_properties["DETREND_L_MAX"], sherlock_user_properties["DETREND_CORES"],
                        sherlock_user_properties["AUTO_DETREND_ENABLED"], sherlock_user_properties["AUTO_DETREND_RATIO"],
                        sherlock_user_properties["AUTO_DETREND_METHOD"],
                        user_prepare) \
