@@ -550,7 +550,6 @@ class Sherlock:
         flux = lc.flux
         flux_err = lc.flux_err
         time = lc.time
-
         logging.info('================================================')
         logging.info("Detrend Window length / Kernel size")
         logging.info('================================================')
