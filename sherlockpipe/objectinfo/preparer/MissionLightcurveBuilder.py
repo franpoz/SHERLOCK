@@ -38,9 +38,9 @@ class MissionLightcurveBuilder(LightcurveBuilder):
         for i in range(0, len(lcf.PDCSAP_FLUX)):
             if lcf.PDCSAP_FLUX[i].label == mission_id:
                 if lc is None:
-                    lc = lcf.PDCSAP_FLUX[i]
+                    lc = lcf.PDCSAP_FLUX[i].normalize()
                 else:
-                    lc.append(lcf.PDCSAP_FLUX[i])
+                    lc.append(lcf.PDCSAP_FLUX[i].normalize())
             else:
                 matching_objects.append(lcf.PDCSAP_FLUX[i].label)
         if len(matching_objects) > 0:
