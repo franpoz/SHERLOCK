@@ -111,9 +111,9 @@ class Sherlock:
         return self
 
     def setup_detrend(self, initial_smooth=True, initial_rms_mask=True, initial_rms_threshold=1.5,
-                      initial_rms_bin_hours=3, n_detrends=6, detrend_method="biweight", cores=1,
-                      auto_detrend_periodic_signals=False, auto_detrend_ratio=1/4, auto_detrend_method="biweight",
-                      user_prepare=None):
+                      initial_rms_bin_hours=3, n_detrends=6, detrend_method="biweight", detrend_wl_min=None,
+                      detrend_wl_max=None, cores=1, auto_detrend_periodic_signals=False, auto_detrend_ratio=1/4,
+                      auto_detrend_method="biweight", user_prepare=None):
         """
         Configures the values for the detrends steps.
         @param initial_smooth: whether to execute an initial local noise reduction before the light curve analysis
@@ -143,6 +143,8 @@ class Sherlock:
         self.initial_smooth = initial_smooth
         self.n_detrends = n_detrends
         self.detrend_method = detrend_method
+        self.detrend_wl_min = detrend_wl_min
+        self.detrend_wl_max = detrend_wl_max
         self.detrend_cores = cores
         self.auto_detrend_periodic_signals = auto_detrend_periodic_signals
         self.auto_detrend_ratio = auto_detrend_ratio
@@ -343,7 +345,7 @@ class Sherlock:
                 object_report["transits"] = np.array(transit_results[signal_selection.curve_index]
                                                           .results.transit_times)[real_transit_args.flatten()]
                 object_report["transits"] = ','.join(map(str, object_report["transits"]))
-                object_report["sectors"] = ','.join(map(str, sectors))
+                object_report["sectors"] = ','.join(map(str, sectors)) if sectors is not None and len(sectors) > 0 else None
                 object_report["ffi"] = isinstance(object_info, MissionFfiIdObjectInfo) or \
                                        isinstance(object_info, MissionFfiCoordsObjectInfo)
 
@@ -548,14 +550,30 @@ class Sherlock:
         flux = lc.flux
         flux_err = lc.flux_err
         time = lc.time
-        transit_duration = wotan.t14(R_s=star_info.radius, M_s=star_info.mass, P=self.period_protec,
-                                     small_planet=True)  # we define the typical duration of a small planet in this star
-        if self.detrend_method == 'gp':
-            self.wl_min[sherlock_id] = 1
-            self.wl_max[sherlock_id] = 12
+
+        logging.info('================================================')
+        logging.info("Window length / Kernel size")
+        if self.detrend_wl_min is not None and self.detrend_wl_max is not None:
+            logging.info("Using user input WL / KS")
+            if self.detrend_method == 'gp':
+                self.wl_min[sherlock_id] = self.detrend_wl_min
+                self.wl_max[sherlock_id] = self.detrend_wl_max
+            else:
+                self.wl_min[sherlock_id] = self.detrend_wl_min
+                self.wl_max[sherlock_id] = self.detrend_wl_max
         else:
-            self.wl_min[sherlock_id] = 3 * transit_duration  # minimum transit duration
-            self.wl_max[sherlock_id] = 20 * transit_duration  # maximum transit duration
+            logging.info("Using transit duration based WL or fixed KS")
+            transit_duration = wotan.t14(R_s=star_info.radius, M_s=star_info.mass, P=self.period_protec,
+                                         small_planet=True)  # we define the typical duration of a small planet in this star
+            if self.detrend_method == 'gp':
+                self.wl_min[sherlock_id] = 1
+                self.wl_max[sherlock_id] = 12
+            else:
+                self.wl_min[sherlock_id] = 3 * transit_duration  # minimum transit duration
+                self.wl_max[sherlock_id] = 20 * transit_duration  # maximum transit duration
+        logging.info("wl/ks_min: %.2f", self.wl_min[sherlock_id])
+        logging.info("wl/ks_min: %.2f", self.wl_max[sherlock_id])
+        logging.info('================================================')
         lc = lk.LightCurve(time=time, flux=flux, flux_err=flux_err)
         lc_df = pandas.DataFrame(columns=['#time', 'flux', 'flux_err'])
         lc_df['#time'] = lc.time
@@ -655,6 +673,8 @@ class Sherlock:
         if is_short_cadence and self.initial_smooth:
             logging.info('Applying Savitzky-Golay filter')
             clean_flux = savgol_filter(clean_flux, 11, 3)
+            flux = np.convolve(flux, [0.025, 0.05, 0.1, 0.155, 0.34, 0.155, 0.1, 0.05, 0.025], "same")
+            flux = np.convolve(flux, [0.025, 0.05, 0.1, 0.155, 0.34, 0.155, 0.1, 0.05, 0.025], "same")
             #clean_flux = uniform_filter1d(clean_flux, 11)
             #clean_flux = self.flatten_bw(self.FlattenInput(clean_time, clean_flux, 0.02))[0]
         return clean_time, clean_flux, clean_flux_err
@@ -840,7 +860,7 @@ class Sherlock:
         power_args = {"period_min": self.period_min, "period_max": self.period_max,
                       "n_transits_min": transits_min_count,
                       "show_progress_bar": False, "use_threads": self.run_cores,
-                      "T0_fit_margin": 0.05}
+                      "T0_fit_margin": 0.05, "oversampling_factor": 10}
         if star_info.ld_coefficients is not None:
             power_args["u"] = star_info.ld_coefficients
         if not star_info.radius_assumed:

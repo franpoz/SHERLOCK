@@ -45,6 +45,10 @@ INITIAL_HIGH_RMS_THRESHOLD: 2
 INITIAL_HIGH_RMS_BIN_HOURS: 4
 # Accepted detrend methods are 'biweight' and 'gp'
 DETREND_METHOD: 'biweight'
+# Minimum detrend window to build the detrends set
+DETREND_WL_MIN:
+# Maximum detrend window to build the detrends set
+DETREND_WL_MAX:
 # Number of detrend models to be generated from the original light curve
 DETRENDS_NUMBER: 6
 # Number of cpu cores to be used for parallel detrend model creation
