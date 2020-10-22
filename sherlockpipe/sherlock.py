@@ -552,7 +552,8 @@ class Sherlock:
         time = lc.time
 
         logging.info('================================================')
-        logging.info("Window length / Kernel size")
+        logging.info("Detrend Window length / Kernel size")
+        logging.info('================================================')
         if self.detrend_wl_min is not None and self.detrend_wl_max is not None:
             logging.info("Using user input WL / KS")
             if self.detrend_method == 'gp':
