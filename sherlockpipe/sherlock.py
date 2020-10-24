@@ -501,14 +501,18 @@ class Sherlock:
         lightcurve_timespan = lc.time[len(lc.time) - 1] - lc.time[0]
         if self.search_zone is not None and not (star_info.mass_assumed or star_info.radius_assumed):
             logging.info("Selected search zone: %s. Minimum and maximum periods will be calculated.", self.search_zone)
-            period_min, period_max = self.search_zones_resolvers[self.search_zone].calculate_period_range(star_info)
-            logging.info("Selected search zone periods are [%.2f, %.2f] days", period_min, period_max)
-            if period_min > lightcurve_timespan or period_max > lightcurve_timespan:
-                logging.info("Selected search zone period values are greater than lightcurve dataset. " +
-                             "Defaulting to minimum and maximum input periods.")
+            min_and_max_period = self.search_zones_resolvers[self.search_zone].calculate_period_range(star_info)
+            if min_and_max_period is None:
+                logging.info("Selected search zone was %s but cannot be calculated. Defaulting to minimum and " +
+                             "maximum input periods", self.search_zone)
             else:
-                self.period_min = period_min
-                self.period_max = period_max
+                logging.info("Selected search zone periods are [%.2f, %.2f] days", min_and_max_period[0], min_and_max_period[1])
+                if min_and_max_period[0] > lightcurve_timespan or min_and_max_period[1] > lightcurve_timespan:
+                    logging.info("Selected search zone period values are greater than lightcurve dataset. " +
+                                 "Defaulting to minimum and maximum input periods.")
+                else:
+                    self.period_min = min_and_max_period[0]
+                    self.period_max = min_and_max_period[1]
         elif self.search_zone is not None:
             logging.info("Selected search zone was %s but star catalog info was not found or wasn't complete. " +
                          "Defaulting to minimum and maximum input periods.", self.search_zone)
@@ -780,7 +784,6 @@ class Sherlock:
                      "SNR", "SDE", "FAP", "Border_score", "Matching OI", "Harmonic", "Planet radius (R_Earth)", "Rp/Rs",
                      "Semi-major axis", "Habitability Zone")
         transit_results = {}
-        object_dir = self.__init_object_dir(object_info.sherlock_id())
         run_dir = self.__init_object_run_dir(object_info.sherlock_id(), id_run)
         lc_df = pandas.DataFrame(columns=['#time', 'flux', 'flux_err'])
         args = np.argwhere(~np.isnan(lcs[0])).flatten()
@@ -803,7 +806,7 @@ class Sherlock:
                      habitability_zone)
         plot_title = 'Run ' + str(id_run) + 'PDCSAP_FLUX # P=' + \
                      format(transit_result.period, '.2f') + 'd # T0=' + format(transit_result.t0, '.2f') + \
-                     ' # Depth=' + format(transit_result.depth, '.4f') + ' # Dur=' + \
+                     ' # Depth=' + format(transit_result.depth, '.4f') + 'ppt # Dur=' + \
                      format(transit_result.duration * 24 * 60, '.0f') + 'm # SNR:' + \
                      str(format(transit_result.snr, '.2f')) + ' # SDE:' + str(format(transit_result.sde, '.2f')) + \
                      ' # FAP:' + format(transit_result.fap, '.6f')
@@ -834,7 +837,7 @@ class Sherlock:
             detrend_file_name_customs = 'ks' if self.detrend_method == 'gp' else 'ws'
             title = 'Run ' + str(id_run) + '# ' + detrend_file_title_customs + ':' + str(format(wl[i], '.4f')) + \
                     ' # P=' + format(transit_result.period, '.2f') + 'd # T0=' + \
-                    format(transit_result.t0, '.2f') + ' # Depth=' + format(transit_result.depth, '.4f') + " # Dur=" + \
+                    format(transit_result.t0, '.2f') + ' # Depth=' + format(transit_result.depth, '.4f') + "ppt # Dur=" + \
                     format(transit_result.duration * 24 * 60, '.0f') + 'm # SNR:' + \
                     str(format(transit_result.snr, '.2f')) + ' # SDE:' + str(format(transit_result.sde, '.2f')) + \
                     ' # FAP:' + format(transit_result.fap, '.6f')

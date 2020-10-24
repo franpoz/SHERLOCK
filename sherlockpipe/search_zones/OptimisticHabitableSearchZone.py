@@ -14,4 +14,6 @@ class OptimisticHabitableSearchZone(SearchZone):
     def calculate_period_range(self, star_info: StarInfo):
         habitability_calc = HabitabilityCalculator()
         hz_periods = habitability_calc.calculate_hz_periods(star_info.teff, star_info.lum, star_info.mass)
+        if hz_periods is None:
+            return None
         return hz_periods[0], hz_periods[3]

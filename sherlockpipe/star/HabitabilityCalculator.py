@@ -36,6 +36,8 @@ class HabitabilityCalculator:
         @return: a tuple of size 4 with the recent venus, moist greenhouse, maximum greenhouse and early mars orbital
         semi-major axises for the given star parameters.
         """
+        if t_eff < 2600 or t_eff > 7200:
+            return None
         t_star = t_eff - 5700
         # Recent Venus
         s_eff_rv = 1.7763
@@ -99,6 +101,8 @@ class HabitabilityCalculator:
         periods for the given star parameters.
         """
         aus = self.calculate_hz(t_eff, luminosity)
+        if aus is None:
+            return None
         return [self.au_to_period(mass, au) for au in aus]
 
     def au_to_period(self, mass, au):
