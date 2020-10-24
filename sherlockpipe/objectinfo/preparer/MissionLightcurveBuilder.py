@@ -40,7 +40,7 @@ class MissionLightcurveBuilder(LightcurveBuilder):
                 if lc is None:
                     lc = lcf.PDCSAP_FLUX[i].normalize()
                 else:
-                    lc.append(lcf.PDCSAP_FLUX[i].normalize())
+                    lc = lc.append(lcf.PDCSAP_FLUX[i].normalize())
             else:
                 matching_objects.append(lcf.PDCSAP_FLUX[i].label)
         if len(matching_objects) > 0:
