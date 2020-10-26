@@ -13,6 +13,7 @@ from sherlockpipe.star.HabitabilityCalculator import HabitabilityCalculator
 import pandas as pd
 import os
 from os import path
+import matplotlib.pyplot as plt
 
 
 resources_dir = path.join(path.dirname(__file__))
@@ -54,11 +55,15 @@ class Fitter:
             shutil.copyfile(sherlock_star_file, star_file)
         shutil.copyfile(resources_dir + "/resources/allesfitter/params.csv", params_file)
         shutil.copyfile(resources_dir + "/resources/allesfitter/settings.csv", settings_file)
+        fit_width = 0.3333333
+        if candidate_row["duration"] is not None:
+            fit_width = float(candidate_row["duration"]) / 60 / 24 * 7
         # TODO replace sherlock properties from allesfitter files
         # TODO only use params_star when the star mass or radius was not assumed
         with open(settings_file, 'r+') as f:
             text = f.read()
             text = re.sub('\\${sherlock:cores}', str(cpus), text)
+            text = re.sub('\\${sherlock:fit_width}', str(fit_width), text)
             text = re.sub('\\${sherlock:name}', str(candidate_row["name"]), text)
             detrend_param = "baseline_flux_lc,hybrid_offset"
             detrend_param = detrend_param if self.detrend else "#" + detrend_param
@@ -86,12 +91,44 @@ class Fitter:
             f.write(text)
             f.truncate()
         allesfitter.show_initial_guess(allesfit_dir)
-        if not self.only_initial and not self.mcmc:
-            allesfitter.ns_fit(allesfit_dir)
-            allesfitter.ns_output(allesfit_dir)
-        elif not self.only_initial and self.mcmc:
-            allesfitter.mcmc_fit(allesfit_dir)
-            allesfitter.mcmc_output(allesfit_dir)
+        self.custom_plot(candidate_row["name"], candidate_row["period"], fit_width, allesfit_dir, "initial_guess")
+        if not self.only_initial:
+            if not self.mcmc:
+                allesfitter.ns_fit(allesfit_dir)
+                allesfitter.ns_output(allesfit_dir)
+            elif self.mcmc:
+                allesfitter.mcmc_fit(allesfit_dir)
+                allesfitter.mcmc_output(allesfit_dir)
+            self.custom_plot(candidate_row["name"], candidate_row["period"], fit_width, allesfit_dir, "posterior")
+
+    def custom_plot(self, name, period, fit_width, allesfit_dir, mode="posterior"):
+        allesclass = allesfitter.allesclass(allesfit_dir)
+        baseline_width = fit_width * 24
+        baseline_to_period = fit_width / period
+        fig, axes = plt.subplots(2, 3, figsize=(18, 6), gridspec_kw={'height_ratios': [3, 1]}, sharex='col')
+        fig.subplots_adjust(left=0.5, right=1.5, hspace=0)
+        style = 'full'
+        allesclass.plot('lc', name, style, ax=axes[0][0], mode=mode)
+        axes[0][0].set_title('lc, ' + style)
+        allesclass.plot('lc', name, style + '_residuals', ax=axes[1][0], mode=mode)
+        axes[1][0].set_title('')
+        style = 'phase'
+        allesclass.plot('lc', name, style, ax=axes[0][1], mode=mode, zoomwindow=baseline_to_period)
+        axes[0][1].set_title('lc, ' + style)
+        axes[0][1].set_xlim([- baseline_to_period / 2, baseline_width / 2])
+        allesclass.plot('lc', name, style + '_residuals', ax=axes[1][1], mode=mode, zoomwindow=baseline_to_period)
+        axes[1][1].set_title('')
+        axes[1][1].set_xlim([- baseline_to_period / 2, baseline_to_period / 2])
+        style = 'phasezoom'
+        allesclass.plot('lc', name, style, ax=axes[0][2], mode=mode, zoomwindow=baseline_width)
+        axes[0][2].set_title('lc, ' + style)
+        axes[0][2].set_xlim([- baseline_width / 2, baseline_width / 2])
+        allesclass.plot('lc', name, style + '_residuals', ax=axes[1][2], mode=mode, zoomwindow=baseline_width)
+        axes[1][2].set_title('')
+        axes[1][2].set_xlim([- baseline_width / 2, baseline_width / 2])
+        fig.savefig(allesfit_dir + '/results/ns_' + mode + '_' + name + '_custom.pdf', bbox_inches='tight')
+        style = ['phasezoom_occ']
+        style = ['phase_variations']
 
 
 if __name__ == '__main__':
