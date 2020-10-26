@@ -477,10 +477,11 @@ class Sherlock:
             logging.info('radius_min = %.6f', star_info.radius_min)
             logging.info('radius_max = %.6f', star_info.radius_max)
         if not star_info.radius_assumed and not star_info.mass_assumed and star_info.teff is not None:
-            star_df = pandas.DataFrame(columns=['R_star', 'R_star_lerr', 'R_star_uerr', 'M_star', 'M_star_lerr',
-                                              'M_star_uerr', 'Teff_star', 'Teff_star_lerr', 'Teff_star_uerr', 'ld_a',
-                                                'ld_b'])
-            star_df = star_df.append({'R_star': star_info.radius, 'R_star_lerr': star_info.radius - star_info.radius_min,
+            star_df = pandas.DataFrame(columns=['ra', 'dec', 'R_star', 'R_star_lerr', 'R_star_uerr', 'M_star',
+                                                'M_star_lerr', 'M_star_uerr', 'Teff_star', 'Teff_star_lerr',
+                                                'Teff_star_uerr', 'ld_a', 'ld_b'])
+            star_df = star_df.append({'ra': star_info.ra, 'dec': star_info.dec, 'R_star': star_info.radius,
+                                      'R_star_lerr': star_info.radius - star_info.radius_min,
                             'R_star_uerr': star_info.radius_max - star_info.radius,
                             'M_star': star_info.mass, 'M_star_lerr': star_info.mass - star_info.mass_min,
                             'M_star_uerr': star_info.mass_max - star_info.mass,

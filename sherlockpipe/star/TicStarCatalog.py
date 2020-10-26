@@ -17,6 +17,8 @@ class TicStarCatalog(StarCatalog):
         lum = result[0]['lum']
         logg = result[0][66]
         radius = result[0][70]
+        ra = result[0][13]
+        dec = result[0][14]
         radius_max = result[0][71]
         radius_min = result[0][71]
         mass = result[0][72]
@@ -25,4 +27,4 @@ class TicStarCatalog(StarCatalog):
         if lum is None or np.isnan(lum):
             lum = self.star_luminosity(Teff, radius)
         ld, mass, mass_min, mass_max, radius, radius_min, radius_max = tls.catalog_info(TIC_ID=id)
-        return (ld, Teff, lum, logg, radius, radius_min, radius_max, mass, mass_min, mass_max)
+        return (ld, Teff, lum, logg, radius, radius_min, radius_max, mass, mass_min, mass_max, ra, dec)
