@@ -1,6 +1,6 @@
 class StarInfo:
-    def __init__(self, object_id, ld_coefficients=None, teff=None, lum=None, logg=None, mass=None, mass_min=None,
-                 mass_max=None, radius=None, radius_min=None, radius_max=None, ra=None, dec=None):
+    def __init__(self, object_id, ld_coefficients=None, teff=None, lum=None, logg=None, radius=None, radius_min=None,
+                 radius_max=None, mass=None, mass_min=None, mass_max=None, ra=None, dec=None):
         self.object_id = object_id
         self.ld_coefficients = ld_coefficients
         self.teff = teff
@@ -18,6 +18,7 @@ class StarInfo:
         self.radius_assumed = False
         self.ra = ra
         self.dec = dec
+
 
     def assume_model_mass(self, mass=0.1):
         self.mass = mass
