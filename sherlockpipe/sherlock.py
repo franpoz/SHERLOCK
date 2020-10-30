@@ -594,7 +594,7 @@ class Sherlock:
                                                                              star_info, cadence)
         lc = lk.LightCurve(time=clean_time, flux=flatten_flux, flux_err=clean_flux_err)
         self.rotator_period = None
-        periodogram = lc.to_periodogram(minimum_period=self.wl_min[sherlock_id], oversample_factor=10)
+        periodogram = lc.to_periodogram(minimum_period=0.05, maximum_period=15, oversample_factor=10)
         periodogram.plot(view='period', scale='log')
         plt.title(str(sherlock_id) + " Lightcurve periodogram")
         plt.savefig(object_dir + "Periodogram_" + str(sherlock_id) + ".png")
@@ -678,8 +678,11 @@ class Sherlock:
         if is_short_cadence and self.initial_smooth:
             logging.info('Applying Savitzky-Golay filter')
             clean_flux = savgol_filter(clean_flux, 11, 3)
-            flux = np.convolve(flux, [0.025, 0.05, 0.1, 0.155, 0.34, 0.155, 0.1, 0.05, 0.025], "same")
-            flux = np.convolve(flux, [0.025, 0.05, 0.1, 0.155, 0.34, 0.155, 0.1, 0.05, 0.025], "same")
+            # TODO to use convolve we need to remove the borders effect
+            # clean_flux = np.convolve(clean_flux, [0.025, 0.05, 0.1, 0.155, 0.34, 0.155, 0.1, 0.05, 0.025], "same")
+            # clean_flux = np.convolve(clean_flux, [0.025, 0.05, 0.1, 0.155, 0.34, 0.155, 0.1, 0.05, 0.025], "same")
+            # clean_flux[0:5] = 1
+            # clean_flux[len(clean_flux) - 6: len(clean_flux) - 1] = 1
             #clean_flux = uniform_filter1d(clean_flux, 11)
             #clean_flux = self.flatten_bw(self.FlattenInput(clean_time, clean_flux, 0.02))[0]
         return clean_time, clean_flux, clean_flux_err
@@ -862,9 +865,8 @@ class Sherlock:
     def __adjust_transit(self, time, lc, star_info, transits_min_count, run_results, report, cadence):
         model = tls.transitleastsquares(time, lc)
         power_args = {"period_min": self.period_min, "period_max": self.period_max,
-                      "n_transits_min": transits_min_count,
-                      "show_progress_bar": False, "use_threads": self.run_cores,
-                      "T0_fit_margin": 0.05, "oversampling_factor": 10}
+                      "n_transits_min": transits_min_count, "T0_fit_margin": 0.01,
+                      "show_progress_bar": False, "use_threads": self.run_cores, "oversampling_factor": 10}
         if star_info.ld_coefficients is not None:
             power_args["u"] = star_info.ld_coefficients
         if not star_info.radius_assumed:
