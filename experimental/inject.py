@@ -15,6 +15,7 @@ from transitleastsquares import catalog_info
 import astropy.constants as ac
 import astropy.units as u
 import lightkurve as lk
+import pandas as pd
 from lightkurve import search_lightcurvefile
 from scipy import stats
 from wotan import t14
@@ -58,7 +59,7 @@ clean=lc_new.remove_outliers(sigma_lower=float('inf'), sigma_upper=3) #remove ou
 
 flux0=clean.flux
 time=clean.time
-
+flux_err = clean.flux_err
 #period_maximum=(max(time)-min(time))/2.
 #time, flux0 = np.genfromtxt('TESS_phot.csv', delimiter=',', unpack=True)
 #rstar = 0.211257 * 41.46650444642 #in Rearth
@@ -149,106 +150,7 @@ def logprint(*text):
         sys.stdout = f
         print(*text)
     sys.stdout = original
-        
 
-
-def IsMultipleOf(a, b, tolerance=0.05):
-   a = np.float(a)
-   b = np.float(b) 
-   result = a % b
-   return (abs(result/b) <= tolerance) or (abs((b-result)/b) <= tolerance)
-
-    
-
-#::: tls search
-def tls_search(time, flux, epoch, period, rplanet):
-    SNR = 1e12
-    SNR_threshold = 5.
-    FOUND_SIGNAL = False
-    
-    #::: mask out the first detection at 6.2 days, with a duration of 2.082h, and T0=1712.54922
-    #intransit = transit_mask(time, 6.26391, 2*2.082/24., 1712.54922)
-    #time = time[~intransit]
-    #flux = flux[~intransit]
-    time, flux = cleaned_array(time, flux)
-    
-    #::: search for the rest
-    while (SNR >= SNR_threshold) and (FOUND_SIGNAL==False):
-        logprint('\n====================================================================')
-    
-        model = transitleastsquares(time, flux)
-        R_starx=rstar/u.R_sun
-        #print(rstar_min/u.R_sun)
-        #print(rstar_max/u.R_sun)
-        #print(mstar/u.M_sun) 
-        #print(mstar_min/u.M_sun)
-        #print(mstar_max/u.M_sun)
-        results = model.power(u=ab,
-                              R_star= radius,#rstar/u.R_sun, 
-                              R_star_min=rstar_min, #rstar_min/u.R_sun,
-                              R_star_max=rstar_max, #rstar_max/u.R_sun,
-                              M_star= mass, #mstar/u.M_sun, 
-                              M_star_min= mstar_min,#mstar_min/u.M_sun,
-                              M_star_max=mstar_max, #mstar_max/u.M_sun,
-                              period_min=0.5,
-                              period_max=20,
-                              n_transits_min=1,
-                              show_progress_bar=False
-                              )
-        
-        #mass and radius for the TLS
-#rstar=radius
-##mstar=mass
-#mstar_min = mass-massmin
-#mstar_max = mass+massmax
-#rstar_min = radius-radiusmin
-#rstar_max = radius+raduismax
-        
-        
-        if results.snr >= SNR_threshold:
-            
-            logprint('\nPeriod:', format(results.period, '.5f'), 'd')
-            logprint(len(results.transit_times), 'transit times in time series:', ['{0:0.5f}'.format(i) for i in results.transit_times])
-            logprint('Transit depth:', format(1.-results.depth, '.5f'))
-            logprint('Best duration (days):', format(results.duration, '.5f'))
-            logprint('Signal detection efficiency (SDE):', results.SDE)
-            logprint('Signal-to-noise ratio (SNR):', results.snr)
-        
-            intransit = transit_mask(time, results.period, 2*results.duration, results.T0)
-            time = time[~intransit]
-            flux = flux[~intransit]
-            time, flux = cleaned_array(time, flux)
-            
-            
-            #::: check if it found the right signal
-            right_period  = IsMultipleOf(results.period, period/2.) #check if it is a multiple of half the period to within 5%
-            
-            right_epoch = False
-            for tt in results.transit_times:
-                for i in range(-5,5):
-                    right_epoch = right_epoch or (np.abs(tt-epoch+i*period) < (1./24.)) #check if any epochs matches to within 1 hour
-                     
-#            right_depth   = (np.abs(np.sqrt(1.-results.depth)*rstar - rplanet)/rplanet < 0.05) #check if the depth matches
-                        
-            if right_period and right_epoch:
-                logprint('*** SUCCESFULLY FOUND THE TRANSIT ***')
-                with open( os.path.join('tls_table/tls_table.csv'), 'a' ) as f:
-                    f.write(str(period)+','+str(rplanet/u.R_earth)+','+'1\n')
-                    FOUND_SIGNAL = True
-                
-          
-        
-        else:
-            logprint('No other signals detected with SNR >= ' + str(SNR_threshold))
-            if FOUND_SIGNAL == False:                
-                logprint('*** FAILED FINDING THE TRANSIT ***')
-                with open( os.path.join('tls_table/tls_table.csv'), 'a' ) as f:
-                    f.write(str(period)+','+str(rplanet)+','+'0\n')
-    
-        SNR = results.snr
-    
-    
-    
     
 #::: iterate through grid of periods and rplanet
 for period in np.arange(1,20,0.5):
@@ -258,9 +160,11 @@ for period in np.arange(1,20,0.5):
         rplanet = np.around(rplanet, decimals=2)*u.R_earth
         print('\n')
         print('P = '+str(period)+' days, Rp = '+str(rplanet))
-        if not os.path.exists('tls/'+'P = '+str(period)+' days, Rp = '+str(rplanet)+'.log'):
-#            print('do it')
-            time, flux = make_model(epoch, period, rplanet)
-            tls_search(time, flux, epoch, period, rplanet)
-        else:
-            print('already exists')
+        time, flux = make_model(epoch, period, rplanet)
+        file_name = os.path.join('curves/P_' + str(period) + '_R' + str(radius) + '_' + str(epoch) + '.csv')
+        lc_df = pd.DataFrame(columns=['#time', 'flux', 'flux_err'])
+        lc_df['#time'] = time
+        lc_df['flux'] = flux
+        lc_df['flux_err'] = flux_err
+        lc_df.to_csv(file_name, index=False)
+        # TODO bulk into file
