@@ -115,7 +115,7 @@ class Fitter:
         style = 'phase'
         allesclass.plot('lc', name, style, ax=axes[0][1], mode=mode, zoomwindow=baseline_to_period)
         axes[0][1].set_title('lc, ' + style)
-        axes[0][1].set_xlim([- baseline_to_period / 2, baseline_width / 2])
+        axes[0][1].set_xlim([- baseline_to_period / 2, baseline_to_period / 2])
         allesclass.plot('lc', name, style + '_residuals', ax=axes[1][1], mode=mode, zoomwindow=baseline_to_period)
         axes[1][1].set_title('')
         axes[1][1].set_xlim([- baseline_to_period / 2, baseline_to_period / 2])
