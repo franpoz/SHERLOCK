@@ -336,7 +336,7 @@ class Vetter:
             norm = ImageNormalize(stretch=stretching.LogStretch())
             division = np.int(np.log10(np.nanmax(tpf.flux)))
             splot = plt.imshow(np.nanmean(tpf.flux, axis=0) / 10 ** division, norm=norm, \
-                               extent=[tpf.column, tpf.column + ny, tpf.row, tpf.row + nx], origin='bottom', zorder=0)
+                               extent=[tpf.column, tpf.column + ny, tpf.row, tpf.row + nx], origin='lower', zorder=0)
             # Pipeline aperture
             if pipeline:  #
                 aperture_mask = tpf.pipeline_mask
