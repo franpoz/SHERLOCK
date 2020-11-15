@@ -19,6 +19,8 @@ class StarInfo:
         self.ra = ra
         self.dec = dec
 
+    def __init(self):
+        pass
 
     def assume_model_mass(self, mass=0.1):
         self.mass = mass
