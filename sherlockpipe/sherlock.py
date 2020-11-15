@@ -13,6 +13,7 @@ import os
 import sys
 
 from scipy.ndimage import uniform_filter1d
+from sherlockpipe.star.starinfo import StarInfo
 
 from sherlockpipe.curve_preparer.Flattener import Flattener
 from sherlockpipe.curve_preparer.Flattener import FlattenInput
@@ -77,15 +78,17 @@ class Sherlock:
     ois_manager = OisManager()
     use_ois = False
 
-    def __init__(self, update_ois: bool, object_infos: list):
+    def __init__(self, update_ois: bool, object_infos: list, explore=False):
         """
         Initializes a Sherlock object, loading the OIs from the csvs, setting up the detrend and transit configurations,
         storing the provided object_infos list and initializing the builders to be used to prepare the light curves for
         the provided object_infos.
         @param update_ois: Flag to signal SHERLOCK for updating the TOIs, KOIs and EPICs
         @param object_infos: a list of objects information to be analysed
+        @param explore: whether to only run the prepare stage for all objects
         @type object_infos: a list of ObjectInfo implementations to be resolved and analysed
         """
+        self.explore = explore
         self.setup_files(update_ois)
         self.setup_detrend()
         self.object_infos = object_infos
@@ -162,7 +165,8 @@ class Sherlock:
                                     search_zone=None, user_search_zone=None, period_min=0.5, period_max=20,
                                     bin_minutes=10, run_cores=NUM_CORES, snr_min=5, sde_min=5, fap_max=0.1,
                                     mask_mode="mask", best_signal_algorithm='border-correct', quorum_strength=1,
-                                    min_quorum=0, user_selection_algorithm=None):
+                                    min_quorum=0, user_selection_algorithm=None, fit_method="default",
+                                    oversampling=None, t0_fit_margin=0.05, duration_grid_step=1.1):
         """
         Configures the values to be used for the transit fitting and the main run loop.
         @param max_runs: the max number of runs to be executed for each object.
@@ -188,6 +192,10 @@ class Sherlock:
         @param min_quorum: used to decide when SHERLOCK should be stopped because of lack of persistence in the found
         signals of the last executed run.
         @param user_selection_algorithm: selection algorithm provided by the user to be used by SHERLOCK.
+        @param fit_method: selection algorithm provided by the user to be used by SHERLOCK.
+        @param oversampling: from 1 to 10, the oversampling size to be used by TLS.
+        @param t0_fit_margin: from 0.01 to 0.1, the percent of T0 to be shifted for the T0 fit.
+        @param duration_grid_step: from 1.0 to 1.1, how fast should the duration be iterated by TLS.
         @return: the Sherlock object itself
         @rtype: Sherlock
         """
@@ -217,6 +225,10 @@ class Sherlock:
                                        "user": user_selection_algorithm}
         self.best_signal_algorithm = best_signal_algorithm if user_selection_algorithm is None else "user"
         self.user_selection_algorithm = user_selection_algorithm
+        self.fit_method = fit_method
+        self.oversampling = oversampling
+        self.t0_fit_margin = t0_fit_margin
+        self.duration_grid_step = duration_grid_step
         return self
 
     def refresh_ois(self):
@@ -293,6 +305,7 @@ class Sherlock:
         self.__setup_logging()
         logging.info('SHERLOCK (Searching for Hints of Exoplanets fRom Lightcurves Of spaCe-base seeKers)')
         logging.info('Version %s', self.VERSION)
+        logging.info('MODE: %s', "ANALYSE" if not self.explore else "EXPLORE")
         if len(self.object_infos) == 0 and self.use_ois:
             self.object_infos = [MissionObjectInfo(object_id, 'all')
                                  for object_id in self.ois["Object Id"].astype('string').unique()]
@@ -318,7 +331,7 @@ class Sherlock:
             lcs, wl = self.__detrend(time, flux, star_info)
             lcs = np.concatenate(([flux], lcs), axis=0)
             wl = np.concatenate(([0], wl), axis=0)
-            while best_signal_score == 1 and id_run <= self.max_runs:
+            while not self.explore and best_signal_score == 1 and id_run <= self.max_runs:
                 object_report = {}
                 logging.info("________________________________ run %s________________________________", id_run)
                 transit_results, signal_selection = \
@@ -360,35 +373,36 @@ class Sherlock:
                 else:
                     logging.info('New best signal does not look very promising. End')
                 self.report[sherlock_id].append(object_report)
-            self.__setup_object_report_logging(sherlock_id)
-            object_dir = self.__init_object_dir(object_info.sherlock_id())
-            logging.info("Listing most promising candidates for ID %s:", sherlock_id)
-            logging.info("%-12s%-8s%-10s%-10s%-8s%-8s%-8s%-8s%-10s%-14s%-14s%-12s%-25s%-10s%-18s%-20s", "Detrend no.", "Period",
-                         "Per_err", "Duration", "T0", "Depth", "SNR", "SDE", "FAP", "Border_score", "Matching OI", "Harmonic",
-                         "Planet radius (R_Earth)", "Rp/Rs", "Semi-major axis", "Habitability Zone")
-            if sherlock_id in self.report:
-                candidates_df = pandas.DataFrame(columns=['curve', 'period', 'per_err', 'duration', 't0', 'depth',
-                                                          'snr', 'sde', 'fap', 'border_score', 'oi', 'rad_p', 'rp_rs',
-                                                          'a', 'hz'])
-                i = 1
-                for report in self.report[sherlock_id]:
-                    a, habitability_zone = self.habitability_calculator\
-                        .calculate_hz_score(star_info.teff, star_info.mass, star_info.lum, report["period"])
-                    report['a'] = a
-                    report['hz'] = habitability_zone
-                    if star_info.radius_assumed:
-                        report['rad_p'] = np.nan
-                        report['rp_rs'] = np.nan
-                    else:
-                        report['rad_p'] = star_info.radius * math.sqrt(report["depth"] / 1000) / 0.0091577
-                    logging.info("%-12s%-8.4f%-10.5f%-10.2f%-8.2f%-8.3f%-8.2f%-8.2f%-10.6f%-14.2f%-14s%-12s%-25.5f%-10.5f%-18.5f%-20s",
-                                 report["curve"], report["period"], report["per_err"],
-                                 report["duration"], report["t0"], report["depth"], report["snr"], report["sde"],
-                                 report["fap"], report["border_score"], report["oi"], report["harmonic"],
-                                 report['rad_p'], report['rp_rs'], a, habitability_zone)
-                    candidates_df = candidates_df.append(report, ignore_index=True)
-                    i = i + 1
-                candidates_df.to_csv(object_dir + "candidates.csv", index=False)
+            if not self.explore:
+                self.__setup_object_report_logging(sherlock_id)
+                object_dir = self.__init_object_dir(object_info.sherlock_id())
+                logging.info("Listing most promising candidates for ID %s:", sherlock_id)
+                logging.info("%-12s%-8s%-10s%-10s%-8s%-8s%-8s%-8s%-10s%-14s%-14s%-12s%-25s%-10s%-18s%-20s", "Detrend no.", "Period",
+                             "Per_err", "Duration", "T0", "Depth", "SNR", "SDE", "FAP", "Border_score", "Matching OI", "Harmonic",
+                             "Planet radius (R_Earth)", "Rp/Rs", "Semi-major axis", "Habitability Zone")
+                if sherlock_id in self.report:
+                    candidates_df = pandas.DataFrame(columns=['curve', 'period', 'per_err', 'duration', 't0', 'depth',
+                                                              'snr', 'sde', 'fap', 'border_score', 'oi', 'rad_p', 'rp_rs',
+                                                              'a', 'hz'])
+                    i = 1
+                    for report in self.report[sherlock_id]:
+                        a, habitability_zone = self.habitability_calculator\
+                            .calculate_hz_score(star_info.teff, star_info.mass, star_info.lum, report["period"])
+                        report['a'] = a
+                        report['hz'] = habitability_zone
+                        if star_info.radius_assumed:
+                            report['rad_p'] = np.nan
+                            report['rp_rs'] = np.nan
+                        else:
+                            report['rad_p'] = self.__calculate_planet_radius(star_info, report["depth"])
+                        logging.info("%-12s%-8.4f%-10.5f%-10.2f%-8.2f%-8.3f%-8.2f%-8.2f%-10.6f%-14.2f%-14s%-12s%-25.5f%-10.5f%-18.5f%-20s",
+                                     report["curve"], report["period"], report["per_err"],
+                                     report["duration"], report["t0"], report["depth"], report["snr"], report["sde"],
+                                     report["fap"], report["border_score"], report["oi"], report["harmonic"],
+                                     report['rad_p'], report['rp_rs'], a, habitability_zone)
+                        candidates_df = candidates_df.append(report, ignore_index=True)
+                        i = i + 1
+                    candidates_df.to_csv(object_dir + "candidates.csv", index=False)
         except InvalidNumberOfSectorsError as e:
             logging.exception(str(e))
             print(e)
@@ -453,11 +467,46 @@ class Sherlock:
         handler.setFormatter(formatter)
         logger.addHandler(handler)
 
+    def __complete_star_info(self, input_star_info, catalogue_star_info):
+        if catalogue_star_info is None:
+            catalogue_star_info = StarInfo()
+        result_star_info = catalogue_star_info
+        if input_star_info is None:
+            input_star_info = StarInfo()
+        if input_star_info.radius is not None:
+            result_star_info.radius = input_star_info.radius
+            result_star_info.radius_assumed = False
+        if input_star_info.radius_min is not None:
+            result_star_info.radius_min = input_star_info.radius_min
+        if input_star_info.radius_max is not None:
+            result_star_info.radius_max = input_star_info.radius_max
+        if input_star_info.mass is not None:
+            result_star_info.mass = input_star_info.mass
+            result_star_info.mass_assumed = False
+        if input_star_info.mass_min is not None:
+            result_star_info.mass_min = input_star_info.mass_min
+        if input_star_info.mass_max is not None:
+            result_star_info.mass_max = input_star_info.mass_max
+        if input_star_info.ra is not None:
+            result_star_info.ra = input_star_info.ra
+        if input_star_info.dec is not None:
+            result_star_info.dec = input_star_info.dec
+        if input_star_info.teff is not None:
+            result_star_info.teff = input_star_info.teff
+        if input_star_info.lum is not None:
+            result_star_info.lum = input_star_info.lum
+        if input_star_info.logg is not None:
+            result_star_info.logg = input_star_info.logg
+        if input_star_info.ld_coefficients is not None:
+            result_star_info.ld_coefficients = input_star_info.ld_coefficients
+        return result_star_info
+
     def __prepare(self, object_info):
         sherlock_id = object_info.sherlock_id()
         object_dir = self.__setup_object_logging(sherlock_id)
         logging.info('ID: %s', sherlock_id)
         lc, star_info, transits_min_count, sectors, quarters = self.lightcurve_builders[type(object_info)].build(object_info)
+        star_info = self.__complete_star_info(object_info.star_info, star_info)
         if star_info is not None:
             logging.info('================================================')
             logging.info('STELLAR PROPERTIES FOR THE SIGNAL SEARCH')
@@ -527,6 +576,13 @@ class Sherlock:
         logging.info('Threshold limit for SNR: %.1f', self.snr_min)
         logging.info('Threshold limit for SDE: %.1f', self.sde_min)
         logging.info('Threshold limit for FAP: %.1f', self.fap_max)
+        logging.info("Fit method: %s", self.fit_method)
+        if self.oversampling is not None:
+            logging.info('Oversampling: %.3f', self.oversampling)
+        if self.duration_grid_step is not None:
+            logging.info('Duration step: %.3f', self.duration_grid_step)
+        if self.t0_fit_margin is not None:
+            logging.info('T0 Fit Margin: %.3f', self.t0_fit_margin)
         logging.info('Signal scoring algorithm: %s', self.best_signal_algorithm)
         if self.best_signal_algorithm == self.VALID_SIGNAL_SELECTORS[2]:
             logging.info('Quorum algorithm vote strength: %.0f',
@@ -863,10 +919,19 @@ class Sherlock:
         return oi
 
     def __adjust_transit(self, time, lc, star_info, transits_min_count, run_results, report, cadence):
+        oversampling = self.oversampling
+        if oversampling is None:
+            time_lapse = time[len(time) - 1] - time[0]
+            oversampling = 600 / time_lapse
+            if oversampling < 3:
+                oversampling = 3
+            elif oversampling > 10:
+                oversampling = 10
         model = tls.transitleastsquares(time, lc)
-        power_args = {"period_min": self.period_min, "period_max": self.period_max,
-                      "n_transits_min": transits_min_count, "T0_fit_margin": 0.01,
-                      "show_progress_bar": False, "use_threads": self.run_cores, "oversampling_factor": 10}
+        power_args = {"transit_template": self.fit_method, "period_min": self.period_min, "period_max": self.period_max,
+                      "n_transits_min": transits_min_count, "T0_fit_margin": self.t0_fit_margin,
+                      "show_progress_bar": False, "use_threads": self.run_cores, "oversampling_factor": oversampling,
+                      "duration_grid_step": self.duration_grid_step}
         if star_info.ld_coefficients is not None:
             power_args["u"] = star_info.ld_coefficients
         if not star_info.radius_assumed:
@@ -888,7 +953,7 @@ class Sherlock:
         transit_count = results.distinct_transit_count
         border_score = self.__compute_border_score(time, results, in_transit, cadence)
         # Recalculating duration because of tls issue https://github.com/hippke/tls/issues/83
-        intransit_folded_model = np.where( results['model_folded_model'] < 1. )[0]
+        intransit_folded_model = np.where(results['model_folded_model'] < 1.)[0]
         if len(intransit_folded_model) > 0:
             duration = results['period'] * (results['model_folded_phase'][intransit_folded_model[-1]]
                                             - results['model_folded_phase'][intransit_folded_model[0]])
@@ -900,7 +965,14 @@ class Sherlock:
                              results.SDE, results.FAP, border_score, in_transit, harmonic)
 
     def __calculate_planet_radius(self, star_info, depth):
-        return star_info.radius * math.sqrt(depth / 1000) / 0.0091577
+        rp = np.nan
+        try:
+            rp = star_info.radius * math.sqrt(depth / 1000) / 0.0091577
+        except ValueError as e:
+            logging.error("Planet radius could not be calculated: depth=%s, star_radius=%s", depth, star_info.radius)
+            logging.exception(str(e))
+            print(e)
+        return rp
 
     def __compute_border_score(self, time, result, intransit, cadence):
         shift_cadences = 60 / cadence
