@@ -1,5 +1,8 @@
 import pickle
 import sys
+
+from sherlockpipe.star.starinfo import StarInfo
+
 from sherlockpipe import sherlock
 from sherlockpipe.objectinfo.InputObjectInfo import InputObjectInfo
 from sherlockpipe.objectinfo.MissionFfiIdObjectInfo import MissionFfiIdObjectInfo
@@ -20,10 +23,29 @@ def load_module(module_path):
     spec.loader.exec_module(module)
     return module
 
+def get_star_info(properties, id):
+    input_star_info = None
+    if properties["STAR"] is not None and properties["STAR"][id] is not None:
+        star_properties = properties["STAR"][id]
+        input_star_info = StarInfo(id, tuple(star_properties["LD_COEFFICIENTS"]) if "LD_COEFFICIENTS" in star_properties else None,
+                             star_properties["TEFF"] if "TEFF" in star_properties else None,
+                             star_properties["LUM"] if "LUM" in star_properties else None,
+                             star_properties["LOGG"] if "LOGG" in star_properties else None,
+                             star_properties["RADIUS"] if "RADIUS" in star_properties else None,
+                             star_properties["RADIUS_LOWER_ERROR"] if "RADIUS_LOWER_ERROR" in star_properties else None,
+                             star_properties["RADIUS_UPPER_ERROR"] if "RADIUS_UPPER_ERROR" in star_properties else None,
+                             star_properties["MASS"] if "MASS" in star_properties else None,
+                             star_properties["MASS_LOWER_ERROR"] if "MASS_LOWER_ERROR" in star_properties else None,
+                             star_properties["MASS_UPPER_ERROR"] if "MASS_UPPER_ERROR" in star_properties else None,
+                             star_properties["RA"] if "RA" in star_properties else None,
+                             star_properties["DEC"] if "DEC" in star_properties else None)
+    return input_star_info
+
 
 if __name__ == '__main__':
     ap = ArgumentParser(description='Searching for Hints of Exoplanets fRom Lightcurves Of spaCe-based seeKers')
     ap.add_argument('--properties', help="Additional properties to be loaded into Sherlock run ", required=True)
+    ap.add_argument('--explore', dest='explore', action='store_true', help="Whether to run using mcmc or ns. Default is ns.")
     args = ap.parse_args()
     resources_dir = path.join(path.dirname(__file__))
     file_dir = resources_dir + "/" + 'properties.yaml' if resources_dir != "" and resources_dir is not None \
@@ -44,42 +66,45 @@ if __name__ == '__main__':
     ## Adding by-sector analysis objects
     if sherlock_user_properties["SECTOR_TWO_MIN_IDS"]:
         for two_min_id, sectors in sherlock_user_properties["SECTOR_TWO_MIN_IDS"].items():
+            star_info = get_star_info(sherlock_user_properties, two_min_id)
             if sectors == 'all':
-                ffi_object_infos.append(MissionFfiIdObjectInfo(two_min_id, sectors))
+                mission_object_infos.append(MissionObjectInfo(two_min_id, sectors, star_info=star_info))
             else:
                 for sector in sectors:
-                    mission_object_infos.append(MissionObjectInfo(two_min_id, sector))
+                    mission_object_infos.append(MissionObjectInfo(two_min_id, sector, star_info=star_info))
     if sherlock_user_properties["SECTOR_FFI_IDS"]:
         for ffi_id, sectors in sherlock_user_properties["SECTOR_FFI_IDS"].items():
+            star_info = get_star_info(sherlock_user_properties, None)
             if sectors == 'all':
-                ffi_object_infos.append(MissionFfiIdObjectInfo(ffi_id, sectors))
+                ffi_object_infos.append(MissionFfiIdObjectInfo(ffi_id, sectors, star_info=star_info))
             else:
                 for sector in sectors:
-                    ffi_object_infos.append(MissionFfiIdObjectInfo(ffi_id, sector))
+                    ffi_object_infos.append(MissionFfiIdObjectInfo(ffi_id, sector, star_info=star_info))
     if sherlock_user_properties["SECTOR_FFI_COORDINATES"]:
         for coords, sectors in sherlock_user_properties["SECTOR_FFI_COORDINATES"].items():
+            star_info = get_star_info(sherlock_user_properties, str(coords[0]) + "_" + str(coords[1]))
             if sectors == 'all':
-                ffi_object_infos.append(MissionFfiIdObjectInfo(two_min_id, sectors))
+                ffi_object_infos.append(MissionFfiCoordsObjectInfo(coords[0], coords[1], sectors, star_info=star_info))
             else:
                 for sector in sectors:
-                    ffi_coords_object_infos.append(MissionFfiCoordsObjectInfo(coords[0], coords[1], sector))
+                    ffi_coords_object_infos.append(MissionFfiCoordsObjectInfo(coords[0], coords[1], sector, star_info=star_info))
 
     ## Adding global analysis objects
     if sherlock_user_properties["GLOBAL_TWO_MIN_IDS"]:
-        [mission_object_infos.append(MissionObjectInfo(two_min_id, sectors))
+        [mission_object_infos.append(MissionObjectInfo(two_min_id, sectors, star_info=get_star_info(sherlock_user_properties, two_min_id)))
          for two_min_id, sectors in sherlock_user_properties["GLOBAL_TWO_MIN_IDS"].items()]
     if sherlock_user_properties["GLOBAL_FFI_IDS"]:
-        [ffi_object_infos.append(MissionFfiIdObjectInfo(ffi_id, sectors))
+        [ffi_object_infos.append(MissionFfiIdObjectInfo(ffi_id, sectors, star_info=get_star_info(sherlock_user_properties, ffi_id)))
          for ffi_id, sectors in sherlock_user_properties["GLOBAL_FFI_IDS"].items()]
     if sherlock_user_properties["GLOBAL_FFI_COORDINATES"]:
-        [ffi_coords_object_infos.append(MissionFfiCoordsObjectInfo(coords[0], coords[1], sectors))
+        [ffi_coords_object_infos.append(MissionFfiCoordsObjectInfo(coords[0], coords[1], sectors, star_info=get_star_info(sherlock_user_properties, str(coords[0]) + "_" + str(coords[1]))))
          for coords, sectors in sherlock_user_properties["GLOBAL_FFI_COORDINATES"].items()]
     if sherlock_user_properties["INPUT_FILES_WITH_IDS"]:
         [input_object_infos.append(
-            MissionInputObjectInfo(input_id, sherlock_user_properties["INPUT_FILES_WITH_IDS"][input_id]))
+            MissionInputObjectInfo(input_id, sherlock_user_properties["INPUT_FILES_WITH_IDS"][input_id], star_info=get_star_info(sherlock_user_properties, input_id)))
          for input_id in sherlock_user_properties["INPUT_FILES_WITH_IDS"].keys()]
     if sherlock_user_properties["INPUT_FILES"]:
-        [input_id_object_infos.append(InputObjectInfo(file)) for file in sherlock_user_properties["INPUT_FILES"]]
+        [input_id_object_infos.append(InputObjectInfo(file, star_info=get_star_info(sherlock_user_properties, file))) for file in sherlock_user_properties["INPUT_FILES"]]
 
     ## Set mask to object infos
     if sherlock_user_properties["TWO_MIN_MASKS"]:
@@ -128,7 +153,6 @@ if __name__ == '__main__':
             if object_info.mission_id() in sherlock_user_properties["INPUT_FILES_WITH_IDS_INITIAL_DETREND_PERIOD"].keys():
                 object_info.initial_detrend_period = \
                 sherlock_user_properties["INPUT_FILES_WITH_IDS_INITIAL_DETREND_PERIOD"][object_info.mission_id()]
-
     user_search_zone = None
     user_prepare = None
     user_selection_algorithm = None
@@ -152,14 +176,13 @@ if __name__ == '__main__':
         user_selection_algorithm = getattr(user_selection_algorithm, class_name)()
         globals()[class_name] = user_selection_algorithm
         pickle.dumps(user_selection_algorithm)
-
     ## Adding all object infos to same array
     object_infos.extend(mission_object_infos)
     object_infos.extend(ffi_object_infos)
     object_infos.extend(ffi_coords_object_infos)
     object_infos.extend(input_object_infos)
     object_infos.extend(input_id_object_infos)
-    sherlock.Sherlock(sherlock_user_properties["UPDATE_OIS"], object_infos) \
+    sherlock.Sherlock(sherlock_user_properties["UPDATE_OIS"], object_infos, args.explore) \
         .setup_detrend(sherlock_user_properties["INITIAL_SMOOTH_ENABLED"],
                        sherlock_user_properties["INITIAL_HIGH_RMS_MASK"],
                        sherlock_user_properties["INITIAL_HIGH_RMS_THRESHOLD"],
@@ -181,5 +204,9 @@ if __name__ == '__main__':
                                      sherlock_user_properties["BEST_SIGNAL_ALGORITHM"],
                                      sherlock_user_properties["QUORUM_STRENGTH"],
                                      sherlock_user_properties["MIN_QUORUM"],
-                                     user_selection_algorithm) \
+                                     user_selection_algorithm,
+                                     sherlock_user_properties["FIT_METHOD"],
+                                     sherlock_user_properties["OVERSAMPLING"],
+                                     sherlock_user_properties["T0_FIT_MARGIN"],
+                                     sherlock_user_properties["DURATION_GRID_STEP"]) \
         .run()
