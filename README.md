@@ -150,12 +150,23 @@ If enabled, this feature automatically disables
 for the assigned object. The user can input a period to be used for an initial detrend of the 
 original signal. 
 
-#### Custom curve preparation
-You can even inject your own python code to perform a custom signal preparation task by implementing the
-[CurvePreparer](https://github.com/franpoz/SHERLOCK/tree/master/sherlockpipe/curve_preparer/CurvePreparer.py)
-class that we provide. Then, inject your python file into the CUSTOM_PREPARER property and let SHERLOCK
-use your code (see 
-[example](https://github.com/franpoz/SHERLOCK/tree/master/examples/properties/custom_algorithms.yaml))!
+#### Custom user code
+You can even inject your own python code to perform:
+* A custom signal preparation task by implementing the
+[CurvePreparer](https://github.com/franpoz/SHERLOCK/tree/master/sherlockpipe/sherlockpipe/curve_preparer/CurvePreparer.py)
+class that we provide. Then, inject your python file into the `CUSTOM_PREPARER` property and let SHERLOCK
+use your code.
+* A custom best signal selection algorithm by implementing the 
+[SignalSelector](https://github.com/franpoz/SHERLOCK/tree/master/sherlockpipe/sherlockpipe/scoring/SignalSelector.py). 
+class that we provide. Then, inject your python file into the `CUSTOM_ALGORITHM` property and let SHERLOCK use your code.
+* A custom search zone definition by implementing the
+[SearchZone](https://github.com/franpoz/SHERLOCK/tree/master/sherlockpipe/sherlockpipe/search_zones/SearchZone.py).
+class that we provide. Then, inject your python file into the `CUSTOM_SEARCH_ZONE` property and let SHERLOCK use your code. 
+
+For better understanding of usage please see the
+[examples](https://github.com/franpoz/SHERLOCK/tree/master/examples/properties/custom_algorithms.yaml),
+which references custom implementations that you can inspect in our 
+[custom algorithms directory](https://github.com/franpoz/SHERLOCK/tree/master/examples/custom_algorithms)
 
 ### Main execution (run)
 After the preparation stage, the SHERLOCK PIPEline will execute what we call `runs` iteratively:
