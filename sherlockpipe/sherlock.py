@@ -165,7 +165,7 @@ class Sherlock:
                                     search_zone=None, user_search_zone=None, period_min=0.5, period_max=20,
                                     bin_minutes=10, run_cores=NUM_CORES, snr_min=5, sde_min=5, fap_max=0.1,
                                     mask_mode="mask", best_signal_algorithm='border-correct', quorum_strength=1,
-                                    min_quorum=0, user_selection_algorithm=None, fit_method="default",
+                                    min_quorum=0, user_selection_algorithm=None, fit_method="tls",
                                     oversampling=None, t0_fit_margin=0.05, duration_grid_step=1.1):
         """
         Configures the values to be used for the transit fitting and the main run loop.
@@ -225,7 +225,11 @@ class Sherlock:
                                        "user": user_selection_algorithm}
         self.best_signal_algorithm = best_signal_algorithm if user_selection_algorithm is None else "user"
         self.user_selection_algorithm = user_selection_algorithm
-        self.fit_method = fit_method
+        self.fit_method = "tls"
+        if fit_method is not None and fit_method.lower() == 'bls':
+            self.fit_method = "box"
+        elif fit_method is not None and fit_method.lower() == 'grazing':
+            self.fit_method = "grazing"
         self.oversampling = oversampling
         if self.oversampling is not None:
             self.oversampling = int(self.oversampling)

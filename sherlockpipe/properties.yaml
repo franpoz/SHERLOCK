@@ -91,8 +91,8 @@ MIN_QUORUM: 0
 # User defined python class extending SHERLOCK SignalSelector abstract class. An absolute path to the file must be
 # provided.
 CUSTOM_SELECTION_ALGORITHM:
-# Selection of fit method ("default", "grazing", "box")
-FIT_METHOD: "default"
+# Selection of fit method ("tls", "bls", "grazing")
+FIT_METHOD: "tls"
 # Selection of T0 fit percent over the diration (admitted range from 0.01 to 0.1). Default is None so the oversampling
 # is calculated from the entire time lapse taken by the light curve.
 OVERSAMPLING:

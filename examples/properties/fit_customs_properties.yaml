@@ -1,7 +1,7 @@
 GLOBAL_TWO_MIN_IDS:
   TIC 273369281: "all"
-# Selection of fit method ("default", "grazing", "box")
-FIT_METHOD: "box"
+# Selection of fit method ("tls", "bls", "grazing")
+FIT_METHOD: "bls"
 # Selection of T0 fit percent over the diration (admitted range from 0.01 to 0.1). Default is None so the oversampling
 # is calculated from the entire time lapse taken by the light curve.
 OVERSAMPLING: 5
