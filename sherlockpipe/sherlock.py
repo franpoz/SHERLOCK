@@ -227,6 +227,8 @@ class Sherlock:
         self.user_selection_algorithm = user_selection_algorithm
         self.fit_method = fit_method
         self.oversampling = oversampling
+        if self.oversampling is not None:
+            self.oversampling = int(self.oversampling)
         self.t0_fit_margin = t0_fit_margin
         self.duration_grid_step = duration_grid_step
         return self
@@ -525,6 +527,9 @@ class Sherlock:
             logging.info('radius = %.6f', star_info.radius)
             logging.info('radius_min = %.6f', star_info.radius_min)
             logging.info('radius_max = %.6f', star_info.radius_max)
+            logging.info('teff = %.6f', star_info.teff)
+            logging.info('lum = %.6f', star_info.lum)
+            logging.info('logg = %.6f', star_info.logg)
         if not star_info.radius_assumed and not star_info.mass_assumed and star_info.teff is not None:
             star_df = pandas.DataFrame(columns=['ra', 'dec', 'R_star', 'R_star_lerr', 'R_star_uerr', 'M_star',
                                                 'M_star_lerr', 'M_star_uerr', 'Teff_star', 'Teff_star_lerr',
@@ -585,7 +590,7 @@ class Sherlock:
             logging.info('T0 Fit Margin: %.3f', self.t0_fit_margin)
         logging.info('Signal scoring algorithm: %s', self.best_signal_algorithm)
         if self.best_signal_algorithm == self.VALID_SIGNAL_SELECTORS[2]:
-            logging.info('Quorum algorithm vote strength: %.0f',
+            logging.info('Quorum algorithm vote strength: %.2f',
                          self.signal_score_selectors[self.VALID_SIGNAL_SELECTORS[2]].strength)
         if sectors is not None:
             sectors_count = len(sectors)

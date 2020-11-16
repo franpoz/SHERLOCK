@@ -2,6 +2,7 @@ import os
 import shutil
 import unittest
 
+from sherlockpipe.star.starinfo import StarInfo
 
 from sherlockpipe.objectinfo.InputObjectInfo import InputObjectInfo
 from sherlockpipe.objectinfo.MissionFfiCoordsObjectInfo import MissionFfiCoordsObjectInfo
@@ -146,9 +147,62 @@ class SherlockTests(unittest.TestCase):
 
     def test_run_with_rms_mask(self):
         sherlock = Sherlock(False, [MissionFfiIdObjectInfo("TIC 181804752", 'all')])
-        sherlock.setup_detrend(n_detrends=2, initial_rms_mask=True)\
+        sherlock.setup_detrend(n_detrends=1, initial_rms_mask=True) \
             .setup_transit_adjust_params(max_runs=1).run()
         self.__assert_run_files("TIC181804752_FFI_all")
+
+    def test_run_with_explore(self):
+        sherlock = Sherlock(False, [MissionFfiIdObjectInfo("TIC 181804752", 'all')], True)
+        sherlock.setup_detrend(n_detrends=1, initial_rms_mask=True) \
+            .setup_transit_adjust_params(max_runs=1).run()
+        run_dir = "TIC181804752_FFI_all"
+        self.assertTrue(os.path.exists(run_dir))
+        self.assertTrue(os.path.exists(run_dir + "/Periodogram_TIC181804752_FFI_all.png"))
+        self.assertFalse(os.path.exists(run_dir + "/1"))
+
+    def test_run_with_star_info(self):
+        sherlock = Sherlock(False, [MissionFfiIdObjectInfo("TIC 181804752", 'all',
+                                                           star_info=StarInfo(ld_coefficients=(0.15,0.25),
+                                                                              teff=4000,
+                                                                              lum=1.50, logg=0.15, radius=0.4,
+                                                                              radius_min=0.10, radius_max=0.15,
+                                                                              mass=0.3, mass_min=0.05, mass_max=0.075,
+                                                                              ra=15, dec=87))], True)
+        sherlock.setup_detrend(n_detrends=1, initial_rms_mask=True)\
+            .setup_transit_adjust_params(max_runs=1).run()
+        run_dir = "TIC181804752_FFI_all"
+        self.assertTrue(os.path.exists(run_dir))
+        self.assertTrue(os.path.exists(run_dir + "/Periodogram_TIC181804752_FFI_all.png"))
+        self.assertFalse(os.path.exists(run_dir + "/1"))
+        with open(run_dir + '/TIC181804752_FFI_all_report.log') as f:
+            content = f.read()
+            self.assertTrue('mass = 0.3' in content)
+            self.assertTrue('mass_min = 0.25' in content)
+            self.assertTrue('mass_max = 0.375' in content)
+            self.assertTrue('radius = 0.4' in content)
+            self.assertTrue('radius_min = 0.3' in content)
+            self.assertTrue('radius_max = 0.55' in content)
+            self.assertTrue('limb-darkening estimates using quadratic LD (a,b)= (0.15, 0.25)' in content)
+            self.assertTrue('teff = 4000' in content)
+            self.assertTrue('logg = 0.15' in content)
+            self.assertTrue('lum = 1.50' in content)
+
+    def test_run_with_transit_customs(self):
+        sherlock = Sherlock(False, [MissionFfiIdObjectInfo("TIC 181804752", 'all')], False)
+        sherlock.setup_detrend(n_detrends=1, initial_rms_mask=True)\
+            .setup_transit_adjust_params(max_runs=1, oversampling=5.5, t0_fit_margin=0.09, duration_grid_step=1.075,
+                                         fit_method="box", best_signal_algorithm="quorum", quorum_strength=0.31)\
+            .run()
+        run_dir = "TIC181804752_FFI_all"
+        with open(run_dir + '/TIC181804752_FFI_all_report.log') as f:
+            content = f.read()
+            self.assertTrue('Fit method: box' in content)
+            self.assertTrue('Duration step: 1.075' in content)
+            self.assertTrue('T0 Fit Margin: 0.09' in content)
+            self.assertTrue('Oversampling: 5' in content)
+            self.assertTrue('Signal scoring algorithm: quorum' in content)
+            self.assertTrue('Quorum algorithm vote strength: 0.31' in content)
+        self.__assert_run_files(run_dir)
 
     def __assert_run_files(self, object_dir, assert_rms_mask=True):
         run_dir = object_dir + "/1"
