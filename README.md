@@ -36,6 +36,14 @@ or files to be analysed in the execution. You'd need to fill at least one of tho
 pipeline to do anything. If you still have any doubts please refer to the 
 [examples/properties](https://github.com/franpoz/SHERLOCK/tree/master/examples/properties) directory 
 
+Additionally, you could only want to inspect the preparation stage of SHERLOCK and therefore, you can execute it without
+running the analyse phase so you can watch the light curve, the periodogram and the initial report to take better
+decisions to tune the execution parameters. Just launch SHERLOCK with:
+
+ ```python3 -m sherlockpipe --properties my_properties.yaml --explore```
+ 
+ and it will end as soon as it has processed the preparation stages for each object.
+
 ## Updates
 SHERLOCK uses third party data to know TOIs, KOIs, EPICs and to handle FFIs and the vetting process.
 This data gets frequently updated from the active missions and therefore SHERLOCK will perform better
