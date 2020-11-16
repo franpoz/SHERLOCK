@@ -225,7 +225,7 @@ class Sherlock:
                                        "user": user_selection_algorithm}
         self.best_signal_algorithm = best_signal_algorithm if user_selection_algorithm is None else "user"
         self.user_selection_algorithm = user_selection_algorithm
-        self.fit_method = "tls"
+        self.fit_method = "default"
         if fit_method is not None and fit_method.lower() == 'bls':
             self.fit_method = "box"
         elif fit_method is not None and fit_method.lower() == 'grazing':
