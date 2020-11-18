@@ -5,26 +5,19 @@ from __future__ import print_function, division, absolute_import
 
 #::: modules
 import numpy as np
-import matplotlib.pyplot as plt
-import matplotlib.gridspec as gridspec
 import os, sys
 import ellc
-from transitleastsquares import transitleastsquares
-from transitleastsquares import transit_mask, cleaned_array
 from transitleastsquares import catalog_info
 import astropy.constants as ac
 import astropy.units as u
 import lightkurve as lk
 import pandas as pd
-from lightkurve import search_lightcurvefile
-from scipy import stats
-from wotan import t14
 
 
 np.random.seed(42)
 
 #::: load data and set the units correctly
-TIC_ID = 354687625    # TIC_ID of our candidate
+TIC_ID = 85400193    # TIC_ID of our candidate
 lcf= lk.search_lightcurvefile('TIC '+str(TIC_ID), mission="tess").download_all()
 ab, mass, massmin, massmax, radius, radiusmin, radiusmax = catalog_info(TIC_ID=TIC_ID)
 
@@ -55,8 +48,6 @@ rstar_max = radius+radiusmax
 lc=lcf.PDCSAP_FLUX.stitch().remove_nans() # remove of the nans
 lc_new=lk.LightCurve(time=lc.time, flux=lc.flux,flux_err=lc.flux_err)
 clean=lc_new.remove_outliers(sigma_lower=float('inf'), sigma_upper=3) #remove outliers over 3sigma
-
-
 flux0=clean.flux
 time=clean.time
 flux_err = clean.flux_err
@@ -76,13 +67,13 @@ def make_model(epoch, period, rplanet):
     #tdur=t14(R_s=radius, M_s=mass,P=period,small_planet=False) #we define the typical duration of a small planet in this star
     #print("transit_duration= ", tdur*24*60,"min" )
     model = ellc.lc(
-           t_obs = time, 
-           radius_1 = rstar.to(u.au) / a, #star radius convert from AU to in units of a 
+           t_obs = time,
+           radius_1 = rstar.to(u.au) / a, #star radius convert from AU to in units of a
            radius_2 = rplanet.to(u.au) / a, #convert from Rearth (equatorial) into AU and then into units of a
-           sbratio = 0, 
-           incl = 90, 
+           sbratio = 0,
+           incl = 90,
            light_3 = 0,
-           t_zero = epoch, 
+           t_zero = epoch,
            period = period,
            a = None,
            q = 1e-6,
@@ -94,17 +85,26 @@ def make_model(epoch, period, rplanet):
            rotfac_1 = 1, rotfac_2 = 1,
            hf_1 = 1.5, hf_2 = 1.5,
            bfac_1 = None, bfac_2 = None,
-           heat_1 = None, heat_2 = None, 
+           heat_1 = None, heat_2 = None,
            lambda_1 = None, lambda_2 = None,
            vsini_1 = None, vsini_2 = None,
-           t_exp=texpo, n_int=None, 
+           t_exp=texpo, n_int=None,
            grid_1='default', grid_2='default',
            ld_1='quad', ld_2=None,
            shape_1='sphere', shape_2='sphere',
-           spots_1=None, spots_2=None, 
+           spots_1=None, spots_2=None,
            exact_grav=False, verbose=1)
-    
-    flux = flux0+model-1.
+
+    flux_t = flux0 + model - 1.
+    if model[0] > 0:
+        flux = flux_t
+        flux_err_model = flux_err
+        time_custom = time
+    else:
+        flux = []
+        time_custom = []
+        flux_err_model = []
+    return time_custom, flux, flux_err_model
     #minutes=10
     #print(len(time))
     #print(min(time),max(time))
@@ -137,9 +137,6 @@ def make_model(epoch, period, rplanet):
     #ax3.set_xlabel("Time (days)")
     #ax3.set_xlim(1766,1769)
     #plt.savefig('model.png', dpi=200)
-     
-    
-    return time, flux
 
 
 
@@ -153,18 +150,21 @@ def logprint(*text):
 
     
 #::: iterate through grid of periods and rplanet
-for period in np.arange(1,20,0.5):
-    for rplanet in np.arange(2.7,0.65,-0.05):
-        epoch = time[0]+np.random.rand()*period
-        #epoch = time[0]+5
-        rplanet = np.around(rplanet, decimals=2)*u.R_earth
-        print('\n')
-        print('P = '+str(period)+' days, Rp = '+str(rplanet))
-        time, flux = make_model(epoch, period, rplanet)
-        file_name = os.path.join('curves/P_' + str(period) + '_R' + str(radius) + '_' + str(epoch) + '.csv')
-        lc_df = pd.DataFrame(columns=['#time', 'flux', 'flux_err'])
-        lc_df['#time'] = time
-        lc_df['flux'] = flux
-        lc_df['flux_err'] = flux_err
-        lc_df.to_csv(file_name, index=False)
-        # TODO bulk into file
+dir = "/home/pozuelos/martin/curves"
+if not os.path.isdir(dir):
+    os.mkdir(dir)
+max_period = 10
+min_period = 0.5
+for period in np.arange(min_period, max_period, 0.5):
+    for t0 in np.arange(time[60], time[60] + period - 0.1, period / 5):
+        for rplanet in np.arange(4, 0.65, -0.1):
+            rplanet = np.around(rplanet, decimals=2)*u.R_earth
+            print('\n')
+            print('P = '+str(period)+' days, Rp = '+str(rplanet) + ", T0 = " + str(t0))
+            time_model, flux_model, flux_err_model = make_model(t0, period, rplanet)
+            file_name = os.path.join(dir + '/P' + str(period) + '_R' + str(rplanet.value) + '_' + str(t0) + '.csv')
+            lc_df = pd.DataFrame(columns=['#time', 'flux', 'flux_err'])
+            lc_df['#time'] = time_model
+            lc_df['flux'] = flux_model
+            lc_df['flux_err'] = flux_err_model
+            lc_df.to_csv(file_name, index=False)
