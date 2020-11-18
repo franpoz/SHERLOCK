@@ -9,6 +9,7 @@ import matplotlib.pyplot as plt
 import matplotlib.gridspec as gridspec
 import os, sys
 import ellc
+import wotan
 from transitleastsquares import transitleastsquares
 from transitleastsquares import transit_mask, cleaned_array
 from transitleastsquares import catalog_info
@@ -43,6 +44,8 @@ def tls_search(time, flux, epoch, period, rplanet):
     # flux = flux[~intransit]
     time, flux = cleaned_array(time, flux)
     run = 0
+    flux = wotan.flatten(time, flux, window_length=0.25, return_trend=False, method='biweight',
+                  break_tolerance=0.5)
     #::: search for the rest
     while (SNR >= SNR_threshold) and (not FOUND_SIGNAL):
         model = transitleastsquares(time, flux)
@@ -57,7 +60,8 @@ def tls_search(time, flux, epoch, period, rplanet):
                               period_min=0.5,
                               period_max=14,
                               n_transits_min=2,
-                              show_progress_bar=False
+                              show_progress_bar=False,
+                              use_threads=20
                               )
 
         # mass and radius for the TLS
@@ -105,7 +109,8 @@ mstar_min = mass - massmin
 mstar_max = mass + massmax
 rstar_min = radius - radiusmin
 rstar_max = radius + radiusmax
-dir = "../run_tests/experiment/"
+dir = "../run_tests/experiment/curves/"
+results_dir = "../run_tests/experiment/curves/"
 report = {}
 reports_df = pd.DataFrame(columns=['period', 'radius', 'epoch', 'found', 'snr', 'run'])
 for file in os.listdir(dir):
@@ -115,15 +120,19 @@ for file in os.listdir(dir):
             r_planet = float(re.search("R([0-9]+\\.[0-9]+)", file)[1])
             epoch = float(re.search("_([0-9]+\\.[0-9]+)\\.csv", file)[1])
             df = pd.read_csv(dir + file, float_precision='round_trip', sep=',', usecols=['#time', 'flux', 'flux_err'])
-            lc = lk.LightCurve(time=df['#time'], flux=df['flux'], flux_err=df['flux_err'])
-            clean = lc.remove_nans().remove_outliers(sigma_lower=float('inf'), sigma_upper=3)  # remove outliers over 3sigma
-            flux = clean.flux
-            time = clean.time
-            found, snr, run = tls_search(time, flux, epoch, period, r_planet)
+            if len(df) == 0:
+                found = True
+                snr = 20
+                run = 1
+            else:
+                lc = lk.LightCurve(time=df['#time'], flux=df['flux'], flux_err=df['flux_err'])
+                clean = lc.remove_nans().remove_outliers(sigma_lower=float('inf'), sigma_upper=3)  # remove outliers over 3sigma
+                flux = clean.flux
+                time = clean.time
+                found, snr, run = tls_search(time, flux, epoch, period, r_planet)
             new_report = {"period": period, "radius": r_planet, "epoch": epoch, "found": found, "snr": snr, "run": run}
             reports_df = reports_df.append(new_report, ignore_index=True)
             print("P=" + str(period) + ", R=" + str(r_planet) + ", T0=" + str(epoch) + ", FOUND WAS " + str(found) + " WITH SNR " + str(snr))
+            reports_df.to_csv(dir + "a_tls_report.csv", index=False)
         except:
             print("File not valid: "+ file)
-
-reports_df.to_csv(dir + "tls_report.csv", index=False)
