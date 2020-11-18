@@ -4,35 +4,16 @@
 from __future__ import print_function, division, absolute_import
 
 #::: modules
-import multiprocessing
-
 import numpy as np
-import matplotlib.pyplot as plt
-import matplotlib.gridspec as gridspec
-import os, sys
-import ellc
-from dask import multiprocessing
 from sherlockpipe.scoring.QuorumSnrBorderCorrectedSignalSelector import QuorumSnrBorderCorrectedSignalSelector
-
-from sherlockpipe.scoring.BasicSignalSelector import BasicSignalSelector
-
-from sherlockpipe.scoring.SnrBorderCorrectedSignalSelector import CorrectedBorderSignalSelection
-from transitleastsquares import transitleastsquares
-from transitleastsquares import transit_mask, cleaned_array
 from transitleastsquares import catalog_info
-import astropy.constants as ac
 import astropy.units as u
 import lightkurve as lk
-from lightkurve import search_lightcurvefile
-from scipy import stats
-from wotan import t14
-from wotan import flatten
 import os
 import re
 import pandas as pd
 from sherlockpipe import sherlock
 from sherlockpipe.objectinfo.MissionInputObjectInfo import MissionInputObjectInfo
-import multiprocessing
 
 
 class QuorumSnrBorderCorrectedStopWhenMatchSignalSelector(QuorumSnrBorderCorrectedSignalSelector):
@@ -86,13 +67,24 @@ mstar_min = mass - massmin
 mstar_max = mass + massmax
 rstar_min = radius - radiusmin
 rstar_max = radius + radiusmax
-dir = "/home/pozuelos/martin/curves"
+dir = "/home/pozuelos/martin/curves/"
 report = {}
-reports_df = pd.DataFrame(columns=['period', 'radius', 'epoch', 'found', 'snr', 'run'])
+reports_df = pd.DataFrame(columns=['period', 'radius', 'epoch', 'found', 'snr', 'sde', 'run'])
 a = False
-for file in os.listdir(dir):
-    if file.endswith(".csv"):
+tls_report_df = pd.read_csv(dir + "a_tls_report.csv", float_precision='round_trip', sep=',', usecols=['period', 'radius',
+                                                                                            'epoch', 'found',
+                                                                                            'snr', 'run'])
+samples = 4
+samples_analysed = 4
+for index, row in tls_report_df.iterrows():
+    file = os.path.join('P' + str(row['period']) + '_R' + str(row['radius']) + '_' + str(row['epoch']) + '.csv')
+    last_true = index < len(tls_report_df) - 1 and tls_report_df.iloc[index]['found'] and \
+                not tls_report_df.iloc[index + 1]['found']
+    if last_true:
+        samples_analysed = 0
+    if samples_analysed < 4:
         try:
+            samples_analysed = samples_analysed + 1
             period = float(re.search("P([0-9]+\\.[0-9]+)", file)[1])
             r_planet = float(re.search("R([0-9]+\\.[0-9]+)", file)[1])
             epoch = float(re.search("_([0-9]+\\.[0-9]+)\\.csv", file)[1])
@@ -101,19 +93,21 @@ for file in os.listdir(dir):
             if len(df) == 0:
                 found = True
                 snr = 20
+                sde = 20
                 run = 1
             else:
                 sherlock.Sherlock(False, object_infos=[MissionInputObjectInfo("TIC 85400193", dir + file)]) \
-                    .setup_detrend(True, True, 1.5, 4, 6, "biweight", None, None, multiprocessing.cpu_count() - 1, False,
+                    .setup_detrend(True, True, 1.5, 4, 12, "biweight", None, None, 20, False,
                                    0.25, "cosine", None) \
-                    .setup_transit_adjust_params(15, None, None, 10, None, None, 0.4, 14, 10,
-                                                 multiprocessing.cpu_count() - 1, 7, 5.5, 0.05, "mask", "quorum", 0.2, 0,
+                    .setup_transit_adjust_params(5, None, None, 10, None, None, 0.4, 14, 10,
+                                                 20, 5, 5.5, 0.05, "mask", "quorum", 1, 0,
                                                  signal_selection_algorithm)\
                     .run()
                 df = pd.read_csv("TIC85400193_INP/candidates.csv", float_precision='round_trip', sep=',',
                                  usecols=['curve', 'period', 't0', 'run', 'snr', 'rad_p', 'transits'])
                 snr = df["snr"].iloc[len(df) - 1]
                 run = df["run"].iloc[len(df) - 1]
+                sde = df["sde"].iloc[len(df) - 1]
                 per_run = 0
                 found_period = False
                 j = 0
@@ -131,14 +125,15 @@ for file in os.listdir(dir):
                         if right_epoch:
                             snr = df["snr"].iloc[j]
                             run = df["run"].iloc[j]
+                            sde = df["sde"].iloc[j]
                             break
                 found = right_epoch
-            new_report = {"period": period, "radius": r_planet, "epoch": epoch, "found": found, "snr": snr,
+            new_report = {"period": period, "radius": r_planet, "epoch": epoch, "found": found, "sde": sde, "snr": snr,
                           "run": int(run)}
             reports_df = reports_df.append(new_report, ignore_index=True)
             reports_df.to_csv(dir + "a_sherlock_report.csv", index=False)
             print("P=" + str(period) + ", R=" + str(r_planet) + ", T0=" + str(epoch) + ", FOUND WAS " + str(found) +
-                  " WITH SNR " + str(snr))
+                  " WITH SNR " + str(snr) + "and SDE " + str(sde))
         except Exception as e:
             print(e)
             print("File not valid: " + file)
