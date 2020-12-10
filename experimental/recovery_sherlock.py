@@ -28,16 +28,20 @@ class QuorumSnrBorderCorrectedStopWhenMatchSignalSelector(QuorumSnrBorderCorrect
         signal_selection = super(QuorumSnrBorderCorrectedStopWhenMatchSignalSelector, self) \
             .select(transit_results, snr_min, detrend_method, wl)
         if signal_selection.score == 0 or (
-                self.IsMultipleOf(signal_selection.transit_result.period, self.per / 2.) and
+                self.is_harmonic(signal_selection.transit_result.period, self.per) and
                 self.isRightEpoch(signal_selection.transit_result.t0, self.t0, self.per)):
             signal_selection.score = 0
         return signal_selection
 
-    def IsMultipleOf(self, a, b, tolerance=0.05):
+    def is_harmonic(self, a, b, tolerance=0.05):
         a = np.float(a)
         b = np.float(b)
-        result = a % b
-        return (abs(result / b) <= tolerance) or (abs((b - result) / b) <= tolerance)
+        mod_ab = a % b
+        mod_ba = b % a
+        return (a > b and a < b * 3 + tolerance * 3 and (
+                    abs(mod_ab % 1) <= tolerance or abs((b - mod_ab) % 1) <= tolerance)) or \
+               (b > a and a > b / 3 - tolerance / 3 and (
+                           abs(mod_ba % 1) <= tolerance or abs((a - mod_ba) % 1) <= tolerance))
 
     def isRightEpoch(self, t0, known_epoch, known_period):
         right_epoch = False
@@ -50,9 +54,22 @@ class QuorumSnrBorderCorrectedStopWhenMatchSignalSelector(QuorumSnrBorderCorrect
 def IsMultipleOf(a, b, tolerance=0.05):
     a = np.float(a)
     b = np.float(b)
-    result = a % b
-    return (abs(result / b) <= tolerance) or (abs((b - result) / b) <= tolerance)
+    mod_ab = a % b
+    mod_ba = b % a
+    return (a > b and a < b * 3 + tolerance * 3 and (abs(mod_ab % 1) <= tolerance or abs((b - mod_ab) % 1) <= tolerance)) or \
+           (b > a and a > b / 3 - tolerance / 3 and (abs(mod_ba % 1) <= tolerance or abs((a - mod_ba) % 1) <= tolerance))
 
+
+# print(IsMultipleOf(0.5 / 2 + 0.005, 0.5))
+# print(IsMultipleOf(0.5 / 3 - 0.005, 0.5))
+# print(IsMultipleOf(0.5 / 4 + 0.01, 0.5))
+# print(IsMultipleOf(0.5 + 0.01, 0.5))
+# print(IsMultipleOf(0.5 * 2 + 0.01, 0.5))
+# print(IsMultipleOf(0.5 * 3 + 0.01, 0.5))
+# print(IsMultipleOf(0.5 * 4 + 0.01, 0.5))
+# print(IsMultipleOf(0.75, 0.5))
+# print(IsMultipleOf(1.25, 0.5))
+# print(IsMultipleOf(5 + 0.01, 0.5))
 
 #::: load data and set the units correctly
 TIC_ID = 85400193  # TIC_ID of our candidate
@@ -97,14 +114,14 @@ for index, row in tls_report_df.iterrows():
                 run = 1
             else:
                 sherlock.Sherlock(False, object_infos=[MissionInputObjectInfo("TIC 85400193", dir + file)]) \
-                    .setup_detrend(True, True, 1.5, 4, 12, "biweight", None, None, 20, False,
+                    .setup_detrend(True, True, 1.5, 4, 12, "biweight", 0.2, 1.0, 20, False,
                                    0.25, "cosine", None) \
                     .setup_transit_adjust_params(5, None, None, 10, None, None, 0.4, 14, 10,
                                                  20, 5, 5.5, 0.05, "mask", "quorum", 1, 0,
                                                  signal_selection_algorithm)\
                     .run()
                 df = pd.read_csv("TIC85400193_INP/candidates.csv", float_precision='round_trip', sep=',',
-                                 usecols=['curve', 'period', 't0', 'run', 'snr', 'rad_p', 'transits'])
+                                 usecols=['curve', 'period', 't0', 'run', 'snr', 'sde', 'rad_p', 'transits'])
                 snr = df["snr"].iloc[len(df) - 1]
                 run = df["run"].iloc[len(df) - 1]
                 sde = df["sde"].iloc[len(df) - 1]
@@ -112,7 +129,7 @@ for index, row in tls_report_df.iterrows():
                 found_period = False
                 j = 0
                 for per in df["period"]:
-                    if signal_selection_algorithm.IsMultipleOf(per, period / 2.):
+                    if signal_selection_algorithm.is_harmonic(per, period / 2.):
                         found_period = True
                         t0 = df["t0"].iloc[j]
                         break

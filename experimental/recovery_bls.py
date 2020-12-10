@@ -132,15 +132,15 @@ for file in os.listdir(dir):
                 clean = lc.remove_nans().remove_outliers(sigma_lower=float('inf'), sigma_upper=3)  # remove outliers over 3sigma
                 flux = clean.flux
                 time = clean.time
-                found, snr, run = tls_search(time, flux, epoch, period, r_planet, 5, "default")
+                found, snr, run = tls_search(time, flux, epoch, period, r_planet, 7, "box")
             new_report = {"period": period, "radius": r_planet, "epoch": epoch, "found": found, "snr": snr, "run": run}
             reports_df = reports_df.append(new_report, ignore_index=True)
             print("P=" + str(period) + ", R=" + str(r_planet) + ", T0=" + str(epoch) + ", FOUND WAS " + str(found) + " WITH SNR " + str(snr))
-            reports_df.to_csv(dir + "a_tls_report.csv", index=False)
+            reports_df.to_csv(dir + "a_bls_report.csv", index=False)
         except:
             print("File not valid: " + file)
 
-df = pd.read_csv(dir + "a_tls_report.csv")
+df = pd.read_csv(dir + "a_bls_report.csv")
 min_period = df["period"].min()
 max_period = df["period"].max()
 min_rad = df["radius"].min()
@@ -173,7 +173,8 @@ cbar.ax.set_ylabel("Found transits count", rotation=-90, va="bottom")
 plt.setp(ax.get_xticklabels(), rotation=45, ha="right",
          rotation_mode="anchor")
 plt.gca().invert_yaxis()
-ax.set_title("TLS Period/radius recovery")
+ax.set_title("BLS Period/radius recovery")
 fig.tight_layout()
-plt.savefig(dir + "a_tls_report.png")
+plt.savefig(dir + "a_bls_report.png")
 plt.close()
+
