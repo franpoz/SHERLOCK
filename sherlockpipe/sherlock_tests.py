@@ -191,7 +191,7 @@ class SherlockTests(unittest.TestCase):
         sherlock = Sherlock(False, [MissionFfiIdObjectInfo("TIC 181804752", 'all')], False)
         sherlock.setup_detrend(n_detrends=1, initial_rms_mask=True)\
             .setup_transit_adjust_params(max_runs=1, oversampling=5.5, t0_fit_margin=0.09, duration_grid_step=1.075,
-                                         fit_method="box", best_signal_algorithm="quorum", quorum_strength=0.31)\
+                                         fit_method="bls", best_signal_algorithm="quorum", quorum_strength=0.31)\
             .run()
         run_dir = "TIC181804752_FFI_all"
         with open(run_dir + '/TIC181804752_FFI_all_report.log') as f:
