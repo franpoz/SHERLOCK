@@ -10,7 +10,7 @@ class MissionInputLightcurveBuilder(LightcurveBuilder):
     def __init__(self):
         super().__init__()
 
-    def build(self, object_info):
+    def build(self, object_info, sherlock_dir):
         mission_id = object_info.mission_id()
         sherlock_id = object_info.sherlock_id()
         quarters = None

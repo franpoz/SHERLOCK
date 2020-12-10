@@ -122,6 +122,8 @@ STAR:
 # The initial mask of time ranges to be applied to short cadence light curves with mission id.
 # TESS/Kepler/K2 ids array. E.g: {"TIC 181804752": [[1546.25, 1550.5], [1561, 1563]]}
 # 36724087 181804752 243185500 318022259 54962195
+APERTURE:
+
 TWO_MIN_MASKS:
 # TESS ONLY ids dictionary with mask ranges. E.g: {"TIC 181804752": [[1546.25, 1550.5]]}
 FFI_IDS_MASKS:

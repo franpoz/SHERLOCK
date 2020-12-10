@@ -338,6 +338,7 @@ class Sherlock:
             lcs = np.concatenate(([flux], lcs), axis=0)
             wl = np.concatenate(([0], wl), axis=0)
             while not self.explore and best_signal_score == 1 and id_run <= self.max_runs:
+                self.__setup_object_logging(sherlock_id, False)
                 object_report = {}
                 logging.info("________________________________ run %s________________________________", id_run)
                 transit_results, signal_selection = \
@@ -379,8 +380,7 @@ class Sherlock:
                 else:
                     logging.info('New best signal does not look very promising. End')
                 self.report[sherlock_id].append(object_report)
-            if not self.explore:
-                self.__setup_object_report_logging(sherlock_id)
+                self.__setup_object_report_logging(sherlock_id, True)
                 object_dir = self.__init_object_dir(object_info.sherlock_id())
                 logging.info("Listing most promising candidates for ID %s:", sherlock_id)
                 logging.info("%-12s%-8s%-10s%-10s%-8s%-8s%-8s%-8s%-10s%-14s%-14s%-12s%-25s%-10s%-18s%-20s", "Detrend no.", "Period",
@@ -464,11 +464,15 @@ class Sherlock:
         logger.addHandler(handler)
         return object_dir
 
-    def __setup_object_report_logging(self, object_id):
+    def __setup_object_report_logging(self, object_id, clean=False):
         object_dir = self.__setup_object_logging(object_id, False)
         logger = logging.getLogger()
+        logger.handlers.pop()
         formatter = logging.Formatter('%(message)s')
-        handler = logging.FileHandler(object_dir + str(object_id) + "_candidates.log")
+        file = object_dir + str(object_id) + "_candidates.log"
+        if clean and os.path.exists(file):
+            os.remove(file)
+        handler = logging.FileHandler(file)
         handler.setLevel(logging.INFO)
         handler.setFormatter(formatter)
         logger.addHandler(handler)
@@ -511,7 +515,7 @@ class Sherlock:
         sherlock_id = object_info.sherlock_id()
         object_dir = self.__setup_object_logging(sherlock_id)
         logging.info('ID: %s', sherlock_id)
-        lc, star_info, transits_min_count, sectors, quarters = self.lightcurve_builders[type(object_info)].build(object_info)
+        lc, star_info, transits_min_count, sectors, quarters = self.lightcurve_builders[type(object_info)].build(object_info, object_dir)
         star_info = self.__complete_star_info(object_info.star_info, star_info)
         if star_info is not None:
             logging.info('================================================')

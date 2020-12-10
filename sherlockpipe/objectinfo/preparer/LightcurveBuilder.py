@@ -19,7 +19,7 @@ class LightcurveBuilder(ABC):
         self.star_catalogs[self.MISSION_ID_TESS] = TicStarCatalog()
 
     @abstractmethod
-    def build(self, object_info):
+    def build(self, object_info, sherlock_dir):
         pass
 
     def parse_object_id(self, object_id):

@@ -15,10 +15,11 @@ class ObjectInfo(ABC):
     initial_mask = None
     star_info = None
 
-    def __init__(self, initial_mask=None, initial_detrend_period=None, star_info=None):
+    def __init__(self, initial_mask=None, initial_detrend_period=None, star_info=None, aperture_file=None):
         self.initial_mask = initial_mask
         self.initial_detrend_period = initial_detrend_period
         self.star_info = star_info
+        self.aperture_file = aperture_file
 
     @abstractmethod
     def sherlock_id(self):

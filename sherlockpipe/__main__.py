@@ -41,6 +41,12 @@ def get_star_info(properties, id):
                              star_properties["DEC"] if "DEC" in star_properties else None)
     return input_star_info
 
+def get_aperture(properties, id):
+    input_aperture_file = None
+    if properties["APERTURE"] is not None and properties["APERTURE"][id] is not None:
+        input_aperture_file = properties["APERTURE"][id]
+    return input_aperture_file
+
 
 if __name__ == '__main__':
     ap = ArgumentParser(description='Searching for Hints of Exoplanets fRom Lightcurves Of spaCe-based seeKers')
@@ -67,44 +73,58 @@ if __name__ == '__main__':
     if sherlock_user_properties["SECTOR_TWO_MIN_IDS"]:
         for two_min_id, sectors in sherlock_user_properties["SECTOR_TWO_MIN_IDS"].items():
             star_info = get_star_info(sherlock_user_properties, two_min_id)
+            aperture = get_aperture(sherlock_user_properties, two_min_id)
             if sectors == 'all':
-                mission_object_infos.append(MissionObjectInfo(two_min_id, sectors, star_info=star_info))
+                mission_object_infos.append(MissionObjectInfo(two_min_id, sectors, star_info=star_info, aperture_file=aperture))
             else:
                 for sector in sectors:
-                    mission_object_infos.append(MissionObjectInfo(two_min_id, sector, star_info=star_info))
+                    mission_object_infos.append(MissionObjectInfo(two_min_id, sector, star_info=star_info, aperture_file=aperture))
     if sherlock_user_properties["SECTOR_FFI_IDS"]:
         for ffi_id, sectors in sherlock_user_properties["SECTOR_FFI_IDS"].items():
             star_info = get_star_info(sherlock_user_properties, None)
+            aperture = get_aperture(sherlock_user_properties, ffi_id)
             if sectors == 'all':
-                ffi_object_infos.append(MissionFfiIdObjectInfo(ffi_id, sectors, star_info=star_info))
+                ffi_object_infos.append(MissionFfiIdObjectInfo(ffi_id, sectors, star_info=star_info, aperture_file=aperture))
             else:
                 for sector in sectors:
-                    ffi_object_infos.append(MissionFfiIdObjectInfo(ffi_id, sector, star_info=star_info))
+                    ffi_object_infos.append(MissionFfiIdObjectInfo(ffi_id, sector, star_info=star_info, aperture_file=aperture))
     if sherlock_user_properties["SECTOR_FFI_COORDINATES"]:
         for coords, sectors in sherlock_user_properties["SECTOR_FFI_COORDINATES"].items():
             star_info = get_star_info(sherlock_user_properties, str(coords[0]) + "_" + str(coords[1]))
+            aperture = get_aperture(sherlock_user_properties, coords)
             if sectors == 'all':
-                ffi_object_infos.append(MissionFfiCoordsObjectInfo(coords[0], coords[1], sectors, star_info=star_info))
+                ffi_object_infos.append(MissionFfiCoordsObjectInfo(coords[0], coords[1], sectors, star_info=star_info, aperture_file=aperture))
             else:
                 for sector in sectors:
-                    ffi_coords_object_infos.append(MissionFfiCoordsObjectInfo(coords[0], coords[1], sector, star_info=star_info))
+                    ffi_coords_object_infos.append(MissionFfiCoordsObjectInfo(coords[0], coords[1], sector, star_info=star_info, aperture_file=aperture))
 
     ## Adding global analysis objects
     if sherlock_user_properties["GLOBAL_TWO_MIN_IDS"]:
-        [mission_object_infos.append(MissionObjectInfo(two_min_id, sectors, star_info=get_star_info(sherlock_user_properties, two_min_id)))
+        [mission_object_infos.append(MissionObjectInfo(two_min_id, sectors,
+                                                       star_info=get_star_info(sherlock_user_properties, two_min_id),
+                                                       aperture_file=get_aperture(sherlock_user_properties, two_min_id)))
          for two_min_id, sectors in sherlock_user_properties["GLOBAL_TWO_MIN_IDS"].items()]
     if sherlock_user_properties["GLOBAL_FFI_IDS"]:
-        [ffi_object_infos.append(MissionFfiIdObjectInfo(ffi_id, sectors, star_info=get_star_info(sherlock_user_properties, ffi_id)))
+        [ffi_object_infos.append(MissionFfiIdObjectInfo(ffi_id, sectors,
+                                                        star_info=get_star_info(sherlock_user_properties, ffi_id),
+                                                       aperture_file=get_aperture(sherlock_user_properties, two_min_id)))
          for ffi_id, sectors in sherlock_user_properties["GLOBAL_FFI_IDS"].items()]
     if sherlock_user_properties["GLOBAL_FFI_COORDINATES"]:
-        [ffi_coords_object_infos.append(MissionFfiCoordsObjectInfo(coords[0], coords[1], sectors, star_info=get_star_info(sherlock_user_properties, str(coords[0]) + "_" + str(coords[1]))))
+        [ffi_coords_object_infos.append(MissionFfiCoordsObjectInfo(coords[0], coords[1], sectors,
+                                                       star_info=get_star_info(sherlock_user_properties, str(coords[0]) + "_" + str(coords[1])),
+                                                       aperture_file=get_aperture(sherlock_user_properties, two_min_id)))
          for coords, sectors in sherlock_user_properties["GLOBAL_FFI_COORDINATES"].items()]
     if sherlock_user_properties["INPUT_FILES_WITH_IDS"]:
         [input_object_infos.append(
-            MissionInputObjectInfo(input_id, sherlock_user_properties["INPUT_FILES_WITH_IDS"][input_id], star_info=get_star_info(sherlock_user_properties, input_id)))
+            MissionInputObjectInfo(input_id, sherlock_user_properties["INPUT_FILES_WITH_IDS"][input_id],
+                                   star_info=get_star_info(sherlock_user_properties, input_id),
+                                   aperture_file=get_aperture(sherlock_user_properties, two_min_id)))
          for input_id in sherlock_user_properties["INPUT_FILES_WITH_IDS"].keys()]
     if sherlock_user_properties["INPUT_FILES"]:
-        [input_id_object_infos.append(InputObjectInfo(file, star_info=get_star_info(sherlock_user_properties, file))) for file in sherlock_user_properties["INPUT_FILES"]]
+        [input_id_object_infos.append(InputObjectInfo(file,
+                                                      star_info=get_star_info(sherlock_user_properties, file),
+                                                      aperture_file=get_aperture(sherlock_user_properties, two_min_id)))
+         for file in sherlock_user_properties["INPUT_FILES"]]
 
     ## Set mask to object infos
     if sherlock_user_properties["TWO_MIN_MASKS"]:
