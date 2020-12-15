@@ -107,12 +107,12 @@ if __name__ == '__main__':
     if sherlock_user_properties["GLOBAL_FFI_IDS"]:
         [ffi_object_infos.append(MissionFfiIdObjectInfo(ffi_id, sectors,
                                                         star_info=get_star_info(sherlock_user_properties, ffi_id),
-                                                       aperture_file=get_aperture(sherlock_user_properties, two_min_id)))
+                                                       aperture_file=get_aperture(sherlock_user_properties, ffi_id)))
          for ffi_id, sectors in sherlock_user_properties["GLOBAL_FFI_IDS"].items()]
     if sherlock_user_properties["GLOBAL_FFI_COORDINATES"]:
         [ffi_coords_object_infos.append(MissionFfiCoordsObjectInfo(coords[0], coords[1], sectors,
                                                        star_info=get_star_info(sherlock_user_properties, str(coords[0]) + "_" + str(coords[1])),
-                                                       aperture_file=get_aperture(sherlock_user_properties, two_min_id)))
+                                                       aperture_file=get_aperture(sherlock_user_properties, ffi_id)))
          for coords, sectors in sherlock_user_properties["GLOBAL_FFI_COORDINATES"].items()]
     if sherlock_user_properties["INPUT_FILES_WITH_IDS"]:
         [input_object_infos.append(
