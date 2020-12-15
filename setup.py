@@ -28,7 +28,6 @@ setuptools.setup(
                         "lightkurve",
                         "transitleastsquares",
                         "requests",
-                        "eleanor",
                         "wotan",
                         "matplotlib",
                         "pyyaml",
@@ -43,6 +42,13 @@ setuptools.setup(
                         "reproject==0.4",
                         "reportlab",
                         "astropy",
-                        "mock > 2.0.0"
+                        "mock > 2.0.0",
+                        'photutils>=0.7',
+                        'tqdm',
+                        'astropy>=3.2.3',
+                        'setuptools>=41.0.0',
+                        'torch',
+                        'beautifulsoup4>=4.6.0',
+                        'tess-point>=0.3.6'
     ]
 )
