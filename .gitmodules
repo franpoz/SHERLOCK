@@ -6,4 +6,4 @@
 	url = https://github.com/martindevora/LATTE
 [submodule "sherlockpipe/eleanorSub"]
 	path = sherlockpipe/eleanorSub
-	url = https://github.com/afeinstein20/eleanor
+	url = https://github.com/martindevora/eleanor
