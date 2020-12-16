@@ -112,18 +112,15 @@ if __name__ == '__main__':
     if sherlock_user_properties["GLOBAL_FFI_COORDINATES"]:
         [ffi_coords_object_infos.append(MissionFfiCoordsObjectInfo(coords[0], coords[1], sectors,
                                                        star_info=get_star_info(sherlock_user_properties, str(coords[0]) + "_" + str(coords[1])),
-                                                       aperture_file=get_aperture(sherlock_user_properties, ffi_id)))
+                                                       aperture_file=get_aperture(sherlock_user_properties, coords)))
          for coords, sectors in sherlock_user_properties["GLOBAL_FFI_COORDINATES"].items()]
     if sherlock_user_properties["INPUT_FILES_WITH_IDS"]:
         [input_object_infos.append(
             MissionInputObjectInfo(input_id, sherlock_user_properties["INPUT_FILES_WITH_IDS"][input_id],
-                                   star_info=get_star_info(sherlock_user_properties, input_id),
-                                   aperture_file=get_aperture(sherlock_user_properties, two_min_id)))
+                                   star_info=get_star_info(sherlock_user_properties, input_id)))
          for input_id in sherlock_user_properties["INPUT_FILES_WITH_IDS"].keys()]
     if sherlock_user_properties["INPUT_FILES"]:
-        [input_id_object_infos.append(InputObjectInfo(file,
-                                                      star_info=get_star_info(sherlock_user_properties, file),
-                                                      aperture_file=get_aperture(sherlock_user_properties, two_min_id)))
+        [input_id_object_infos.append(InputObjectInfo(file, star_info=get_star_info(sherlock_user_properties, file)))
          for file in sherlock_user_properties["INPUT_FILES"]]
 
     ## Set mask to object infos
