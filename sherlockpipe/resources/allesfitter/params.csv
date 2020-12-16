@@ -1,12 +1,12 @@
 #name,value,fit,bounds,label,unit
 #companion b astrophysical params,,,,,
-${sherlock:name}_rr,${sherlock:rp_rs},1,trunc_normal 0 1 ${sherlock:rp_rs} 0.05,$R_b / R_\star$,
-${sherlock:name}_rsuma,${sherlock:sum_rp_rs_a},1,trunc_normal 0 1 ${sherlock:sum_rp_rs_a} 0.1,$(R_\star + R_b) / a_b$,
+${sherlock:name}_rr,${sherlock:rp_rs},1,uniform ${sherlock:rp_rs_min} ${sherlock:rp_rs_max},$R_b / R_\star$,
+${sherlock:name}_rsuma,${sherlock:sum_rp_rs_a},1,uniform ${sherlock:sum_rp_rs_a_min} ${sherlock:sum_rp_rs_a_max},$(R_\star + R_b) / a_b$,
 ${sherlock:name}_cosi,0.0,1,uniform 0.0 0.06,$\cos{i_b}$,
-${sherlock:name}_epoch,${sherlock:t0},1,trunc_normal -1000000000000.0 1000000000000.0 ${sherlock:t0} 0.05,$T_{0;b}$,$\mathrm{BJD}$
-${sherlock:name}_period,${sherlock:period},1,trunc_normal -1000000000000.0 1000000000000.0 ${sherlock:period} 0.05,$P_b$,$\mathrm{d}$
-${sherlock:name}_f_c,0.0,0,trunc_normal -1 1 0.0 0.0,$\sqrt{e_b} \cos{\omega_b}$,
-${sherlock:name}_f_s,0.0,0,trunc_normal -1 1 0.0 0.0,$\sqrt{e_b} \sin{\omega_b}$,
+${sherlock:name}_epoch,${sherlock:t0},1,uniform ${sherlock:t0_min} ${sherlock:t0_max},$T_{0;b}$,$\mathrm{BJD}$
+${sherlock:name}_period,${sherlock:period},1,uniform ${sherlock:period_min} ${sherlock:period_max},$P_b$,$\mathrm{d}$
+${sherlock:name}_f_c,0.0,0,uniform -1.0 1.0,$\sqrt{e_b} \cos{\omega_b}$,
+${sherlock:name}_f_s,0.0,0,uniform -1.0 1.0,$\sqrt{e_b} \sin{\omega_b}$,
 
 #dilution per instrument,,,,,
 dil_lc,0.0,0,trunc_normal 0 1 0.0 0.0,$D_\mathrm{0; lc}$,

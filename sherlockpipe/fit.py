@@ -1,4 +1,5 @@
 # from __future__ import print_function, absolute_import, division
+import math
 import multiprocessing
 import re
 import shutil
@@ -74,12 +75,49 @@ class Fitter:
         with open(params_file, 'r+') as f:
             text = f.read()
             text = re.sub('\\${sherlock:t0}', str(candidate_row["t0"]), text)
+            text = re.sub('\\${sherlock:t0_min}', str(candidate_row["t0"] - 0.02), text)
+            text = re.sub('\\${sherlock:t0_max}', str(candidate_row["t0"] + 0.02), text)
             text = re.sub('\\${sherlock:period}', str(candidate_row["period"]), text)
+            text = re.sub('\\${sherlock:period_min}', str(candidate_row["period"] - candidate_row["per_err"]), text)
+            text = re.sub('\\${sherlock:period_max}', str(candidate_row["period"] + candidate_row["per_err"]), text)
             rp_rs = candidate_row["rp_rs"] if candidate_row["rp_rs"] != "-" else 0.1
+            depth = candidate_row["depth"] / 1000
+            depth_err = depth * 0.2
+            rp_rs_err = 0.5 / math.sqrt(depth) * depth_err
             text = re.sub('\\${sherlock:rp_rs}', str(rp_rs), text)
+            # TODO calculate depth error in SHERLOCK maybe given the std deviation from the depths or even using the residuals
+            rp_rs_min = rp_rs - rp_rs_err
+            rp_rs_min = rp_rs_min if rp_rs_min > 0 else 0.0000001
+            text = re.sub('\\${sherlock:rp_rs_min}', str(rp_rs_min), text)
+            text = re.sub('\\${sherlock:rp_rs_max}', str(rp_rs + rp_rs_err), text)
             sum_rp_rs_a = (candidate_row["rp_rs"] + star_df.iloc[0]['R_star']) / candidate_row["a"] * 0.00465047 \
                 if candidate_row["rp_rs"] != "-" else 0.2
+            rp_err_min = depth ** 0.5 * star_df.iloc[0]["R_star_lerr"] + star_df.iloc[0]["R_star"] / 2 * depth ** (- 0.5)
+            rp_err_max = depth ** 0.5 * star_df.iloc[0]["R_star_uerr"] + star_df.iloc[0]["R_star"] / 2 * depth ** (- 0.5)
+            constant = (6.674e-11 / 4 / (math.pi ** 2)) ** (1 / 3) / 1.48e11
+            mstar = star_df.iloc[0]["M_star"] * 2e30
+            mstar_low_err = star_df.iloc[0]["M_star_lerr"] * 2e30
+            mstar_up_err = star_df.iloc[0]["M_star_uerr"] * 2e30
+            per = candidate_row["period"] * 24 * 3600
+            per_err = candidate_row["per_err"] * 24 * 3600
+            a_err_min = constant * ((mstar ** (1/3)) * 2 / 3 * (per ** (-2/3)) * per_err + per ** (2/3) / 3 * (mstar ** (-2/3)) * mstar_low_err)
+            a_err_max = constant * ((mstar ** (1/3)) * 2 / 3 * (per ** (-2/3)) * per_err + per ** (2/3) / 3 * (mstar ** (-2/3)) * mstar_up_err)
+            a_err_min_rads = a_err_min * 215
+            a_err_max_rads = a_err_max * 215
+            a_rads = candidate_row["a"] * 215
+            radp_rads = candidate_row["rad_p"] / 0.0091577
+            sum_rp_rs_a_min_err = 1 / a_rads * rp_err_min + 1 / a_rads * star_df.iloc[0]["R_star_lerr"] + \
+                                  (radp_rads + star_df.iloc[0]["R_star"]) / (a_rads ** 2) * a_err_min_rads
+            sum_rp_rs_a_max_err = 1 / a_rads * rp_err_max + 1 / a_rads * star_df.iloc[0]["R_star_uerr"] + \
+                                  (radp_rads + star_df.iloc[0]["R_star"]) / (a_rads ** 2) * a_err_max_rads
+            sum_rp_rs_a_min_err_aus = sum_rp_rs_a_min_err / 215
+            sum_rp_rs_a_max_err_aus = sum_rp_rs_a_max_err / 215
+            sum_rp_rs_a_min = sum_rp_rs_a - sum_rp_rs_a_min_err_aus
+            sum_rp_rs_a_min = sum_rp_rs_a_min if sum_rp_rs_a_min > 0 else 0.0000001
+            sum_rp_rs_a_max = sum_rp_rs_a + sum_rp_rs_a_max_err_aus
             text = re.sub('\\${sherlock:sum_rp_rs_a}', str(sum_rp_rs_a), text)
+            text = re.sub('\\${sherlock:sum_rp_rs_a_min}', str(sum_rp_rs_a_min), text)
+            text = re.sub('\\${sherlock:sum_rp_rs_a_max}', str(sum_rp_rs_a_max), text)
             text = re.sub('\\${sherlock:name}', str(candidate_row["name"]), text)
             if os.path.exists(sherlock_star_file) and os.path.isfile(sherlock_star_file):
                 text = re.sub('\\${sherlock:ld_a}', str(star_df.iloc[0]["ld_a"]) + ",0", text)
