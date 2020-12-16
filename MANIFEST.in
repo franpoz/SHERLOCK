@@ -1,2 +1,2 @@
 graft sherlockpipe/LATTEsub/LATTE_imgs
-include sherlockpipe/eleanorSub/postcard_centers.txt
+include sherlockpipe/eleanorSub/eleanor/postcard_centers.txt
