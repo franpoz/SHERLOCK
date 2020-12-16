@@ -5,3 +5,6 @@
 	path = sherlockpipe/LATTEsub
 	url = https://github.com/martindevora/LATTE
 
+[submodule "sherlockpipe/eleanorSub"]
+	path = sherlockpipe/eleanorSub
+	url = https://github.com/martindevora/eleanor
