@@ -5,6 +5,8 @@ rm myenv -R
 rm tests.log
 python3.8 -m venv myenv
 source myenv/bin/activate
+export LLVM_CONFIG=/usr/bin/llvm-config-10
+python3.8 -m pip install wheel
 python3.8 -m pip install numpy
 python3.8 -m pip install cython
 python3.8 -m pip install pandas
