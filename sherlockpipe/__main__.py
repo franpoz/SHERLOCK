@@ -1,8 +1,8 @@
 import pickle
 import sys
-
+import sherlockpipe.transitleastsquares
+sys.modules['transitleastsquares'] = sherlockpipe.transitleastsquares
 from sherlockpipe.star.starinfo import StarInfo
-
 from sherlockpipe import sherlock
 from sherlockpipe.objectinfo.InputObjectInfo import InputObjectInfo
 from sherlockpipe.objectinfo.MissionFfiIdObjectInfo import MissionFfiIdObjectInfo
@@ -173,6 +173,7 @@ if __name__ == '__main__':
     user_search_zone = None
     user_prepare = None
     user_selection_algorithm = None
+    user_transit_template = None
     from pathlib import Path
     if sherlock_user_properties["CUSTOM_SEARCH_ZONE"] is not None:
         user_search_zone = load_module(sherlock_user_properties["CUSTOM_SEARCH_ZONE"])
@@ -193,6 +194,12 @@ if __name__ == '__main__':
         user_selection_algorithm = getattr(user_selection_algorithm, class_name)()
         globals()[class_name] = user_selection_algorithm
         pickle.dumps(user_selection_algorithm)
+    if sherlock_user_properties["CUSTOM_TRANSIT_TEMPLATE"] is not None:
+        user_transit_template = load_module(sherlock_user_properties["CUSTOM_TRANSIT_TEMPLATE"])
+        class_name = Path(sherlock_user_properties["CUSTOM_TRANSIT_TEMPLATE"].replace(".py", "")).name
+        user_transit_template = getattr(user_transit_template, class_name)()
+        globals()[class_name] = user_transit_template
+        pickle.dumps(user_transit_template)
     ## Adding all object infos to same array
     object_infos.extend(mission_object_infos)
     object_infos.extend(ffi_object_infos)
@@ -225,5 +232,6 @@ if __name__ == '__main__':
                                      sherlock_user_properties["FIT_METHOD"],
                                      sherlock_user_properties["OVERSAMPLING"],
                                      sherlock_user_properties["T0_FIT_MARGIN"],
-                                     sherlock_user_properties["DURATION_GRID_STEP"]) \
+                                     sherlock_user_properties["DURATION_GRID_STEP"],
+                                     user_transit_template) \
         .run()
