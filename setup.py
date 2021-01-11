@@ -26,7 +26,6 @@ setuptools.setup(
                         "cython",
                         "pandas",
                         "lightkurve",
-                        "transitleastsquares",
                         "requests",
                         "wotan",
                         "matplotlib",
@@ -53,6 +52,11 @@ setuptools.setup(
                         'setuptools>=41.0.0',
                         'torch',
                         'beautifulsoup4>=4.6.0',
-                        'tess-point>=0.3.6'
+                        'tess-point>=0.3.6',
+                        'numba',
+                        'batman-package',
+                        'argparse',
+                        'configparser',
+                        'triceratops'
     ]
 )
