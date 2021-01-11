@@ -91,6 +91,9 @@ MIN_QUORUM: 0
 # User defined python class extending SHERLOCK SignalSelector abstract class. An absolute path to the file must be
 # provided.
 CUSTOM_SELECTION_ALGORITHM:
+# User defined template to be used to perform the least squares algorithm. If provided, it will replace the FIT_METHOD
+# selection.
+CUSTOM_TRANSIT_TEMPLATE:
 # Selection of fit method ("tls", "bls", "grazing")
 FIT_METHOD: "tls"
 # Selection of T0 fit percent over the diration (admitted range from 0.01 to 0.1). Default is None so the oversampling
