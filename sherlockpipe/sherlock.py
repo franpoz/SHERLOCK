@@ -2,10 +2,12 @@ import logging
 import math
 import multiprocessing
 import shutil
-
+import sys
 import pandas
 import wotan
 import matplotlib.pyplot as plt
+import sherlockpipe.transitleastsquares
+sys.modules['transitleastsquares'] = sherlockpipe.transitleastsquares
 import transitleastsquares as tls
 import lightkurve as lk
 import numpy as np
@@ -77,6 +79,7 @@ class Sherlock:
     config_step = 0
     ois_manager = OisManager()
     use_ois = False
+    user_transit_template = None
 
     def __init__(self, update_ois: bool, object_infos: list, explore=False):
         """
@@ -166,7 +169,8 @@ class Sherlock:
                                     bin_minutes=10, run_cores=NUM_CORES, snr_min=5, sde_min=5, fap_max=0.1,
                                     mask_mode="mask", best_signal_algorithm='border-correct', quorum_strength=1,
                                     min_quorum=0, user_selection_algorithm=None, fit_method="tls",
-                                    oversampling=None, t0_fit_margin=0.05, duration_grid_step=1.1):
+                                    oversampling=None, t0_fit_margin=0.05, duration_grid_step=1.1,
+                                    custom_transit_template=None):
         """
         Configures the values to be used for the transit fitting and the main run loop.
         @param max_runs: the max number of runs to be executed for each object.
@@ -196,6 +200,8 @@ class Sherlock:
         @param oversampling: from 1 to 10, the oversampling size to be used by TLS.
         @param t0_fit_margin: from 0.01 to 0.1, the percent of T0 to be shifted for the T0 fit.
         @param duration_grid_step: from 1.0 to 1.1, how fast should the duration be iterated by TLS.
+        @param custom_transit_template: User provided TransitTemplateGenerator extension, which in case of being
+        provided, overrides the fit_method.
         @return: the Sherlock object itself
         @rtype: Sherlock
         """
@@ -230,11 +236,17 @@ class Sherlock:
             self.fit_method = "box"
         elif fit_method is not None and fit_method.lower() == 'grazing':
             self.fit_method = "grazing"
+        elif fit_method is not None and fit_method.lower() == 'comet':
+            self.fit_method = "comet"
         self.oversampling = oversampling
         if self.oversampling is not None:
             self.oversampling = int(self.oversampling)
         self.t0_fit_margin = t0_fit_margin
         self.duration_grid_step = duration_grid_step
+        if custom_transit_template is not None:
+            self.fit_method = "custom"
+            self.user_transit_template = custom_transit_template
+
         return self
 
     def refresh_ois(self):
@@ -745,8 +757,9 @@ class Sherlock:
             fig.savefig(plot_dir + 'High_RMS_Mask_' + str(star_info.object_id) + '.png', dpi=200)
             fig.clf()
         if is_short_cadence and self.initial_smooth:
-            logging.info('Applying Savitzky-Golay filter')
-            clean_flux = savgol_filter(clean_flux, 11, 3)
+            #logging.info('Applying Smooth phase (savgol + weighted average)')
+            logging.info('Applying Smooth phase (savgol)')
+            clean_flux = self.smooth(clean_flux)
             # TODO to use convolve we need to remove the borders effect
             # clean_flux = np.convolve(clean_flux, [0.025, 0.05, 0.1, 0.155, 0.34, 0.155, 0.1, 0.05, 0.025], "same")
             # clean_flux = np.convolve(clean_flux, [0.025, 0.05, 0.1, 0.155, 0.34, 0.155, 0.1, 0.05, 0.025], "same")
@@ -755,6 +768,22 @@ class Sherlock:
             #clean_flux = uniform_filter1d(clean_flux, 11)
             #clean_flux = self.flatten_bw(self.FlattenInput(clean_time, clean_flux, 0.02))[0]
         return clean_time, clean_flux, clean_flux_err
+
+    def smooth(self, flux, window_len=11, window='blackman'):
+        clean_flux = savgol_filter(flux, window_len, 3)
+        # if window_len < 3:
+        #     return flux
+        # if not window in ['flat', 'hanning', 'hamming', 'bartlett', 'blackman']:
+        #     raise ValueError("Window is on of 'flat', 'hanning', 'hamming', 'bartlett', 'blackman'")
+        # s = np.r_[np.ones(window_len//2), clean_flux, np.ones(window_len//2)]
+        # # print(len(s))
+        # if window == 'flat':  # moving average
+        #     w = np.ones(window_len, 'd')
+        # else:
+        #     w = eval('np.' + window + '(window_len)')
+        # # TODO probably problematic with big gaps in the middle of the curve
+        # clean_flux = np.convolve(w / w.sum(), s, mode='valid')
+        return clean_flux
 
     def __calculate_max_significant_period(self, lc, periodogram):
         #max_accepted_period = (lc.time[len(lc.time) - 1] - lc.time[0]) / 4
@@ -935,7 +964,7 @@ class Sherlock:
         oversampling = self.oversampling
         if oversampling is None:
             time_lapse = time[len(time) - 1] - time[0]
-            oversampling = 600 / time_lapse
+            oversampling = int(600 // time_lapse)
             if oversampling < 3:
                 oversampling = 3
             elif oversampling > 10:
@@ -955,6 +984,8 @@ class Sherlock:
             power_args["M_star"] = star_info.mass
             power_args["M_star_min"] = star_info.mass_min
             power_args["M_star_max"] = star_info.mass_max
+        if self.user_transit_template is not None:
+            power_args["transit_template_generator"] = self.user_transit_template
         results = model.power(**power_args)
         if results.T0 != 0:
             depths = results.transit_depths[~np.isnan(results.transit_depths)]
