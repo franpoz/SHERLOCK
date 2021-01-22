@@ -250,7 +250,7 @@ Detrend no. Period  Duration  T0      SNR     SDE     FAP       Border_score  Ma
 
 In \autoref{fig:run.png} is displayed one detrended light curve which would be stored in the folder RUN 1. The header provides with the main parameters for the most promissing signal. There are three panels, from the top to the bottom: (1) relative flux with the candidate signal overploted in red. (2) A phase-folded light curve for the candidate. The binning is authomatically chosen to ensure that there will be about 10 points in transit. The model for the candidate is given by the red-solid line. And (3), the periodogram where the main period signal and its harmonics are highlighted.
 
-!\label{fig:run}](example_run1.png)
+![\label{fig:run}](example_run1.png)
 
 
 * Light curve csv file: The original (before pre-processing) PDC-SAP Flux stored in three columns: 
