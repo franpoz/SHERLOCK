@@ -274,11 +274,9 @@ where is shown the period strengths. Example:
 
 ![\label{fig:periodogram](Periodogram.png)
 
-* Phase-folded period plot: In case auto-detrend or manual period detrend is enabled.
-<p align="center">
-  <img width="80%" src="https://github.com/franpoz/SHERLOCK/blob/master/paper/autodetrend.png">
-</p>
+* Phase-folded period plot, in case auto-detrend or manual period detrend is enabled. Example:
 
+![\label{fig:detrend](autodetrend.png)
 
 
 * RMS masking plot: In case the High RMS masking pre-processing is enabled. Example:
@@ -288,18 +286,22 @@ where is shown the period strengths. Example:
 
 # 4. Future implementations  
 
-While the ``SHERLOCK PIPEline``'s goal is to search-and-find planets, there is still a number of improvements which will make the user's life easier. In particular, we have identified some of them
-and we are continuosly working in their implementation. Here the most urgents ones at this point: 
+While the ``SHERLOCK PIPEline``'s goal is to search-and-find planets, there is still a number of improvements which will make the user's life easier. In particular, we have identified some of them and we are continuosly working in their implementation. Here the most urgents ones at this point: 
 
 ## 4.1 Pulsating stars
 
-While [Automatic detrend of intense periodicities](https://github.com/franpoz/SHERLOCK#automatic-detrend-of-intense-periodicities) allows the user to remove pulsation-like features, it is 
-very common that stars pulse in different modes, which is more complex than a simple variability. To handle this issue, we will implemente a more robust characterizarion of the stellar pulsations. In particular, high-frecuency pressure-mode (p-mode) pulsators
+While [Automatic detrend of intense periodicities](https://github.com/franpoz/SHERLOCK#automatic-detrend-of-intense-periodicities) allows the user to remove pulsation-like features, it is very common that stars pulse in different modes, which is more complex than a simple variability. To handle this issue, we will implemente a more robust characterizarion of the stellar pulsations. In particular, high-frecuency pressure-mode (p-mode) pulsators
 which have relatively high amplitudes and can hinder the detection of shallow transits [@sowicka:2017].
 
 ## 4.2 Disentigrating planets
 
 We are including in ``SHERLOCK`` a model for comet-like tails of disintegrating exoplanets, which highly differ from the typical shape of transiting exoplanets see e.g.[@rappaport:2012,@sanchis:2015]. 
+
+## 4.3 Vetting astrophysical phenomena
+
+``SHERLOCK`` includes already a vetting tool via ``LATTE`` , which helps the user to indentify some sources of false positive for a detected signal. However, 
+this still can be improved by providing a statistical validation. To this end, we will include a link to ``TRICERATOPS`` tool, where a number of potential 
+scenarios are tested and computes their likehoods.  
 
 
 # Acknowledgements
