@@ -12,14 +12,17 @@ authors:
     orcid: 0000-0003-1572-7707
     affiliation: "1, 2" # (Multiple affiliations must be quoted)
   - name: Martín Dévora-Pajares
-    affiliation: 3
+    orcid: 0000-0003-2007-6144 
+    affiliation: "3, 4"
 affiliations:
  - name: Space Sciences, Technologies and Astrophysics Research (STAR) Institute, Universit\'e de Li\`ege, All\'ee du 6 Ao\^ut 19C, B-4000 Li\`ege, Belgium
    index: 1
  - name: Astrobiology Research Unit, Universit\'e de Li\`ege, All\'ee du 6 Ao\^ut 19C, B-4000 Li\`ege, Belgium
    index: 2
- - name: Valencia International University
+ - name: Universidad Internacional de Valencia (VIU), Carrer del Pintor Sorolla 21, 46002, Valencia, Spain
    index: 3
+ - name: Dpto. Física Teórica y del Cosmos, Universidad de Granada, 18071, Granada, Spain
+   index: 4
 date: 2 August 2020
 bibliography: paper.bib
 
