@@ -23,7 +23,7 @@ affiliations:
    index: 3
  - name: Dpto. Física Teórica y del Cosmos, Universidad de Granada, 18071, Granada, Spain
    index: 4
-date: 2 August 2020
+date: 22 January 2021
 bibliography: paper.bib
 
 # Optional fields if submitting to a AAS journal too, see this blog post:
