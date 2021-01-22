@@ -35,7 +35,7 @@ python3.8 -m pip install torch
 python3.8 -m pip install beautifulsoup4>=4.6.0
 python3.8 -m pip install tess-point>=0.3.6
 python3.8 -m pip install nose
-python3.8 -m pip install triceratops=0.2.2
+python3.8 -m pip install triceratops==0.2.2
 python3.8 -m unittest sherlockpipe/sherlock_tests.py 2> tests.log
 tests_results=$(cat tests.log | grep -e "FAILED" -e "failed" -e "Failed" -e "error" -e "Error" -e "ERROR")
 deactivate
