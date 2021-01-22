@@ -272,11 +272,11 @@ The model for the candidate is given by the red-solid line. And 3), the periodog
 * Lomb-Scargle periodogram plot: This plot corresponds to the section "(3.2.4) Automatic detrend of intense periodicities",
 where is shown the period strengths. Example:
 
-![\label{fig:periodogram](periodogram.png)
+![\label{fig:periodogram](Periodogram.png)
 
 * Phase-folded period plot: In case auto-detrend or manual period detrend is enabled.
 <p align="center">
-  <img width="80%" src="https://github.com/franpoz/SHERLOCK/blob/master/images/autodetrend.png">
+  <img width="80%" src="https://github.com/franpoz/SHERLOCK/blob/master/paper/autodetrend.png">
 </p>
 
 
