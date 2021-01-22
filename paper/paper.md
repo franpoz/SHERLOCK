@@ -317,7 +317,7 @@ scenarios are tested and computes their likehoods.
 
 # Acknowledgements
 
-We acknowledge balblabla
+TBD
 
 
 # References
