@@ -57,6 +57,6 @@ setuptools.setup(
                         'batman-package',
                         'argparse',
                         'configparser',
-                        'triceratops'
+                        'triceratops==0.2.2'
     ]
 )
