@@ -46,8 +46,8 @@ two years of operation, *TESS* has released more than 2,000 TOIs (TESS Objects o
 Taken together, both missions *Kepler* and *TESS*, offer a huge data base of high-quality continuos observations, with an excellent 
 photometric precision, which allows the detection of exoplanets radii down to ~1R$_{\oplus}$. 
 
-Here we are presenting an open-source pipeline, which aims to help the data explorarion of the aforementioned missions, in the search of new exoplanets
-in particular, threshold crossing events, which due to their shallowness remained unnoticed by the automatic pipelines. 
+Here we are presenting an open-source pipeline, which aims to help the data explorarion of the aforementioned missions, in the search of new exoplanets.
+In particular, threshold crossing events, which due to their shallowness remained unnoticed by the automatic pipelines. 
 
 
 # 1. The SHERLOCK PIPEline 
@@ -183,8 +183,10 @@ by the user in the [properties.yaml](https://github.com/franpoz/SHERLOCK/blob/ma
 The minimum value is obtained by computing the transit duration (T${14}$) of a hypothetical Earth-size planet with a period of 15~d orbiting the given star (minimum period to have, at least, two transits in one TESS sector or one Kepler sub-quarter). To protect a transit of at least this duration, we chose a minimum window size of 3$\times T{14}$. The maximum value explored was fixed to 20$\times T${14}$, which seemed enough to remove low frecuency variability of most of the stars. As mentioned, these values may be re-fined by the user, which helps to optimaze 
 the findings. 
 
-![Detrended models applied to a light curve corresponding to TIC 259377017 (in sector 5) with the bi-weight method for twelve different window-sizes. Each panel indicates the window-size in units of day in the top. The black points
-show the PDC-SAP Fluxes, the solid-orange line are the indentified trends.\label{fig:rms}](detrends.png)
+* Detrended models applied to a light curve with the bi-weight method for twelve different window-sizes. Each panel indicates the window-size in units of day in the top. The black points show the PDC-SAP Fluxes, the solid-orange line are the indentified trends. Example:
+
+![\label{fig:detrends}](detrends.png)
+
 
 ## 3.4 The search
 
