@@ -1,6 +1,9 @@
 # from __future__ import print_function, absolute_import, division
+import copy
+import multiprocessing
 import shutil
 import types
+from multiprocessing import Pool
 from pathlib import Path
 import traceback
 import lightkurve
@@ -9,6 +12,7 @@ import matplotlib
 import matplotlib.pyplot as plt
 import matplotlib.gridspec as gridspec
 import yaml
+from lightkurve import TessLightCurve
 from matplotlib.colorbar import Colorbar
 from matplotlib import patches
 from astropy.visualization.mpl_normalize import ImageNormalize
@@ -16,7 +20,10 @@ from astropy.table import Table
 from astropy.io import ascii
 import astropy.visualization as stretching
 from argparse import ArgumentParser
-from sherlockpipe import tpfplotter
+
+from sherlockpipe.eleanor import TargetData
+
+from sherlockpipe import tpfplotter, eleanor
 import six
 import sys
 import sherlockpipe.LATTE
@@ -31,6 +38,13 @@ import ast
 import csv
 from sherlockpipe.LATTE import LATTEutils, LATTEbrew
 from os import path
+import triceratops.triceratops as tr
+from matplotlib import cm, ticker
+from math import floor, ceil
+from triceratops.likelihoods import (simulate_TP_transit, simulate_EB_transit)
+from triceratops.funcs import (Gauss2D, query_TRILEGAL, renorm_flux, stellar_relations)
+from astropy import constants
+import uuid
 
 '''WATSON: Verboseless Vetting and Adjustments of Transits for Sherlock Objects of iNterest
 This class intends to provide a inspection and transit fitting tool for SHERLOCK Candidates.
@@ -62,6 +76,7 @@ class Vetter:
         if not os.path.exists(self.latte_dir):
             os.mkdir(self.latte_dir)
         self.data_dir = self.object_dir
+        self.validation_runs = 5
 
     def update(self):
         indir = self.latte_dir
@@ -253,7 +268,7 @@ class Vetter:
         mnd['starttime'] = np.nanmin(alltime) if not isinstance(alltime, str) else "-"
         return mnd
 
-    def vetting(self, candidate):
+    def vetting(self, candidate, cpus):
         indir, df, TIC_wanted, ffi = self.__prepare(candidate)
         for tic in TIC_wanted:
             # check the existing manifest to see if I've processed this file!
@@ -262,8 +277,16 @@ class Vetter:
             urls_exist = manifest_table['TICID']
             # get the transit time list
             period = df.loc[df['TICID'] == tic]['period'].iloc[0]
+            duration = df.loc[df['TICID'] == tic]['duration'].iloc[0]
             t0 = df.loc[df['TICID'] == tic]['t0'].iloc[0]
             transit_list = ast.literal_eval(((df.loc[df['TICID'] == tic]['transits']).values)[0])
+            transit_depth = df.loc[df['TICID'] == tic]['depth'].iloc[0]
+            candidate_row = candidate.iloc[0]
+            if candidate_row["number"] is None or np.isnan(candidate_row["number"]):
+                lc_file = "/" + candidate_row["lc"]
+            else:
+                lc_file = "/" + str(candidate_row["number"]) + "/lc_" + str(candidate_row["curve"]) + ".csv"
+            lc_file = self.data_dir + lc_file
             try:
                 sectors_in = ast.literal_eval(str(((df.loc[df['TICID'] == tic]['sectors']).values)[0]))
                 if (type(sectors_in) == int) or (type(sectors_in) == float):
@@ -283,37 +306,435 @@ class Vetter:
             if res['TICID'] == -99:
                 print('something went wrong')
                 continue
-            self.vetting_field_of_view(indir, tic, res['RA'], res['DEC'], sectors)
-            shutil.move(vetter.latte_dir + "/tpfplot", vetting_dir + "/tpfplot")
+            result_dir = self.vetting_validation(cpus, indir, tic, sectors, lc_file, transit_depth, period, t0, duration)
+            shutil.move(result_dir, vetting_dir + "/triceratops")
+            result_dir = self.vetting_field_of_view(indir, tic, res['RA'], res['DEC'], sectors)
+            shutil.move(result_dir, vetting_dir + "/tpfplot")
             # TODO improve this condition to check whether tic, sectors and transits exist
-            if not np.isin(tic, urls_exist):
-                # make sure the file is opened as append only
-                with open('{}/manifest.csv'.format(str(indir)), 'a') as tic:  # save in the photometry folder
-                    writer = csv.writer(tic, delimiter=',')
-                    metadata_data = [res['TICID']]
-                    metadata_data.append(res['MarkedTransits'])
-                    metadata_data.append(res['Sectors'])
-                    metadata_data.append(res['RA'])
-                    metadata_data.append(res['DEC'])
-                    metadata_data.append(res['SolarRad'])
-                    metadata_data.append(res['TMag'])
-                    metadata_data.append(res['Teff'])
-                    metadata_data.append(res['thissector'])
-                    metadata_data.append(res['TOI'])
-                    metadata_data.append(res['TCE'])
-                    metadata_data.append(res['TCE_link'])
-                    metadata_data.append(res['EB'])
-                    metadata_data.append(res['Systematics'])
-                    metadata_data.append(res['BackgroundFlux'])
-                    metadata_data.append(res['CentroidsPositions'])
-                    metadata_data.append(res['MomentumDumps'])
-                    metadata_data.append(res['ApertureSize'])
-                    metadata_data.append(res['InoutFlux'])
-                    metadata_data.append(res['Keep'])
-                    metadata_data.append(res['Comment'])
-                    metadata_data.append(res['starttime'])
-                    writer.writerow(metadata_data)
+            # if not np.isin(tic, urls_exist):
+            #     # make sure the file is opened as append only
+            #     with open('{}/manifest.csv'.format(str(indir)), 'a') as tic:  # save in the photometry folder
+            #         writer = csv.writer(tic, delimiter=',')
+            #         metadata_data = [res['TICID']]
+            #         metadata_data.append(res['MarkedTransits'])
+            #         metadata_data.append(res['Sectors'])
+            #         metadata_data.append(res['RA'])
+            #         metadata_data.append(res['DEC'])
+            #         metadata_data.append(res['SolarRad'])
+            #         metadata_data.append(res['TMag'])
+            #         metadata_data.append(res['Teff'])
+            #         metadata_data.append(res['thissector'])
+            #         metadata_data.append(res['TOI'])
+            #         metadata_data.append(res['TCE'])
+            #         metadata_data.append(res['TCE_link'])
+            #         metadata_data.append(res['EB'])
+            #         metadata_data.append(res['Systematics'])
+            #         metadata_data.append(res['BackgroundFlux'])
+            #         metadata_data.append(res['CentroidsPositions'])
+            #         metadata_data.append(res['MomentumDumps'])
+            #         metadata_data.append(res['ApertureSize'])
+            #         metadata_data.append(res['InoutFlux'])
+            #         metadata_data.append(res['Keep'])
+            #         metadata_data.append(res['Comment'])
+            #         metadata_data.append(res['starttime'])
+            #         writer.writerow(metadata_data)
         return TIC_wanted
+
+    def vetting_validation(self, cpus, indir, tic, sectors, lc_file, transit_depth, period, t0, transit_duration):
+        """ Calculates probabilities of the signal being caused by any of the following astrophysical sources:
+        TP No unresolved companion. Transiting planet with Porb around target star. (i, Rp)
+        EB No unresolved companion. Eclipsing binary with Porb around target star. (i, qshort)
+        EBx2P No unresolved companion. Eclipsing binary with 2 × Porb around target star. (i, qshort)
+        PTP Unresolved bound companion. Transiting planet with Porb around primary star. (i, Rp, qlong)
+        PEB Unresolved bound companion. Eclipsing binary with Porb around primary star. (i, qshort, qlong)
+        PEBx2P Unresolved bound companion. Eclipsing binary with 2 × Porb around primary star. (i, qshort, qlong)
+        STP Unresolved bound companion. Transiting planet with Porb around secondary star. (i, Rp, qlong)
+        SEB Unresolved bound companion. Eclipsing binary with Porb around secondary star. (i, qshort, qlong)
+        SEBx2P Unresolved bound companion. Eclipsing binary with 2 × Porb around secondary star. (i, qshort, qlong)
+        DTP Unresolved background star. Transiting planet with Porb around target star. (i, Rp, simulated star)
+        DEB Unresolved background star. Eclipsing binary with Porb around target star. (i, qshort, simulated star)
+        DEBx2P Unresolved background star. Eclipsing binary with 2 × Porb around target star. (i, qshort, simulated star)
+        BTP Unresolved background star. Transiting planet with Porb around background star. (i, Rp, simulated star)
+        BEB Unresolved background star. Eclipsing binary with Porb around background star. (i, qshort, simulated star)
+        BEBx2P Unresolved background star. Eclipsing binary with 2 × Porb around background star. (i, qshort, simulated star)
+        NTP No unresolved companion. Transiting planet with Porb around nearby star. (i, Rp)
+        NEB No unresolved companion. Eclipsing binary with Porb around nearby star. (i, qshort)
+        NEBx2P No unresolved companion. Eclipsing binary with 2 × Porb around nearby star. (i, qshort)
+        FPP = 1 - (TP + PTP + DTP)
+        NFPP = NTP + NEB + NEBx2P
+        Giacalone & Dressing (2020) define validated planets as TOIs with NFPP < 10−3 and FPP < 0.015 (or FPP ≤ 0.01,
+        when rounding to the nearest percent)
+        @param cpus: number of cpus to be used
+        @param indir: root directory to store the results
+        @param tic: the tess object id for which the analysis will be run
+        @param sectors: the sectors of the tic
+        @param lc_file: the light curve source file
+        @param transit_depth: the depth of the transit signal (ppts)
+        @param period: the period of the transit signal /days)
+        @param t0: the t0 of the transit signal (days)
+        @param transit_duration: the duration of the transit signal (minutes)
+        """
+        save_dir = indir + "/" + str(tic) + "/triceratops_" + str(uuid.uuid4())
+        if os.path.exists(save_dir):
+            shutil.rmtree(save_dir, ignore_errors=True)
+        if not os.path.exists(save_dir):
+            os.makedirs(save_dir)
+        sectors = np.array(sectors)
+        duration = transit_duration / 60 / 24
+        target = tr.target(ID=tic, sectors=sectors)
+        # TODO allow user input apertures
+        tpfs = lightkurve.search_targetpixelfile("TIC " + str(tic), mission="TESS", cadence="short", sector=sectors)\
+            .download_all()
+        star = eleanor.multi_sectors(tic=tic, sectors=sectors, tesscut_size=31)
+        apertures = []
+        sector_num = 0
+        for s in star:
+            tpf_idx = [data.sector if data.sector == s.sector else -1 for data in tpfs.data]
+            tpf = tpfs[np.where(tpf_idx > np.zeros(len(tpf_idx)))[0][0]]
+            pipeline_mask = tpfs[np.where(tpf_idx > np.zeros(len(tpf_idx)))[0][0]].pipeline_mask
+            pipeline_mask = np.transpose(pipeline_mask)
+            pipeline_mask_triceratops = np.zeros((len(pipeline_mask[0]), len(pipeline_mask[:][0]), 2))
+            for i in range(0, len(pipeline_mask[0])):
+                for j in range(0, len(pipeline_mask[:][0])):
+                    pipeline_mask_triceratops[i, j] = [tpf.column + i, tpf.row + j]
+            pipeline_mask_triceratops[~pipeline_mask] = None
+            aperture = []
+            for i in range(0, len(pipeline_mask_triceratops[0])):
+                for j in range(0, len(pipeline_mask_triceratops[:][0])):
+                    if not np.isnan(pipeline_mask_triceratops[i, j]).any():
+                        aperture.append(pipeline_mask_triceratops[i, j])
+            apertures.append(aperture)
+            self.plot_field(target=target, save_file=save_dir + "/field_S" + str(s.sector) + ".png", sector=s.sector,
+                            ap_pixels=aperture)
+            sector_num = sector_num + 1
+        apertures = np.array(apertures)
+        depth = transit_depth / 1000
+        target.calc_depths(depth, apertures)
+        target.stars.to_csv(save_dir + "/stars.csv", index=False)
+        lc = pd.read_csv(lc_file, header=0)
+        time, flux, flux_err = lc["#time"].values, lc["flux"].values, lc["flux_err"].values
+        lc_len = len(time)
+        zeros_lc = np.zeros(lc_len)
+        lc = TessLightCurve(time=time, flux=flux, flux_err=flux_err, quality=zeros_lc)
+        # Two lines of hack to prevent binning of lightkurve throw exceptions with quality
+        del lc.quality
+        lc.extra_columns = []
+        #
+        lc = lc.fold(period=period, t0=t0)
+        folded_plot_range = duration / 2 / period * 5
+        inner_folded_range_args = np.where((0 - folded_plot_range < lc.time) & (lc.time < 0 + folded_plot_range))
+        lc.time = lc.time[inner_folded_range_args]
+        lc.time = lc.time * period
+        lc.flux = lc.flux[inner_folded_range_args]
+        lc.flux_err = lc.flux_err[inner_folded_range_args]
+        sigma = np.mean(lc.flux_err)
+        input_n_times = [ValidatorInput(save_dir, copy.deepcopy(target), lc.time, lc.flux, sigma, period, depth,
+                                        apertures, value)
+                         for value in range(0, self.validation_runs)]
+        validator = Validator()
+        with Pool(processes=cpus) as pool:
+            validation_results = pool.map(validator.validate, input_n_times)
+        fpp_sum = 0
+        nfpp_sum = 0
+        probs_total_df = None
+        scenarios_num = len(validation_results[0][2])
+        star_num = np.zeros((5, scenarios_num))
+        u1 = np.zeros((5, scenarios_num))
+        u2 = np.zeros((5, scenarios_num))
+        fluxratio_EB = np.zeros((5, scenarios_num))
+        fluxratio_comp = np.zeros((5, scenarios_num))
+        target = input_n_times[0].target
+        target.star_num = np.zeros(scenarios_num)
+        target.u1 = np.zeros(scenarios_num)
+        target.u2 = np.zeros(scenarios_num)
+        target.fluxratio_EB = np.zeros(scenarios_num)
+        target.fluxratio_comp = np.zeros(scenarios_num)
+        i = 0
+        for fpp, nfpp, probs_df, star_num_arr, u1_arr, u2_arr, fluxratio_EB_arr, fluxratio_comp_arr in validation_results:
+            if probs_total_df is None:
+                probs_total_df = probs_df
+            else:
+                probs_total_df = pd.concat((probs_total_df, probs_df))
+            fpp_sum = fpp_sum + fpp
+            nfpp_sum = nfpp + fpp
+            star_num[i] = star_num_arr
+            u1[i] = u1_arr
+            u2[i] = u2_arr
+            fluxratio_EB[i] = fluxratio_EB_arr
+            fluxratio_comp[i] = fluxratio_comp_arr
+            i = i + 1
+        for i in range(0, scenarios_num):
+            target.star_num[i] = np.mean(star_num[:, i])
+            target.u1[i] = np.mean(u1[:, i])
+            target.u2[i] = np.mean(u2[:, i])
+            target.fluxratio_EB[i] = np.mean(fluxratio_EB[:, i])
+            target.fluxratio_comp[i] = np.mean(fluxratio_comp[:, i])
+        with open(save_dir + "/validation.csv", 'w') as the_file:
+            the_file.write("FPP,NFPP\n")
+            the_file.write(str(fpp_sum / self.validation_runs) + "," + str(nfpp_sum / self.validation_runs))
+        probs_total_df = probs_total_df.groupby("scenario", as_index=False).mean()
+        probs_total_df["scenario"] = pd.Categorical(probs_total_df["scenario"], ["TP", "EB", "EBx2P", "PTP", "PEB", "PEBx2P",
+                                                                         "STP", "SEB", "SEBx2P", "DTP", "DEB", "DEBx2P",
+                                                                         "BTP", "BEB", "BEBx2P"])
+        probs_total_df = probs_total_df.sort_values("scenario")
+        probs_total_df.to_csv(save_dir + "/validation_scenarios.csv")
+        target.probs = probs_total_df
+        Vetter.plot_fits(target=target, save_file=save_dir + "/scenario_fits.png", time=lc.time, flux_0=lc.flux,
+                         sigma_0=sigma)
+        return save_dir
+
+    def plot_field(self, target, save_file=None, sector: int = None, ap_pixels=None):
+        """
+        Plots the field of stars and pixels around the target.
+        Args:
+            sector (int): Sector to plot.
+            ap_pixels (numpy array): Aperture used to
+                                     extract light curve.
+        """
+        if len(target.sectors) > 1:
+            idx = np.argwhere(target.sectors == sector)[0, 0]
+        else:
+            idx = 0
+        corners = np.arange(-0.5, target.N_pix+0.5, 1)
+        centers = np.arange(0, target.N_pix, 1)
+        fig, ax = plt.subplots(1, 2, figsize=(15, 6))
+        plt.subplots_adjust(wspace=0.15)
+        # aperture
+        if ap_pixels is not None:
+            for i in range(len(ap_pixels)):
+                ax[0].fill_between(
+                    [ap_pixels[i][0]-0.5, ap_pixels[i][0]+0.5],
+                    [ap_pixels[i][1]-0.5, ap_pixels[i][1]-0.5],
+                    [ap_pixels[i][1]+0.5, ap_pixels[i][1]+0.5],
+                    color="cyan", alpha=0.5
+                    )
+        # pixel grid
+        for i in corners:
+            ax[0].plot(
+                np.full_like(corners, target.col0s[idx]+i),
+                target.row0s[idx]+corners, "k-", lw=0.5
+                )
+            ax[0].plot(
+                target.col0s[idx]+corners,
+                np.full_like(corners, target.row0s[idx]+i), "k-", lw=0.5
+                )
+        # search radius
+        ax[0].plot(
+            (
+                target.pix_coords[idx][0, 0]
+                + target.search_radius
+                * np.cos(np.linspace(0, 2*np.pi, 100))
+            ),
+            (
+                target.pix_coords[idx][0, 1]
+                + target.search_radius
+                * np.sin(np.linspace(0, 2*np.pi, 100))
+            ),
+            "k--", alpha=0.5)
+        # stars
+        sc = ax[0].scatter(
+            target.pix_coords[idx][:, 0],
+            target.pix_coords[idx][:, 1],
+            c=target.stars["Tmag"], s=75,
+            edgecolors="k",
+            cmap=cm.viridis_r,
+            vmin=floor(min(target.stars["Tmag"])),
+            vmax=ceil(max(target.stars["Tmag"]))
+            )
+        cb1 = fig.colorbar(sc, ax=ax[0], pad=0.02)
+        cb1.ax.set_ylabel(
+            "T mag", rotation=270, fontsize=12, labelpad=18
+            )
+        for i in range(len(target.stars)):
+            ax[0].annotate(
+                str(i),
+                (
+                    target.pix_coords[idx][i, 0]-1,
+                    target.pix_coords[idx][i, 1]-1
+                ),
+                fontsize=12
+                )
+        ax[0].set_ylim([
+            min(target.row0s[idx]+corners),
+            max(target.row0s[idx]+corners)
+            ])
+        ax[0].set_xlim([
+            min(target.col0s[idx]+corners),
+            max(target.col0s[idx]+corners)
+            ])
+        ax[0].set_yticks(target.row0s[idx]+centers)
+        ax[0].set_xticks(target.col0s[idx]+centers)
+        ax[0].tick_params(width=0)
+        ax[0].tick_params(axis='x', labelrotation=90)
+        ax[0].set_ylabel("pixel row number", fontsize=12)
+        ax[0].set_xlabel("pixel column number", fontsize=12)
+        # TESS FFI
+        im = ax[1].imshow(
+            target.TESS_images[idx],
+            extent=[
+                min(target.col0s[idx]+corners),
+                max(target.col0s[idx]+corners),
+                max(target.row0s[idx]+corners),
+                min(target.row0s[idx]+corners)
+            ])
+        cb2 = fig.colorbar(im, ax=ax[1], pad=0.02)
+        cb2.ax.set_ylabel(
+            "flux [e$^-$ s$^{-1}$]",
+            rotation=270, fontsize=12, labelpad=18)
+        ax[1].set_ylim([
+            min(target.row0s[idx]+corners),
+            max(target.row0s[idx]+corners)
+            ])
+        ax[1].set_xlim([
+            min(target.col0s[idx]+corners),
+            max(target.col0s[idx]+corners)
+            ])
+        ax[1].set_yticks(target.row0s[idx]+centers)
+        ax[1].set_xticks(target.col0s[idx]+centers)
+        ax[1].tick_params(width=0)
+        ax[1].tick_params(axis='x', labelrotation=90)
+        ax[1].set_ylabel("pixel row number", fontsize=12)
+        ax[1].set_xlabel("pixel column number", fontsize=12)
+        # aperture
+        if ap_pixels is not None:
+            for i in range(len(ap_pixels)):
+                ax[1].fill_between(
+                    [ap_pixels[i][0]-0.5, ap_pixels[i][0]+0.5],
+                    [ap_pixels[i][1]-0.5, ap_pixels[i][1]-0.5],
+                    [ap_pixels[i][1]+0.5, ap_pixels[i][1]+0.5],
+                    color="cyan", alpha=0.2
+                    )
+        if save_file is not None:
+            plt.savefig(save_file)
+        plt.show()
+        return
+
+    @staticmethod
+    def plot_fits(target, save_file, time: np.ndarray, flux_0: np.ndarray, sigma_0: float):
+        """
+        Plots light curve for best fit instance of each scenario.
+        Args:
+            time (numpy array): Time of each data point
+                                [days from transit midpoint].
+            flux_0 (numpy array): Normalized flux of each data point.
+            sigma_0 (numpy array): Uncertainty of flux.
+        """
+        scenario_idx = target.probs[target.probs["ID"] != 0].index.values
+        df = target.probs[target.probs["ID"] != 0]
+        star_num = target.star_num[target.probs["ID"] != 0]
+        u1s = target.u1[target.probs["ID"] != 0]
+        u2s = target.u2[target.probs["ID"] != 0]
+        fluxratios_EB = target.fluxratio_EB[target.probs["ID"] != 0]
+        fluxratios_comp = target.fluxratio_comp[target.probs["ID"] != 0]
+
+        model_time = np.linspace(min(time), max(time), 100)
+
+        f, ax = plt.subplots(
+            len(df)//3, 3, figsize=(12, len(df)//3*4), sharex=True
+            )
+        G = constants.G.cgs.value
+        M_sun = constants.M_sun.cgs.value
+        for i in range(len(df)//3):
+            for j in range(3):
+                if i == 0:
+                    k = j
+                else:
+                    k = 3*i+j
+                # subtract flux from other stars in the aperture
+                idx = np.argwhere(
+                    target.stars["ID"].values == str(df["ID"].values[k])
+                    )[0, 0]
+                flux, sigma = renorm_flux(
+                    flux_0, sigma_0, target.stars["fluxratio"].values[idx]
+                    )
+                # all TPs
+                if j == 0:
+                    if star_num[k] == 1:
+                        comp = False
+                    else:
+                        comp = True
+                    a = (
+                        (G*df["M_s"].values[k]*M_sun)/(4*np.pi**2)
+                        * (df['P_orb'].values[k]*86400)**2
+                        )**(1/3)
+                    u1, u2 = u1s[k], u2s[k]
+                    best_model = simulate_TP_transit(
+                        model_time,
+                        df['R_p'].values[k], df['P_orb'].values[k],
+                        df['inc'].values[k], a, df["R_s"].values[k],
+                        u1, u2, fluxratios_comp[k], comp
+                        )
+                # all small EBs
+                elif j == 1:
+                    if star_num[k] == 1:
+                        comp = False
+                    else:
+                        comp = True
+                    mass = df["M_s"].values[k] + df["M_EB"].values[k]
+                    a = (
+                        (G*mass*M_sun)/(4*np.pi**2)
+                        * (df['P_orb'].values[k]*86400)**2
+                        )**(1/3)
+                    u1, u2 = u1s[k], u2s[k]
+                    best_model = simulate_EB_transit(
+                        model_time,
+                        df["R_EB"].values[k], fluxratios_EB[k],
+                        df['P_orb'].values[k], df['inc'].values[k],
+                        a, df["R_s"].values[k], u1, u2,
+                        fluxratios_comp[k], comp
+                        )[0]
+                # all twin EBs
+                elif j == 2:
+                    if star_num[k] == 1:
+                        comp = False
+                    else:
+                        comp = True
+                    mass = df["M_s"].values[k] + df["M_EB"].values[k]
+                    a = (
+                        (G*mass*M_sun)/(4*np.pi**2)
+                        * (df['P_orb'].values[k]*86400)**2
+                        )**(1/3)
+                    u1, u2 = u1s[k], u2s[k]
+                    best_model = simulate_EB_transit(
+                        model_time,
+                        df["R_EB"].values[k], fluxratios_EB[k],
+                        df['P_orb'].values[k], df['inc'].values[k],
+                        a, df["R_s"].values[k], u1, u2,
+                        fluxratios_comp[k], comp
+                        )[0]
+
+                y_formatter = ticker.ScalarFormatter(useOffset=False)
+                ax[i, j].yaxis.set_major_formatter(y_formatter)
+                ax[i, j].errorbar(
+                    time, flux, sigma, fmt=".",
+                    color="blue", alpha=0.1, zorder=0
+                    )
+                ax[i, j].plot(
+                    model_time, best_model, "k-", lw=5, zorder=2
+                    )
+                ax[i, j].set_ylabel("normalized flux", fontsize=12)
+                ax[i, j].annotate(
+                    str(df["ID"].values[k]), xy=(0.05, 0.92),
+                    xycoords="axes fraction", fontsize=12
+                    )
+                ax[i, j].annotate(
+                    str(df["scenario"].values[k]), xy=(0.05, 0.05),
+                    xycoords="axes fraction", fontsize=12
+                    )
+        ax[len(df)//3-1, 0].set_xlabel(
+            "days from transit center", fontsize=12
+            )
+        ax[len(df)//3-1, 1].set_xlabel(
+            "days from transit center", fontsize=12
+            )
+        ax[len(df)//3-1, 2].set_xlabel(
+            "days from transit center", fontsize=12
+            )
+        plt.tight_layout()
+        if save_file is not None:
+            plt.savefig(save_file)
+        plt.show()
+        return
 
     def vetting_field_of_view(self, indir, tic, ra, dec, sectors):
         maglim = 6
@@ -423,6 +844,7 @@ class Vetter:
             data = Table([IDs, GaiaID, x, y, dist, dist * 21., gaiamags, inside.astype('int')],
                          names=['# ID', 'GaiaID', 'x', 'y', 'Dist_pix', 'Dist_arcsec', 'Gmag', 'InAper'])
             ascii.write(data, save_dir + '/Gaia_TIC' + tic + '_S' + str(tpf.sector) + '.dat', overwrite=True)
+        return save_dir
 
     def show_candidates(self):
         self.candidates = pd.read_csv(self.object_dir + "/candidates.csv")
@@ -440,12 +862,40 @@ class Vetter:
             raise SystemExit("User selected a wrong candidate number.")
         self.data_dir = self.object_dir + "/" + str(self.candidate_selection)
 
+class Validator:
+    def __init__(self) -> None:
+        super().__init__()
+
+    def validate(self, input):
+        input.target.calc_depths(tdepth=input.depth, all_ap_pixels=input.apertures)
+        input.target.calc_probs(time=input.time, flux_0=input.flux, sigma_0=input.sigma, P_orb=input.period)
+        with open(input.save_dir + "/validation_" + str(input.run) + ".csv", 'w') as the_file:
+            the_file.write("FPP,NFPP\n")
+            the_file.write(str(input.target.FPP) + "," + str(input.target.NFPP))
+        input.target.probs.to_csv(input.save_dir + "/validation_" + str(input.run) + "_scenarios.csv", index=False)
+        Vetter.plot_fits(target=input.target, save_file=input.save_dir + "/scenario_" + str(input.run) + "_fits.png",
+                         time=input.time, flux_0=input.flux, sigma_0=input.sigma)
+        return input.target.FPP, input.target.NFPP, input.target.probs, input.target.star_num, input.target.u1, \
+               input.target.u2, input.target.fluxratio_EB, input.target.fluxratio_comp
+
+class ValidatorInput:
+    def __init__(self, save_dir, target, time, flux, sigma, period, depth, apertures, run):
+        self.save_dir = save_dir
+        self.target = target
+        self.time = time
+        self.flux = flux
+        self.sigma = sigma
+        self.period = period
+        self.depth = depth
+        self.apertures = apertures
+        self.run = run
 
 if __name__ == '__main__':
     ap = ArgumentParser(description='Vetting of Sherlock objects of interest')
     ap.add_argument('--object_dir', help="If the object directory is not your current one you need to provide the ABSOLUTE path", required=False)
     ap.add_argument('--candidate', type=int, default=None, help="The candidate signal to be used.", required=False)
     ap.add_argument('--properties', help="The YAML file to be used as input.", required=False)
+    ap.add_argument('--cpus', type=int, default=None, help="The number of CPU cores to be used.", required=False)
     args = ap.parse_args()
     vetter = Vetter(args.object_dir)
     if args.candidate is None:
@@ -454,6 +904,7 @@ if __name__ == '__main__':
         candidate = candidate.append(user_properties, ignore_index=True)
         candidate = candidate.rename(columns={'id': 'TICID'})
         candidate['TICID'] = candidate["TICID"].apply(str)
+        cpus = user_properties["settings"]["cpus"]
     else:
         candidate_selection = int(args.candidate)
         candidates = pd.read_csv(vetter.object_dir + "/candidates.csv")
@@ -461,6 +912,11 @@ if __name__ == '__main__':
             raise SystemExit("User selected a wrong candidate number.")
         candidates = candidates.rename(columns={'Object Id': 'TICID'})
         candidate = candidates.iloc[[candidate_selection - 1]]
+        candidate['number'] = [candidate_selection]
         vetter.data_dir = vetter.object_dir
         print("Selected signal number " + str(candidate_selection))
-        vetter.vetting(candidate)
+        if args.cpus is None:
+            cpus = multiprocessing.cpu_count() - 1
+        else:
+            cpus = args.cpus
+    vetter.vetting(candidate, cpus)
