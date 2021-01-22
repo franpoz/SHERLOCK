@@ -71,7 +71,9 @@ YAML file the next line:
 
 ### Vetting
 SHERLOCK PIPEline comes with a submodule to examine the most promising transit candidates
-found by any of its executions. This is done via [LATTE](https://github.com/noraeisner/LATTE).
+found by any of its executions. This is done via [LATTE](https://github.com/noraeisner/LATTE), 
+[TPFPlotter](https://github.com/jlillo/tpfplotter) and 
+[Triceratops](https://github.com/stevengiacalone/triceratops).
 Please note that this feature is only enabled for TESS candidates.
 You should be able to execute the vetting by calling:
 
@@ -93,7 +95,8 @@ parameters from the Sherlock generated files.
 
 ### Fitting
 SHERLOCK PIPEline comes with another submodule to fit the most promising transit candidates
-found by any of its executions. This fit is done via [ALLESFITTER](https://github.com/MNGuenther/allesfitter) code. By calling:
+found by any of its executions. This fit is done via 
+[ALLESFITTER](https://github.com/MNGuenther/allesfitter) code. By calling:
 
 ```python3 -m sherlockpipe.fit --properties my_properties.yaml```
 
@@ -170,6 +173,9 @@ class that we provide. Then, inject your python file into the `CUSTOM_ALGORITHM`
 * A custom search zone definition by implementing the
 [SearchZone](https://github.com/franpoz/SHERLOCK/tree/master/sherlockpipe/sherlockpipe/search_zones/SearchZone.py).
 class that we provide. Then, inject your python file into the `CUSTOM_SEARCH_ZONE` property and let SHERLOCK use your code. 
+* Custom search modes: 'tls', 'bls', 'grazing', 'comet' or 'custom'. You can search for transits by using TLS, BLS,
+TLS for a grazing template, TLS for a comet template or even inject your custom transit template (this is currently
+included as an experimental feature).
 
 For better understanding of usage please see the
 [examples](https://github.com/franpoz/SHERLOCK/tree/master/examples/properties/custom_algorithms.yaml),
@@ -253,23 +259,9 @@ endpoints.
 </p>
 
 ### Dependencies
-All the needed dependencies should be included by your `pip` installation of SHERLOCK. 
-These are the Python libraries which are <b>required</b> for <i>SHERLOCK</i> to be run:
-* numpy: If you run into problems by installing numpy, it might be helpful to install 
-the next packages (if you're under an Ubuntu distribution)
-    * sudo apt-get install libblas-dev  liblapack-dev
-    * sudo apt-get install gfortran
-* cython (for lightkurve and pandas dependencies)
-* pandas
-* lightkurve
-* transitleastsquares
-* eleanor
-* wotan
-* matplotlib
-
-The next libraries are <b>required</b> for <i>SHERLOCK Explorer</i> to be run:
-* plotly
-* colorama
+All the needed dependencies should be included by your `pip` installation of SHERLOCK. If you are
+interested you can inspect the requirements list under 
+[setup.py](https://github.com/franpoz/SHERLOCK/blob/master/setup.py).
 
 ## Testing
 SHERLOCK Pipeline comes with a light automated tests suite which can be executed with:
@@ -287,8 +279,10 @@ If so, please read the instructions provided there to execute them.
 
 ## Integration
 SHERLOCK integrates with several third party services. Some of them are listed below:
-* TESS, Kepler and K2 databases through [Lightkurve](https://github.com/KeplerGO/lightkurve) and 
-[ELEANOR](https://adina.feinste.in/eleanor/)
-* MAST and Vizier catalogs through [Lightkurve](https://github.com/KeplerGO/lightkurve)
+* TESS, Kepler and K2 databases through [Lightkurve](https://github.com/KeplerGO/lightkurve), 
+[ELEANOR](https://adina.feinste.in/eleanor/) and [LATTE](https://github.com/noraeisner/LATTE).
+* MAST and Vizier catalogs through [Lightkurve](https://github.com/KeplerGO/lightkurve), 
+[transitleastsquares](https://github.com/hippke/tls) and 
+[Triceratops](https://github.com/stevengiacalone/triceratops)
 * [NASA Exoplanet Archive API](https://exoplanetarchive.ipac.caltech.edu/docs/program_interfaces.html)
-* [TESS ExoFOP](https://exofop.ipac.caltech.edu/tess/view_toi.php)
+* [TESS ExoFOP](https://exofop.ipac.caltech.edu/tess/view_toi.php).
