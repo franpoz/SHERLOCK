@@ -43,7 +43,7 @@ if [[ -z "${tests_results}" ]]; then
   python3 setup.py sdist bdist_wheel
   python3 -m twine upload dist/*
   echo "Build docker image"
-  sudo docker build . --no-cache
+  sudo docker build ./docker/ --no-cache
   git_tag=$(git tag -l --sort -version:refname | head -n 1)
   docker_image_id=${sudo docker images | awk '{print $3}' | awk 'NR==2'}
   echo "Tagging docker image with tag ${git_tag}"
