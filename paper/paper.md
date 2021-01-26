@@ -288,21 +288,27 @@ where is shown the period strengths. Example:
 
 ![Selfmasking function evaluates the RMS of the light curve in blocks of four hours and mask these regions with high RMS.\label{fig:rms}](rms.png)
 
+# 4. Performance
 
-# 4. Future implementations  
+To test the performace of ``SHERLOCK`` in comparison to others methods in finding threshold crossing events, we carried out suite of inject-and-recovey experiments over a TESS light curve, correspoding to a single sector. It was injected a synthetic sample of planets with radii in the range of 0.7-2.5 R_earth with steps of 0.5 R_earth, and periods in the range 0.5-9.5 days, with steps of 0.1 day. In addition, we evaluate each scenario with five different epochs. Hence, in total we evaluated a total of 1710 scenarios. Then, we run three different methods to find recover the signals: (1) A search using a clasical Box Least Squares algorithim, with a threshold limit of signal-to-noise of 7 to claim a planet as recovered. This would be similar to the automatic TESS and Kepler pipelines. (2) A search using the Transit Least Square algorithim, with a threshold limit of signal-to-noise of 5 to claim a planet as recovered. (3) A search using ``SHERLOCK`` with a threshold limit of signal-to-noise of 7, and 5 runs maximum. We found that ``SHERLOCK`` is the most efficient algorithm, being able to recover sub-Earth planets in short-period orbits and about 2 R_earth for periods as large as 10 days.       
+
+![\label{fig:sherlock](sherlock1.png)
+
+
+# 5. Future implementations  
 
 While the ``SHERLOCK PIPEline``'s goal is to search-and-find planets, there is still a number of improvements which will make the user's life easier. In particular, we have identified some of them and we are continuosly working in their implementation. Here the most urgents ones at this point: 
 
-## 4.1 Pulsating stars
+## 5.1 Pulsating stars
 
 While [Automatic detrend of intense periodicities](https://github.com/franpoz/SHERLOCK#automatic-detrend-of-intense-periodicities) allows the user to remove pulsation-like features, it is very common that stars pulse in different modes, which is more complex than a simple variability. To handle this issue, we will implemente a more robust characterizarion of the stellar pulsations. In particular, high-frecuency pressure-mode (p-mode) pulsators
 which have relatively high amplitudes and can hinder the detection of shallow transits [@sowicka:2017].
 
-## 4.2 Disentigrating planets
+## 5.2 Disintegrating planets
 
 We are including in ``SHERLOCK`` a model for comet-like tails of disintegrating exoplanets, which highly differ from the typical shape of transiting exoplanets see e.g.[@rappaport:2012,@sanchis:2015]. 
 
-## 4.3 Vetting astrophysical phenomena
+## 5.3 Vetting astrophysical phenomena
 
 ``SHERLOCK`` includes already a vetting tool via ``LATTE`` , which helps the user to indentify some sources of false positive for a detected signal. However, 
 this still can be improved by providing a statistical validation. To this end, we will include a link to ``TRICERATOPS`` tool, where a number of potential 
@@ -311,7 +317,7 @@ scenarios are tested and computes their likehoods.
 
 # Acknowledgements
 
-We acknowledge balblabla
+TBD
 
 
 # References
