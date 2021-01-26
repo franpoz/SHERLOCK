@@ -117,7 +117,7 @@ The ``SHERLOCK PIPEline`` is specially devoted for:
 3) Recover planets already reported and search for extra candidates in a given system. 
  
 That is, ``SHERLOCK`` might be used for a number of projects which need to explore light curves in the search of exoplanets. For example, it is used 
-in the SPECULOOS-TESS alliance [@sebastian:2020], and in the hot-subdwarf survery in the search of planetary remants [@vangrootel:2021], which project
+in the SPECULOOS-TESS alliance [@sebastian:2020], and in the hot-subdwarf survey in the search of planetary remants [@vangrootel:2021], which project
 can be found here [Hot-subdwarf catalogues](https://github.com/franpoz/Hot-Subdwarfs-Catalogues).
 
 
