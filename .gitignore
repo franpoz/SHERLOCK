@@ -142,3 +142,4 @@ dmypy.json
 **/user-properties.yaml
 /*.simg
 /.pypirc
+**/P*_R*_*.csv
