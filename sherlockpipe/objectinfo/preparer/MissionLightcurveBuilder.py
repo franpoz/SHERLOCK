@@ -51,7 +51,7 @@ class MissionLightcurveBuilder(LightcurveBuilder):
                 logging.warning("TICS IN THE SAME PIXEL: " + str(matching_objects))
                 logging.warning("================================================")
             lc = lc.remove_nans()
-            transits_min_count = 1 if len(lcf) == 0 else 2
+            transits_min_count = self.__calculate_transits_min_count(len(lcf))
             if mission_prefix == self.MISSION_ID_KEPLER or mission_id == self.MISSION_ID_KEPLER_2:
                 quarters = [lcfile.quarter for lcfile in lcf]
             elif mission_prefix == self.MISSION_ID_TESS:
@@ -160,7 +160,7 @@ class MissionLightcurveBuilder(LightcurveBuilder):
             lc.plot(label="Normalized light curve")
             plt.savefig(sherlock_dir + "/Normalized_lc[" + str(sector) + "].png")
             plt.close()
-            transits_min_count = 1 if len(tpfs) == 0 else 2
+            transits_min_count = self.__calculate_transits_min_count(len(tpfs))
             if mission_prefix == self.MISSION_ID_KEPLER or mission_id == self.MISSION_ID_KEPLER_2:
                 quarters = [lcfile.quarter for lcfile in tpfs]
             elif mission_prefix == self.MISSION_ID_TESS:
@@ -169,3 +169,7 @@ class MissionLightcurveBuilder(LightcurveBuilder):
                 logging.info("Correcting K2 motion in light curve...")
                 quarters = [lcfile.campaign for lcfile in tpfs]
             return lc, star_info, transits_min_count, np.unique(sectors), np.unique(quarters)
+
+    def __calculate_transits_min_count(self, len_data):
+        return 1 if len_data == 1 else 2
+
