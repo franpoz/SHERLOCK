@@ -146,6 +146,30 @@ if __name__ == '__main__':
             if object_info.mission_id() in sherlock_user_properties["INPUT_FILES_WITH_IDS_MASKS"].keys():
                 object_info.initial_mask = sherlock_user_properties["INPUT_FILES_WITH_IDS_MASKS"][object_info.mission_id()]
 
+    ## Set transit mask to object infos
+    if sherlock_user_properties["TWO_MIN_TRANSIT_MASKS"]:
+        for object_info in mission_object_infos:
+            if object_info.mission_id() in sherlock_user_properties["TWO_MIN_TRANSIT_MASKS"].keys():
+                object_info.initial_transit_mask = sherlock_user_properties["TWO_MIN_TRANSIT_MASKS"][object_info.mission_id()]
+    if sherlock_user_properties["FFI_IDS_TRANSIT_MASKS"]:
+        for object_info in ffi_object_infos:
+            if object_info.mission_id() in sherlock_user_properties["FFI_IDS_TRANSIT_MASKS"].keys():
+                object_info.initial_transit_mask = sherlock_user_properties["FFI_IDS_TRANSIT_MASKS"][object_info.mission_id()]
+    if sherlock_user_properties["FFI_COORDINATES_TRANSIT_MASKS"]:
+        for object_info in ffi_coords_object_infos:
+            key = str(object_info.ra) + "_" + str(object_info.dec)
+            if key in sherlock_user_properties["FFI_COORDINATES_TRANSIT_MASKS"].keys():
+                object_info.initial_transit_mask = sherlock_user_properties["FFI_COORDINATES_TRANSIT_MASKS"][key]
+    if sherlock_user_properties["INPUT_FILES_TRANSIT_MASKS"]:
+        for object_info in input_object_infos:
+            if object_info.input_file in sherlock_user_properties["INPUT_FILES_TRANSIT_MASKS"].keys():
+                object_info.initial_transit_mask = sherlock_user_properties["INPUT_FILES_TRANSIT_MASKS"][object_info.input_file]
+    if sherlock_user_properties["INPUT_FILES_WITH_IDS_TRANSIT_MASKS"]:
+        for object_info in input_id_object_infos:
+            if object_info.mission_id() in sherlock_user_properties["INPUT_FILES_WITH_IDS_TRANSIT_MASKS"].keys():
+                object_info.initial_transit_mask = sherlock_user_properties["INPUT_FILES_WITH_IDS_TRANSIT_MASKS"][
+                    object_info.mission_id()]
+
     ## Set detrend period to object infos
     if sherlock_user_properties["TWO_MIN_INITIAL_DETREND_PERIOD"]:
         for object_info in mission_object_infos:

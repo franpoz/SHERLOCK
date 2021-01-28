@@ -127,6 +127,7 @@ STAR:
 # 36724087 181804752 243185500 318022259 54962195
 APERTURE:
 
+# TESS ONLY ids dictionary with mask ranges. E.g: {"TIC 181804752": [[1546.25, 1550.5]]}
 TWO_MIN_MASKS:
 # TESS ONLY ids dictionary with mask ranges. E.g: {"TIC 181804752": [[1546.25, 1550.5]]}
 FFI_IDS_MASKS:
@@ -137,6 +138,38 @@ INPUT_FILES_MASKS:
 # The initial mask of time ranges to be applied to input light curves with mission id.
 # TESS/Kepler/K2 ids array. E.g: {"TIC 181804752": [[1546.25, 1550.5]]}
 INPUT_FILES_WITH_IDS_MASKS:
+
+# TESS ONLY ids dictionary with transit ephemeris to be masked. E.g:
+# TIC 251848941:
+#   - T0: 1354.5510
+#     P: 20.70573
+#     D: 136.9
+TWO_MIN_TRANSIT_MASKS:
+# TESS ONLY ids dictionary with transit ephemeris to be masked. E.g:
+# TIC 251848941:
+#   - T0: 1354.5510
+#     P: 20.70573
+#     D: 136.9
+FFI_IDS_TRANSIT_MASKS:
+# A dict of RA_Dec (degrees) keys with mask ranges. . E.g:
+## "yourRA_yourDec":
+##   - T0: 1354.5510
+##     P: 20.70573
+##     D: 136.9
+FFI_COORDINATES_TRANSIT_MASKS:
+# A dict of file names (degrees) keys with mask ranges. E.g:
+## "model1.csv":
+##   - T0: 1354.5510
+##     P: 20.70573
+##     D: 136.9
+INPUT_FILES_TRANSIT_MASKS:
+# The initial mask of time ranges to be applied to input light curves with mission id.
+# TESS/Kepler/K2 ids array. E.g:
+### TIC 251848941:
+###   - T0: 1354.5510
+###     P: 20.70573
+###     D: 136.9
+INPUT_FILES_WITH_IDS_TRANSIT_MASKS:
 
 ######################################################################################################################
 ### INITIAL DETREND PERIOD - If any value of this section overlaps any auto-detrend setup, auto-detrend will be

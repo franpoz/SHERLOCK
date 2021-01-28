@@ -598,6 +598,10 @@ class Sherlock:
             logging.info('Mask: yes')
         else:
             logging.info('Mask: no')
+        if object_info.initial_transit_mask is not None:
+            logging.info('Transit Mask: yes')
+        else:
+            logging.info('Transit Mask: no')
         logging.info('Threshold limit for SNR: %.1f', self.snr_min)
         logging.info('Threshold limit for SDE: %.1f', self.sde_min)
         logging.info('Threshold limit for FAP: %.1f', self.fap_max)
@@ -708,6 +712,17 @@ class Sherlock:
                         (clean_time > mask_range[1] if not math.isnan(mask_range[1]) else False)]
                 clean_time = clean_time[mask]
                 flatten_flux = flatten_flux[mask]
+        if object_info.initial_transit_mask is not None:
+            logging.info('================================================')
+            logging.info('INITIAL TRANSIT MASKING')
+            logging.info('================================================')
+            initial_transit_mask = object_info.initial_transit_mask
+            logging.info('** Applying ordered transit masks to the lightcurve **')
+            for transit_mask in initial_transit_mask:
+                mask = tls.transit_mask(clean_time, transit_mask["P"], transit_mask["D"] / 60 / 24, transit_mask["T0"])
+                clean_time = clean_time[~mask]
+                flatten_flux = flatten_flux[~mask]
+                clean_flux_err = clean_flux_err[~mask]
         return clean_time, flatten_flux, clean_flux_err, star_info, transits_min_count, cadence, \
                sectors if sectors is not None else quarters
 
