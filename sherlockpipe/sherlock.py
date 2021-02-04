@@ -664,19 +664,25 @@ class Sherlock:
         logging.info("wl/ks_min: %.2f", self.wl_min[sherlock_id])
         logging.info("wl/ks_min: %.2f", self.wl_max[sherlock_id])
         logging.info('================================================')
-        lc = lk.LightCurve(time=time, flux=flux, flux_err=flux_err)
+        time_float = lc.time.value
+        flux_float = lc.flux.value
+        flux_err_float = lc.flux_err.value
+        lc = lk.LightCurve(time=time_float, flux=flux_float, flux_err=flux_err_float)
         lc_df = pandas.DataFrame(columns=['#time', 'flux', 'flux_err'])
-        lc_df['#time'] = lc.time
-        lc_df['flux'] = lc.flux
-        lc_df['flux_err'] = lc.flux_err
+        lc_df['#time'] = time_float
+        lc_df['flux'] = flux_float
+        lc_df['flux_err'] = flux_err_float
         lc_df.to_csv(object_dir + "lc.csv", index=False)
         lc = lc.remove_outliers(sigma_lower=float('inf'), sigma_upper=3)  # remove outliers over 3sigma
-        cadence_array = np.diff(lc.time) * 24 * 60
+        time_float = lc.time.value
+        flux_float = lc.flux.value
+        flux_err_float = lc.flux_err.value
+        cadence_array = np.diff(time_float) * 24 * 60
         cadence_array = cadence_array[~np.isnan(cadence_array)]
         cadence_array = cadence_array[cadence_array > 0]
         cadence = np.nanmedian(cadence_array)
-        clean_time, flatten_flux, clean_flux_err = self.__clean_initial_flux(object_info, lc.time, lc.flux, lc.flux_err,
-                                                                             star_info, cadence)
+        clean_time, flatten_flux, clean_flux_err = self.__clean_initial_flux(object_info, time_float, flux_float,
+                                                                             flux_err_float, star_info, cadence)
         lc = lk.LightCurve(time=clean_time, flux=flatten_flux, flux_err=clean_flux_err)
         self.rotator_period = None
         periodogram = lc.to_periodogram(minimum_period=0.05, maximum_period=15, oversample_factor=10)
@@ -719,6 +725,8 @@ class Sherlock:
             initial_transit_mask = object_info.initial_transit_mask
             logging.info('** Applying ordered transit masks to the lightcurve **')
             for transit_mask in initial_transit_mask:
+                logging.info('* Transit mask with P=%.2f d, T0=%.2f d, Dur=%.2f min**', transit_mask["P"],
+                             transit_mask["T0"], transit_mask["D"])
                 mask = tls.transit_mask(clean_time, transit_mask["P"], transit_mask["D"] / 60 / 24, transit_mask["T0"])
                 clean_time = clean_time[~mask]
                 flatten_flux = flatten_flux[~mask]

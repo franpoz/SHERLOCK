@@ -23,17 +23,12 @@ class MissionLightcurveBuilder(LightcurveBuilder):
             raise ValueError("Wrong object id " + mission_id)
         star_info = starinfo.StarInfo(sherlock_id, *self.star_catalogs[mission_prefix].catalog_info(id))
         logging.info("Downloading lightcurve files...")
+        sectors = None if object_info.sectors == 'all' else object_info.sectors
         if object_info.aperture_file is None:
-            if mission == "TESS" and object_info.sectors != 'all':
-                lcf = lk.search_lightcurvefile(str(mission_id), mission=mission, cadence="short", sector=object_info.sectors)\
-                    .download_all()
-            elif mission == "TESS":
-                lcf = lk.search_lightcurvefile(str(mission_id), mission=mission, cadence="short").download_all()
-            elif object_info.sectors != 'all':
-                lcf = lk.search_lightcurvefile(str(mission_id), mission=mission, cadence="short", quarter=object_info.sectors)\
-                    .download_all()
-            else:
-                lcf = lk.search_lightcurvefile(str(mission_id), mission=mission, cadence="short").download_all()
+            lcf = lk.search_lightcurvefile(str(mission_id), mission=mission, cadence="short",
+                                           sector=sectors, quarter=sectors,
+                                           campaign=sectors, author=self.authors[mission])\
+                .download_all()
             if lcf is None:
                 raise ObjectProcessingError("Light curve not found for object id " + mission_id)
             lc = None
@@ -63,16 +58,9 @@ class MissionLightcurveBuilder(LightcurveBuilder):
             return lc, star_info, transits_min_count, np.unique(sectors), np.unique(quarters)
         else:
             logging.info("Using user apertures!")
-            if mission == "TESS" and object_info.sectors != 'all':
-                tpfs = lk.search_targetpixelfile(str(mission_id), mission=mission, cadence="short",
-                                                 sector=object_info.sectors).download_all()
-            elif mission == "TESS":
-                tpfs = lk.search_targetpixelfile(str(mission_id), mission=mission, cadence="short").download_all()
-            elif object_info.sectors != 'all':
-                tpfs = lk.search_targetpixelfile(str(mission_id), mission=mission, cadence="short",
-                                                 quarter=object_info.sectors).download_all()
-            else:
-                tpfs = lk.search_targetpixelfile(str(mission_id), mission=mission, cadence="short").download_all()
+            tpfs = lk.search_targetpixelfile(str(mission_id), mission=mission, cadence="short",
+                                             sector=sectors, quarter=sectors, campaign=sectors,
+                                             author=authors[mission]).download_all()
             apertures = {}
             if isinstance(object_info.aperture_file, str):
                 aperture = []

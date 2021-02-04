@@ -32,12 +32,11 @@ class MissionFfiLightcurveBuilder(LightcurveBuilder):
         quarters = None
         if mission_prefix not in self.star_catalogs:
             raise ValueError("Wrong object id " + mission_id)
+        sectors = None if object_info.sectors == 'all' else object_info.sectors
         if mission_prefix == self.MISSION_ID_KEPLER or mission_prefix == self.MISSION_ID_KEPLER_2:
-            if object_info.sectors != 'all':
-                lcf = lk.search_lightcurvefile(str(mission_id), mission=mission, cadence="long",
-                                               quarter=object_info.sectors).download_all()
-            else:
-                lcf = lk.search_lightcurvefile(str(mission_id), mission=mission, cadence="long").download_all()
+            lcf = lk.search_lightcurvefile(str(mission_id), mission=mission, cadence="long",
+                                           author=self.authors[mission], sector=sectors, quarter=sectors,
+                                           campaign=sectors).download_all()
             lc = lcf.PDCSAP_FLUX.stitch().remove_nans()
             transits_min_count = 1 if len(lcf) == 0 else 2
             if mission_prefix == self.MISSION_ID_KEPLER:

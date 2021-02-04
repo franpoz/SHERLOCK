@@ -160,6 +160,23 @@ class SherlockTests(unittest.TestCase):
         self.assertTrue(os.path.exists(run_dir + "/Periodogram_TIC181804752_FFI_all.png"))
         self.assertFalse(os.path.exists(run_dir + "/1"))
 
+    def test_run_with_autodetrend(self):
+        sherlock = Sherlock(False, [MissionObjectInfo("TIC 259377017", [5])], True)
+        sherlock.setup_detrend(n_detrends=1, initial_rms_mask=True, auto_detrend_periodic_signals=True) \
+            .setup_transit_adjust_params(max_runs=1).run()
+        run_dir = "TIC259377017_[5]"
+        self.assertTrue(os.path.exists(run_dir))
+        self.assertTrue(os.path.exists(run_dir + "/Phase_detrend_period_TIC259377017_[5]_3.60_days.png"))
+
+    def test_run_epic_ffi(self):
+        sherlock = Sherlock(False, [MissionFfiIdObjectInfo("EPIC 249631677", 'all')], False)
+        sherlock.setup_detrend(n_detrends=1, initial_rms_mask=True, auto_detrend_periodic_signals=False) \
+            .setup_transit_adjust_params(max_runs=1).run()
+        run_dir = "EPIC249631677_FFI_all"
+        self.assertTrue(os.path.exists(run_dir))
+        self.assertTrue(os.path.exists(run_dir + "/Periodogram_EPIC249631677_FFI_all.png"))
+        self.assertFalse(os.path.exists(run_dir + "/1"))
+
     def test_run_with_star_info(self):
         sherlock = Sherlock(False, [MissionFfiIdObjectInfo("TIC 181804752", 'all',
                                                            star_info=StarInfo(ld_coefficients=(0.15,0.25),

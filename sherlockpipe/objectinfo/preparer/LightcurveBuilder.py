@@ -17,6 +17,10 @@ class LightcurveBuilder(ABC):
         self.star_catalogs[self.MISSION_ID_KEPLER] = KicStarCatalog()
         self.star_catalogs[self.MISSION_ID_KEPLER_2] = EpicStarCatalog()
         self.star_catalogs[self.MISSION_ID_TESS] = TicStarCatalog()
+        self.authors = {}
+        self.authors["Kepler"] = "Kepler"
+        self.authors["K2"] = "K2"
+        self.authors["TESS"] = "SPOC"
 
     @abstractmethod
     def build(self, object_info, sherlock_dir):
