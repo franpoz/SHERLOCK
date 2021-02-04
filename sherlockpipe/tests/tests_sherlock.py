@@ -20,7 +20,7 @@ from sherlockpipe.scoring.SnrBorderCorrectedSignalSelector import SnrBorderCorre
 from sherlockpipe.sherlock import Sherlock
 
 
-class SherlockTests(unittest.TestCase):
+class TestsSherlock(unittest.TestCase):
     def test_setup_files(self):
         sherlock = Sherlock(False, None)
         sherlock.setup_files(False, "inner/")
