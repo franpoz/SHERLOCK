@@ -45,9 +45,12 @@ numba = "^0.52.0"
 batman-package = "^2.4.7"
 argparse = "^1.4.0"
 configparser = "^5.0.1"
-triceratops = "^0.2.2"
+triceratops = "^1.0.2"
+transitleastsquares = "^1.0.25"
+celerite = "^0.4.0"
 
 [tool.poetry.dev-dependencies]
+pytest = "^6.2"
 
 [build-system]
 requires = ["poetry-core>=1.0.0"]

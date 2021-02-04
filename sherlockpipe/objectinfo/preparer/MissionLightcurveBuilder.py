@@ -23,11 +23,13 @@ class MissionLightcurveBuilder(LightcurveBuilder):
             raise ValueError("Wrong object id " + mission_id)
         star_info = starinfo.StarInfo(sherlock_id, *self.star_catalogs[mission_prefix].catalog_info(id))
         logging.info("Downloading lightcurve files...")
-        sectors = None if object_info.sectors == 'all' else object_info.sectors
+        sectors = None if object_info.sectors == 'all' or mission != "TESS" else object_info.sectors
+        quarters = None if object_info.sectors == 'all' or mission != "K2" else object_info.sectors
+        campaigns = None if object_info.sectors == 'all' or mission != "Kepler" else object_info.sectors
         if object_info.aperture_file is None:
-            lcf = lk.search_lightcurvefile(str(mission_id), mission=mission, cadence="short",
-                                           sector=sectors, quarter=sectors,
-                                           campaign=sectors, author=self.authors[mission])\
+            lcf = lk.search_lightcurve(str(mission_id), mission=mission, cadence="short",
+                                           sector=sectors, quarter=quarters,
+                                           campaign=campaigns, author=self.authors[mission])\
                 .download_all()
             if lcf is None:
                 raise ObjectProcessingError("Light curve not found for object id " + mission_id)
@@ -59,7 +61,7 @@ class MissionLightcurveBuilder(LightcurveBuilder):
         else:
             logging.info("Using user apertures!")
             tpfs = lk.search_targetpixelfile(str(mission_id), mission=mission, cadence="short",
-                                             sector=sectors, quarter=sectors, campaign=sectors,
+                                             sector=sectors, quarter=quarters, campaign=campaigns,
                                              author=authors[mission]).download_all()
             apertures = {}
             if isinstance(object_info.aperture_file, str):

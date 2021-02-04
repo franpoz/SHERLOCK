@@ -12,6 +12,7 @@ import matplotlib
 import matplotlib.pyplot as plt
 import matplotlib.gridspec as gridspec
 import yaml
+from astropy.time import Time
 from lightkurve import TessLightCurve
 from matplotlib.colorbar import Colorbar
 from matplotlib import patches
@@ -20,7 +21,7 @@ from astropy.table import Table
 from astropy.io import ascii
 import astropy.visualization as stretching
 from argparse import ArgumentParser
-
+import astropy.units as u
 from sherlockpipe.eleanor import TargetData
 
 from sherlockpipe import tpfplotter, eleanor
@@ -150,7 +151,7 @@ class Vetter:
                 sectors = sectors_all
         except:
             sectors = sectors_all
-
+        sectors = np.sort(sectors)
         if not ffi:
             alltime, allflux, allflux_err, all_md, alltimebinned, allfluxbinned, allx1, allx2, ally1, ally2, alltime12, allfbkg, start_sec, end_sec, in_sec, tessmag, teff, srad = LATTEutils.download_data(
                 indir, sectors, tic)
@@ -168,7 +169,7 @@ class Vetter:
         # TODO decide whether to use transit_list or period
         transit_list = []
         last_time = alltime[len(alltime) - 1]
-        num_of_transits = int((last_time - t0) / period)
+        num_of_transits = int(ceil(((last_time - t0) / period)))
         transit_lists = t0 + period * range(0, num_of_transits)
         transit_lists = [transit_lists[x:x + 3] for x in range(0, len(transit_lists), 3)]
         for index, transit_list in enumerate(transit_lists):
@@ -311,34 +312,34 @@ class Vetter:
             result_dir = self.vetting_field_of_view(indir, tic, res['RA'], res['DEC'], sectors)
             shutil.move(result_dir, vetting_dir + "/tpfplot")
             # TODO improve this condition to check whether tic, sectors and transits exist
-            # if not np.isin(tic, urls_exist):
-            #     # make sure the file is opened as append only
-            #     with open('{}/manifest.csv'.format(str(indir)), 'a') as tic:  # save in the photometry folder
-            #         writer = csv.writer(tic, delimiter=',')
-            #         metadata_data = [res['TICID']]
-            #         metadata_data.append(res['MarkedTransits'])
-            #         metadata_data.append(res['Sectors'])
-            #         metadata_data.append(res['RA'])
-            #         metadata_data.append(res['DEC'])
-            #         metadata_data.append(res['SolarRad'])
-            #         metadata_data.append(res['TMag'])
-            #         metadata_data.append(res['Teff'])
-            #         metadata_data.append(res['thissector'])
-            #         metadata_data.append(res['TOI'])
-            #         metadata_data.append(res['TCE'])
-            #         metadata_data.append(res['TCE_link'])
-            #         metadata_data.append(res['EB'])
-            #         metadata_data.append(res['Systematics'])
-            #         metadata_data.append(res['BackgroundFlux'])
-            #         metadata_data.append(res['CentroidsPositions'])
-            #         metadata_data.append(res['MomentumDumps'])
-            #         metadata_data.append(res['ApertureSize'])
-            #         metadata_data.append(res['InoutFlux'])
-            #         metadata_data.append(res['Keep'])
-            #         metadata_data.append(res['Comment'])
-            #         metadata_data.append(res['starttime'])
-            #         writer.writerow(metadata_data)
-        return TIC_wanted
+        #     if not np.isin(tic, urls_exist):
+        #         # make sure the file is opened as append only
+        #         with open('{}/manifest.csv'.format(str(indir)), 'a') as tic:  # save in the photometry folder
+        #             writer = csv.writer(tic, delimiter=',')
+        #             metadata_data = [res['TICID']]
+        #             metadata_data.append(res['MarkedTransits'])
+        #             metadata_data.append(res['Sectors'])
+        #             metadata_data.append(res['RA'])
+        #             metadata_data.append(res['DEC'])
+        #             metadata_data.append(res['SolarRad'])
+        #             metadata_data.append(res['TMag'])
+        #             metadata_data.append(res['Teff'])
+        #             metadata_data.append(res['thissector'])
+        #             metadata_data.append(res['TOI'])
+        #             metadata_data.append(res['TCE'])
+        #             metadata_data.append(res['TCE_link'])
+        #             metadata_data.append(res['EB'])
+        #             metadata_data.append(res['Systematics'])
+        #             metadata_data.append(res['BackgroundFlux'])
+        #             metadata_data.append(res['CentroidsPositions'])
+        #             metadata_data.append(res['MomentumDumps'])
+        #             metadata_data.append(res['ApertureSize'])
+        #             metadata_data.append(res['InoutFlux'])
+        #             metadata_data.append(res['Keep'])
+        #             metadata_data.append(res['Comment'])
+        #             metadata_data.append(res['starttime'])
+        #             writer.writerow(metadata_data)
+        # return TIC_wanted
 
     def vetting_validation(self, cpus, indir, tic, sectors, lc_file, transit_depth, period, t0, transit_duration):
         """ Calculates probabilities of the signal being caused by any of the following astrophysical sources:
@@ -383,7 +384,7 @@ class Vetter:
         duration = transit_duration / 60 / 24
         target = tr.target(ID=tic, sectors=sectors)
         # TODO allow user input apertures
-        tpfs = lightkurve.search_targetpixelfile("TIC " + str(tic), mission="TESS", cadence="short", sector=sectors)\
+        tpfs = lightkurve.search_targetpixelfile("TIC " + str(tic), mission="TESS", cadence="short", sector=sectors.tolist())\
             .download_all()
         star = eleanor.multi_sectors(tic=tic, sectors=sectors, tesscut_size=31)
         apertures = []
@@ -404,7 +405,7 @@ class Vetter:
                     if not np.isnan(pipeline_mask_triceratops[i, j]).any():
                         aperture.append(pipeline_mask_triceratops[i, j])
             apertures.append(aperture)
-            self.plot_field(target=target, save_file=save_dir + "/field_S" + str(s.sector) + ".png", sector=s.sector,
+            target.plot_field(save=True, fname=save_dir + "/field_S" + str(s.sector), sector=s.sector,
                             ap_pixels=aperture)
             sector_num = sector_num + 1
         apertures = np.array(apertures)
@@ -416,19 +417,14 @@ class Vetter:
         lc_len = len(time)
         zeros_lc = np.zeros(lc_len)
         lc = TessLightCurve(time=time, flux=flux, flux_err=flux_err, quality=zeros_lc)
-        # Two lines of hack to prevent binning of lightkurve throw exceptions with quality
-        del lc.quality
         lc.extra_columns = []
-        #
-        lc = lc.fold(period=period, t0=t0)
+        lc = lc.fold(period=period, epoch_time=t0, normalize_phase=True)
         folded_plot_range = duration / 2 / period * 5
-        inner_folded_range_args = np.where((0 - folded_plot_range < lc.time) & (lc.time < 0 + folded_plot_range))
-        lc.time = lc.time[inner_folded_range_args]
+        inner_folded_range_args = np.where((0 - folded_plot_range < lc.time.value) & (lc.time.value < 0 + folded_plot_range))
+        lc = lc[inner_folded_range_args]
         lc.time = lc.time * period
-        lc.flux = lc.flux[inner_folded_range_args]
-        lc.flux_err = lc.flux_err[inner_folded_range_args]
         sigma = np.mean(lc.flux_err)
-        input_n_times = [ValidatorInput(save_dir, copy.deepcopy(target), lc.time, lc.flux, sigma, period, depth,
+        input_n_times = [ValidatorInput(save_dir, copy.deepcopy(target), lc.time.value, lc.flux.value, sigma, period, depth,
                                         apertures, value)
                          for value in range(0, self.validation_runs)]
         validator = Validator()
@@ -456,7 +452,7 @@ class Vetter:
             else:
                 probs_total_df = pd.concat((probs_total_df, probs_df))
             fpp_sum = fpp_sum + fpp
-            nfpp_sum = nfpp + fpp
+            nfpp_sum = nfpp_sum + nfpp
             star_num[i] = star_num_arr
             u1[i] = u1_arr
             u2[i] = u2_arr
@@ -475,139 +471,13 @@ class Vetter:
         probs_total_df = probs_total_df.groupby("scenario", as_index=False).mean()
         probs_total_df["scenario"] = pd.Categorical(probs_total_df["scenario"], ["TP", "EB", "EBx2P", "PTP", "PEB", "PEBx2P",
                                                                          "STP", "SEB", "SEBx2P", "DTP", "DEB", "DEBx2P",
-                                                                         "BTP", "BEB", "BEBx2P"])
+                                                                         "BTP", "BEB", "BEBx2P", "NTP", "NEB", "NEBx2P"])
         probs_total_df = probs_total_df.sort_values("scenario")
-        probs_total_df.to_csv(save_dir + "/validation_scenarios.csv")
+        probs_total_df.to_csv(save_dir + "/validation_scenarios.csv", index=False)
         target.probs = probs_total_df
-        Vetter.plot_fits(target=target, save_file=save_dir + "/scenario_fits.png", time=lc.time, flux_0=lc.flux,
-                         sigma_0=sigma)
+        # target.plot_fits(save=True, fname=save_dir + "/scenario_fits", time=lc.time.value, flux_0=lc.flux.value,
+        #                  sigma_0=sigma)
         return save_dir
-
-    def plot_field(self, target, save_file=None, sector: int = None, ap_pixels=None):
-        """
-        Plots the field of stars and pixels around the target.
-        Args:
-            sector (int): Sector to plot.
-            ap_pixels (numpy array): Aperture used to
-                                     extract light curve.
-        """
-        if len(target.sectors) > 1:
-            idx = np.argwhere(target.sectors == sector)[0, 0]
-        else:
-            idx = 0
-        corners = np.arange(-0.5, target.N_pix+0.5, 1)
-        centers = np.arange(0, target.N_pix, 1)
-        fig, ax = plt.subplots(1, 2, figsize=(15, 6))
-        plt.subplots_adjust(wspace=0.15)
-        # aperture
-        if ap_pixels is not None:
-            for i in range(len(ap_pixels)):
-                ax[0].fill_between(
-                    [ap_pixels[i][0]-0.5, ap_pixels[i][0]+0.5],
-                    [ap_pixels[i][1]-0.5, ap_pixels[i][1]-0.5],
-                    [ap_pixels[i][1]+0.5, ap_pixels[i][1]+0.5],
-                    color="cyan", alpha=0.5
-                    )
-        # pixel grid
-        for i in corners:
-            ax[0].plot(
-                np.full_like(corners, target.col0s[idx]+i),
-                target.row0s[idx]+corners, "k-", lw=0.5
-                )
-            ax[0].plot(
-                target.col0s[idx]+corners,
-                np.full_like(corners, target.row0s[idx]+i), "k-", lw=0.5
-                )
-        # search radius
-        ax[0].plot(
-            (
-                target.pix_coords[idx][0, 0]
-                + target.search_radius
-                * np.cos(np.linspace(0, 2*np.pi, 100))
-            ),
-            (
-                target.pix_coords[idx][0, 1]
-                + target.search_radius
-                * np.sin(np.linspace(0, 2*np.pi, 100))
-            ),
-            "k--", alpha=0.5)
-        # stars
-        sc = ax[0].scatter(
-            target.pix_coords[idx][:, 0],
-            target.pix_coords[idx][:, 1],
-            c=target.stars["Tmag"], s=75,
-            edgecolors="k",
-            cmap=cm.viridis_r,
-            vmin=floor(min(target.stars["Tmag"])),
-            vmax=ceil(max(target.stars["Tmag"]))
-            )
-        cb1 = fig.colorbar(sc, ax=ax[0], pad=0.02)
-        cb1.ax.set_ylabel(
-            "T mag", rotation=270, fontsize=12, labelpad=18
-            )
-        for i in range(len(target.stars)):
-            ax[0].annotate(
-                str(i),
-                (
-                    target.pix_coords[idx][i, 0]-1,
-                    target.pix_coords[idx][i, 1]-1
-                ),
-                fontsize=12
-                )
-        ax[0].set_ylim([
-            min(target.row0s[idx]+corners),
-            max(target.row0s[idx]+corners)
-            ])
-        ax[0].set_xlim([
-            min(target.col0s[idx]+corners),
-            max(target.col0s[idx]+corners)
-            ])
-        ax[0].set_yticks(target.row0s[idx]+centers)
-        ax[0].set_xticks(target.col0s[idx]+centers)
-        ax[0].tick_params(width=0)
-        ax[0].tick_params(axis='x', labelrotation=90)
-        ax[0].set_ylabel("pixel row number", fontsize=12)
-        ax[0].set_xlabel("pixel column number", fontsize=12)
-        # TESS FFI
-        im = ax[1].imshow(
-            target.TESS_images[idx],
-            extent=[
-                min(target.col0s[idx]+corners),
-                max(target.col0s[idx]+corners),
-                max(target.row0s[idx]+corners),
-                min(target.row0s[idx]+corners)
-            ])
-        cb2 = fig.colorbar(im, ax=ax[1], pad=0.02)
-        cb2.ax.set_ylabel(
-            "flux [e$^-$ s$^{-1}$]",
-            rotation=270, fontsize=12, labelpad=18)
-        ax[1].set_ylim([
-            min(target.row0s[idx]+corners),
-            max(target.row0s[idx]+corners)
-            ])
-        ax[1].set_xlim([
-            min(target.col0s[idx]+corners),
-            max(target.col0s[idx]+corners)
-            ])
-        ax[1].set_yticks(target.row0s[idx]+centers)
-        ax[1].set_xticks(target.col0s[idx]+centers)
-        ax[1].tick_params(width=0)
-        ax[1].tick_params(axis='x', labelrotation=90)
-        ax[1].set_ylabel("pixel row number", fontsize=12)
-        ax[1].set_xlabel("pixel column number", fontsize=12)
-        # aperture
-        if ap_pixels is not None:
-            for i in range(len(ap_pixels)):
-                ax[1].fill_between(
-                    [ap_pixels[i][0]-0.5, ap_pixels[i][0]+0.5],
-                    [ap_pixels[i][1]-0.5, ap_pixels[i][1]-0.5],
-                    [ap_pixels[i][1]+0.5, ap_pixels[i][1]+0.5],
-                    color="cyan", alpha=0.2
-                    )
-        if save_file is not None:
-            plt.savefig(save_file)
-        plt.show()
-        return
 
     @staticmethod
     def plot_fits(target, save_file, time: np.ndarray, flux_0: np.ndarray, sigma_0: float):
@@ -752,10 +622,10 @@ class Vetter:
             gs.update(left=0.05, right=0.95, bottom=0.12, top=0.95, wspace=0.01, hspace=0.03)
             ax1 = plt.subplot(gs[0, 0])
             # TPF plot
-            mean_tpf = np.mean(tpf.flux, axis=0)
+            mean_tpf = np.mean(tpf.flux.value, axis=0)
             nx, ny = np.shape(mean_tpf)
             norm = ImageNormalize(stretch=stretching.LogStretch())
-            division = np.int(np.log10(np.nanmax(tpf.flux)))
+            division = np.int(np.log10(np.nanmax(tpf.flux.value)))
             splot = plt.imshow(np.nanmean(tpf.flux, axis=0) / 10 ** division, norm=norm, \
                                extent=[tpf.column, tpf.column + ny, tpf.row, tpf.row + nx], origin='lower', zorder=0)
             # Pipeline aperture
@@ -873,7 +743,7 @@ class Validator:
             the_file.write("FPP,NFPP\n")
             the_file.write(str(input.target.FPP) + "," + str(input.target.NFPP))
         input.target.probs.to_csv(input.save_dir + "/validation_" + str(input.run) + "_scenarios.csv", index=False)
-        Vetter.plot_fits(target=input.target, save_file=input.save_dir + "/scenario_" + str(input.run) + "_fits.png",
+        input.target.plot_fits(save=True, fname=input.save_dir + "/scenario_" + str(input.run) + "_fits",
                          time=input.time, flux_0=input.flux, sigma_0=input.sigma)
         return input.target.FPP, input.target.NFPP, input.target.probs, input.target.star_num, input.target.u1, \
                input.target.u2, input.target.fluxratio_EB, input.target.fluxratio_comp

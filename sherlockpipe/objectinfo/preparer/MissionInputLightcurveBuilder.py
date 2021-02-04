@@ -13,8 +13,6 @@ class MissionInputLightcurveBuilder(LightcurveBuilder):
     def build(self, object_info, sherlock_dir):
         mission_id = object_info.mission_id()
         sherlock_id = object_info.sherlock_id()
-        quarters = None
-        sectors = None
         if isinstance(object_info, MissionInputObjectInfo):
             logging.info("Retrieving star catalog info...")
             mission, mission_prefix, id = super().parse_object_id(mission_id)
@@ -30,4 +28,4 @@ class MissionInputLightcurveBuilder(LightcurveBuilder):
                          usecols=['#time', 'flux', 'flux_err'])
         lc = lk.LightCurve(time=df['#time'], flux=df['flux'], flux_err=df['flux_err'])
         transits_min_count = 1
-        return lc, star_info, transits_min_count, sectors, quarters
+        return lc, star_info, transits_min_count, None, None

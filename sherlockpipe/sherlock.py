@@ -395,7 +395,7 @@ class Sherlock:
                 self.__setup_object_report_logging(sherlock_id, True)
                 object_dir = self.__init_object_dir(object_info.sherlock_id())
                 logging.info("Listing most promising candidates for ID %s:", sherlock_id)
-                logging.info("%-12s%-8s%-10s%-10s%-8s%-8s%-8s%-8s%-10s%-14s%-14s%-12s%-25s%-10s%-18s%-20s", "Detrend no.", "Period",
+                logging.info("%-12s%-10s%-10s%-10s%-8s%-8s%-8s%-8s%-10s%-14s%-14s%-12s%-25s%-10s%-18s%-20s", "Detrend no.", "Period",
                              "Per_err", "Duration", "T0", "Depth", "SNR", "SDE", "FAP", "Border_score", "Matching OI", "Harmonic",
                              "Planet radius (R_Earth)", "Rp/Rs", "Semi-major axis", "Habitability Zone")
                 if sherlock_id in self.report:
@@ -413,7 +413,7 @@ class Sherlock:
                             report['rp_rs'] = np.nan
                         else:
                             report['rad_p'] = self.__calculate_planet_radius(star_info, report["depth"])
-                        logging.info("%-12s%-8.4f%-10.5f%-10.2f%-8.2f%-8.3f%-8.2f%-8.2f%-10.6f%-14.2f%-14s%-12s%-25.5f%-10.5f%-18.5f%-20s",
+                        logging.info("%-12s%-10.4f%-10.5f%-10.2f%-8.2f%-8.3f%-8.2f%-8.2f%-10.6f%-14.2f%-14s%-12s%-25.5f%-10.5f%-18.5f%-20s",
                                      report["curve"], report["period"], report["per_err"],
                                      report["duration"], report["t0"], report["depth"], report["snr"], report["sde"],
                                      report["fap"], report["border_score"], report["oi"], report["harmonic"],
@@ -904,7 +904,7 @@ class Sherlock:
 
     def __identify_signals(self, object_info, time, lcs, flux_err, star_info, transits_min_count, wl, id_run, cadence, report):
         detrend_logging_customs = 'ker_size' if self.detrend_method == 'gp' else "win_size"
-        logging.info("%-12s%-10s%-10s%-8s%-18s%-14s%-14s%-12s%-12s%-14s%-16s%-14s%-12s%-25s%-10s%-18s%-20s",
+        logging.info("%-12s%-12s%-10s%-8s%-18s%-14s%-14s%-12s%-12s%-14s%-16s%-14s%-12s%-25s%-10s%-18s%-20s",
                      detrend_logging_customs, "Period", "Per_err", "N.Tran", "Mean Depth (ppt)", "T. dur (min)", "T0",
                      "SNR", "SDE", "FAP", "Border_score", "Matching OI", "Harmonic", "Planet radius (R_Earth)", "Rp/Rs",
                      "Semi-major axis", "Habitability Zone")
@@ -923,7 +923,7 @@ class Sherlock:
         a, habitability_zone = self.habitability_calculator \
             .calculate_hz_score(star_info.teff, star_info.mass, star_info.lum, transit_result.period)
         oi = self.__find_matching_oi(object_info, transit_result.period)
-        logging.info('%-12s%-10.5f%-10.6f%-8s%-18.3f%-14.1f%-14.4f%-12.3f%-12.3f%-14s%-16.2f%-14s%-12s%-25.5f%-10.5f%-18.5f%-20s',
+        logging.info('%-12s%-12.5f%-10.6f%-8s%-18.3f%-14.1f%-14.4f%-12.3f%-12.3f%-14s%-16.2f%-14s%-12s%-25.5f%-10.5f%-18.5f%-20s',
                      "PDCSAP_FLUX", transit_result.period,
                      transit_result.per_err, transit_result.count, transit_result.depth,
                      transit_result.duration * 24 * 60, transit_result.t0, transit_result.snr, transit_result.sde,
@@ -952,7 +952,7 @@ class Sherlock:
             a, habitability_zone = self.habitability_calculator \
                 .calculate_hz_score(star_info.teff, star_info.mass, star_info.lum, transit_result.period)
             oi = self.__find_matching_oi(object_info, transit_result.period)
-            logging.info('%-12.4f%-10.5f%-10.6f%-8s%-18.3f%-14.1f%-14.4f%-12.3f%-12.3f%-14s%-16.2f%-14s%-12s%-25.5f%-10.5f%-18.5f%-20s',
+            logging.info('%-12.4f%-12.5f%-10.6f%-8s%-18.3f%-14.1f%-14.4f%-12.3f%-12.3f%-14s%-16.2f%-14s%-12s%-25.5f%-10.5f%-18.5f%-20s',
                          wl[i], transit_result.period,
                      transit_result.per_err, transit_result.count, transit_result.depth,
                      transit_result.duration * 24 * 60, transit_result.t0, transit_result.snr, transit_result.sde,
@@ -1105,12 +1105,13 @@ class Sherlock:
         ax1.set(xlabel='Time (days)', ylabel='Relative flux')
         # phase folded plus binning
         bins_per_transit = 8
+        half_duration_phase = transit_result.duration / 2 / transit_result.period
         if np.isnan(transit_result.period) or np.isnan(transit_result.duration):
             bins = 200
             folded_plot_range = 0.05
         else:
             bins = transit_result.period / transit_result.duration * bins_per_transit
-            folded_plot_range = transit_result.duration / 2 / transit_result.period * 10
+            folded_plot_range = half_duration_phase * 10
         binning_enabled = round(cadence) <= 5
         ax2.plot(tls_results.model_folded_phase, tls_results.model_folded_model, color='red')
         scatter_measurements_alpha = 0.05 if binning_enabled else 0.8
@@ -1119,13 +1120,18 @@ class Sherlock:
         ax2.set_xlim(0.5 - folded_plot_range, 0.5 + folded_plot_range)
         ax2.set(xlabel='Phase', ylabel='Relative flux')
         plt.ticklabel_format(useOffset=False)
+        bins = 80
         if binning_enabled and tls_results.SDE != 0:
-            bin_means, bin_edges, binnumber = stats.binned_statistic(tls_results.folded_phase, tls_results.folded_y,
-                                                                     statistic='mean', bins=bins)
-            bin_stds, _, _ = stats.binned_statistic(tls_results.folded_phase, tls_results.folded_y, statistic='std', bins=bins)
+            folded_phase_zoom_mask = np.where((tls_results.folded_phase > 0.5 - folded_plot_range) &
+                                              (tls_results.folded_phase < 0.5 + folded_plot_range))
+            folded_phase = tls_results.folded_phase[folded_phase_zoom_mask]
+            folded_y = tls_results.folded_y[folded_phase_zoom_mask]
+            bin_means, bin_edges, binnumber = stats.binned_statistic(folded_phase, folded_y, statistic='mean',
+                                                                     bins=bins)
+            bin_stds, _, _ = stats.binned_statistic(folded_phase, folded_y, statistic='std', bins=bins)
             bin_width = (bin_edges[1] - bin_edges[0])
             bin_centers = bin_edges[1:] - bin_width / 2
-            bin_size = int(round(bin_width * 60 * 24 * transit_result.period))
+            bin_size = int(folded_plot_range * 2 / bins * transit_result.period * 24 * 60)
             ax2.errorbar(bin_centers, bin_means, yerr=bin_stds / 2, xerr=bin_width / 2, marker='o', markersize=4,
                          color='darkorange', alpha=1, linestyle='none', label='Bin size: ' + str(bin_size) + "m")
             ax2.legend(loc="upper right")

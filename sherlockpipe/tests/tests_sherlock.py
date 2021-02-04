@@ -1,9 +1,11 @@
 import os
 import shutil
 import unittest
-
+import sys
+import sherlockpipe.transitleastsquares
+sys.modules['transitleastsquares'] = sherlockpipe.transitleastsquares
+import transitleastsquares as tls
 from sherlockpipe.star.starinfo import StarInfo
-
 from sherlockpipe.objectinfo.InputObjectInfo import InputObjectInfo
 from sherlockpipe.objectinfo.MissionFfiCoordsObjectInfo import MissionFfiCoordsObjectInfo
 from sherlockpipe.objectinfo.MissionFfiIdObjectInfo import MissionFfiIdObjectInfo
@@ -140,86 +142,114 @@ class SherlockTests(unittest.TestCase):
         self.assertFalse(os.path.exists(object_dir))
 
     def test_run(self):
-        sherlock = Sherlock(False, [MissionFfiIdObjectInfo("TIC 181804752", 'all')])
-        sherlock.setup_detrend(n_detrends=1, initial_smooth=False, initial_rms_mask=False)\
-            .setup_transit_adjust_params(max_runs=1).run()
-        self.__assert_run_files("TIC181804752_FFI_all", assert_rms_mask=False)
+        run_dir = "TIC181804752_FFI_all"
+        try:
+            sherlock = Sherlock(False, [MissionFfiIdObjectInfo("TIC 181804752", 'all')])
+            sherlock.setup_detrend(n_detrends=1, initial_smooth=False, initial_rms_mask=False)\
+                .setup_transit_adjust_params(max_runs=1).run()
+            self.__assert_run_files(run_dir, assert_rms_mask=False)
+        finally:
+            self.__clean(run_dir)
 
     def test_run_with_rms_mask(self):
-        sherlock = Sherlock(False, [MissionFfiIdObjectInfo("TIC 181804752", 'all')])
-        sherlock.setup_detrend(n_detrends=1, initial_rms_mask=True) \
-            .setup_transit_adjust_params(max_runs=1).run()
-        self.__assert_run_files("TIC181804752_FFI_all")
+        run_dir = "TIC181804752_FFI_all"
+        try:
+            sherlock = Sherlock(False, [MissionFfiIdObjectInfo("TIC 181804752", 'all')])
+            sherlock.setup_detrend(n_detrends=1, initial_rms_mask=True) \
+                .setup_transit_adjust_params(max_runs=1).run()
+            self.__assert_run_files(run_dir)
+        finally:
+            self.__clean(run_dir)
 
     def test_run_with_explore(self):
-        sherlock = Sherlock(False, [MissionFfiIdObjectInfo("TIC 181804752", 'all')], True)
-        sherlock.setup_detrend(n_detrends=1, initial_rms_mask=True) \
-            .setup_transit_adjust_params(max_runs=1).run()
-        run_dir = "TIC181804752_FFI_all"
-        self.assertTrue(os.path.exists(run_dir))
-        self.assertTrue(os.path.exists(run_dir + "/Periodogram_TIC181804752_FFI_all.png"))
-        self.assertFalse(os.path.exists(run_dir + "/1"))
+        run_dir = None
+        try:
+            sherlock = Sherlock(False, [MissionFfiIdObjectInfo("TIC 181804752", 'all')], True)
+            sherlock.setup_detrend(n_detrends=1, initial_rms_mask=True) \
+                .setup_transit_adjust_params(max_runs=1).run()
+            run_dir = "TIC181804752_FFI_all"
+            self.assertTrue(os.path.exists(run_dir))
+            self.assertTrue(os.path.exists(run_dir + "/Periodogram_TIC181804752_FFI_all.png"))
+            self.assertFalse(os.path.exists(run_dir + "/1"))
+        finally:
+            self.__clean(run_dir)
 
     def test_run_with_autodetrend(self):
-        sherlock = Sherlock(False, [MissionObjectInfo("TIC 259377017", [5])], True)
-        sherlock.setup_detrend(n_detrends=1, initial_rms_mask=True, auto_detrend_periodic_signals=True) \
-            .setup_transit_adjust_params(max_runs=1).run()
-        run_dir = "TIC259377017_[5]"
-        self.assertTrue(os.path.exists(run_dir))
-        self.assertTrue(os.path.exists(run_dir + "/Phase_detrend_period_TIC259377017_[5]_3.60_days.png"))
+        run_dir = None
+        try:
+            sherlock = Sherlock(False, [MissionObjectInfo("TIC 259377017", [5])], True)
+            sherlock.setup_detrend(n_detrends=1, initial_rms_mask=True, auto_detrend_periodic_signals=True) \
+                .setup_transit_adjust_params(max_runs=1).run()
+            run_dir = "TIC259377017_[5]"
+            self.assertTrue(os.path.exists(run_dir))
+            self.assertTrue(os.path.exists(run_dir + "/Phase_detrend_period_TIC259377017_[5]_3.60_days.png"))
+        finally:
+            self.__clean(run_dir)
 
     def test_run_epic_ffi(self):
-        sherlock = Sherlock(False, [MissionFfiIdObjectInfo("EPIC 249631677", 'all')], False)
-        sherlock.setup_detrend(n_detrends=1, initial_rms_mask=True, auto_detrend_periodic_signals=False) \
-            .setup_transit_adjust_params(max_runs=1).run()
-        run_dir = "EPIC249631677_FFI_all"
-        self.assertTrue(os.path.exists(run_dir))
-        self.assertTrue(os.path.exists(run_dir + "/Periodogram_EPIC249631677_FFI_all.png"))
-        self.assertFalse(os.path.exists(run_dir + "/1"))
+        run_dir = None
+        try:
+            sherlock = Sherlock(False, [MissionFfiIdObjectInfo("EPIC 249631677", 'all')], False)
+            sherlock.setup_detrend(n_detrends=1, initial_rms_mask=True, auto_detrend_periodic_signals=False) \
+                .setup_transit_adjust_params(max_runs=1).run()
+            run_dir = "EPIC249631677_FFI_all"
+            self.assertTrue(os.path.exists(run_dir))
+            self.assertTrue(os.path.exists(run_dir + "/Periodogram_EPIC249631677_FFI_all.png"))
+            self.assertTrue(os.path.exists(run_dir + "/1"))
+        finally:
+            self.__clean(run_dir)
 
     def test_run_with_star_info(self):
-        sherlock = Sherlock(False, [MissionFfiIdObjectInfo("TIC 181804752", 'all',
-                                                           star_info=StarInfo(ld_coefficients=(0.15,0.25),
-                                                                              teff=4000,
-                                                                              lum=1.50, logg=0.15, radius=0.4,
-                                                                              radius_min=0.10, radius_max=0.15,
-                                                                              mass=0.3, mass_min=0.05, mass_max=0.075,
-                                                                              ra=15, dec=87))], True)
-        sherlock.setup_detrend(n_detrends=1, initial_rms_mask=True)\
-            .setup_transit_adjust_params(max_runs=1).run()
-        run_dir = "TIC181804752_FFI_all"
-        self.assertTrue(os.path.exists(run_dir))
-        self.assertTrue(os.path.exists(run_dir + "/Periodogram_TIC181804752_FFI_all.png"))
-        self.assertFalse(os.path.exists(run_dir + "/1"))
-        with open(run_dir + '/TIC181804752_FFI_all_report.log') as f:
-            content = f.read()
-            self.assertTrue('mass = 0.3' in content)
-            self.assertTrue('mass_min = 0.25' in content)
-            self.assertTrue('mass_max = 0.375' in content)
-            self.assertTrue('radius = 0.4' in content)
-            self.assertTrue('radius_min = 0.3' in content)
-            self.assertTrue('radius_max = 0.55' in content)
-            self.assertTrue('limb-darkening estimates using quadratic LD (a,b)= (0.15, 0.25)' in content)
-            self.assertTrue('teff = 4000' in content)
-            self.assertTrue('logg = 0.15' in content)
-            self.assertTrue('lum = 1.50' in content)
+        run_dir = None
+        try:
+            sherlock = Sherlock(False, [MissionFfiIdObjectInfo("TIC 181804752", 'all',
+                                                               star_info=StarInfo(ld_coefficients=(0.15,0.25),
+                                                                                  teff=4000,
+                                                                                  lum=1.50, logg=0.15, radius=0.4,
+                                                                                  radius_min=0.10, radius_max=0.15,
+                                                                                  mass=0.3, mass_min=0.05, mass_max=0.075,
+                                                                                  ra=15, dec=87))], True)
+            sherlock.setup_detrend(n_detrends=1, initial_rms_mask=True)\
+                .setup_transit_adjust_params(max_runs=1).run()
+            run_dir = "TIC181804752_FFI_all"
+            self.assertTrue(os.path.exists(run_dir))
+            self.assertTrue(os.path.exists(run_dir + "/Periodogram_TIC181804752_FFI_all.png"))
+            self.assertFalse(os.path.exists(run_dir + "/1"))
+            with open(run_dir + '/TIC181804752_FFI_all_report.log') as f:
+                content = f.read()
+                self.assertTrue('mass = 0.3' in content)
+                self.assertTrue('mass_min = 0.25' in content)
+                self.assertTrue('mass_max = 0.375' in content)
+                self.assertTrue('radius = 0.4' in content)
+                self.assertTrue('radius_min = 0.3' in content)
+                self.assertTrue('radius_max = 0.55' in content)
+                self.assertTrue('limb-darkening estimates using quadratic LD (a,b)= (0.15, 0.25)' in content)
+                self.assertTrue('teff = 4000' in content)
+                self.assertTrue('logg = 0.15' in content)
+                self.assertTrue('lum = 1.50' in content)
+        finally:
+            self.__clean(run_dir)
 
     def test_run_with_transit_customs(self):
-        sherlock = Sherlock(False, [MissionFfiIdObjectInfo("TIC 181804752", 'all')], False)
-        sherlock.setup_detrend(n_detrends=1, initial_rms_mask=True)\
-            .setup_transit_adjust_params(max_runs=1, oversampling=5.5, t0_fit_margin=0.09, duration_grid_step=1.075,
-                                         fit_method="bls", best_signal_algorithm="quorum", quorum_strength=0.31)\
-            .run()
-        run_dir = "TIC181804752_FFI_all"
-        with open(run_dir + '/TIC181804752_FFI_all_report.log') as f:
-            content = f.read()
-            self.assertTrue('Fit method: box' in content)
-            self.assertTrue('Duration step: 1.075' in content)
-            self.assertTrue('T0 Fit Margin: 0.09' in content)
-            self.assertTrue('Oversampling: 5' in content)
-            self.assertTrue('Signal scoring algorithm: quorum' in content)
-            self.assertTrue('Quorum algorithm vote strength: 0.31' in content)
-        self.__assert_run_files(run_dir)
+        run_dir = None
+        try:
+            sherlock = Sherlock(False, [MissionFfiIdObjectInfo("TIC 181804752", 'all')], False)
+            sherlock.setup_detrend(n_detrends=1, initial_rms_mask=True)\
+                .setup_transit_adjust_params(max_runs=1, oversampling=5.5, t0_fit_margin=0.09, duration_grid_step=1.075,
+                                             fit_method="bls", best_signal_algorithm="quorum", quorum_strength=0.31)\
+                .run()
+            run_dir = "TIC181804752_FFI_all"
+            with open(run_dir + '/TIC181804752_FFI_all_report.log') as f:
+                content = f.read()
+                self.assertTrue('Fit method: box' in content)
+                self.assertTrue('Duration step: 1.075' in content)
+                self.assertTrue('T0 Fit Margin: 0.09' in content)
+                self.assertTrue('Oversampling: 5' in content)
+                self.assertTrue('Signal scoring algorithm: quorum' in content)
+                self.assertTrue('Quorum algorithm vote strength: 0.31' in content)
+            self.__assert_run_files(run_dir)
+        finally:
+            self.__clean(run_dir)
 
     def __assert_run_files(self, object_dir, assert_rms_mask=True):
         run_dir = object_dir + "/1"
@@ -238,6 +268,10 @@ class SherlockTests(unittest.TestCase):
             self.assertTrue(os.path.isfile(candidates_csv_file))
         finally:
             shutil.rmtree(object_dir, ignore_errors=True)
+
+    def __clean(self, run_dir):
+        if run_dir is not None and os.path.isdir(run_dir):
+            shutil.rmtree(run_dir, ignore_errors=True)
 
 
 if __name__ == '__main__':
