@@ -90,7 +90,7 @@ class TestsSherlock(unittest.TestCase):
         sherlock = Sherlock(False, object_info)
         self.assertTrue(isinstance(sherlock.lightcurve_builders[type(object_info)], MissionInputLightcurveBuilder))
 
-    def test_refresh_tois(self):
+    def test_apdate_tois(self):
         sherlock = Sherlock(False, None)
         sherlock.ois_manager.update_tic_csvs()
         try:
@@ -98,7 +98,7 @@ class TestsSherlock(unittest.TestCase):
         finally:
             os.remove(sherlock.ois_manager.tois_csv)
 
-    def test_refresh_kois(self):
+    def test_apdate_kois(self):
         sherlock = Sherlock(False, None)
         sherlock.ois_manager.update_kic_csvs()
         try:
@@ -110,7 +110,7 @@ class TestsSherlock(unittest.TestCase):
         finally:
             os.remove(sherlock.ois_manager.kois_csv)
 
-    def test_refresh_epicois(self):
+    def test_apdate_epicois(self):
         sherlock = Sherlock(False, None)
         sherlock.ois_manager.update_epic_csvs()
         try:

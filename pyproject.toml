@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "sherlockpipe"
-version = "0.17.3"
+version = "0.17.3-RC1"
 description = "SHERLOCKPipe: Search for Hints of Exoplanets fRom Light-curves Of spaCe-based seeKers PIPEline"
 authors = ["Franciso J. Pozuelos <fpozuelos@uliege.be>", "Martín Dévora Pajares <mdevorapajares@protonmail.com>"]
 license = "MIT"
@@ -11,9 +11,13 @@ homepage = "https://github.com/franpoz/SHERLOCK"
 include = ["sherlockpipe/eleanorSub/eleanor/postcard_centers.txt",
 "sherlockpipe/tlsSub/*.csv", "sherlockpipe/LATTEsub/LATTE_imgs"]
 
+
 [tool.poetry.dependencies]
 python = ">=3.6.2,<3.9"
-numpy = "^1.19"
+numpy = [
+    { version = "^1.20", python = ">=3.8"},
+    { version = "1.19.5", python = ">=3.6.2,<3.8"}
+]
 Cython = "^0.29.21"
 pandas = "^1.1.5"
 lightkurve = {version = "^2.0b5", allow-prereleases = true}
@@ -53,5 +57,5 @@ celerite = "^0.4.0"
 pytest = "^6.2"
 
 [build-system]
-requires = ["poetry-core>=1.0.0"]
+requires = ["poetry-core>=1.0.0", "setuptools>=46.0.0"]
 build-backend = "poetry.core.masonry.api"
