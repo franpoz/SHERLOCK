@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "sherlockpipe"
-version = "0.17.3rc2"
+version = "0.17.3rc3"
 description = "SHERLOCKPipe: Search for Hints of Exoplanets fRom Light-curves Of spaCe-based seeKers PIPEline"
 authors = ["Franciso J. Pozuelos <fpozuelos@uliege.be>", "Martín Dévora Pajares <mdevorapajares@protonmail.com>"]
 license = "MIT"
