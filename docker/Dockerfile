@@ -11,5 +11,5 @@ ENV LC_ALL en_US.UTF-8
 ENV LLVM_CONFIG=/usr/bin/llvm-config-9
 RUN python3.6 -m pip install Cython
 RUN python3.6 -m pip install numpy
-RUN python3.6 -m pip install sherlockpipe
+RUN python3.6 -m pip install sherlockpipe --pre
 CMD ["/bin/bash"]
