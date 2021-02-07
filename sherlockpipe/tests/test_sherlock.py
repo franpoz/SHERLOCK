@@ -272,6 +272,9 @@ class TestsSherlock(unittest.TestCase):
     def __clean(self, run_dir):
         if run_dir is not None and os.path.isdir(run_dir):
             shutil.rmtree(run_dir, ignore_errors=True)
+        mast_download_dir = "mastDownload"
+        if mast_download_dir is not None and os.path.isdir(mast_download_dir):
+            shutil.rmtree(mast_download_dir, ignore_errors=True)
 
 
 if __name__ == '__main__':
