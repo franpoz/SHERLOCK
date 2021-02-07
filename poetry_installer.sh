@@ -3,8 +3,7 @@
 rm dist* -r
 tox -r > tests.log
 tests_results=$(cat tests.log | grep "congratulations")
-deactivate
-if [[ -v tests_results ]]; then
+if ! [[ -z ${tests_results} ]]; then
   git_tag=$1
   sed -i '3s/.*/version = "'${git_tag}'"/' pyproject.toml
   git add pyproject.toml
