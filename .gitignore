@@ -139,6 +139,7 @@ dmypy.json
 **/TIC*
 **/KIC*
 **/EPIC*
+**/mastDownload*
 **/user-properties.yaml
 /*.simg
 /.pypirc
