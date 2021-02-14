@@ -163,6 +163,7 @@ class MissionLightcurveBuilder(LightcurveBuilder):
             if mission_prefix == self.MISSION_ID_KEPLER_2:
                 logging.info("Correcting K2 motion in light curve...")
                 quarters = [lcfile.campaign for lcfile in tpfs]
+            lc_data = None
             return lc, lc_data, star_info, transits_min_count, np.unique(sectors), np.unique(quarters)
 
     def __calculate_transits_min_count(self, len_data):
