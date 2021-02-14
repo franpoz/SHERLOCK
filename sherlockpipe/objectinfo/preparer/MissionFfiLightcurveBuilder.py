@@ -1,4 +1,5 @@
 import logging
+import os
 import sys
 import sherlockpipe.eleanor
 sys.modules['eleanor'] = sys.modules['sherlockpipe.eleanor']
@@ -6,6 +7,8 @@ import eleanor
 from sherlockpipe.eleanor.targetdata import TargetData
 import re
 import numpy as np
+import pandas
+import astropy.io.fits as astropy_fits
 from astropy.coordinates import SkyCoord
 from sherlockpipe.star import starinfo
 from sherlockpipe.objectinfo.MissionFfiCoordsObjectInfo import MissionFfiCoordsObjectInfo
@@ -36,9 +39,11 @@ class MissionFfiLightcurveBuilder(LightcurveBuilder):
         quarters = None if object_info.sectors == 'all' or mission != "K2" else object_info.sectors
         campaigns = None if object_info.sectors == 'all' or mission != "Kepler" else object_info.sectors
         if mission_prefix == self.MISSION_ID_KEPLER or mission_prefix == self.MISSION_ID_KEPLER_2:
-            lcf = lk.search_lightcurvefile(str(mission_id), mission=mission, cadence="long",
+            lcf_search_results = lk.search_lightcurvefile(str(mission_id), mission=mission, cadence="long",
                                            author=self.authors[mission], sector=sectors, quarter=quarters,
-                                           campaign=campaigns).download_all()
+                                           campaign=campaigns)
+            lcf = lcf_search_results.download_all()
+            lc_data = self.extract_lc_data(lcf_search_results)
             lc = lcf.PDCSAP_FLUX.stitch().remove_nans()
             transits_min_count = 1 if len(lcf) == 0 else 2
             if mission_prefix == self.MISSION_ID_KEPLER:
@@ -56,6 +61,8 @@ class MissionFfiLightcurveBuilder(LightcurveBuilder):
                 object_id_parsed = re.search(super().NUMBERS_REGEX, object_info.id)
                 object_id_parsed = object_info.id[object_id_parsed.regs[0][0]:object_id_parsed.regs[0][1]]
                 star = eleanor.multi_sectors(tic=object_id_parsed, sectors=object_info.sectors)
+            if star is None:
+                raise ValueError("No data for this object")
             if star[0].tic:
                 # TODO FIX star info objectid
                 logging.info("Assotiated TIC is " + star[0].tic)
@@ -65,6 +72,7 @@ class MissionFfiLightcurveBuilder(LightcurveBuilder):
                 datum = TargetData(s, height=15, width=15, bkg_size=31, do_pca=True)
                 data.append(datum)
             quality_bitmask = np.bitwise_and(data[0].quality.astype(int), 175)
+            lc_data = self.extract_eleanor_lc_data(data)
             lc = data[0].to_lightkurve(data[0].pca_flux, quality_mask=quality_bitmask).remove_nans().flatten()
             sectors = [datum.source_info.sector for datum in data]
             if len(data) > 1:
@@ -72,4 +80,49 @@ class MissionFfiLightcurveBuilder(LightcurveBuilder):
                     quality_bitmask = np.bitwise_and(datum.quality, 175)
                     lc = lc.append(datum.to_lightkurve(datum.pca_flux, quality_mask=quality_bitmask).remove_nans().flatten())
                 transits_min_count = 2
-        return lc, star_info, transits_min_count, sectors, quarters
+        return lc, lc_data, star_info, transits_min_count, sectors, quarters
+
+    def extract_eleanor_lc_data(selfself, eleanor_data):
+        time = []
+        flux = []
+        flux_err = []
+        background_flux = []
+        quality = []
+        centroids_x = []
+        centroids_y = []
+        motion_x = []
+        motion_y = []
+        [time.append(data.time) for data in eleanor_data]
+        [flux.append(data.pca_flux) for data in eleanor_data]
+        [flux_err.append(data.flux_err) for data in eleanor_data]
+        [background_flux.append(data.flux_bkg) for data in eleanor_data]
+        try:
+            [quality.append(data.quality) for data in eleanor_data]
+        except KeyError:
+            logging.info("QUALITY info is not available.")
+            [quality.append(np.full(len(data.time), np.nan)) for data in eleanor_data]
+        [centroids_x.append(data.centroid_xs - data.cen_x) for data in eleanor_data]
+        [centroids_y.append(data.centroid_ys - data.cen_y) for data in eleanor_data]
+        [motion_x.append(data.x_com) for data in eleanor_data]
+        [motion_y.append(data.y_com) for data in eleanor_data]
+        time = np.array(time).flatten()
+        flux = np.array(flux).flatten()
+        flux_err = np.array(flux_err).flatten()
+        background_flux = np.array(background_flux).flatten()
+        quality = np.array(quality).flatten()
+        centroids_x = np.array(centroids_x).flatten()
+        centroids_y = np.array(centroids_y).flatten()
+        motion_x = np.array(motion_x).flatten()
+        motion_y = np.array(motion_y).flatten()
+        lc_data = pandas.DataFrame(columns=['time', 'flux', 'flux_err', 'background_flux', 'quality', 'centroids_x',
+                                            'centroids_y', 'motion_x', 'motion_y'])
+        lc_data['time'] = time
+        lc_data['flux'] = flux
+        lc_data['flux_err'] = flux_err
+        lc_data['background_flux'] = background_flux
+        lc_data['quality'] = quality
+        lc_data['centroids_x'] = centroids_x
+        lc_data['centroids_y'] = centroids_y
+        lc_data['motion_x'] = motion_x
+        lc_data['motion_y'] = motion_y
+        return lc_data

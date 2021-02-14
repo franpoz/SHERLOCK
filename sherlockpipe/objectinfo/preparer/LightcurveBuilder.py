@@ -1,4 +1,9 @@
+import logging
+import os
+import numpy as np
+import astropy.io.fits as astropy_fits
 import re
+import pandas
 from abc import ABC, abstractmethod
 from sherlockpipe.star.EpicStarCatalog import EpicStarCatalog
 from sherlockpipe.star.KicStarCatalog import KicStarCatalog
@@ -39,3 +44,52 @@ class LightcurveBuilder(ABC):
         else:
             raise ValueError("Invalid object id " + object_id)
         return mission, mission_prefix, int(id)
+
+    def extract_lc_data(selfself, lcf_search_results):
+        download_dir = os.path.join(os.path.expanduser('~'), '.lightkurve-cache', 'mastDownload')
+        fit_files = [astropy_fits.open(os.path.join(download_dir, table['obs_collection'], table['obs_id'],
+                                                    table['productFilename']))
+                     for table in lcf_search_results.table]
+        time = []
+        flux = []
+        flux_err = []
+        background_flux = []
+        quality = []
+        centroids_x = []
+        centroids_y = []
+        motion_x = []
+        motion_y = []
+        [time.append(fit_file[1].data['TIME']) for fit_file in fit_files]
+        [flux.append(fit_file[1].data['PDCSAP_FLUX']) for fit_file in fit_files]
+        [flux_err.append(fit_file[1].data['PDCSAP_FLUX_ERR']) for fit_file in fit_files]
+        [background_flux.append(fit_file[1].data['SAP_BKG']) for fit_file in fit_files]
+        try:
+            [quality.append(fit_file[1].data['QUALITY']) for fit_file in fit_files]
+        except KeyError:
+            logging.info("QUALITY info is not available.")
+            [quality.append(np.full(len(fit_file[1].data['TIME']), np.nan)) for fit_file in fit_files]
+        [centroids_x.append(fit_file[1].data['MOM_CENTR1']) for fit_file in fit_files]
+        [centroids_y.append(fit_file[1].data['MOM_CENTR2']) for fit_file in fit_files]
+        [motion_x.append(fit_file[1].data['POS_CORR1']) for fit_file in fit_files]
+        [motion_y.append(fit_file[1].data['POS_CORR2']) for fit_file in fit_files]
+        time = np.array(time).flatten()
+        flux = np.array(flux).flatten()
+        flux_err = np.array(flux_err).flatten()
+        background_flux = np.array(background_flux).flatten()
+        quality = np.array(quality).flatten()
+        centroids_x = np.array(centroids_x).flatten()
+        centroids_y = np.array(centroids_y).flatten()
+        motion_x = np.array(motion_x).flatten()
+        motion_y = np.array(motion_y).flatten()
+        lc_data = pandas.DataFrame(columns=['time', 'flux', 'flux_err', 'background_flux', 'quality', 'centroids_x',
+                                            'centroids_y', 'motion_x', 'motion_y'])
+        lc_data['time'] = time
+        lc_data['flux'] = flux
+        lc_data['flux_err'] = flux_err
+        lc_data['background_flux'] = background_flux
+        lc_data['quality'] = quality
+        lc_data['centroids_x'] = centroids_x
+        lc_data['centroids_y'] = centroids_y
+        lc_data['motion_x'] = motion_x
+        lc_data['motion_y'] = motion_y
+        return lc_data

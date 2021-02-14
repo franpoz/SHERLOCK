@@ -16,7 +16,7 @@ import sys
 
 from scipy.ndimage import uniform_filter1d
 from sherlockpipe.star.starinfo import StarInfo
-
+from astropy import units as u
 from sherlockpipe.curve_preparer.Flattener import Flattener
 from sherlockpipe.curve_preparer.Flattener import FlattenInput
 from sherlockpipe.objectinfo.MissionObjectInfo import MissionObjectInfo
@@ -527,7 +527,7 @@ class Sherlock:
         sherlock_id = object_info.sherlock_id()
         object_dir = self.__setup_object_logging(sherlock_id)
         logging.info('ID: %s', sherlock_id)
-        lc, star_info, transits_min_count, sectors, quarters = self.lightcurve_builders[type(object_info)].build(object_info, object_dir)
+        lc, lc_data, star_info, transits_min_count, sectors, quarters = self.lightcurve_builders[type(object_info)].build(object_info, object_dir)
         star_info = self.__complete_star_info(object_info.star_info, star_info)
         if star_info is not None:
             logging.info('================================================')
@@ -686,10 +686,18 @@ class Sherlock:
         lc = lk.LightCurve(time=clean_time, flux=flatten_flux, flux_err=clean_flux_err)
         self.rotator_period = None
         periodogram = lc.to_periodogram(minimum_period=0.05, maximum_period=15, oversample_factor=10)
+        # power_norm = self.running_median(periodogram.power.value, 20)
         periodogram.plot(view='period', scale='log')
         plt.title(str(sherlock_id) + " Lightcurve periodogram")
         plt.savefig(object_dir + "Periodogram_" + str(sherlock_id) + ".png")
         plt.clf()
+        # power_mod = periodogram.power.value - power_norm
+        # power_mod = power_mod / np.mean(power_mod)
+        # periodogram.power = power_mod * u.d / u.d
+        # periodogram.plot(view='period', scale='log')
+        # plt.title(str(sherlock_id) + " Lightcurve normalized periodogram")
+        # plt.savefig(object_dir + "PeriodogramNorm_" + str(sherlock_id) + ".png")
+        # plt.clf()
         if object_info.initial_detrend_period is not None:
             self.rotator_period = object_info.initial_detrend_period
         elif self.auto_detrend_periodic_signals:
@@ -733,6 +741,22 @@ class Sherlock:
                 clean_flux_err = clean_flux_err[~mask]
         return clean_time, flatten_flux, clean_flux_err, star_info, transits_min_count, cadence, \
                sectors if sectors is not None else quarters
+
+    def running_median(self, data, kernel):
+        """Returns sliding median of width 'kernel' and same length as data """
+        idx = np.arange(kernel) + np.arange(len(data) - kernel + 1)[:, None]
+        med = np.percentile(data[idx], 90, axis=1)
+
+        # Append the first/last value at the beginning/end to match the length of
+        # data and returned median
+        first_values = med[0]
+        last_values = med[-1]
+        missing_values = len(data) - len(med)
+        values_front = int(missing_values * 0.5)
+        values_end = missing_values - values_front
+        med = np.append(np.full(values_front, first_values), med)
+        med = np.append(med, np.full(values_end, last_values))
+        return med
 
     def __clean_initial_flux(self, object_info, time, flux, flux_err, star_info, cadence):
         clean_time = time

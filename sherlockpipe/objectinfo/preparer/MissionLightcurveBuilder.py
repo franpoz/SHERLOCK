@@ -1,12 +1,15 @@
 import logging
+import os
+
 import numpy as np
+import pandas
+
 from sherlockpipe.star import starinfo
 from sherlockpipe.objectinfo.ObjectProcessingError import ObjectProcessingError
 from sherlockpipe.objectinfo.preparer.LightcurveBuilder import LightcurveBuilder
 import lightkurve as lk
 import matplotlib.pyplot as plt
 import csv
-
 
 class MissionLightcurveBuilder(LightcurveBuilder):
     def __init__(self):
@@ -27,10 +30,11 @@ class MissionLightcurveBuilder(LightcurveBuilder):
         quarters = None if object_info.sectors == 'all' or mission != "K2" else object_info.sectors
         campaigns = None if object_info.sectors == 'all' or mission != "Kepler" else object_info.sectors
         if object_info.aperture_file is None:
-            lcf = lk.search_lightcurve(str(mission_id), mission=mission, cadence="short",
+            lcf_search_results = lk.search_lightcurve(str(mission_id), mission=mission, cadence="short",
                                            sector=sectors, quarter=quarters,
-                                           campaign=campaigns, author=self.authors[mission])\
-                .download_all()
+                                           campaign=campaigns, author=self.authors[mission])
+            lcf = lcf_search_results.download_all()
+            lc_data = self.extract_lc_data(lcf_search_results)
             if lcf is None:
                 raise ObjectProcessingError("Light curve not found for object id " + mission_id)
             lc = None
@@ -57,12 +61,13 @@ class MissionLightcurveBuilder(LightcurveBuilder):
                 logging.info("Correcting K2 motion in light curve...")
                 quarters = [lcfile.campaign for lcfile in lcf]
                 lc = lc.to_corrector("sff").correct(windows=20)
-            return lc, star_info, transits_min_count, np.unique(sectors), np.unique(quarters)
+            return lc, lc_data, star_info, transits_min_count, np.unique(sectors), np.unique(quarters)
         else:
             logging.info("Using user apertures!")
-            tpfs = lk.search_targetpixelfile(str(mission_id), mission=mission, cadence="short",
+            tpf_search_results = lk.search_targetpixelfile(str(mission_id), mission=mission, cadence="short",
                                              sector=sectors, quarter=quarters, campaign=campaigns,
-                                             author=authors[mission]).download_all()
+                                             author=self.authors[mission])
+            tpfs = tpf_search_results.download_all()
             apertures = {}
             if isinstance(object_info.aperture_file, str):
                 aperture = []
@@ -158,7 +163,7 @@ class MissionLightcurveBuilder(LightcurveBuilder):
             if mission_prefix == self.MISSION_ID_KEPLER_2:
                 logging.info("Correcting K2 motion in light curve...")
                 quarters = [lcfile.campaign for lcfile in tpfs]
-            return lc, star_info, transits_min_count, np.unique(sectors), np.unique(quarters)
+            return lc, lc_data, star_info, transits_min_count, np.unique(sectors), np.unique(quarters)
 
     def __calculate_transits_min_count(self, len_data):
         return 1 if len_data == 1 else 2
