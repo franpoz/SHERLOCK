@@ -87,7 +87,7 @@ if __name__ == '__main__':
                 ffi_object_infos.append(MissionFfiIdObjectInfo(ffi_id, sectors, star_info=star_info, aperture_file=aperture))
             else:
                 for sector in sectors:
-                    ffi_object_infos.append(MissionFfiIdObjectInfo(ffi_id, sector, star_info=star_info, aperture_file=aperture))
+                    ffi_object_infos.append(MissionFfiIdObjectInfo(ffi_id, [sector], star_info=star_info, aperture_file=aperture))
     if sherlock_user_properties["SECTOR_FFI_COORDINATES"]:
         for coords, sectors in sherlock_user_properties["SECTOR_FFI_COORDINATES"].items():
             star_info = get_star_info(sherlock_user_properties, str(coords[0]) + "_" + str(coords[1]))
