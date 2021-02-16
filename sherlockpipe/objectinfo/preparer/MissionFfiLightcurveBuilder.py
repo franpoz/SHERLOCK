@@ -43,7 +43,7 @@ class MissionFfiLightcurveBuilder(LightcurveBuilder):
                                            author=self.authors[mission], sector=sectors, quarter=quarters,
                                            campaign=campaigns)
             lcf = lcf_search_results.download_all()
-            lc_data = self.extract_lc_data(lcf_search_results)
+            lc_data = self.extract_lc_data(lcf)
             lc = lcf.PDCSAP_FLUX.stitch().remove_nans()
             transits_min_count = 1 if len(lcf) == 0 else 2
             if mission_prefix == self.MISSION_ID_KEPLER:
@@ -105,15 +105,15 @@ class MissionFfiLightcurveBuilder(LightcurveBuilder):
         [centroids_y.append(data.centroid_ys - data.cen_y) for data in eleanor_data]
         [motion_x.append(data.x_com) for data in eleanor_data]
         [motion_y.append(data.y_com) for data in eleanor_data]
-        time = np.array(time).flatten()
-        flux = np.array(flux).flatten()
-        flux_err = np.array(flux_err).flatten()
-        background_flux = np.array(background_flux).flatten()
-        quality = np.array(quality).flatten()
-        centroids_x = np.array(centroids_x).flatten()
-        centroids_y = np.array(centroids_y).flatten()
-        motion_x = np.array(motion_x).flatten()
-        motion_y = np.array(motion_y).flatten()
+        time = np.concatenate(time)
+        flux = np.concatenate(flux)
+        flux_err = np.concatenate(flux_err)
+        background_flux = np.concatenate(background_flux)
+        quality = np.concatenate(quality)
+        centroids_x = np.concatenate(centroids_x)
+        centroids_y = np.concatenate(centroids_y)
+        motion_x = np.concatenate(motion_x)
+        motion_y = np.concatenate(motion_y)
         lc_data = pandas.DataFrame(columns=['time', 'flux', 'flux_err', 'background_flux', 'quality', 'centroids_x',
                                             'centroids_y', 'motion_x', 'motion_y'])
         lc_data['time'] = time

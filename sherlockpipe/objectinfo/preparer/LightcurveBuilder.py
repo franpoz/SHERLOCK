@@ -45,11 +45,8 @@ class LightcurveBuilder(ABC):
             raise ValueError("Invalid object id " + object_id)
         return mission, mission_prefix, int(id)
 
-    def extract_lc_data(selfself, lcf_search_results):
-        download_dir = os.path.join(os.path.expanduser('~'), '.lightkurve-cache', 'mastDownload')
-        fit_files = [astropy_fits.open(os.path.join(download_dir, table['obs_collection'], table['obs_id'],
-                                                    table['productFilename']))
-                     for table in lcf_search_results.table]
+    def extract_lc_data(selfself, lcf):
+        fit_files = [astropy_fits.open(lcf.filename) for lcf in lcf]
         time = []
         flux = []
         flux_err = []
@@ -72,15 +69,15 @@ class LightcurveBuilder(ABC):
         [centroids_y.append(fit_file[1].data['MOM_CENTR2']) for fit_file in fit_files]
         [motion_x.append(fit_file[1].data['POS_CORR1']) for fit_file in fit_files]
         [motion_y.append(fit_file[1].data['POS_CORR2']) for fit_file in fit_files]
-        time = np.array(time).flatten()
-        flux = np.array(flux).flatten()
-        flux_err = np.array(flux_err).flatten()
-        background_flux = np.array(background_flux).flatten()
-        quality = np.array(quality).flatten()
-        centroids_x = np.array(centroids_x).flatten()
-        centroids_y = np.array(centroids_y).flatten()
-        motion_x = np.array(motion_x).flatten()
-        motion_y = np.array(motion_y).flatten()
+        time = np.concatenate(time)
+        flux = np.concatenate(flux)
+        flux_err = np.concatenate(flux_err)
+        background_flux = np.concatenate(background_flux)
+        quality = np.concatenate(quality)
+        centroids_x = np.concatenate(centroids_x)
+        centroids_y = np.concatenate(centroids_y)
+        motion_x = np.concatenate(motion_x)
+        motion_y = np.concatenate(motion_y)
         lc_data = pandas.DataFrame(columns=['time', 'flux', 'flux_err', 'background_flux', 'quality', 'centroids_x',
                                             'centroids_y', 'motion_x', 'motion_y'])
         lc_data['time'] = time
