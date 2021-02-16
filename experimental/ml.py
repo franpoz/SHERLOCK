@@ -198,7 +198,7 @@ for tic in tic_list:
     lc_classified_short.to_csv(target_dir + "lc_classified_short.csv")
     lc_classified_long = pd.DataFrame.from_dict({"time": lc_long.time.value, "flux": lc_long.flux.value, "tag": tags_series_long})
     lc_classified_long.to_csv(target_dir + "lc_classified_long.csv")
-
+    # TODO store folded light curves -with local and global views-(masking previous candidates?)
 # TODO tsfresh needs a dataframe with all the "time series" data (centroids, motion, flux, bck_flux...)
 # TODO with an id column specifying the target id and a "y" as a df containing the target ids and the classification
 # TODO tag. We need to check how to make this compatible with transit times tagging instead of entire curve
