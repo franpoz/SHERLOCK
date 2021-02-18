@@ -1,5 +1,10 @@
 import pickle
 import sys
+
+from sherlockpipe.objectinfo.preparer.MissionFfiLightcurveBuilder import MissionFfiLightcurveBuilder
+
+from sherlockpipe.objectinfo.preparer.MissionLightcurveBuilder import MissionLightcurveBuilder
+
 import sherlockpipe.transitleastsquares
 sys.modules['transitleastsquares'] = sherlockpipe.transitleastsquares
 from sherlockpipe.star.starinfo import StarInfo
@@ -47,6 +52,15 @@ def get_aperture(properties, id):
         input_aperture_file = properties["APERTURE"][id]
     return input_aperture_file
 
+def extract_sectors(object_info):
+    lc, lc_data, object_star_info, transits_min_count, object_sectors, quarters = \
+        MissionFfiLightcurveBuilder().build(object_info, None)
+    if object_sectors is not None:
+        sections = object_sectors
+    else:
+        sections = quarters
+    return sections
+
 
 if __name__ == '__main__':
     ap = ArgumentParser(description='Searching for Hints of Exoplanets fRom Lightcurves Of spaCe-based seeKers')
@@ -75,28 +89,39 @@ if __name__ == '__main__':
             star_info = get_star_info(sherlock_user_properties, two_min_id)
             aperture = get_aperture(sherlock_user_properties, two_min_id)
             if sectors == 'all':
-                mission_object_infos.append(MissionObjectInfo(two_min_id, sectors, star_info=star_info, aperture_file=aperture))
+                sectors = extract_sectors(MissionObjectInfo(two_min_id, sectors, star_info=star_info, aperture_file=aperture))
+                for sector in sectors:
+                    mission_object_infos.append(MissionObjectInfo(two_min_id, [sector], star_info=star_info, aperture_file=aperture))
             else:
                 for sector in sectors:
-                    mission_object_infos.append(MissionObjectInfo(two_min_id, sector, star_info=star_info, aperture_file=aperture))
+                    mission_object_infos.append(MissionObjectInfo(two_min_id, [sector], star_info=star_info, aperture_file=aperture))
     if sherlock_user_properties["SECTOR_FFI_IDS"]:
         for ffi_id, sectors in sherlock_user_properties["SECTOR_FFI_IDS"].items():
             star_info = get_star_info(sherlock_user_properties, None)
             aperture = get_aperture(sherlock_user_properties, ffi_id)
             if sectors == 'all':
-                ffi_object_infos.append(MissionFfiIdObjectInfo(ffi_id, sectors, star_info=star_info, aperture_file=aperture))
+                sectors = extract_sectors(MissionFfiIdObjectInfo(ffi_id, sectors, star_info=star_info,
+                                                                 aperture_file=aperture))
+                for sector in sectors:
+                    ffi_object_infos.append(MissionFfiIdObjectInfo(ffi_id, [sector], star_info=star_info,
+                                                                   aperture_file=aperture))
             else:
                 for sector in sectors:
-                    ffi_object_infos.append(MissionFfiIdObjectInfo(ffi_id, [sector], star_info=star_info, aperture_file=aperture))
+                    ffi_object_infos.append(MissionFfiIdObjectInfo(ffi_id, [sector], star_info=star_info,
+                                                                   aperture_file=aperture))
     if sherlock_user_properties["SECTOR_FFI_COORDINATES"]:
         for coords, sectors in sherlock_user_properties["SECTOR_FFI_COORDINATES"].items():
             star_info = get_star_info(sherlock_user_properties, str(coords[0]) + "_" + str(coords[1]))
             aperture = get_aperture(sherlock_user_properties, coords)
             if sectors == 'all':
-                ffi_object_infos.append(MissionFfiCoordsObjectInfo(coords[0], coords[1], sectors, star_info=star_info, aperture_file=aperture))
+                sectors = extract_sectors(MissionFfiCoordsObjectInfo(coords[0], coords[1], sectors, star_info=star_info,
+                                                                     aperture_file=aperture))
+                for sector in sectors:
+                    ffi_object_infos.append(MissionFfiCoordsObjectInfo(coords[0], coords[1], [sector],
+                                                                       star_info=star_info, aperture_file=aperture))
             else:
                 for sector in sectors:
-                    ffi_coords_object_infos.append(MissionFfiCoordsObjectInfo(coords[0], coords[1], sector, star_info=star_info, aperture_file=aperture))
+                    ffi_coords_object_infos.append(MissionFfiCoordsObjectInfo(coords[0], coords[1], [sector], star_info=star_info, aperture_file=aperture))
 
     ## Adding global analysis objects
     if sherlock_user_properties["GLOBAL_TWO_MIN_IDS"]:
