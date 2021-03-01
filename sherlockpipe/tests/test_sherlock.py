@@ -1,10 +1,6 @@
 import os
 import shutil
 import unittest
-import sys
-import sherlockpipe.transitleastsquares
-sys.modules['transitleastsquares'] = sherlockpipe.transitleastsquares
-import transitleastsquares as tls
 from sherlockpipe.star.starinfo import StarInfo
 from sherlockpipe.objectinfo.InputObjectInfo import InputObjectInfo
 from sherlockpipe.objectinfo.MissionFfiCoordsObjectInfo import MissionFfiCoordsObjectInfo
@@ -214,7 +210,7 @@ class TestsSherlock(unittest.TestCase):
         run_dir = "EPIC249631677_FFI_all"
         self.assertTrue(os.path.exists(run_dir))
         self.assertTrue(os.path.exists(run_dir + "/Periodogram_EPIC249631677_FFI_all.png"))
-        self.assertFalse(os.path.exists(run_dir + "/1"))
+        self.assertTrue(os.path.exists(run_dir + "/1"))
 
     def test_run_with_star_info(self):
         run_dir = None
