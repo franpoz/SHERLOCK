@@ -3,7 +3,7 @@ import os
 
 with open("README.md", "r") as fh:
     long_description = fh.read()
-version = os.popen('git tag -l --sort -version:refname | head -n 1').read().split('\n', 1)[0]
+version = "0.17.3rc5"
 
 setuptools.setup(
     name="sherlockpipe", # Replace with your own username

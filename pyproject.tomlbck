@@ -9,7 +9,8 @@ readme = 'README.md'
 repository = "https://github.com/franpoz/SHERLOCK"
 homepage = "https://github.com/franpoz/SHERLOCK"
 include = ["sherlockpipe/eleanorSub/eleanor/postcard_centers.txt",
-"sherlockpipe/tlsSub/*.csv", "sherlockpipe/LATTEsub/LATTE_imgs"]
+"sherlockpipe/tlsSub/*.csv", "sherlockpipe/LATTEsub/LATTE_imgs",
+"sherlockpipe/transitleastsquares"]
 
 
 [tool.poetry.dependencies]
@@ -20,7 +21,7 @@ numpy = [
 ]
 Cython = "^0.29.21"
 pandas = "^1.1.5"
-lightkurve = {version = "^2.0b5", allow-prereleases = true}
+lightkurve = "^2.0.2"
 requests = "^2.25.1"
 wotan = "^1.9"
 matplotlib = "^3.3.4"
@@ -57,5 +58,5 @@ celerite = "^0.4.0"
 pytest = "^6.2"
 
 [build-system]
-requires = ["poetry-core>=1.0.0", "setuptools>=46.0.0"]
+requires = ["poetry-core>=1.0.0"]
 build-backend = "poetry.core.masonry.api"
