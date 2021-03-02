@@ -2,11 +2,9 @@ import pickle
 import sys
 
 from sherlockpipe.objectinfo.preparer.MissionFfiLightcurveBuilder import MissionFfiLightcurveBuilder
-
 from sherlockpipe.objectinfo.preparer.MissionLightcurveBuilder import MissionLightcurveBuilder
 
-import sherlockpipe.transitleastsquares
-sys.modules['transitleastsquares'] = sherlockpipe.transitleastsquares
+import transitleastsquares
 from sherlockpipe.star.starinfo import StarInfo
 from sherlockpipe import sherlock
 from sherlockpipe.objectinfo.InputObjectInfo import InputObjectInfo
