@@ -6,8 +6,6 @@ import sys
 import pandas
 import wotan
 import matplotlib.pyplot as plt
-import sherlockpipe.transitleastsquares
-sys.modules['transitleastsquares'] = sherlockpipe.transitleastsquares
 import transitleastsquares as tls
 import lightkurve as lk
 import numpy as np
