@@ -16,7 +16,7 @@ from sherlockpipe.objectinfo.preparer.LightcurveBuilder import LightcurveBuilder
 from sherlockpipe.star.TicStarCatalog import TicStarCatalog
 from astropy import units as u
 import lightkurve as lk
-
+from lightkurve.correctors import SFFCorrector
 
 class MissionFfiLightcurveBuilder(LightcurveBuilder):
     def __init__(self):
@@ -51,7 +51,7 @@ class MissionFfiLightcurveBuilder(LightcurveBuilder):
             elif mission_prefix == self.MISSION_ID_KEPLER_2:
                 logging.info("Correcting K2 motion in light curve...")
                 quarters = [lcfile.campaign for lcfile in lcf]
-                lc = lc.to_corrector("sff").correct(windows=20)
+                lc = SFFCorrector(lc).correct(windows=20)
             star_info = starinfo.StarInfo(sherlock_id, *self.star_catalogs[mission_prefix].catalog_info(id))
         else:
             if isinstance(object_info, MissionFfiCoordsObjectInfo):
