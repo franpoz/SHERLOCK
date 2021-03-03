@@ -689,7 +689,7 @@ class Vetter:
             pos1 = cbax.get_position()  # get the original position
             pos2 = [pos1.x0 - 0.05, pos1.y0, pos1.width, pos1.height]
             cbax.set_position(pos2)  # set a new position
-            cb = Colorbar(ax=cbax, mappable=splot, orientation='vertical', ticklocation='right')
+            cb = Colorbar(ax=cbax, cmap="viridis", mappable=splot, orientation='vertical', ticklocation='right')
             plt.xticks(fontsize=14)
             exponent = r'$\times 10^' + str(division) + '$'
             cb.set_label(r'Flux ' + exponent + r' (e$^-$)', labelpad=10, fontsize=16)
