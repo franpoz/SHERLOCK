@@ -3,7 +3,7 @@ import shutil
 import sys
 import time
 from argparse import ArgumentParser
-
+import sherlockpipe.eleanor
 sys.modules['eleanor'] = sys.modules['sherlockpipe.eleanor']
 import eleanor
 from sherlockpipe.vet import Vetter
