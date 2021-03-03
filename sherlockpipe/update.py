@@ -1,8 +1,10 @@
 import os
 import shutil
+import sys
 import time
 from argparse import ArgumentParser
 
+sys.modules['eleanor'] = sys.modules['sherlockpipe.eleanor']
 import eleanor
 from sherlockpipe.vet import Vetter
 from sherlockpipe.ois.OisManager import OisManager
