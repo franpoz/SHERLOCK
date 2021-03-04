@@ -60,7 +60,7 @@ ttran = 0.1
 resources_dir = path.join(path.dirname(__file__))
 
 class Vetter:
-    def __init__(self, object_dir):
+    def __init__(self, object_dir, validate):
         self.args = types.SimpleNamespace()
         self.args.noshow = True
         self.args.north = False
@@ -78,6 +78,7 @@ class Vetter:
             os.mkdir(self.latte_dir)
         self.data_dir = self.object_dir
         self.validation_runs = 5
+        self.validate = validate
 
     def update(self):
         indir = self.latte_dir
@@ -307,8 +308,9 @@ class Vetter:
             if res['TICID'] == -99:
                 print('something went wrong')
                 continue
-            result_dir = self.vetting_validation(cpus, indir, tic, sectors, lc_file, transit_depth, period, t0, duration)
-            shutil.move(result_dir, vetting_dir + "/triceratops")
+            if self.validate:
+                result_dir = self.vetting_validation(cpus, indir, tic, sectors, lc_file, transit_depth, period, t0, duration)
+                shutil.move(result_dir, vetting_dir + "/triceratops")
             result_dir = self.vetting_field_of_view(indir, tic, res['RA'], res['DEC'], sectors)
             shutil.move(result_dir, vetting_dir + "/tpfplot")
             # TODO improve this condition to check whether tic, sectors and transits exist
@@ -476,7 +478,7 @@ class Vetter:
         probs_total_df.to_csv(save_dir + "/validation_scenarios.csv", index=False)
         target.probs = probs_total_df
         # target.plot_fits(save=True, fname=save_dir + "/scenario_fits", time=lc.time.value, flux_0=lc.flux.value,
-        #                  sigma_0=sigma)
+        #                  flux_err_0=sigma)
         return save_dir
 
     @staticmethod
@@ -738,13 +740,13 @@ class Validator:
 
     def validate(self, input):
         input.target.calc_depths(tdepth=input.depth, all_ap_pixels=input.apertures)
-        input.target.calc_probs(time=input.time, flux_0=input.flux, sigma_0=input.sigma, P_orb=input.period)
+        input.target.calc_probs(time=input.time, flux_0=input.flux, flux_err_0=input.sigma, P_orb=input.period)
         with open(input.save_dir + "/validation_" + str(input.run) + ".csv", 'w') as the_file:
             the_file.write("FPP,NFPP\n")
             the_file.write(str(input.target.FPP) + "," + str(input.target.NFPP))
         input.target.probs.to_csv(input.save_dir + "/validation_" + str(input.run) + "_scenarios.csv", index=False)
         input.target.plot_fits(save=True, fname=input.save_dir + "/scenario_" + str(input.run) + "_fits",
-                         time=input.time, flux_0=input.flux, sigma_0=input.sigma)
+                         time=input.time, flux_0=input.flux, flux_err_0=input.sigma)
         return input.target.FPP, input.target.NFPP, input.target.probs, input.target.star_num, input.target.u1, \
                input.target.u2, input.target.fluxratio_EB, input.target.fluxratio_comp
 
@@ -762,12 +764,15 @@ class ValidatorInput:
 
 if __name__ == '__main__':
     ap = ArgumentParser(description='Vetting of Sherlock objects of interest')
-    ap.add_argument('--object_dir', help="If the object directory is not your current one you need to provide the ABSOLUTE path", required=False)
+    ap.add_argument('--object_dir', help="If the object directory is not your current one you need to provide the "
+                                         "ABSOLUTE path", required=False)
     ap.add_argument('--candidate', type=int, default=None, help="The candidate signal to be used.", required=False)
     ap.add_argument('--properties', help="The YAML file to be used as input.", required=False)
     ap.add_argument('--cpus', type=int, default=None, help="The number of CPU cores to be used.", required=False)
+    ap.add_argument('--no_validate', dest='validate', action='store_false',
+                    help="Whether to avoid running statistical validation")
     args = ap.parse_args()
-    vetter = Vetter(args.object_dir)
+    vetter = Vetter(args.object_dir, args.validate)
     if args.candidate is None:
         user_properties = yaml.load(open(args.properties), yaml.SafeLoader)
         candidate = pd.DataFrame(columns=['id', 'transits', 'sectors', 'FFI'])
