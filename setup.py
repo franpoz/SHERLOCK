@@ -57,6 +57,7 @@ setuptools.setup(
                         'batman-package==2.4.7',
                         'argparse==1.4.0',
                         'configparser==5.0.1',
+                        'pyparsing==2.4.7', # Matplotlib dependency
                         'triceratops==1.0.6',
                         'transitleastsquares==1.0.25'
     ]
