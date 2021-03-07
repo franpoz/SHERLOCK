@@ -24,7 +24,9 @@ setuptools.setup(
     python_requires='>=3.6.9',
     install_requires=['numpy==1.20.1; python_version>="3.7"',
                         'numpy==1.19; python_version<"3.7"',
-                        "celerite==0.4.0",
+                        'batman-package==2.4.7',  # Transitleastsquares dependency
+                        'argparse==1.4.0',
+                        "celerite==0.4.0", # Allesfitter dependency
                         "cython==0.29.21",
                         "pandas==1.1.5",
                         "lightkurve==2.0.2",
@@ -54,10 +56,9 @@ setuptools.setup(
                         'torch==1.7.1',
                         'beautifulsoup4==4.9.3',
                         'numba>=0.53.0rc1',
-                        'batman-package==2.4.7',
-                        'argparse==1.4.0',
                         'configparser==5.0.1',
                         'pyparsing==2.4.7', # Matplotlib dependency
+                        'statsmodels==0.12.2', # Allesfitter dependency
                         'triceratops==1.0.6',
                         'transitleastsquares==1.0.25'
     ]
