@@ -144,3 +144,4 @@ dmypy.json
 /*.simg
 /.pypirc
 **/P*_R*_*.csv
+.idea/
