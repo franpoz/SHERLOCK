@@ -2,6 +2,8 @@ import logging
 import os
 import sys
 import sherlockpipe.eleanor
+from sherlockpipe import constants
+
 sys.modules['eleanor'] = sys.modules['sherlockpipe.eleanor']
 import eleanor
 from sherlockpipe.eleanor.targetdata import TargetData
@@ -56,11 +58,13 @@ class MissionFfiLightcurveBuilder(LightcurveBuilder):
         else:
             if isinstance(object_info, MissionFfiCoordsObjectInfo):
                 coords = SkyCoord(ra=object_info.ra, dec=object_info.dec, unit=(u.deg, u.deg))
-                star = eleanor.source.multi_sectors(coords=coords, sectors=object_info.sectors)
+                star = eleanor.source.multi_sectors(coords=coords, sectors=object_info.sectors,
+                                                    post_dir=constants.USER_HOME_ELEANOR_CACHE)
             else:
                 object_id_parsed = re.search(super().NUMBERS_REGEX, object_info.id)
                 object_id_parsed = object_info.id[object_id_parsed.regs[0][0]:object_id_parsed.regs[0][1]]
-                star = eleanor.multi_sectors(tic=object_id_parsed, sectors=object_info.sectors)
+                star = eleanor.multi_sectors(tic=object_id_parsed, sectors=object_info.sectors,
+                                             post_dir=constants.USER_HOME_ELEANOR_CACHE)
             if star is None:
                 raise ValueError("No data for this object")
             if star[0].tic:

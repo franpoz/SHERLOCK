@@ -23,7 +23,7 @@ import astropy.visualization as stretching
 from argparse import ArgumentParser
 import astropy.units as u
 from sherlockpipe.eleanor import TargetData
-
+from sherlockpipe import constants as const
 from sherlockpipe import tpfplotter, eleanor
 import six
 import sys
@@ -388,7 +388,7 @@ class Vetter:
         # TODO allow user input apertures
         tpfs = lightkurve.search_targetpixelfile("TIC " + str(tic), mission="TESS", cadence="short", sector=sectors.tolist())\
             .download_all()
-        star = eleanor.multi_sectors(tic=tic, sectors=sectors, tesscut_size=31)
+        star = eleanor.multi_sectors(tic=tic, sectors=sectors, tesscut_size=31, post_dir=const.USER_HOME_ELEANOR_CACHE)
         apertures = []
         sector_num = 0
         for s in star:
