@@ -102,7 +102,7 @@ python3 -m sherlockpipe.vet --candidate {number_of_the_candidate}
 
 ```
 
-by replacing {number_of_the_candidate} with 1, 2, 3, etc., the tool will print a collection of plots. To fully understand them, we reffer the reader to [@eisner:2020], [@aller:2020] and [@giacalone:2021].
+by replacing {number_of_the_candidate} with 1, 2, 3, etc., the tool will print a collection of plots. To fully understand them, we reffer the reader to @eisner:2020, @aller:2020 and @giacalone:2021.
 
 ## 1.3 Fitting promising candidates
 
