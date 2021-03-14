@@ -17,7 +17,7 @@ authors:
     affiliation: 1
   - name: Valérie Van Grootel
     affiliation: 1
-  - name: Michaël Gillon
+  - name: Michael Gillon
     orcid:0000-0003-1462-7739 
     affiliation: 2    
     
