@@ -13,30 +13,14 @@ authors:
     affiliation: "1, 2" # (Multiple affiliations must be quoted)
   - name: Martín Dévora-Pajares
     affiliation: "3, 4"
-  - name: Antoine Thuillier
-    orcid: 
-    affiliation: 1
-  - name: Lionel J. Garc\'ia
-    orcid: 
-    affiliation: 2
-  - name: Val\'erie Van Grootel
-    orcid: 
-    affiliation: 1
-  - name: Micha\"el Gillon
-    orcid:0000-0003-1462-7739 
-    affiliation: 2
-  - name: Juan C. Suarez Yanes
-    orcid:0000-0003-1462-7739 
-    affiliation: 4
-
 affiliations:
- - name: Space Sciences, Technologies and Astrophysics Research (STAR) Institute, Universit\'e de Li\`ege, All\'ee du 6 Ao\^ut 19C, B-4000 Li\`ege, Belgium
+ - name: Space Sciences, Technologies and Astrophysics Research (STAR) Institute, Universitè de Liège, Allée du 6 Août 19C, B-4000 Liège, Belgium
    index: 1
- - name: Astrobiology Research Unit, Universit\'e de Li\`ege, All\'ee du 6 Ao\^ut 19C, B-4000 Li\`ege, Belgium
+ - name: Astrobiology Research Unit, Universitè de Liège, Allée du 6 Août 19C, B-4000 Liège, Belgium
    index: 2
  - name: Universidad Internacional de Valencia (VIU), Carrer del Pintor Sorolla 21, 46002, Valencia, Spain
    index: 3
- - name: Dpto. F\'isica Te\'orica y del Cosmos, Universidad de Granada, 18071, Granada, Spain 
+ - name: Dpto. Física Teórica y del Cosmos, Universidad de Granada, 18071, Granada, Spain 
    index: 4
 
 date: 12 March 2021
