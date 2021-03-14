@@ -14,20 +14,14 @@ authors:
   - name: Martín Dévora-Pajares
     affiliation: "3, 4"
   - name: Antoine Thuillier
-    orcid: 
     affiliation: 1
   - name: Lionel J. García
-    orcid: 
     affiliation: 2
   - name: Valérie Van Grootel
-    orcid: 
     affiliation: 1
   - name: Michael Gillon
     orcid:0000-0003-1462-7739 
     affiliation: 2
-  - name: Juan C. Suarez
-    orcid:0000-0003-1462-7739 
-    affiliation: 4
     
 affiliations:
  - name: Space Sciences, Technologies and Astrophysics Research (STAR) Institute, Universitè de Liège, Allée du 6 Août 19C, B-4000 Liège, Belgium
