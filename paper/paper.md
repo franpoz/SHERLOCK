@@ -184,8 +184,8 @@ and "DETRENDS_NUMBER", respectively.
 The goal of this multi-detrending approach is avoid the potential risk of removing shallow and short transiting signals. While the minimum and maximum window and kernel sizes might be specified
 by the user in the [properties.yaml](https://github.com/franpoz/SHERLOCK/blob/master/sherlockpipe/properties.yaml) file, ``SHERLOCK`` offers the option of computing these values automatically: 
 the minimum value is obtained by computing the transit duration ($T_{14}$) of a hypothetical Earth-size planet with a period of 15 days orbiting the target star (i.e., to obtain the minimum period, at least 
-two transits in one *TESS* sector or one *Kepler* sub-quarter are required). To protect a transit of at least this duration from being removed, we chose a minimum window size of 3$\timesT_{14}$. 
-After conducting experiments, the optimal maximum value explored has been fixed to 20$\timesT_{14}$, which seemed sufficient to remove low-frecuency variability of most stars. As mentioned previously, these values may be refined by the users, to optimaze their findings. An example of this proccess is displayed in \autoref{fig:detrends}.
+two transits in one *TESS* sector or one *Kepler* sub-quarter are required). To protect a transit of at least this duration from being removed, we chose a minimum window size of $3\times T_{14}$. 
+After conducting experiments, the optimal maximum value explored has been fixed to $20\times T_{14}$, which seemed sufficient to remove low-frecuency variability of most stars. As mentioned previously, these values may be refined by the users, to optimaze their findings. An example of this proccess is displayed in \autoref{fig:detrends}.
 
 ![Detrended models applied to a light curve corresponding to TIC 259377017 (in sector 5) with the bi-weight method for twelve different window-sizes. Each panel indicates the window-size in units of days in the top. The black points show the PDCSAP fluxes, the solid-orange lines are the indentified trends.\label{fig:detrends}](detrends.png)
 
