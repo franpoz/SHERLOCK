@@ -17,9 +17,7 @@ authors:
     affiliation: 1
   - name: Valérie Van Grootel
     affiliation: 1
-  - name: Michael Gillon
-    orcid:0000-0003-1462-7739 
-    affiliation: 2    
+ 
     
 affiliations:
  - name: Space Sciences, Technologies and Astrophysics Research (STAR) Institute, Universitè de Liège, Allée du 6 Août 19C, B-4000 Liège, Belgium
