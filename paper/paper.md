@@ -8,17 +8,18 @@ tags:
   - K2
   - TESS
 authors:
-  - name: Francisco J. Pozuelos
+  - name: Francisco J. Pozuelos(*)
     orcid: 0000-0003-1572-7707
     affiliation: "1, 2" # (Multiple affiliations must be quoted)
-  - name: Martín Dévora-Pajares
+  - name: Martín Dévora-Pajares(*)
     affiliation: "3, 4"
   - name: Antoine Thuillier
     affiliation: 1
-  - name: Lionel J. García
-    affiliation: 2
   - name: Valérie Van Grootel
     affiliation: 1
+  - name: Michaël Gillon
+    orcid:0000-0003-1462-7739 
+    affiliation: 2    
     
 affiliations:
  - name: Space Sciences, Technologies and Astrophysics Research (STAR) Institute, Universitè de Liège, Allée du 6 Août 19C, B-4000 Liège, Belgium
@@ -29,6 +30,7 @@ affiliations:
    index: 3
  - name: Dpto. Física Teórica y del Cosmos, Universidad de Granada, 18071, Granada, Spain 
    index: 4
+   
 
 date: 12 March 2021
 bibliography: paper.bib
@@ -69,7 +71,7 @@ cases the user only needs to provide a KOI-ID, EPIC-ID, TIC-ID or coordinates of
 
 ## 1.1 Searching for candidates
 
-``SHERLOCK`` makes use of the ``LIGHTKURVE`` [@lightkurve:2018], ``WOTAN`` [@wotan:2019], ``ELEANOR`` [@eleanor:2019] and ``TRANSIT LEAST SQUARES`` [@tls:2019] packages to download, process and search for exoplanets in any of the thousands of public light curves provided by *Kepler* and *TESS* missions. Alternatively, the user may provide the light curves in a csv file with time, flux and flux_err. As output, ``SHERLOCK`` produces a collection of
+``SHERLOCK`` makes use of the ``LIGHTKURVE`` [@lightkurve:2018], ``WOTAN`` [@wotan:2019], ``ELEANOR`` [@eleanor:2019] and ``TRANSIT LEAST SQUARES`` [@tls:2019] packages to download, process and search for exoplanets in any of the thousands of public light curves provided by *Kepler* and *TESS* missions. Alternatively, the user may provide the light curves in a csv file with "time", "flux" and "flux_err". As output, ``SHERLOCK`` produces a collection of
 plots and log files which allow the user to explore the most promising signals. ``SHERLOCK`` uses a multi-detrend approach; that is, it performs a number of detrends by varying the window or the kernel size, depending if the detrending process is bi-weight or Gaussian. Then, ``SHERLOCK`` performs a transit search over the full set of detrended light curves and the original one. This strategy is motivated by the associate risk of removing transit signals, in particular short and shallow ones, during the detrend phase.
 
 The basic usage of ``SHERLOCK`` consists of  completing a [properties.yaml](https://github.com/franpoz/SHERLOCK/blob/master/sherlockpipe/properties.yaml) 
@@ -108,7 +110,7 @@ python3 -m sherlockpipe.fit --candidate {number_of_the_candidate}
 
 ```
 
-Whereby SHERLOK saves, jointly with the PDCSAP fluxes, all the light curves generated during the detrending phase. This allows the user the opportunity to use them to fit any other result. 
+Whereby ``SHERLOCK`` saves, jointly with the PDCSAP fluxes, all the light curves generated during the detrending phase. This allows the user the opportunity to use them to fit any other result. 
 
 
 
@@ -187,14 +189,9 @@ For each light curve, ``SHERLOCK`` searches for planet candidates making use the
 stellar parameters, and is optimized for the detection of shallow periodic transits [@tls:2019]. ``SHERLOCK`` iteratively executed what we call `runs`. Hence, in each run
 the PDCSAP fluxes and the n-detrended light curves that the user indicated in the [properties.yaml](https://github.com/franpoz/SHERLOCK/blob/master/sherlockpipe/properties.yaml)
 file are examined. For each light curve, the best periodic signal found jointly with the corresponding periodogram is plotted. That is, if the user used six detrended models, the results of each run will 
-be printed as seven (six-detrended and the PDCSAP flux light curves) `runs plots`, which are saved in specific folders. Moreover, for each light curve, the main results obtained are 
-printed in a log file containing the `period (days)`, `period_err (days)`, `number of transits detected`, `mean depths (ppt)`, `transit duration (min)`, `Epoch (TBJD)`, `Signal-to-noise ratio (SNR)`, 
-`signal detection efficiency (SDE)`, `false alarm probability (FAP)`, `border score`, `Matchin OI`, `Harmonic`, `planet radius ($R_{\oplus}$)`, `Rp/Rs`, `Habitability zone`. This information
-allows the user to evaluate and understand their results. We encourage the reader to thoroughly consult the [examples](https://github.com/franpoz/SHERLOCK/tree/master/examples) in the ``SHERLOCK``'s GitHub site 
-for a better understanding. 
+be printed as seven (six-detrended and the PDCSAP flux light curves) `runs plots`, which are saved in specific folders. Moreover, for each light curve, the main results obtained are printed in a log file containing the `period (days)`, `period_err (days)`, `number of transits detected`, `mean depths (ppt)`, `transit duration (min)`, `Epoch (TBJD)`, `Signal-to-noise ratio (SNR)`, `signal detection efficiency (SDE)`, `false alarm probability (FAP)`, `border score`, `Matchin OI`, `Harmonic`, `planet radius` ($R_{\oplus}$), `Rp/Rs`, `Habitability zone`. This information allows the user to evaluate and understand their results. We encourage the reader to thoroughly consult the [examples](https://github.com/franpoz/SHERLOCK/tree/master/examples) in the ``SHERLOCK``'s GitHub site for a better understanding. 
 
-Data close to borders are usually less accurate, and often they have a larger dispersion than the rest of the data. Hence, if a planetary candidate has many of its 
-transits close to borders, this may indicate a false positive. To visualize this effect we included a `border-score` parameter which ranges from 0 to 1, where 
+Data close to borders are usually less accurate, and often they have a larger dispersion than the rest of the data. Hence, if a planetary candidate has many of its transits close to borders, this may indicate a false positive. To visualize this effect we included a `border-score` parameter which ranges from 0 to 1, where 
 1 means that none of the transits are near the borders, and 0 indicates the opposite. This parameter allows the user to easily identify false positives
 in the generated reports.
 
@@ -208,7 +205,7 @@ This part of the code is parallelized, so, making use of ``SHERLOCK`` in a clust
 * Object report log file: the entire log of the object run is written here.
 * Most promising candidates log file: a summary of the parameters of the best transits found for each
 run is written at the end of the object execution. 
-* Runs directories: for each run of ``SHERLOCK``, a folder will be generated which contains .png images of the detrended fluxes and their suggested transits (\autoref{fig:run.png}) 
+* Runs directories: for each run of ``SHERLOCK``, a folder will be generated which contains .png images of the detrended fluxes and their suggested transits (\autoref{fig:run}) 
 
 ![Example of one detrended light curve which would be stored in the folder `RUN 1`. The header provides the main parameters for the most promising signal. There are three panels, from top to bottom: (1) relative fluxes with the candidate signal overplotted in red; (2) a phase-folded light curve for the candidate. The binning is authomatically chosen to ensure that there will be about 10 points in-transit region. The model for the candidate is given by the solid-red line; and (3) the periodogram where the main period signal and its harmonics are highlighted.\label{fig:run}](example_run1.png)
 
@@ -225,7 +222,7 @@ strongest period in the Lomb-Scargle periodogram or the period provided by the u
 ![Phase-folded light curve which provides information about the rotational period of the star.\label{fig:autodetrend}](autodetrend.png){width=80%}
 
 
-* RMS masking plot: In case where the high RMS masking pre-processing step is enabled (Section 3.2.2 and 3.2.3) (\autoref{fig:rms.png}).
+* RMS masking plot: In case where the high RMS masking pre-processing step is enabled (Section 3.2.2 and 3.2.3) (\autoref{fig:rms}).
 
 ![Self-masking function evaluates the RMS of the light curve in blocks of four hours and masks these regions with high RMS.\label{fig:rms}](rms.png)
 
@@ -234,7 +231,7 @@ strongest period in the Lomb-Scargle periodogram or the period provided by the u
 
 To test the performance of ``SHERLOCK`` in comparison to other methods used to finding threshold-crossing events, we carried out a suite of inject-and-recovery experiments using a test *TESS* light curve, corresponding to a single sector. The light curve was injected with a synthetic sample of planets with radii in the range of 0.7 to 2.5 $R_{\oplus}$ with steps of 0.5 $R_{\oplus}$, and periods in the range 0.5-9.5 days, with steps of 0.1 day. In addition, we evaluated each scenario at five different epochs. Hence, in total we evaluated a total of 1710 scenarios. Then, we ran three different methods to find and recover the signals: (1) a search using a classical box least squares algorithm [@kovacs:2002], with an SNR threshold limit of 7 to claim a planet as recovered; (2) a search using the transit least square algorithim, with an SNR threshold limit of 5 to claim a planet as recovered; and (3) a search using ``SHERLOCK`` with an SNR threshold limit of 7, and a maximum of five runs. We found that ``SHERLOCK`` is the most efficient algorithm, being able to recover sub-Earth planets in short-period orbits and about 2 $R_{\oplus}$ for periods as large as 10 days (see \autoref{fig:performance}).
 
-![Comparison between different strategies to search for planets.\label{fig:performance](sherlock1.png)
+![Comparison between different strategies to search for planets.\label{fig:performance}](sherlock1.png)
 
 
 # 4. Scientific cases 
@@ -263,7 +260,7 @@ very common that stars pulse in different modes, which is more complex than simp
 
 ## 5.2 Disentigrating planets
 
-We are including in ``SHERLOCK`` a model for comet-like tails of disintegrating exoplanets, which highly differ from the typical shape of transiting exoplanets; see, e.g.[@rappaport:2012,@sanchis:2015]. 
+We are including in ``SHERLOCK`` a model for comet-like tails of disintegrating exoplanets, which highly differ from the typical shape of transiting exoplanets; see, e.g. [@rappaport:2012,@sanchis:2015]. 
 
 
 ## 6. Summary and conclusions
