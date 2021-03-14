@@ -69,7 +69,7 @@ cases the user only needs to provide a KOI-ID, EPIC-ID, TIC-ID or coordinates of
 
 ## 1.1 Searching for candidates
 
-``SHERLOCK`` makes use of the ``LIGHTKURVE`` [@lightkurve:2018], ``WOTAN`` [@wotan:2019], ``ELEONOR`` [@eleonor:2019] and ``TRANSIT LEAST SQUARES`` [@tls:2019] packages to download, process and search for exoplanets in any of the thousands of public light curves provided by *Kepler* and *TESS* missions. Alternatively, the user may provide the light curves in a csv file with time, flux and flux_err. As output, ``SHERLOCK`` produces a collection of
+``SHERLOCK`` makes use of the ``LIGHTKURVE`` [@lightkurve:2018], ``WOTAN`` [@wotan:2019], ``ELEANOR`` [@eleanor:2019] and ``TRANSIT LEAST SQUARES`` [@tls:2019] packages to download, process and search for exoplanets in any of the thousands of public light curves provided by *Kepler* and *TESS* missions. Alternatively, the user may provide the light curves in a csv file with time, flux and flux_err. As output, ``SHERLOCK`` produces a collection of
 plots and log files which allow the user to explore the most promising signals. ``SHERLOCK`` uses a multi-detrend approach; that is, it performs a number of detrends by varying the window or the kernel size, depending if the detrending process is bi-weight or Gaussian. Then, ``SHERLOCK`` performs a transit search over the full set of detrended light curves and the original one. This strategy is motivated by the associate risk of removing transit signals, in particular short and shallow ones, during the detrend phase.
 
 The basic usage of ``SHERLOCK`` consists of  completing a [properties.yaml](https://github.com/franpoz/SHERLOCK/blob/master/sherlockpipe/properties.yaml) 
@@ -119,7 +119,7 @@ The light curve within which the user wants to search for exoplanets is download
 Pre-search Data Conditioning Simple APerture (PDCSAP) fluxes given by the ``SPOC`` (Science Process-ing  Operations  Center) are used. For *Kepler* data, the Pre-search Data
 Conditioning (PDC) given by the ``SOC`` (Science Operations Center) are used. In both cases, these light curves are corrected for systematic error sources, such as pointing drift,
 focus changes and thermal transients. In the case of exploring the full-frame images (FFIs) from *TESS*, the default the ``PCA`` (principal component analysis) 
-fluxes provided by ``ELEONOR`` can be used, although the user can choose among the different available data products such as the raw, corrected, PCA, and PSF-modelled fluxes [@eleonor:2019]. 
+fluxes provided by ``ELEANOR`` can be used, although the user can choose among the different available data products such as the raw, corrected, PCA, and PSF-modelled fluxes [@eleanor:2019]. 
 
 
 ## 2.2 Pre-processing of light curve
