@@ -13,6 +13,9 @@ authors:
     affiliation: "1, 2" # (Multiple affiliations must be quoted)
   - name: Martín Dévora-Pajares
     affiliation: "3, 4"
+  - name: Antoine Thuillier
+    orcid: 
+    affiliation: 1    
 affiliations:
  - name: Space Sciences, Technologies and Astrophysics Research (STAR) Institute, Universitè de Liège, Allée du 6 Août 19C, B-4000 Liège, Belgium
    index: 1
