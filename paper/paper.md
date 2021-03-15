@@ -17,9 +17,9 @@ authors:
     affiliation: 1
   - name: Valérie Van Grootel
     affiliation: 1
-  - name: Test Try Trial
+  - name: Michael Gillon
     affiliation: 1
-  - name: Alegría Macarena
+  - name: Juan C. Suarez
     affiliation: 1
  
     
