@@ -17,7 +17,6 @@ INPUT_FILES_WITH_IDS:
 ### SECTOR OBJECTS RUN SETUP - All sectors analysed independently
 ######################################################################################################################
 # TESS/Kepler/K2 ids array. E.g: ["TIC 123456", "KIC 234567", "EPIC 345678"]
-# 36724087 181804752 243185500 318022259 54962195
 SECTOR_TWO_MIN_IDS:
 # TESS ONLY ids array. E.g: ["TIC 123456", "TIC 234567", "TIC 345678"]
 SECTOR_FFI_IDS:
