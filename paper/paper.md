@@ -30,7 +30,7 @@ affiliations:
    index: 4
    
 
-date: 12 March 2021
+date: 15 March 2021
 bibliography: paper.bib
 
 # Optional fields if submitting to a AAS journal too, see this blog post:
@@ -42,30 +42,20 @@ bibliography: paper.bib
 # Summary
 
 Transit detection of exoplanets is the one of the most fruitful methods for finding planets beyond the Solar System. 
-At the time of writing, more than 4,000 exoplanets have been discovered, most of them
-by the transit method; that is, when a planet passes in front the disk of its host star it blocks a fraction of the star light, creating a decrease in the observed flux. After the transit, the total
+At the time of writing, more than 4,000 exoplanets have been discovered, most of them by the transit method; that is, when a planet passes in front the disk of its host star it blocks a fraction of the star light, creating a decrease in the observed flux. After the transit, the total
 flux rises again to its nominal value.
 
 The transit method was revolutionised by the *Kepler* (and its extended *K2*) mission, which launched in 2009 operated until 2018. *Kepler* discovered 
-more than 2,600 confirmed planets, and its legacy data keep offering exciting results [@niraula:2020; @socia:2020]. Since 2018, another space-based satellite replaced *Kepler* in the hunt for transiting exoplanets: the *TESS* (Transiting Exoplanets Satellite Survey) mission [@ricker:2015]. Different to *Kepler*, which performed its planet search in a reduced portion of the sky, *TESS* is a nearly all-sky survey that focuses
-on the nearest and brightest stars, searching for planets well suited for, among other science goals, future atmospheric characterization. After completion of its nominal, two-year mission in July 2020, *TESS* started its extended mission, which will last until 2022. During its first
-two years of operation, *TESS* has released more than 2,000 TOIs (TESS Objects of Interest) and confirmed more than 50 planets. 
+more than 2,600 confirmed planets, and its legacy data keep offering exciting results [@niraula:2020; @socia:2020]. Since 2018, another space-based satellite replaced *Kepler* in the hunt for transiting exoplanets: the *TESS* (Transiting Exoplanets Satellite Survey) mission [@ricker:2015]. Different to *Kepler*, which performed its planet search in a reduced portion of the sky, *TESS* is a nearly all-sky survey that focuses on the nearest and brightest stars, searching for planets well suited for, among other science goals, future atmospheric characterization. After completion of its nominal, two-year mission in July 2020, *TESS* started its extended mission, which will last until 2022. During its first two years of operation, *TESS* has released more than 2,000 TOIs (TESS Objects of Interest) and confirmed more than 50 planets. 
 
-Taken together, *Kepler*, *K2* and *TESS*, yield a huge data base continuos, high-quality observations with excellent 
-photometric precision. 
+Taken together, *Kepler*, *K2* and *TESS*, yield a huge data base continuos, high-quality observations with excellent photometric precision. 
 
-Motivated to make the most of this considerable abundance of data, in this work we present an open-source pipeline which aims to aid explorarion of the data obtained with the aforementioned missions, in the search for new exoplanets.
-In particular, we are interested in threshold-crossing events, which due to their shallowness remained unnoticed by the current automatic pipelines. 
+Motivated to make the most of this considerable abundance of data, in this work we present an open-source pipeline which aims to aid explorarion of the data obtained with the aforementioned missions, in the search for new exoplanets. In particular, we are interested in threshold-crossing events, which due to their shallowness remained unnoticed by the current automatic pipelines. 
 
 
 # 1. The SHERLOCK PIPEline 
 
-The ``SHERLOCK`` (Searching for Hints of Exoplanets fRom Light curves Of spaCe-based seeKers) ``PIPEline``, in short ``SHERLOCK``, is a Python package ready-to-use and user-friendly, which aims to
-minimize user efforts to donwload, search, vet and fit planetary candidates.
-``SHERLOCK`` is partially based on previous well-known and well-tested codes used by the exoplanet community 
-to explore the public data gathered by the *Kepler*, *K2* and *TESS* missions without needing to know the finer minutiae of how these data were obtained and stored. In most 
-cases the user only needs to provide a KOI-ID, EPIC-ID, TIC-ID or coordinates of the host star to search for exoplanets.
-``SHERLOCK`` has been successfully tested for first time in [@pozuelos:2020] and [@demory:2020]. 
+The ``SHERLOCK`` (Searching for Hints of Exoplanets fRom Light curves Of spaCe-based seeKers) ``PIPEline``, in short ``SHERLOCK``, is a Python package ready-to-use and user-friendly, which aims to minimize user efforts to donwload, search, vet and fit planetary candidates. ``SHERLOCK`` is partially based on previous well-known and well-tested codes used by the exoplanet community to explore the public data gathered by the *Kepler*, *K2* and *TESS* missions without needing to know the finer minutiae of how these data were obtained and stored. In most cases the user only needs to provide a KOI-ID, EPIC-ID, TIC-ID or coordinates of the host star to search for exoplanets. ``SHERLOCK`` has been successfully tested for first time in @pozuelos:2020, @demory:2020 and @benni:2020. 
 
 ## 1.1 Searching for candidates
 
@@ -186,8 +176,7 @@ After conducting experiments, the optimal maximum value explored has been fixed 
 For each light curve, ``SHERLOCK`` searches for planet candidates making use the ``TRANSIT LEAST SQUARES`` package, which uses an analytical transit model based on
 stellar parameters, and is optimized for the detection of shallow periodic transits [@tls:2019]. ``SHERLOCK`` iteratively executed what we call `runs`. Hence, in each run
 the PDCSAP fluxes and the n-detrended light curves that the user indicated in the [properties.yaml](https://github.com/franpoz/SHERLOCK/blob/master/sherlockpipe/properties.yaml)
-file are examined. For each light curve, the best periodic signal found jointly with the corresponding periodogram is plotted. That is, if the user used six detrended models, the results of each run will 
-be printed as seven (six-detrended and the PDCSAP flux light curves) `runs plots`, which are saved in specific folders. Moreover, for each light curve, the main results obtained are printed in a log file containing the `period (days)`, `period_err (days)`, `number of transits detected`, `mean depths (ppt)`, `transit duration (min)`, `Epoch (TBJD)`, `Signal-to-noise ratio (SNR)`, `signal detection efficiency (SDE)`, `false alarm probability (FAP)`, `border score`, `Matchin OI`, `Harmonic`, `planet radius` ($R_{\oplus}$), `Rp/Rs`, `Habitability zone`. This information allows the user to evaluate and understand their results. We encourage the reader to thoroughly consult the [examples](https://github.com/franpoz/SHERLOCK/tree/master/examples) in the ``SHERLOCK``'s GitHub site for a better understanding. 
+file are examined. For each light curve, the best periodic signal found jointly with the corresponding periodogram is plotted. That is, if the user used six detrended models, the results of each run will be printed as seven (six-detrended and the PDCSAP flux light curves) `runs plots`, which are saved in specific folders. Moreover, for each light curve, the main results obtained are printed in a log file containing the `period (days)`, `period_err (days)`, `number of transits detected`, `mean depths (ppt)`, `transit duration (min)`, `Epoch (TBJD)`, `Signal-to-noise ratio (SNR)`, `signal detection efficiency (SDE)`, `false alarm probability (FAP)`, `border score`, `Matchin OI`, `Harmonic`, `planet radius` ($R_{\oplus}$), `Rp/Rs`, `Habitability zone`. This information allows the user to evaluate and understand their results. We encourage the reader to thoroughly consult the [examples](https://github.com/franpoz/SHERLOCK/tree/master/examples) in the ``SHERLOCK``'s GitHub site for a better understanding. 
 
 Data close to borders are usually less accurate, and often they have a larger dispersion than the rest of the data. Hence, if a planetary candidate has many of its transits close to borders, this may indicate a false positive. To visualize this effect we included a `border-score` parameter which ranges from 0 to 1, where 
 1 means that none of the transits are near the borders, and 0 indicates the opposite. This parameter allows the user to easily identify false positives
@@ -210,17 +199,16 @@ run is written at the end of the object execution.
 
 * Light curve .csv files: original (before pre-processing, that is the PDCSAP fluxes) and all the detrended light curves are saved individualy in .csv files which contain three columns: `#time`, `flux` and `flux_err`.
 
-* Lomb-Scargle periodogram: this plot corresponds to the Section "(3.2.4) Automatic detrend of intense periodicities", which shows the period strengths (\autoref{fig:periodogram.png}).
+* Lomb-Scargle periodogram: this plot corresponds to the Section "(3.2.4) Automatic detrend of intense periodicities", which shows the period strengths (see \autoref{fig:periodogram}).
 
 ![Lomb-Scargle periodogram showing the strength of each period.\label{fig:periodogram}](Periodogram.png)
 
-* Phase-folded period: in the case where auto-detrending or manual period detrending is enabled (Sections 3.2.4 and 3.2.5, respectively), it is plotted the phase-folded light curve over the 
-strongest period in the Lomb-Scargle periodogram or the period provided by the user, respectively.
+* Phase-folded period: in the case where auto-detrending or manual period detrending is enabled (Sections 3.2.4 and 3.2.5, respectively), it is plotted the phase-folded light curve over the strongest period in the Lomb-Scargle periodogram or the period provided by the user, respectively.
 
 ![Phase-folded light curve which provides information about the rotational period of the star.\label{fig:autodetrend}](autodetrend.png){width=80%}
 
 
-* RMS masking plot: In case where the high RMS masking pre-processing step is enabled (Section 3.2.2 and 3.2.3) (\autoref{fig:rms}).
+* RMS masking plot: In case where the high RMS masking pre-processing step is enabled (Section 3.2.2 and 3.2.3) (see \autoref{fig:rms}).
 
 ![Self-masking function evaluates the RMS of the light curve in blocks of four hours and masks these regions with high RMS.\label{fig:rms}](rms.png)
 
