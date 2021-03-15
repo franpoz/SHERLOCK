@@ -17,7 +17,7 @@ authors:
     affiliation: 1
   - name: Valérie Van Grootel
     affiliation: 1
-  - name: Michael Gillon
+  - name: Michaël Gillon
     affiliation: 1
   - name: Juan C. Suarez
     affiliation: 4
