@@ -118,7 +118,7 @@ Whereby ``SHERLOCK`` saves, jointly with the PDCSAP fluxes, all the light curves
 The light curve within which the user wants to search for exoplanets is downloaded from the NASA Mikulski Archive for Space Telescope (``MAST``). In the case of *TESS* data, the 
 Pre-search Data Conditioning Simple APerture (PDCSAP) fluxes given by the ``SPOC`` (Science Process-ing  Operations  Center) are used. For *Kepler* data, the Pre-search Data
 Conditioning (PDC) given by the ``SOC`` (Science Operations Center) are used. In both cases, these light curves are corrected for systematic error sources, such as pointing drift,
-focus changes and thermal transients. In the case of exploring the full-frame images (FFIs) from *TESS*, the default the ``PCA`` (principal component analysis) 
+focus changes and thermal transients. In the case of exploring the full-frame images (FFIs) from *TESS*, the default the PCA (principal component analysis) 
 fluxes provided by ``ELEANOR`` can be used, although the user can choose among the different available data products such as the raw, corrected, PCA, and PSF-modelled fluxes [@eleanor:2019]. 
 
 
