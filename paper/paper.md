@@ -17,6 +17,8 @@ authors:
     affiliation: 1
   - name: Valérie Van Grootel
     affiliation: 1
+  - name: Test Try Trial
+    affiliation: 1
  
     
 affiliations:
@@ -41,28 +43,28 @@ bibliography: paper.bib
 
 # Summary
 
-Transit detection of exoplanets is the one of the most fruitful methods for finding planets beyond the Solar System. 
-At the time of writing, more than 4,000 exoplanets have been discovered, most of them by the transit method; that is, when a planet passes in front the disk of its host star it blocks a fraction of the star light, creating a decrease in the observed flux. After the transit, the total
+Transit detection of exoplanets is one of the most fruitful methods for finding planets beyond the Solar System. 
+At the time of writing, more than 4,000 exoplanets have been discovered, most of them by the transit method; that is, when a planet passes in front of the disk of its host star it blocks a fraction of the star light, creating a decrease in the observed flux. After the transit, the total
 flux rises again to its nominal value.
 
-The transit method was revolutionised by the *Kepler* (and its extended *K2*) mission, which launched in 2009 operated until 2018. *Kepler* discovered 
+The transit method was revolutionised by the *Kepler* (and its extended *K2*) mission, which launched in 2009 and operated until 2018. *Kepler* discovered 
 more than 2,600 confirmed planets, and its legacy data keep offering exciting results [@niraula:2020; @socia:2020]. Since 2018, another space-based satellite replaced *Kepler* in the hunt for transiting exoplanets: the *TESS* (Transiting Exoplanets Satellite Survey) mission [@ricker:2015]. Different to *Kepler*, which performed its planet search in a reduced portion of the sky, *TESS* is a nearly all-sky survey that focuses on the nearest and brightest stars, searching for planets well suited for, among other science goals, future atmospheric characterization. After completion of its nominal, two-year mission in July 2020, *TESS* started its extended mission, which will last until 2022. During its first two years of operation, *TESS* has released more than 2,000 TOIs (TESS Objects of Interest) and confirmed more than 50 planets. 
 
-Taken together, *Kepler*, *K2* and *TESS*, yield a huge data base continuos, high-quality observations with excellent photometric precision. 
+Taken together, *Kepler*, *K2* and *TESS*, yield a huge data base of continuous, high-quality observations with excellent photometric precision. 
 
-Motivated to make the most of this considerable abundance of data, in this work we present an open-source pipeline which aims to aid explorarion of the data obtained with the aforementioned missions, in the search for new exoplanets. In particular, we are interested in threshold-crossing events, which due to their shallowness remained unnoticed by the current automatic pipelines. 
+Motivated to make the most of this considerable abundance of data, in this work we present an open-source pipeline which aims to aid exploration of the data obtained with the aforementioned missions, in the search for new exoplanets. In particular, we are interested in threshold-crossing events, which due to their shallowness remained unnoticed by the current automatic pipelines. 
 
 
 # 1. The SHERLOCK PIPEline 
 
-The ``SHERLOCK`` (Searching for Hints of Exoplanets fRom Light curves Of spaCe-based seeKers) ``PIPEline``, in short ``SHERLOCK``, is a Python package ready-to-use and user-friendly, which aims to minimize user efforts to donwload, search, vet and fit planetary candidates. ``SHERLOCK`` is partially based on previous well-known and well-tested codes used by the exoplanet community to explore the public data gathered by the *Kepler*, *K2* and *TESS* missions without needing to know the finer minutiae of how these data were obtained and stored. In most cases the user only needs to provide a KOI-ID, EPIC-ID, TIC-ID or coordinates of the host star to search for exoplanets. ``SHERLOCK`` has been successfully tested for first time in @pozuelos:2020, @demory:2020 and @benni:2020. 
+The ``SHERLOCK`` (Searching for Hints of Exoplanets fRom Light curves Of spaCe-based seeKers) ``PIPEline``, in short ``SHERLOCK``, is a Python package ready-to-use and user-friendly, which aims to minimize user efforts to download, search, vet and fit planetary candidates. ``SHERLOCK`` is partially based on previous well-known and well-tested codes used by the exoplanet community to explore the public data gathered by the *Kepler*, *K2* and *TESS* missions without needing to know the finer minutiae of how these data were obtained and stored. In most cases the user only needs to provide a KIC-ID, EPIC-ID, TIC-ID or coordinates of the host star to search for exoplanets. ``SHERLOCK`` has been successfully tested for first time in @pozuelos:2020, @demory:2020 and @benni:2020. 
 
 ## 1.1 Searching for candidates
 
 ``SHERLOCK`` makes use of the ``LIGHTKURVE`` [@lightkurve:2018], ``WOTAN`` [@wotan:2019], ``ELEANOR`` [@eleanor:2019] and ``TRANSIT LEAST SQUARES`` [@tls:2019] packages to download, process and search for exoplanets in any of the thousands of public light curves provided by *Kepler* and *TESS* missions. Alternatively, the user may provide the light curves in a csv file with "time", "flux" and "flux_err". As output, ``SHERLOCK`` produces a collection of
 plots and log files which allow the user to explore the most promising signals. ``SHERLOCK`` uses a multi-detrend approach; that is, it performs a number of detrends by varying the window or the kernel size, depending if the detrending process is bi-weight or Gaussian. Then, ``SHERLOCK`` performs a transit search over the full set of detrended light curves and the original one. This strategy is motivated by the associate risk of removing transit signals, in particular short and shallow ones, during the detrend phase.
 
-The basic usage of ``SHERLOCK`` consists of  completing a [properties.yaml](https://github.com/franpoz/SHERLOCK/blob/master/sherlockpipe/properties.yaml) 
+The basic usage of ``SHERLOCK`` consists of completing a [properties.yaml](https://github.com/franpoz/SHERLOCK/blob/master/sherlockpipe/properties.yaml) 
 file, where the user needs to specify some basic parameters. We encourage the reader to thoroughly consult this file, as well as the examples provided there, to get a firmly understanding of how to effectively use ``SHERLOCK``.
 
 To run ``SHERLOCK``, one only needs to execute: 
@@ -76,19 +78,19 @@ python3 -m sherlockpipe --properties properties.yaml
 Once the search is done and the user has found a promising candidate, the next step would be to perform some diagnostic tests to check whether the identified signal has an instrumental 
 origin and to rule out alternative astrophysical sources. For *TESS* candidates ``SHERLOCK`` uses ``LATTE`` [@eisner:2020], a user-friendly package which examines different aspects such as momentum dumps, background flux, *X-Y* centroid positions, photometric aperture effect, pixel-level centroid analysis, nearby companion stars, nearest-neighbour light curves, and pixel-level light curves. In addition, via ``tpfplotter`` [@aller:2020], a target pixel file is provided, which contains the aperture used to extract the ``PDCSAP`` fluxes (see Section 3.1) and the *Gaia* DR2 catalogue. This allows the user to identify which stars might be affecting the light curve of a given candidate. To test the alternative astrophysical sources, ``SHERLOCK`` uses ``TRICERATOPS`` [@giacalone:2021] to estimate the probabilities for different astrophysical scenarios such as transiting planet, eclipsing binary, eclipsing binary with 2$\times$ orbital period, among others. Collectively, these analyses help the user estimate the reliability of a given detection. In future releases we will extend our vetting tool to *Kepler* and *K2* data. 
 
-Run this vetting tool for a particular signal is as simple as: 
+Running this vetting tool for a particular signal is as simple as: 
  
 ```shell 
 python3 -m sherlockpipe.vet --candidate {number_of_the_candidate} 
 
 ```
 
-by replacing {number_of_the_candidate} with 1, 2, 3, etc., the tool will print a collection of plots. To fully understand them, we reffer the reader to @eisner:2020, @aller:2020 and @giacalone:2021.
+by replacing {number_of_the_candidate} with 1, 2, 3, etc., the tool will print a collection of plots. To fully understand these vetting packages, we refer the reader to @eisner:2020, @aller:2020 and @giacalone:2021 respectively.
 
 ## 1.3 Fitting promising candidates
 
 After the vetting process, the next step would be to schedule ground-based observations to firmly confirm the event in the target star or to identify potential false positives due to variable stars,
-such as an eclipsing binary (EB). To this aim, it is critical to have the most accurate ephemerides as possible. Unfortunately, the solution currently given by the serach via``TLS`` is not optimal to this end, and it is desirable to perform a proper fitting of the transits. There are a number of available public codes which might be used to this end, where ``Juliet`` [@espinoza:2019], ``Exofast`` [@eastman:2019], and ``allesfitter`` [@gunther:2020] are some examples. 
+such as an eclipsing binary (EB). To this aim, it is critical to have the most accurate ephemeris as possible. Unfortunately, the solution currently given by the serach via``TLS`` is not optimal to this end, and it is desirable to perform a proper fitting of the transits. There are a number of available public codes which might be used to this end, where ``Juliet`` [@espinoza:2019], ``Exofast`` [@eastman:2019], and ``allesfitter`` [@gunther:2020] are some examples. 
 In ``SHERLOCK``, ``allesfitter`` is used. 
 
 To fit a candidate, the user only needs to execute: 
@@ -108,7 +110,7 @@ Whereby ``SHERLOCK`` saves, jointly with the PDCSAP fluxes, all the light curves
 The light curve within which the user wants to search for exoplanets is downloaded from the NASA Mikulski Archive for Space Telescope (``MAST``). In the case of *TESS* data, the 
 Pre-search Data Conditioning Simple APerture (PDCSAP) fluxes given by the ``SPOC`` (Science Process-ing  Operations  Center) are used. For *Kepler* data, the Pre-search Data
 Conditioning (PDC) given by the ``SOC`` (Science Operations Center) are used. In both cases, these light curves are corrected for systematic error sources, such as pointing drift,
-focus changes and thermal transients. In the case of exploring the full-frame images (FFIs) from *TESS*, the default the PCA (principal component analysis) 
+focus changes and thermal transients. In the case of exploring the full-frame images (FFIs) from *TESS*, the default PCA (principal component analysis) 
 fluxes provided by ``ELEANOR`` can be used, although the user can choose among the different available data products such as the raw, corrected, PCA, and PSF-modelled fluxes [@eleanor:2019]. 
 
 
@@ -119,17 +121,17 @@ provides some methods to reduce the effects of these important systematics.
 
 ### 2.2.1 Local noise reduction
 For local noise, where very close measurements show high deviation from the local trend, we apply a
-Savitzky-Golay filter [@sg:1964]. In all our tests, this filter provided a significant improve of the signal-to-noise ratio (SNR) of previously indentified transits.
+Savitzky-Golay filter [@sg:1964]. In all our tests, this filter provided a significant improve of the signal-to-noise ratio (SNR) of previously identified transits.
 This implementation is specially interesting in the search for shallow transits. However, the number of false positives is also incremented, and the user needs to verify that 
-the proposed signal is realistic, for example checking the tranist shape, duration etc. 
-This feature can be enabled/disabled in the "INITIAL SMOOTH ENABLED" flag in the [properties.yaml](https://github.com/franpoz/SHERLOCK/blob/master/sherlockpipe/properties.yaml) file.
+the proposed signal is realistic, for example checking the transit shape, duration etc. 
+This feature can be enabled/disabled by the "INITIAL SMOOTH ENABLED" flag in the [properties.yaml](https://github.com/franpoz/SHERLOCK/blob/master/sherlockpipe/properties.yaml) file.
 
 ### 2.2.2 High RMS self-masking
 It happens sometimes that a particular region of a given light curve is very noisy, e.g. due to jitter induced by 
 the spacecraft, high-light scattering, momentum dumps, etc., which cannot be corrected with a simple detrending process. 
 These noisy regions all have high root-mean-square (RMS) noise in comparison with the running mean, and
 might have a strongly negative impact on the performance of any pipeline which aims to search for planets, even resulting in all of the potential planets remaining undetected. 
-To overcome this issue ``SHERLOCK`` automatically indentifies and masks these noisy regions. To this aim, ``SHERLOCK`` includes a binned RMS computation, where bins whose
+To overcome this issue ``SHERLOCK`` automatically identifies and masks these noisy regions. To this aim, ``SHERLOCK`` includes a binned RMS computation, where bins whose
 RMS values are higher than a configurable factor multiplied by the running mean get automatically masked. 
 From our experience, appropriate thresholds range from 1.1 to 2.5 times the running mean (see \autoref{fig:rms}).
 This feature can be enabled/disabled by the "INITIAL HIGH RMS MASK: True/False" flag. The threshold can be set in the "INITIAL HIGH RMS THRESHOLD" flag. 
@@ -138,7 +140,7 @@ Both of these properties are modified in the [properties.yaml](https://github.co
 ### 2.2.3 Input time-range masking
 The user may identify a region with low-quality data where the automatic self-masking 
 function is not acting properly. In this situation, the user can manually give the time which should be masked. 
-If enabled, this feature automatically disables the authomatic self-masking feature.
+If enabled, this feature automatically disables the automatic self-masking feature.
 Some examples are provided in the [properties.yaml](https://github.com/franpoz/SHERLOCK/blob/master/sherlockpipe/properties.yaml) file, in the 
 INITIAL MASK module.
 
