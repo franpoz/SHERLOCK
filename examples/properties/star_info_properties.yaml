@@ -13,3 +13,4 @@ STAR:
     LUM: 1.25
     #LOGG: 0.15
     LD_COEFFICIENTS: [0.25, 0.64]
+#Instead of run several independent runs of sherlock, the user may add more stars over the same .yaml file
