@@ -51,6 +51,8 @@ class MissionLightcurveBuilder(LightcurveBuilder):
                 logging.warning("================================================")
                 logging.warning("TICS IN THE SAME PIXEL: " + str(matching_objects))
                 logging.warning("================================================")
+            if lc is None:
+                raise ObjectProcessingError("Light curve not found for object id " + mission_id)
             lc = lc.remove_nans()
             transits_min_count = self.__calculate_transits_min_count(len(lcf))
             if mission_prefix == self.MISSION_ID_KEPLER or mission_id == self.MISSION_ID_KEPLER_2:
