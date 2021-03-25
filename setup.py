@@ -24,17 +24,16 @@ setuptools.setup(
     python_requires='>=3.6.9',
     install_requires=['numpy==1.20.1; python_version>="3.7"',
                         'numpy==1.19; python_version<"3.7"',
-                        'batman-package==2.4.7',  # Transitleastsquares dependency
+
+                        "astroquery==0.4.1",
+                        "allesfitter==1.2.2",
                         'argparse==1.4.0',
                         "celerite==0.4.0", # Allesfitter dependency
                         "cython==0.29.21",
-                        "pandas==1.1.5",
-                        "lightkurve==2.0.2",
                         "requests==2.25.1",
                         "wotan==1.9",
                         "matplotlib==3.3.4",
                         "pyyaml==5.4.1",
-                        "allesfitter==1.1.6",
                         "dynesty==1.0.1",
                         "emcee==3.0.2",
                         "corner==2.1.0",
@@ -42,15 +41,12 @@ setuptools.setup(
                         "seaborn==0.11.1",
                         "bokeh==2.2.3",
                         "astroplan==0.7",
-                        "astroquery==0.4.1",
                         "sklearn==0.0",
                         "scipy==1.5.4",
-                        "tess-point==0.6.1",
                         "reproject==0.4",
                         "reportlab==3.5.59",
-                        "astropy==4.1",
+                        "lcbuilder==0.1.1",
                         "mock==4.0.3",
-                        'photutils==1.0.2',
                         'tqdm==4.56.0',
                         'setuptools>=41.0.0',
                         'torch==1.7.1',
@@ -59,8 +55,7 @@ setuptools.setup(
                         'configparser==5.0.1',
                         'pyparsing==2.4.7', # Matplotlib dependency
                         'statsmodels==0.12.2', # Allesfitter dependency
-                        'tkmatrix==0.1.6',
-                        'triceratops==1.0.6',
-                        'transitleastsquares==1.0.25'
+                        'tkmatrix==0.1.9',
+                        'triceratops==1.0.6'
     ]
 )
