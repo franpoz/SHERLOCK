@@ -5,7 +5,7 @@ from examples.custom_algorithms.ButterworthCurvePreparer import ButterworthCurve
 from examples.custom_algorithms.NeptunianDesertSearchZone import NeptunianDesertSearchZone
 from examples.custom_algorithms.RandomSignalSelector import RandomSignalSelector
 from sherlockpipe.sherlock import Sherlock
-from sherlockpipe.objectinfo.MissionFfiIdObjectInfo import MissionFfiIdObjectInfo
+from lcbuilder.objectinfo.MissionFfiIdObjectInfo import MissionFfiIdObjectInfo
 
 
 @contextmanager

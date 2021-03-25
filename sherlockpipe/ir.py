@@ -3,11 +3,11 @@ import traceback
 import numpy as np
 import os, sys
 import ellc
-from sherlockpipe.objectinfo.MissionInputObjectInfo import MissionInputObjectInfo
+from lcbuilder.objectinfo.MissionInputObjectInfo import MissionInputObjectInfo
 from sherlockpipe import sherlock
 from sherlockpipe.scoring.QuorumSnrBorderCorrectedSignalSelector import QuorumSnrBorderCorrectedSignalSelector
-from sherlockpipe.objectinfo.preparer.MissionLightcurveBuilder import MissionLightcurveBuilder
-from sherlockpipe.objectinfo.MissionObjectInfo import MissionObjectInfo
+from lcbuilder.objectinfo.preparer.MissionLightcurveBuilder import MissionLightcurveBuilder
+from lcbuilder.objectinfo.MissionObjectInfo import MissionObjectInfo
 from transitleastsquares import catalog_info
 import astropy.constants as ac
 import astropy.units as u

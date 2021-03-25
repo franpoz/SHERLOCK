@@ -1,7 +1,7 @@
 import math
 from sherlockpipe.search_zones.SearchZone import SearchZone
-from sherlockpipe.star.HabitabilityCalculator import HabitabilityCalculator
-from sherlockpipe.star.starinfo import StarInfo
+from lcbuilder.star.HabitabilityCalculator import HabitabilityCalculator
+from lcbuilder.star.starinfo import StarInfo
 
 
 class HabitableSearchZone(SearchZone):

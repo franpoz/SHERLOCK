@@ -1,11 +1,11 @@
 from contextlib import contextmanager
 from timeit import default_timer
 from sherlockpipe.sherlock import Sherlock
-from sherlockpipe.objectinfo.InputObjectInfo import InputObjectInfo
-from sherlockpipe.objectinfo.MissionFfiCoordsObjectInfo import MissionFfiCoordsObjectInfo
-from sherlockpipe.objectinfo.MissionFfiIdObjectInfo import MissionFfiIdObjectInfo
-from sherlockpipe.objectinfo.MissionInputObjectInfo import MissionInputObjectInfo
-from sherlockpipe.objectinfo.MissionObjectInfo import MissionObjectInfo
+from lcbuilder.objectinfo.InputObjectInfo import InputObjectInfo
+from lcbuilder.objectinfo.MissionFfiCoordsObjectInfo import MissionFfiCoordsObjectInfo
+from lcbuilder.objectinfo.MissionFfiIdObjectInfo import MissionFfiIdObjectInfo
+from lcbuilder.objectinfo.MissionInputObjectInfo import MissionInputObjectInfo
+from lcbuilder.objectinfo.MissionObjectInfo import MissionObjectInfo
 
 
 @contextmanager

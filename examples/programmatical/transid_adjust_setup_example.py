@@ -1,7 +1,7 @@
 from contextlib import contextmanager
 from timeit import default_timer
 from sherlockpipe.sherlock import Sherlock
-from sherlockpipe.objectinfo.MissionObjectInfo import MissionObjectInfo
+from lcbuilder.objectinfo.MissionObjectInfo import MissionObjectInfo
 
 
 @contextmanager

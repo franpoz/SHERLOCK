@@ -9,13 +9,13 @@ from astropy.wcs import WCS
 from astroquery.mast import Catalogs, Tesscut
 from sherlockpipe.ois.OisManager import OisManager
 
-from sherlockpipe.objectinfo.MissionFfiIdObjectInfo import MissionFfiIdObjectInfo
-from sherlockpipe.objectinfo.preparer.MissionFfiLightcurveBuilder import MissionFfiLightcurveBuilder
-from sherlockpipe.objectinfo.MissionObjectInfo import MissionObjectInfo
-from sherlockpipe.objectinfo.preparer.MissionLightcurveBuilder import MissionLightcurveBuilder
+from lcbuilder.objectinfo.MissionFfiIdObjectInfo import MissionFfiIdObjectInfo
+from lcbuilder.objectinfo.preparer.MissionFfiLightcurveBuilder import MissionFfiLightcurveBuilder
+from lcbuilder.objectinfo.MissionObjectInfo import MissionObjectInfo
+from lcbuilder.objectinfo.preparer.MissionLightcurveBuilder import MissionLightcurveBuilder
 from sherlockpipe.eleanor import TargetData
 from sherlockpipe import eleanor
-from sherlockpipe.star.TicStarCatalog import TicStarCatalog
+from lcbuilder.star.TicStarCatalog import TicStarCatalog
 import numpy as np
 import tsfresh
 from tsfresh.utilities.dataframe_functions import impute

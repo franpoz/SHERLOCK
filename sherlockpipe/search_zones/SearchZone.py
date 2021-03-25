@@ -1,6 +1,6 @@
 from abc import ABC, abstractmethod
 
-from sherlockpipe.star.starinfo import StarInfo
+from lcbuilder.star.starinfo import StarInfo
 
 
 class SearchZone(ABC):

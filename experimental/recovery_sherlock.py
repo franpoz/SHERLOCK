@@ -13,7 +13,7 @@ import os
 import re
 import pandas as pd
 from sherlockpipe import sherlock
-from sherlockpipe.objectinfo.MissionInputObjectInfo import MissionInputObjectInfo
+from lcbuilder.objectinfo.MissionInputObjectInfo import MissionInputObjectInfo
 
 
 class QuorumSnrBorderCorrectedStopWhenMatchSignalSelector(QuorumSnrBorderCorrectedSignalSelector):
@@ -84,7 +84,7 @@ mstar_min = mass - massmin
 mstar_max = mass + massmax
 rstar_min = radius - radiusmin
 rstar_max = radius + radiusmax
-dir = "/home/pozuelos/martin/curves/"
+dir = "/home/mdevora/ir/toi2096/curves/"
 report = {}
 reports_df = pd.DataFrame(columns=['period', 'radius', 'epoch', 'found', 'snr', 'sde', 'run'])
 a = False
