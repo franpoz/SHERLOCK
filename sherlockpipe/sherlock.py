@@ -687,7 +687,7 @@ class Sherlock:
         # power_norm = self.running_median(periodogram.power.value, 20)
         periodogram.plot(view='period', scale='log')
         plt.title(str(sherlock_id) + " Lightcurve periodogram")
-        plt.savefig(object_dir + "Periodogram_" + str(sherlock_id) + ".png")
+        plt.savefig(object_dir + "Periodogram_" + str(sherlock_id) + ".png", bbox_inches='tight')
         plt.clf()
         # power_mod = periodogram.power.value - power_norm
         # power_mod = power_mod / np.mean(power_mod)
