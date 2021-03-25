@@ -1,17 +1,16 @@
 import pickle
 import sys
 
-from sherlockpipe.objectinfo.preparer.MissionFfiLightcurveBuilder import MissionFfiLightcurveBuilder
-from sherlockpipe.objectinfo.preparer.MissionLightcurveBuilder import MissionLightcurveBuilder
+from lcbuilder.objectinfo.preparer.MissionFfiLightcurveBuilder import MissionFfiLightcurveBuilder
+from lcbuilder.objectinfo.preparer.MissionLightcurveBuilder import MissionLightcurveBuilder
 
-import transitleastsquares
-from sherlockpipe.star.starinfo import StarInfo
+from lcbuilder.star.starinfo import StarInfo
 from sherlockpipe import sherlock
-from sherlockpipe.objectinfo.InputObjectInfo import InputObjectInfo
-from sherlockpipe.objectinfo.MissionFfiIdObjectInfo import MissionFfiIdObjectInfo
-from sherlockpipe.objectinfo.MissionFfiCoordsObjectInfo import MissionFfiCoordsObjectInfo
-from sherlockpipe.objectinfo.MissionInputObjectInfo import MissionInputObjectInfo
-from sherlockpipe.objectinfo.MissionObjectInfo import MissionObjectInfo
+from lcbuilder.objectinfo.InputObjectInfo import InputObjectInfo
+from lcbuilder.objectinfo.MissionFfiIdObjectInfo import MissionFfiIdObjectInfo
+from lcbuilder.objectinfo.MissionFfiCoordsObjectInfo import MissionFfiCoordsObjectInfo
+from lcbuilder.objectinfo.MissionInputObjectInfo import MissionInputObjectInfo
+from lcbuilder.objectinfo.MissionObjectInfo import MissionObjectInfo
 from argparse import ArgumentParser
 from os import path
 import yaml

@@ -13,26 +13,26 @@ import os
 import sys
 
 from scipy.ndimage import uniform_filter1d
-from sherlockpipe.star.starinfo import StarInfo
+from lcbuilder.star.starinfo import StarInfo
 from astropy import units as u
 from sherlockpipe.curve_preparer.Flattener import Flattener
 from sherlockpipe.curve_preparer.Flattener import FlattenInput
-from sherlockpipe.objectinfo.MissionObjectInfo import MissionObjectInfo
-from sherlockpipe.objectinfo.InputObjectInfo import InputObjectInfo
-from sherlockpipe.objectinfo.MissionFfiIdObjectInfo import MissionFfiIdObjectInfo
-from sherlockpipe.objectinfo.MissionInputObjectInfo import MissionInputObjectInfo
-from sherlockpipe.objectinfo.MissionFfiCoordsObjectInfo import MissionFfiCoordsObjectInfo
-from sherlockpipe.objectinfo.preparer.MissionFfiLightcurveBuilder import MissionFfiLightcurveBuilder
-from sherlockpipe.objectinfo.preparer.MissionInputLightcurveBuilder import MissionInputLightcurveBuilder
-from sherlockpipe.objectinfo.preparer.MissionLightcurveBuilder import MissionLightcurveBuilder
-from sherlockpipe.objectinfo.InvalidNumberOfSectorsError import InvalidNumberOfSectorsError
+from lcbuilder.objectinfo.MissionObjectInfo import MissionObjectInfo
+from lcbuilder.objectinfo.InputObjectInfo import InputObjectInfo
+from lcbuilder.objectinfo.MissionFfiIdObjectInfo import MissionFfiIdObjectInfo
+from lcbuilder.objectinfo.MissionInputObjectInfo import MissionInputObjectInfo
+from lcbuilder.objectinfo.MissionFfiCoordsObjectInfo import MissionFfiCoordsObjectInfo
+from lcbuilder.objectinfo.preparer.MissionFfiLightcurveBuilder import MissionFfiLightcurveBuilder
+from lcbuilder.objectinfo.preparer.MissionInputLightcurveBuilder import MissionInputLightcurveBuilder
+from lcbuilder.objectinfo.preparer.MissionLightcurveBuilder import MissionLightcurveBuilder
+from lcbuilder.objectinfo.InvalidNumberOfSectorsError import InvalidNumberOfSectorsError
 from sherlockpipe.scoring.BasicSignalSelector import BasicSignalSelector
 from sherlockpipe.scoring.SnrBorderCorrectedSignalSelector import SnrBorderCorrectedSignalSelector
 from sherlockpipe.scoring.QuorumSnrBorderCorrectedSignalSelector import QuorumSnrBorderCorrectedSignalSelector
 from sherlockpipe.ois.OisManager import OisManager
 from sherlockpipe.search_zones.HabitableSearchZone import HabitableSearchZone
 from sherlockpipe.search_zones.OptimisticHabitableSearchZone import OptimisticHabitableSearchZone
-from sherlockpipe.star.HabitabilityCalculator import HabitabilityCalculator
+from lcbuilder.star.HabitabilityCalculator import HabitabilityCalculator
 from sherlockpipe.transitresult import TransitResult
 from multiprocessing import Pool
 from scipy.signal import argrelextrema, savgol_filter
@@ -1008,6 +1008,8 @@ class Sherlock:
     def __adjust_transit(self, time, lc, star_info, transits_min_count, run_results, report, cadence):
         oversampling = self.oversampling
         if oversampling is None:
+            # oversampling = 450 / time_lapse
+            # oversampling = oversampling if oversampling < 10 else 10
             time_lapse = time[len(time) - 1] - time[0]
             oversampling = int(600 // time_lapse)
             if oversampling < 3:
