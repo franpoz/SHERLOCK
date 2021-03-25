@@ -694,7 +694,7 @@ class Sherlock:
         # periodogram.power = power_mod * u.d / u.d
         # periodogram.plot(view='period', scale='log')
         # plt.title(str(sherlock_id) + " Lightcurve normalized periodogram")
-        # plt.savefig(object_dir + "PeriodogramNorm_" + str(sherlock_id) + ".png")
+        # plt.savefig(object_dir + "PeriodogramNorm_" + str(sherlock_id) + ".png", bbox_inches='tight')
         # plt.clf()
         if object_info.initial_detrend_period is not None:
             self.rotator_period = object_info.initial_detrend_period
@@ -707,7 +707,7 @@ class Sherlock:
             logging.info("Period = %.3f", self.rotator_period)
             lc.fold(self.rotator_period).scatter()
             plt.title("Phase-folded period: " + format(self.rotator_period, ".2f") + " days")
-            plt.savefig(object_dir + "Phase_detrend_period_" + str(sherlock_id) + "_" + format(self.rotator_period, ".2f") + "_days.png")
+            plt.savefig(object_dir + "Phase_detrend_period_" + str(sherlock_id) + "_" + format(self.rotator_period, ".2f") + "_days.png", bbox_inches='tight')
             plt.clf()
             flatten_flux, lc_trend = self.__detrend_by_period(clean_time, flatten_flux, self.rotator_period * self.auto_detrend_ratio)
             if not self.period_min:
