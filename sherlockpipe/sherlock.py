@@ -771,35 +771,51 @@ class Sherlock:
             logging.info('Masking high RMS areas by a factor of %.2f with %.1f hours binning',
                          self.initial_rms_threshold, self.initial_rms_bin_hours)
             bins_per_day = 24 / self.initial_rms_bin_hours
-            before_flux = clean_flux
             fig, axs = plt.subplots(2, 1, figsize=(8, 8), constrained_layout=True)
-            axs[1].scatter(time, before_flux, color='gray', alpha=0.5, rasterized=True, label="Flux")
-            bins = (clean_time[len(clean_time) - 1] - clean_time[0]) * bins_per_day
-            bin_stds, bin_edges, binnumber = stats.binned_statistic(clean_time, clean_flux, statistic='std', bins=bins)
-            stds_median = np.nanmedian(bin_stds[bin_stds > 0])
-            stds_median_array = np.full(len(bin_stds), stds_median)
-            rms_threshold_array = stds_median_array * self.initial_rms_threshold
-            too_high_bin_stds_indexes = np.argwhere(bin_stds > rms_threshold_array)
-            high_std_mask = np.array([bin_id - 1 in too_high_bin_stds_indexes for bin_id in binnumber])
-            clean_time = clean_time[~high_std_mask]
-            clean_flux = clean_flux[~high_std_mask]
-            clean_flux_err = flux_err[~high_std_mask]
-            bin_width = (bin_edges[1] - bin_edges[0])
-            bin_centers = bin_edges[1:] - bin_width / 2
-            axs[0].plot(bin_centers, bin_stds, color='black', alpha=0.75, rasterized=True, label="RMS")
-            axs[0].plot(bin_centers, rms_threshold_array, color='red', rasterized=True, label='Mask Threshold')
             axs[0].set_title(str(self.initial_rms_bin_hours) + " hours binned RMS")
-            axs[0].legend(loc="upper right")
-            axs[1].scatter(time[high_std_mask], before_flux[high_std_mask], linewidth=1, color='red', alpha=1.0, label="High RMS")
-            axs[1].legend(loc="upper right")
             axs[1].set_title("Total and masked high RMS flux")
             fig.suptitle(str(star_info.object_id) + " High RMS Mask")
             axs[0].set_xlabel('Time')
             axs[0].set_ylabel('Flux RMS')
             axs[1].set_xlabel('Time')
             axs[1].set_ylabel('Flux')
+            dif = time[1:] - time[:-1]
+            jumps = np.where(dif > 3)[0]
+            jumps = np.append(jumps, len(clean_time))
+            before_flux = clean_flux
+            previous_jump_index = 0
+            entire_high_rms_mask = np.array([], dtype=bool)
+            entire_bin_centers = np.array([])
+            entire_bin_stds = np.array([])
+            entire_rms_threshold_array = np.array([])
+            for jumpIndex in jumps:
+                time_partial = clean_time[previous_jump_index:jumpIndex]
+                flux_partial = clean_flux[previous_jump_index:jumpIndex]
+                before_flux_partial = before_flux[previous_jump_index:jumpIndex]
+                bins = (time_partial[len(time_partial) - 1] - time_partial[0]) * bins_per_day
+                bin_stds, bin_edges, binnumber = stats.binned_statistic(time_partial, flux_partial, statistic='std', bins=bins)
+                stds_median = np.nanmedian(bin_stds[bin_stds > 0])
+                stds_median_array = np.full(len(bin_stds), stds_median)
+                rms_threshold_array = stds_median_array * self.initial_rms_threshold
+                too_high_bin_stds_indexes = np.argwhere(bin_stds > rms_threshold_array)
+                high_std_mask = np.array([bin_id - 1 in too_high_bin_stds_indexes for bin_id in binnumber])
+                entire_high_rms_mask = np.append(entire_high_rms_mask, high_std_mask)
+                bin_width = (bin_edges[1] - bin_edges[0])
+                bin_centers = bin_edges[1:] - bin_width / 2
+                entire_bin_centers = np.append(entire_bin_centers, bin_centers)
+                entire_bin_stds = np.append(entire_bin_stds, bin_stds)
+                entire_rms_threshold_array = np.append(entire_rms_threshold_array, rms_threshold_array)
+                previous_jump_index = jumpIndex
+            axs[0].plot(entire_bin_centers, entire_bin_stds, color='black', alpha=0.75, rasterized=True, label="RMS")
+            axs[0].plot(entire_bin_centers, entire_rms_threshold_array, color='red', rasterized=True, label='Mask Threshold')
+            axs[1].scatter(clean_time, before_flux, color='gray', alpha=0.5, rasterized=True, label="Flux")
+            axs[1].scatter(clean_time[entire_high_rms_mask], before_flux[entire_high_rms_mask], linewidth=1, color='red',
+                           alpha=1.0,
+                           label="High RMS")
+            axs[0].legend(loc="upper right")
+            axs[1].legend(loc="upper right")
             plot_dir = self.__init_object_dir(star_info.object_id)
-            fig.savefig(plot_dir + 'High_RMS_Mask_' + str(star_info.object_id) + '.png', dpi=200)
+            fig.savefig(plot_dir + 'High_RMS_Mask_' + str(star_info.object_id) + '.png')
             fig.clf()
         if is_short_cadence and self.initial_smooth:
             #logging.info('Applying Smooth phase (savgol + weighted average)')
