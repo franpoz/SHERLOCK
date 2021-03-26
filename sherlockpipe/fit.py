@@ -10,7 +10,7 @@ import allesfitter
 import numpy as np
 import yaml
 from argparse import ArgumentParser
-from sherlockpipe.star.HabitabilityCalculator import HabitabilityCalculator
+from lcbuilder.star.HabitabilityCalculator import HabitabilityCalculator
 import pandas as pd
 import os
 from os import path
