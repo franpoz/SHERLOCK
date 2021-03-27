@@ -40,7 +40,6 @@ class QuorumSnrBorderCorrectedSignalSelector(BasicSignalSelector):
         number_corrected_snrs_length = len(corrected_snrs[~np.isnan(corrected_snrs)])
         if len(number_corrected_snrs_length) == 0:
             best_signal_score = 0
-            max_votes_rate = 0
             best_signal = 0
             best_signal_snr_index = 0
             best_signal_snr = 0
