@@ -538,6 +538,18 @@ class Sherlock:
             if star_info.radius is None or np.isnan(star_info.radius):
                 logging.info("Star catalog doesn't provide radius. Assuming R=0.1Rsun")
                 star_info.assume_model_radius()
+            if star_info.mass_min is None or np.isnan(star_info.mass_min):
+                star_info.mass_min = star_info.mass - (0.5 if star_info.mass > 0.5 else star_info.mass / 2)
+                logging.info("Star catalog doesn't provide M_low_err. Assuming M_low_err=%.3fMsun", star_info.mass_min)
+            if star_info.mass_max is None or np.isnan(star_info.mass_max):
+                star_info.mass_max = star_info.mass + 0.5
+                logging.info("Star catalog doesn't provide M_up_err. Assuming M_low_err=%.3fMsun", star_info.mass_max)
+            if star_info.radius_min is None or np.isnan(star_info.radius_min):
+                star_info.radius_min = star_info.radius - (0.5 if star_info.radius > 0.5 else star_info.radius / 2)
+                logging.info("Star catalog doesn't provide R_low_err. Assuming R_low_err=%.3fRsun", star_info.radius_min)
+            if star_info.radius_max is None or np.isnan(star_info.radius_max):
+                star_info.radius_max = star_info.radius + 0.5
+                logging.info("Star catalog doesn't provide R_up_err. Assuming R_up_err=%.3fRsun", star_info.radius_max)
             logging.info('limb-darkening estimates using quadratic LD (a,b)= %s', star_info.ld_coefficients)
             logging.info('mass = %.6f', star_info.mass)
             logging.info('mass_min = %.6f', star_info.mass_min)
