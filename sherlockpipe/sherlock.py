@@ -672,7 +672,7 @@ class Sherlock:
                 self.wl_min[sherlock_id] = 3 * transit_duration  # minimum transit duration
                 self.wl_max[sherlock_id] = 20 * transit_duration  # maximum transit duration
         logging.info("wl/ks_min: %.2f", self.wl_min[sherlock_id])
-        logging.info("wl/ks_min: %.2f", self.wl_max[sherlock_id])
+        logging.info("wl/ks_max: %.2f", self.wl_max[sherlock_id])
         logging.info('================================================')
         time_float = lc.time.value
         flux_float = lc.flux.value
