@@ -1,14 +1,13 @@
 # We will add one mission id with all sectors and then provide a period to use as window size for detrend of the
 # initial curve.
-# High RMS detection and masking will be disabled for the selected TIC as a fixed range has been provided.
+# Autodetrend will be disabled for the selected TIC as a fixed period has been provided to be detrended.
 # In addition, the window length of the detrends is constrained by a minimum and a maximum value.
-GLOBAL_TWO_MIN_IDS:
-  'TIC 181804752': 'all'
-DETREND_L_MIN: 0.2
-DETREND_L_MAX: 1.2
-
-TWO_MIN_INITIAL_DETREND_PERIOD:
-  'TIC 181804752': 0.25
+TARGETS:
+  'TIC 181804752':
+     SECTORS: 'all'
+     DETREND_L_MIN: 0.2
+     DETREND_L_MAX: 1.2
+     INITIAL_DETREND_PERIOD: 0.25
 
 
 
