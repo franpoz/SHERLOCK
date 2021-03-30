@@ -6,9 +6,18 @@
 ######################################################################################################################
 # We will add several mission ids to the pipeline.
 # Note that we can select 'all' the sectors, quarters or campaigns or specify a subset of them. In this case, the TIC
-# 299798795 will be processed only using its 13th sector and the EPIC 220641886 using its 8th campaign.
-GLOBAL_FFI_IDS:
-  TIC 299798795: [13]
-  TIC 231663901: 'all',
-  EPIC 220641886: [8],
-  EPIC 201912552: 'all'
+# 299798795 will be processed only using its 13th sector and the EPIC 220641886 using its 8th campaign. Pay attention
+# to the EXPTIME attribute, which will signal SHERLOCK to use the light curve with long cadence.
+TARGETS:
+  TIC 299798795:
+     SECTORS: [13]
+     EXPTIME: 1800
+  TIC 231663901:
+     SECTORS: 'all'
+     EXPTIME: 1800
+  EPIC 220641886: 
+     SECTORS: [8]
+     EXPTIME: 1800
+  EPIC 201912552:
+     SECTORS: 'all'
+     EXPTIME: 1800
