@@ -37,8 +37,8 @@ class QuorumSnrBorderCorrectedSignalSelector(BasicSignalSelector):
         corrected_snrs = [index_snr_period_t0_array[key][1] +
                           index_snr_period_t0_array[key][1] * (votes_count - 1) / number_of_voters * self.strength
                 for key, votes_count in enumerate(votes_counts)]
-        number_corrected_snrs_length = len(corrected_snrs[~np.isnan(corrected_snrs)])
-        if len(number_corrected_snrs_length) == 0:
+        number_corrected_snrs_length = len(np.where(~np.isnan(corrected_snrs)))
+        if number_corrected_snrs_length == 0:
             best_signal_score = 0
             best_signal = 0
             best_signal_snr_index = 0

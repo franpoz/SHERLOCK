@@ -1,27 +1,4 @@
-######################################################################################################################
-### GLOBAL OBJECTS RUN SETUP - All sectors analysed at once
-######################################################################################################################
-# TESS/Kepler/K2 ids array. E.g: ["TIC 123456", "KIC 234567", "EPIC 345678"]
-GLOBAL_TWO_MIN_IDS:
-# TESS ONLY ids array. E.g: ["TIC 123456", "TIC 234567", "TIC 345678"]
-GLOBAL_FFI_IDS:
-# A list of RA/DEC pairs (IN DEGREES UNITS). E.g: [[15.0, -23.1], [45.0, 54.3]]
-GLOBAL_FFI_COORDINATES:
-# A list of file csvs containing light curve information. E.g: ["model1.csv", "model2.csv"]
-INPUT_FILES:
-# A dict of file csvs containing light curve information, each of them associated to a TESS, Kepler or K2 id.
-# E.g: {"TIC 123456": "model1.csv", "KIC 234567": "model2.csv", "EPIC 345678": "model3.csv"}
-INPUT_FILES_WITH_IDS:
-
-######################################################################################################################
-### SECTOR OBJECTS RUN SETUP - All sectors analysed independently
-######################################################################################################################
-# TESS/Kepler/K2 ids array. E.g: ["TIC 123456", "KIC 234567", "EPIC 345678"]
-SECTOR_TWO_MIN_IDS:
-# TESS ONLY ids array. E.g: ["TIC 123456", "TIC 234567", "TIC 345678"]
-SECTOR_FFI_IDS:
-# A list of RA/DEC pairs (IN DEGREES UNITS). E.g: [[15.0, -23.1], [45.0, 54.3]]
-SECTOR_FFI_COORDINATES:
+TARGETS:
 
 ######################################################################################################################
 ### DETRENDS SETUP

@@ -1,3 +1,2 @@
 graft sherlockpipe/LATTE/LATTE_imgs
-include sherlockpipe/eleanor/postcard_centers.txt
 include sherlockpipe/tlsSub/*.csv

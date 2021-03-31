@@ -21,7 +21,7 @@ with elapsed_timer() as elapsed:
     # We will use one TIC from the TESS mission and add provide external customized algorithms for light curve
     # preparation, signal selection and search zone settings. These algorithms are extensions from SHERLOCK abstract
     # classes as you can inspect under the examples/custom_algorithms directory.
-    sherlock = Sherlock(update_ois=False, object_infos=[MissionFfiIdObjectInfo("TIC 181804752", 'all')]) \
+    sherlock = Sherlock(update_ois=False, sherlock_targets=[MissionFfiIdObjectInfo("TIC 181804752", 'all')]) \
         .setup_detrend(initial_smooth=False, initial_rms_mask=False, cores=2, auto_detrend_periodic_signals=False,
                        user_prepare=ButterworthCurvePreparer()) \
         .setup_transit_adjust_params(max_runs=10, user_search_zone=NeptunianDesertSearchZone(),

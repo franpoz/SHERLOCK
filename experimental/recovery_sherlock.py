@@ -113,7 +113,7 @@ for index, row in tls_report_df.iterrows():
                 sde = 20
                 run = 1
             else:
-                sherlock.Sherlock(False, object_infos=[MissionInputObjectInfo("TIC 85400193", dir + file)]) \
+                sherlock.Sherlock(False, sherlock_targets=[MissionInputObjectInfo("TIC 85400193", dir + file)]) \
                     .setup_detrend(True, True, 1.5, 4, 12, "biweight", 0.2, 1.0, 20, False,
                                    0.25, "cosine", None) \
                     .setup_transit_adjust_params(5, None, None, 10, None, None, 0.4, 14, 10,

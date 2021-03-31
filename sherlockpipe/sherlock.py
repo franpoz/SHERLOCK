@@ -12,23 +12,16 @@ import numpy as np
 import os
 import sys
 
+from lcbuilder.lcbuilder_class import LcBuilder
 from scipy.ndimage import uniform_filter1d
 from lcbuilder.star.starinfo import StarInfo
 from astropy import units as u
 from sherlockpipe.curve_preparer.Flattener import Flattener
 from sherlockpipe.curve_preparer.Flattener import FlattenInput
 from lcbuilder.objectinfo.MissionObjectInfo import MissionObjectInfo
-from lcbuilder.objectinfo.InputObjectInfo import InputObjectInfo
 from lcbuilder.objectinfo.MissionFfiIdObjectInfo import MissionFfiIdObjectInfo
-from lcbuilder.objectinfo.MissionInputObjectInfo import MissionInputObjectInfo
 from lcbuilder.objectinfo.MissionFfiCoordsObjectInfo import MissionFfiCoordsObjectInfo
-from lcbuilder.objectinfo.preparer.MissionFfiLightcurveBuilder import MissionFfiLightcurveBuilder
-from lcbuilder.objectinfo.preparer.MissionInputLightcurveBuilder import MissionInputLightcurveBuilder
-from lcbuilder.objectinfo.preparer.MissionLightcurveBuilder import MissionLightcurveBuilder
 from lcbuilder.objectinfo.InvalidNumberOfSectorsError import InvalidNumberOfSectorsError
-from sherlockpipe.scoring.BasicSignalSelector import BasicSignalSelector
-from sherlockpipe.scoring.SnrBorderCorrectedSignalSelector import SnrBorderCorrectedSignalSelector
-from sherlockpipe.scoring.QuorumSnrBorderCorrectedSignalSelector import QuorumSnrBorderCorrectedSignalSelector
 from sherlockpipe.ois.OisManager import OisManager
 from sherlockpipe.search_zones.HabitableSearchZone import HabitableSearchZone
 from sherlockpipe.search_zones.OptimisticHabitableSearchZone import OptimisticHabitableSearchZone
@@ -77,31 +70,26 @@ class Sherlock:
     config_step = 0
     ois_manager = OisManager()
     use_ois = False
-    user_transit_template = None
 
-    def __init__(self, update_ois: bool, object_infos: list, explore=False):
+    def __init__(self, update_ois: bool, sherlock_targets: list, explore=False):
         """
         Initializes a Sherlock object, loading the OIs from the csvs, setting up the detrend and transit configurations,
         storing the provided object_infos list and initializing the builders to be used to prepare the light curves for
         the provided object_infos.
         @param update_ois: Flag to signal SHERLOCK for updating the TOIs, KOIs and EPICs
-        @param object_infos: a list of objects information to be analysed
+        @param sherlock_targets: a list of objects information to be analysed
         @param explore: whether to only run the prepare stage for all objects
-        @type object_infos: a list of ObjectInfo implementations to be resolved and analysed
         """
         self.explore = explore
         self.setup_files(update_ois)
-        self.setup_detrend()
-        self.object_infos = object_infos
-        self.lightcurve_builders = {InputObjectInfo: MissionInputLightcurveBuilder(),
-                                    MissionInputObjectInfo: MissionInputLightcurveBuilder(),
-                                    MissionObjectInfo: MissionLightcurveBuilder(),
-                                    MissionFfiIdObjectInfo: MissionFfiLightcurveBuilder(),
-                                    MissionFfiCoordsObjectInfo: MissionFfiLightcurveBuilder()}
-        self.search_zones_resolvers = {'hz': HabitableSearchZone(),
-                                       'ohz': OptimisticHabitableSearchZone()}
+        self.sherlock_targets = sherlock_targets
         self.habitability_calculator = HabitabilityCalculator()
-        self.setup_transit_adjust_params()
+        self.detrend_plot_axis = [[1, 1], [2, 1], [3, 1], [2, 2], [3, 2], [3, 2], [3, 3], [3, 3], [3, 3], [4, 3],
+                                  [4, 3], [4, 3], [4, 4], [4, 4], [4, 4], [4, 4], [5, 4], [5, 4], [5, 4], [5, 4],
+                                  [6, 4], [6, 4], [6, 4], [6, 4]]
+        self.detrend_plot_axis.append([1, 1])
+        self.detrend_plot_axis.append([2, 1])
+        self.detrend_plot_axis.append([3, 1])
 
     def setup_files(self, refresh_ois, results_dir=RESULTS_DIR):
         """
@@ -112,139 +100,6 @@ class Sherlock:
         """
         self.results_dir = results_dir
         self.load_ois(refresh_ois)
-        return self
-
-    def setup_detrend(self, initial_smooth=True, initial_rms_mask=True, initial_rms_threshold=1.5,
-                      initial_rms_bin_hours=3, n_detrends=6, detrend_method="biweight", detrend_wl_min=None,
-                      detrend_wl_max=None, cores=1, auto_detrend_periodic_signals=False, auto_detrend_ratio=1/4,
-                      auto_detrend_method="biweight", user_prepare=None):
-        """
-        Configures the values for the detrends steps.
-        @param initial_smooth: whether to execute an initial local noise reduction before the light curve analysis
-        @param initial_rms_mask: whether to execute high RMS areas masking before the light curve analysis
-        @param initial_rms_threshold: the high RMS areas limit to be applied multiplied by the RMS median
-        @param initial_rms_bin_hours: the high RMS areas binning
-        @param n_detrends: the number of detrends to be applied to the PDCSAP_FLUX curve for each run.
-        @param detrend_method: the type of algorithm to be used for the detrending
-        @param cores: the number of CPU cores to be used for the detrending process
-        @param auto_detrend_periodic_signals: whether to search for intense periodicities from the LS periodogram and
-        perform an initial detrending based on them.
-        @param auto_detrend_ratio: the factor to apply to the highest periodicity found in the LS periodogram which will
-        be used for the initial detrend.
-        @param auto_detrend_method: the detrend method to be applied with the highest periodicity found in the LS
-        periodogram
-        @param user_prepare: custom algorithm from user to be applied.
-        @return: the Sherlock object itself
-        @rtype: Sherlock
-        """
-        if detrend_method not in self.VALID_DETREND_METHODS:
-            raise ValueError("Provided detrend method '" + detrend_method + "' is not allowed.")
-        if auto_detrend_method not in self.VALID_PERIODIC_DETREND_METHODS:
-            raise ValueError("Provided periodic detrend method '" + auto_detrend_method + "' is not allowed.")
-        self.initial_rms_mask = initial_rms_mask
-        self.initial_rms_threshold = initial_rms_threshold
-        self.initial_rms_bin_hours = initial_rms_bin_hours
-        self.initial_smooth = initial_smooth
-        self.n_detrends = n_detrends
-        self.detrend_method = detrend_method
-        self.detrend_wl_min = detrend_wl_min
-        self.detrend_wl_max = detrend_wl_max
-        self.detrend_cores = cores
-        self.auto_detrend_periodic_signals = auto_detrend_periodic_signals
-        self.auto_detrend_ratio = auto_detrend_ratio
-        self.auto_detrend_method = auto_detrend_method
-        self.detrend_plot_axis = [[1, 1], [2, 1], [3, 1], [2, 2], [3, 2], [3, 2], [3, 3], [3, 3], [3, 3], [4, 3],
-                                  [4, 3], [4, 3], [4, 4], [4, 4], [4, 4], [4, 4], [5, 4], [5, 4], [5, 4], [5, 4],
-                                  [6, 4], [6, 4], [6, 4], [6, 4]]
-        self.detrend_plot_axis.append([1, 1])
-        self.detrend_plot_axis.append([2, 1])
-        self.detrend_plot_axis.append([3, 1])
-        self.user_prepare = user_prepare
-        return self
-
-    def setup_transit_adjust_params(self, max_runs=10, min_sectors=1, max_sectors=999999, period_protec=10,
-                                    search_zone=None, user_search_zone=None, period_min=0.5, period_max=20,
-                                    bin_minutes=10, run_cores=NUM_CORES, snr_min=5, sde_min=5, fap_max=0.1,
-                                    mask_mode="mask", best_signal_algorithm='border-correct', quorum_strength=1,
-                                    min_quorum=0, user_selection_algorithm=None, fit_method="tls",
-                                    oversampling=None, t0_fit_margin=0.05, duration_grid_step=1.1,
-                                    custom_transit_template=None):
-        """
-        Configures the values to be used for the transit fitting and the main run loop.
-        @param max_runs: the max number of runs to be executed for each object.
-        @param min_sectors: the minimum number of sectors/quarters for an object to be analysed
-        @param max_sectors: the maximum number of sectors/quarters for an object to be analysed
-        @param period_protec: the maximum period to be used to calculate the minimum transit duration
-        @param search_zone: the zone where sherlock should be searching transits for. If set, period_min and period_max
-        are to be ignored because they will be generated for the selected zone.
-        @param user_search_zone: custom defined user class to be used for constraining the periods search.
-        @param period_min: the minimum period to search transits for
-        @param period_max: the maximum period to search transits for
-        @param bin_minutes:
-        @param run_cores: the number of CPU cores to use for the transit fitting
-        @param snr_min: the minimum SNR accepted to continue the analysis for an object
-        @param sde_min: the minimum SDE accepted to continue the analysis for an object
-        @param fap_max: the maximum FAP accepted to continue the analysis for an object
-        @param mask_mode: the way to remove every run-selected transit influence in the light curve. 'mask' and
-        'subtract' are available
-        @param best_signal_algorithm: the way to calculate the best signal for each object run. 'basic', 'border-correct'
-        and 'quorum' are available.
-        @param quorum_strength: if quorum is selected as best_signal_algorithm this value will be used for the votes
-        weight.
-        @param min_quorum: used to decide when SHERLOCK should be stopped because of lack of persistence in the found
-        signals of the last executed run.
-        @param user_selection_algorithm: selection algorithm provided by the user to be used by SHERLOCK.
-        @param fit_method: selection algorithm provided by the user to be used by SHERLOCK.
-        @param oversampling: from 1 to 10, the oversampling size to be used by TLS.
-        @param t0_fit_margin: from 0.01 to 0.1, the percent of T0 to be shifted for the T0 fit.
-        @param duration_grid_step: from 1.0 to 1.1, how fast should the duration be iterated by TLS.
-        @param custom_transit_template: User provided TransitTemplateGenerator extension, which in case of being
-        provided, overrides the fit_method.
-        @return: the Sherlock object itself
-        @rtype: Sherlock
-        """
-        if mask_mode not in self.MASK_MODES:
-            raise ValueError("Provided mask mode '" + mask_mode + "' is not allowed.")
-        if best_signal_algorithm not in self.VALID_SIGNAL_SELECTORS:
-            raise ValueError("Provided best signal algorithm '" + best_signal_algorithm + "' is not allowed.")
-        self.max_runs = max_runs
-        self.min_sectors = min_sectors
-        self.max_sectors = max_sectors
-        self.run_cores = run_cores
-        self.mask_mode = mask_mode
-        self.period_protec = period_protec
-        self.period_min = period_min
-        self.period_max = period_max
-        self.bin_minutes = bin_minutes
-        self.snr_min = snr_min
-        self.sde_min = sde_min
-        self.fap_max = fap_max
-        self.search_zone = search_zone if user_search_zone is None else "user"
-        if user_search_zone is not None:
-            self.search_zones_resolvers["user"] = user_search_zone
-        self.signal_score_selectors = {self.VALID_SIGNAL_SELECTORS[0]: BasicSignalSelector(),
-                                       self.VALID_SIGNAL_SELECTORS[1]: SnrBorderCorrectedSignalSelector(),
-                                       self.VALID_SIGNAL_SELECTORS[2]: QuorumSnrBorderCorrectedSignalSelector(
-                                           quorum_strength, min_quorum),
-                                       "user": user_selection_algorithm}
-        self.best_signal_algorithm = best_signal_algorithm if user_selection_algorithm is None else "user"
-        self.user_selection_algorithm = user_selection_algorithm
-        self.fit_method = "default"
-        if fit_method is not None and fit_method.lower() == 'bls':
-            self.fit_method = "box"
-        elif fit_method is not None and fit_method.lower() == 'grazing':
-            self.fit_method = "grazing"
-        elif fit_method is not None and fit_method.lower() == 'comet':
-            self.fit_method = "comet"
-        self.oversampling = oversampling
-        if self.oversampling is not None:
-            self.oversampling = int(self.oversampling)
-        self.t0_fit_margin = t0_fit_margin
-        self.duration_grid_step = duration_grid_step
-        if custom_transit_template is not None:
-            self.fit_method = "custom"
-            self.user_transit_template = custom_transit_template
-
         return self
 
     def refresh_ois(self):
@@ -322,37 +177,37 @@ class Sherlock:
         logging.info('SHERLOCK (Searching for Hints of Exoplanets fRom Lightcurves Of spaCe-base seeKers)')
         logging.info('Version %s', self.VERSION)
         logging.info('MODE: %s', "ANALYSE" if not self.explore else "EXPLORE")
-        if len(self.object_infos) == 0 and self.use_ois:
-            self.object_infos = [MissionObjectInfo(object_id, 'all')
-                                 for object_id in self.ois["Object Id"].astype('string').unique()]
-        for object_info in self.object_infos:
-            self.__run_object(object_info)
+        if len(self.sherlock_targets) == 0 and self.use_ois:
+            self.sherlock_targets = [MissionObjectInfo(object_id, 'all')
+                                     for object_id in self.ois["Object Id"].astype('string').unique()]
+        for sherlock_target in self.sherlock_targets:
+            self.__run_object(sherlock_target)
 
-    def __run_object(self, object_info):
+    def __run_object(self, sherlock_target):
         """
         Performs the analysis for one object_info
-        @param object_info: The object to be analysed.
-        @type object_info: ObjectInfo
+        @param sherlock_target: The object to be analysed.
+        @type sherlock_target: ObjectInfo
         """
-        sherlock_id = object_info.sherlock_id()
-        mission_id = object_info.mission_id()
+        sherlock_id = sherlock_target.object_info.sherlock_id()
+        mission_id = sherlock_target.object_info.mission_id()
         try:
-            time, flux, flux_err, star_info, transits_min_count, cadence, sectors = self.__prepare(object_info)
+            time, flux, flux_err, star_info, transits_min_count, cadence, sectors = self.__prepare(sherlock_target)
             id_run = 1
             best_signal_score = 1
             self.report[sherlock_id] = []
             logging.info('================================================')
             logging.info('SEARCH RUNS')
             logging.info('================================================')
-            lcs, wl = self.__detrend(time, flux, star_info)
+            lcs, wl = self.__detrend(sherlock_target, time, flux, star_info)
             lcs = np.concatenate(([flux], lcs), axis=0)
             wl = np.concatenate(([0], wl), axis=0)
-            while not self.explore and best_signal_score == 1 and id_run <= self.max_runs:
+            while not self.explore and best_signal_score == 1 and id_run <= sherlock_target.max_runs:
                 self.__setup_object_logging(sherlock_id, False)
                 object_report = {}
                 logging.info("________________________________ run %s________________________________", id_run)
                 transit_results, signal_selection = \
-                    self.__analyse(object_info, time, lcs, flux_err, star_info, id_run, transits_min_count, cadence,
+                    self.__analyse(sherlock_target, time, lcs, flux_err, star_info, id_run, transits_min_count, cadence,
                                    self.report[sherlock_id], wl)
                 best_signal_score = signal_selection.score
                 object_report["Object Id"] = mission_id
@@ -376,22 +231,22 @@ class Sherlock:
                                                           .results.transit_times)[real_transit_args.flatten()]
                 object_report["transits"] = ','.join(map(str, object_report["transits"]))
                 object_report["sectors"] = ','.join(map(str, sectors)) if sectors is not None and len(sectors) > 0 else None
-                object_report["ffi"] = isinstance(object_info, MissionFfiIdObjectInfo) or \
-                                       isinstance(object_info, MissionFfiCoordsObjectInfo)
+                object_report["ffi"] = isinstance(sherlock_target, MissionFfiIdObjectInfo) or \
+                                       isinstance(sherlock_target, MissionFfiCoordsObjectInfo)
 
-                object_report["oi"] = self.__find_matching_oi(object_info, object_report["period"])
+                object_report["oi"] = self.__find_matching_oi(sherlock_target.object_info, object_report["period"])
                 if best_signal_score == 1:
                     logging.info('New best signal is good enough to keep searching. Going to the next run.')
-                    time, lcs = self.__apply_mask_from_transit_results(time, lcs, transit_results,
+                    time, lcs = self.__apply_mask_from_transit_results(sherlock_target, time, lcs, transit_results,
                                                                         signal_selection.curve_index)
                     id_run += 1
-                    if id_run > self.max_runs:
-                        logging.info("Max runs limit of %.0f is reached. Stopping.", self.max_runs)
+                    if id_run > sherlock_target.max_runs:
+                        logging.info("Max runs limit of %.0f is reached. Stopping.", sherlock_target.max_runs)
                 else:
                     logging.info('New best signal does not look very promising. End')
                 self.report[sherlock_id].append(object_report)
                 self.__setup_object_report_logging(sherlock_id, True)
-                object_dir = self.__init_object_dir(object_info.sherlock_id())
+                object_dir = self.__init_object_dir(sherlock_id)
                 logging.info("Listing most promising candidates for ID %s:", sherlock_id)
                 logging.info("%-12s%-10s%-10s%-10s%-8s%-8s%-8s%-8s%-10s%-14s%-14s%-12s%-25s%-10s%-18s%-20s", "Detrend no.", "Period",
                              "Per_err", "Duration", "T0", "Depth", "SNR", "SDE", "FAP", "Border_score", "Matching OI", "Harmonic",
@@ -521,11 +376,12 @@ class Sherlock:
             result_star_info.ld_coefficients = input_star_info.ld_coefficients
         return result_star_info
 
-    def __prepare(self, object_info):
+    def __prepare(self, sherlock_target):
+        object_info = sherlock_target.object_info
         sherlock_id = object_info.sherlock_id()
         object_dir = self.__setup_object_logging(sherlock_id)
         logging.info('ID: %s', sherlock_id)
-        lc, lc_data, star_info, transits_min_count, sectors, quarters = self.lightcurve_builders[type(object_info)].build(object_info, object_dir)
+        lc, lc_data, star_info, transits_min_count, sectors, quarters = LcBuilder().build(object_info, object_dir)
         star_info = self.__complete_star_info(object_info.star_info, star_info)
         if star_info is not None:
             logging.info('================================================')
@@ -576,34 +432,34 @@ class Sherlock:
         logging.info('================================================')
         logging.info('USER DEFINITIONS')
         logging.info('================================================')
-        if self.detrend_method == "gp":
+        if sherlock_target.detrend_method == "gp":
             logging.info('Detrend method: Gaussian Process Matern 2/3')
         else:
             logging.info('Detrend method: Bi-Weight')
-        logging.info('No of detrend models applied: %s', self.n_detrends)
+        logging.info('No of detrend models applied: %s', sherlock_target.detrends_number)
         logging.info('Minimum number of transits: %s', transits_min_count)
-        logging.info('Period planet protected: %.1f', self.period_protec)
+        logging.info('Period planet protected: %.1f', sherlock_target.period_protect)
         lightcurve_timespan = lc.time[len(lc.time) - 1] - lc.time[0]
-        if self.search_zone is not None and not (star_info.mass_assumed or star_info.radius_assumed):
-            logging.info("Selected search zone: %s. Minimum and maximum periods will be calculated.", self.search_zone)
-            min_and_max_period = self.search_zones_resolvers[self.search_zone].calculate_period_range(star_info)
+        if sherlock_target.search_zone is not None and not (star_info.mass_assumed or star_info.radius_assumed):
+            logging.info("Selected search zone: %s. Minimum and maximum periods will be calculated.", sherlock_target.search_zone)
+            min_and_max_period = sherlock_target.search_zones_resolvers[sherlock_target.search_zone].calculate_period_range(star_info)
             if min_and_max_period is None:
                 logging.info("Selected search zone was %s but cannot be calculated. Defaulting to minimum and " +
-                             "maximum input periods", self.search_zone)
+                             "maximum input periods", sherlock_target.search_zone)
             else:
                 logging.info("Selected search zone periods are [%.2f, %.2f] days", min_and_max_period[0], min_and_max_period[1])
                 if min_and_max_period[0] > lightcurve_timespan or min_and_max_period[1] > lightcurve_timespan:
                     logging.info("Selected search zone period values are greater than lightcurve dataset. " +
                                  "Defaulting to minimum and maximum input periods.")
                 else:
-                    self.period_min = min_and_max_period[0]
-                    self.period_max = min_and_max_period[1]
-        elif self.search_zone is not None:
+                    sherlock_target.period_min = min_and_max_period[0]
+                    sherlock_target.period_max = min_and_max_period[1]
+        elif sherlock_target.search_zone is not None:
             logging.info("Selected search zone was %s but star catalog info was not found or wasn't complete. " +
-                         "Defaulting to minimum and maximum input periods.", self.search_zone)
-        logging.info('Minimum Period (d): %.1f', self.period_min)
-        logging.info('Maximum Period (d): %.1f', self.period_max)
-        logging.info('Binning size (min): %.1f', self.bin_minutes)
+                         "Defaulting to minimum and maximum input periods.", sherlock_target.search_zone)
+        logging.info('Minimum Period (d): %.1f', sherlock_target.period_min)
+        logging.info('Maximum Period (d): %.1f', sherlock_target.period_max)
+        logging.info('Binning size (min): %.1f', sherlock_target.bin_minutes)
         if object_info.initial_mask is not None:
             logging.info('Mask: yes')
         else:
@@ -612,20 +468,19 @@ class Sherlock:
             logging.info('Transit Mask: yes')
         else:
             logging.info('Transit Mask: no')
-        logging.info('Threshold limit for SNR: %.1f', self.snr_min)
-        logging.info('Threshold limit for SDE: %.1f', self.sde_min)
-        logging.info('Threshold limit for FAP: %.1f', self.fap_max)
-        logging.info("Fit method: %s", self.fit_method)
-        if self.oversampling is not None:
-            logging.info('Oversampling: %.3f', self.oversampling)
-        if self.duration_grid_step is not None:
-            logging.info('Duration step: %.3f', self.duration_grid_step)
-        if self.t0_fit_margin is not None:
-            logging.info('T0 Fit Margin: %.3f', self.t0_fit_margin)
-        logging.info('Signal scoring algorithm: %s', self.best_signal_algorithm)
-        if self.best_signal_algorithm == self.VALID_SIGNAL_SELECTORS[2]:
+        logging.info('Threshold limit for SNR: %.1f', sherlock_target.snr_min)
+        logging.info('Threshold limit for SDE: %.1f', sherlock_target.sde_min)
+        logging.info("Fit method: %s", sherlock_target.fit_method)
+        if sherlock_target.oversampling is not None:
+            logging.info('Oversampling: %.3f', sherlock_target.oversampling)
+        if sherlock_target.duration_grid_step is not None:
+            logging.info('Duration step: %.3f', sherlock_target.duration_grid_step)
+        if sherlock_target.t0_fit_margin is not None:
+            logging.info('T0 Fit Margin: %.3f', sherlock_target.t0_fit_margin)
+        logging.info('Signal scoring algorithm: %s', sherlock_target.best_signal_algorithm)
+        if sherlock_target.best_signal_algorithm == self.VALID_SIGNAL_SELECTORS[2]:
             logging.info('Quorum algorithm vote strength: %.2f',
-                         self.signal_score_selectors[self.VALID_SIGNAL_SELECTORS[2]].strength)
+                         sherlock_target.signal_score_selectors[self.VALID_SIGNAL_SELECTORS[2]].strength)
         if sectors is not None:
             sectors_count = len(sectors)
             logging.info('================================================')
@@ -633,39 +488,39 @@ class Sherlock:
             logging.info('================================================')
             logging.info('Sectors : %s', sectors)
             logging.info('No of sectors available: %s', len(sectors))
-            if sectors_count < self.min_sectors or sectors_count > self.max_sectors:
+            if sectors_count < sherlock_target.min_sectors or sectors_count > sherlock_target.max_sectors:
                 raise InvalidNumberOfSectorsError("The object " + sherlock_id + " contains " + str(sectors_count) +
                                                   " sectors and the min and max selected are [" +
-                                                  str(self.min_sectors) + ", " + str(self.max_sectors) + "].")
+                                                  str(sherlock_target.min_sectors) + ", " + str(sherlock_target.max_sectors) + "].")
         if quarters is not None:
             sectors_count = len(quarters)
             logging.info('================================================')
             logging.info('QUARTERS INFO')
             logging.info('================================================')
             logging.info('Quarters : %s', quarters)
-            if sectors_count < self.min_sectors or sectors_count > self.max_sectors:
+            if sectors_count < sherlock_target.min_sectors or sectors_count > sherlock_target.max_sectors:
                 raise InvalidNumberOfSectorsError("The object " + sherlock_id + " contains " + str(sectors_count) +
                                                   " quarters and the min and max selected are [" +
-                                                  str(self.min_sectors) + ", " + str(self.max_sectors) + "].")
+                                                  str(sherlock_target.min_sectors) + ", " + str(sherlock_target.max_sectors) + "].")
         flux = lc.flux
         flux_err = lc.flux_err
         time = lc.time
         logging.info('================================================')
         logging.info("Detrend Window length / Kernel size")
         logging.info('================================================')
-        if self.detrend_wl_min is not None and self.detrend_wl_max is not None:
+        if sherlock_target.detrend_l_min is not None and sherlock_target.detrend_l_max is not None:
             logging.info("Using user input WL / KS")
-            if self.detrend_method == 'gp':
-                self.wl_min[sherlock_id] = self.detrend_wl_min
-                self.wl_max[sherlock_id] = self.detrend_wl_max
+            if sherlock_target.detrend_method == 'gp':
+                self.wl_min[sherlock_id] = sherlock_target.detrend_l_min
+                self.wl_max[sherlock_id] = sherlock_target.detrend_l_max
             else:
-                self.wl_min[sherlock_id] = self.detrend_wl_min
-                self.wl_max[sherlock_id] = self.detrend_wl_max
+                self.wl_min[sherlock_id] = sherlock_target.detrend_l_min
+                self.wl_max[sherlock_id] = sherlock_target.detrend_l_max
         else:
             logging.info("Using transit duration based WL or fixed KS")
-            transit_duration = wotan.t14(R_s=star_info.radius, M_s=star_info.mass, P=self.period_protec,
+            transit_duration = wotan.t14(R_s=star_info.radius, M_s=star_info.mass, P=sherlock_target.period_protect,
                                          small_planet=True)  # we define the typical duration of a small planet in this star
-            if self.detrend_method == 'gp':
+            if sherlock_target.detrend_method == 'gp':
                 self.wl_min[sherlock_id] = 1
                 self.wl_max[sherlock_id] = 12
             else:
@@ -691,7 +546,7 @@ class Sherlock:
         cadence_array = cadence_array[~np.isnan(cadence_array)]
         cadence_array = cadence_array[cadence_array > 0]
         cadence = np.nanmedian(cadence_array)
-        clean_time, flatten_flux, clean_flux_err = self.__clean_initial_flux(object_info, time_float, flux_float,
+        clean_time, flatten_flux, clean_flux_err = self.__clean_initial_flux(sherlock_target, time_float, flux_float,
                                                                              flux_err_float, star_info, cadence)
         lc = lk.LightCurve(time=clean_time, flux=flatten_flux, flux_err=clean_flux_err)
         self.rotator_period = None
@@ -710,7 +565,7 @@ class Sherlock:
         # plt.clf()
         if object_info.initial_detrend_period is not None:
             self.rotator_period = object_info.initial_detrend_period
-        elif self.auto_detrend_periodic_signals:
+        elif sherlock_target.auto_detrend_enabled:
             self.rotator_period = self.__calculate_max_significant_period(lc, periodogram)
         if self.rotator_period is not None:
             logging.info('================================================')
@@ -721,10 +576,12 @@ class Sherlock:
             plt.title("Phase-folded period: " + format(self.rotator_period, ".2f") + " days")
             plt.savefig(object_dir + "Phase_detrend_period_" + str(sherlock_id) + "_" + format(self.rotator_period, ".2f") + "_days.png", bbox_inches='tight')
             plt.clf()
-            flatten_flux, lc_trend = self.__detrend_by_period(clean_time, flatten_flux, self.rotator_period * self.auto_detrend_ratio)
-            if not self.period_min:
-                self.period_min = self.rotator_period * 4
-                logging.info("Setting Min Period to %.3f", self.period_min)
+            flatten_flux, lc_trend = self.__detrend_by_period(sherlock_target.auto_detrend_method, clean_time,
+                                                              flatten_flux,
+                                                              self.rotator_period * sherlock_target.auto_detrend_ratio)
+            if not sherlock_target.period_min:
+                sherlock_target.period_min = self.rotator_period * 4
+                logging.info("Setting Min Period to %.3f", sherlock_target.period_min)
         if object_info.initial_mask is not None:
             logging.info('================================================')
             logging.info('INITIAL MASKING')
@@ -768,23 +625,24 @@ class Sherlock:
         med = np.append(med, np.full(values_end, last_values))
         return med
 
-    def __clean_initial_flux(self, object_info, time, flux, flux_err, star_info, cadence):
+    def __clean_initial_flux(self, sherlock_target, time, flux, flux_err, star_info, cadence):
         clean_time = time
         clean_flux = flux
         clean_flux_err = flux_err
+        object_info = sherlock_target.object_info
         is_short_cadence = round(cadence) <= 5
-        if self.user_prepare is not None:
-            clean_time, clean_flux, clean_flux_err = self.user_prepare.prepare(object_info, clean_time, clean_flux, clean_flux_err)
-        if (is_short_cadence and self.initial_smooth) or (self.initial_rms_mask and object_info.initial_mask is None):
+        if sherlock_target.prepare_algorithm is not None:
+            clean_time, clean_flux, clean_flux_err = sherlock_target.prepare_algorithm.prepare(object_info, clean_time, clean_flux, clean_flux_err)
+        if (is_short_cadence and sherlock_target.smooth_enabled) or (sherlock_target.high_rms_enabled and sherlock_target.initial_mask is None):
             logging.info('================================================')
             logging.info('INITIAL FLUX CLEANING')
             logging.info('================================================')
-        if self.initial_rms_mask and object_info.initial_mask is None:
+        if sherlock_target.high_rms_enabled and sherlock_target.initial_mask is None:
             logging.info('Masking high RMS areas by a factor of %.2f with %.1f hours binning',
-                         self.initial_rms_threshold, self.initial_rms_bin_hours)
-            bins_per_day = 24 / self.initial_rms_bin_hours
+                         sherlock_target.high_rms_threshold, sherlock_target.high_rms_bin_hours)
+            bins_per_day = 24 / sherlock_target.high_rms_bin_hours
             fig, axs = plt.subplots(2, 1, figsize=(8, 8), constrained_layout=True)
-            axs[0].set_title(str(self.initial_rms_bin_hours) + " hours binned RMS")
+            axs[0].set_title(str(sherlock_target.high_rms_bin_hours) + " hours binned RMS")
             axs[1].set_title("Total and masked high RMS flux")
             fig.suptitle(str(star_info.object_id) + " High RMS Mask")
             axs[0].set_xlabel('Time')
@@ -808,7 +666,7 @@ class Sherlock:
                 bin_stds, bin_edges, binnumber = stats.binned_statistic(time_partial, flux_partial, statistic='std', bins=bins)
                 stds_median = np.nanmedian(bin_stds[bin_stds > 0])
                 stds_median_array = np.full(len(bin_stds), stds_median)
-                rms_threshold_array = stds_median_array * self.initial_rms_threshold
+                rms_threshold_array = stds_median_array * sherlock_target.high_rms_threshold
                 too_high_bin_stds_indexes = np.argwhere(bin_stds > rms_threshold_array)
                 high_std_mask = np.array([bin_id - 1 in too_high_bin_stds_indexes for bin_id in binnumber])
                 entire_high_rms_mask = np.append(entire_high_rms_mask, high_std_mask)
@@ -829,7 +687,7 @@ class Sherlock:
             plot_dir = self.__init_object_dir(star_info.object_id)
             fig.savefig(plot_dir + 'High_RMS_Mask_' + str(star_info.object_id) + '.png')
             fig.clf()
-        if is_short_cadence and self.initial_smooth:
+        if is_short_cadence and sherlock_target.smooth_enabled:
             #logging.info('Applying Smooth phase (savgol + weighted average)')
             logging.info('Applying Smooth phase (savgol)')
             clean_flux = self.smooth(clean_flux)
@@ -872,29 +730,30 @@ class Sherlock:
             period = None
         return period
 
-    def __detrend_by_period(self, time, flux, period_window):
-        if self.auto_detrend_method == 'gp':
-            flatten_lc, lc_trend = flatten(time, flux, method=self.detrend_method, kernel='matern',
+    def __detrend_by_period(self, method, time, flux, period_window):
+        if method == 'gp':
+            flatten_lc, lc_trend = flatten(time, flux, method=method, kernel='matern',
                                    kernel_size=period_window, return_trend=True, break_tolerance=0.5)
         else:
             flatten_lc, lc_trend = flatten(time, flux, window_length=period_window, return_trend=True,
-                                           method=self.auto_detrend_method, break_tolerance=0.5)
+                                           method=method, break_tolerance=0.5)
         return flatten_lc, lc_trend
 
-    def __analyse(self, object_info, time, lcs, flux_err, star_info, id_run, transits_min_count, cadence, report, wl):
+    def __analyse(self, sherlock_target, time, lcs, flux_err, star_info, id_run, transits_min_count, cadence, report, wl):
         logging.info('=================================')
         logging.info('SEARCH OF SIGNALS - Run %s', id_run)
         logging.info('=================================')
-        transit_results = self.__identify_signals(object_info, time, lcs, flux_err, star_info, transits_min_count, wl, id_run, cadence, report)
-        signal_selection = self.signal_score_selectors[self.best_signal_algorithm]\
-            .select(transit_results, self.snr_min, self.detrend_method, wl)
+        transit_results = self.__identify_signals(sherlock_target, time, lcs, flux_err, star_info, transits_min_count,
+                                                  wl, id_run, cadence, report)
+        signal_selection = sherlock_target.signal_score_selectors[sherlock_target.best_signal_algorithm]\
+            .select(transit_results, sherlock_target.snr_min, sherlock_target.detrend_method, wl)
         logging.info(signal_selection.get_message())
         return transit_results, signal_selection
 
-    def __detrend(self, time, lc, star_info):
+    def __detrend(self, sherlock_target, time, lc, star_info):
         wl_min = self.wl_min[star_info.object_id]
         wl_max = self.wl_max[star_info.object_id]
-        bins = len(time) * 2 / self.bin_minutes
+        bins = len(time) * 2 / sherlock_target.bin_minutes
         bin_means, bin_edges, binnumber = stats.binned_statistic(time, lc, statistic='mean', bins=bins)
         logging.info('=================================')
         logging.info('MODELS IN THE DETRENDING')
@@ -903,42 +762,42 @@ class Sherlock:
                      "RMS_10min (ppm)")
         logging.info("%-25s%-17s%-15s%-11.2f%-15.2f", "PDCSAP_FLUX", "---", "---", np.std(lc) * 1e6,
                      np.std(bin_means[~np.isnan(bin_means)]) * 1e6)
-        wl_step = (wl_max - wl_min) / self.n_detrends
+        wl_step = (wl_max - wl_min) / sherlock_target.detrends_number
         wl = np.arange(wl_min, wl_max, wl_step)  # we define all the posibles window_length that we apply
         final_lcs = np.zeros((len(wl), len(lc)))
         ## save in a plot all the detrendings and all the data to inspect visually.
         figsize = (8, 8)  # x,y
-        rows = self.detrend_plot_axis[self.n_detrends - 1][0]
-        cols = self.detrend_plot_axis[self.n_detrends - 1][1]
+        rows = self.detrend_plot_axis[sherlock_target.detrends_number - 1][0]
+        cols = self.detrend_plot_axis[sherlock_target.detrends_number - 1][1]
         shift = 2 * (1.0 - (np.min(lc)))  # shift in the between the raw and detrended data
         fig, axs = plt.subplots(rows, cols, figsize=figsize, constrained_layout=True)
-        if self.n_detrends > 1:
+        if sherlock_target.detrends_number > 1:
             axs = self.__trim_axs(axs, len(wl))
         flatten_inputs = []
         flattener = Flattener()
-        if self.detrend_cores > 1:
+        if sherlock_target.detrend_cores > 1:
             for i in range(0, len(wl)):
-                flatten_inputs.append(FlattenInput(time, lc, wl[i], self.bin_minutes))
-            if self.detrend_method == 'gp':
-                flatten_results = self.run_multiprocessing(self.run_cores, flattener.flatten_gp, flatten_inputs)
+                flatten_inputs.append(FlattenInput(time, lc, wl[i], sherlock_target.bin_minutes))
+            if sherlock_target.detrend_method == 'gp':
+                flatten_results = self.run_multiprocessing(sherlock_target.cpu_cores, flattener.flatten_gp, flatten_inputs)
             else:
-                flatten_results = self.run_multiprocessing(self.run_cores, flattener.flatten_bw, flatten_inputs)
+                flatten_results = self.run_multiprocessing(sherlock_target.cpu_cores, flattener.flatten_bw, flatten_inputs)
         else:
             flatten_results = []
             for i in range(0, len(wl)):
-                if self.detrend_method == 'gp':
-                    flatten_results.append(flattener.flatten_gp(FlattenInput(time, lc, wl[i], self.bin_minutes)))
+                if sherlock_target.detrend_method == 'gp':
+                    flatten_results.append(flattener.flatten_gp(FlattenInput(time, lc, wl[i], sherlock_target.bin_minutes)))
                 else:
-                    flatten_results.append(flattener.flatten_bw(FlattenInput(time, lc, wl[i], self.bin_minutes)))
+                    flatten_results.append(flattener.flatten_bw(FlattenInput(time, lc, wl[i], sherlock_target.bin_minutes)))
         i = 0
         plot_axs = axs
         for flatten_lc_detrended, lc_trend, bin_centers, bin_means, flatten_wl in flatten_results:
-            if self.n_detrends > 1:
+            if sherlock_target.detrends_number > 1:
                 plot_axs = axs[i]
             final_lcs[i] = flatten_lc_detrended
-            logging.info("%-25s%-17s%-15.4f%-11.2f%-15.2f", 'flatten_lc & trend_lc ' + str(i), self.detrend_method,
+            logging.info("%-25s%-17s%-15.4f%-11.2f%-15.2f", 'flatten_lc & trend_lc ' + str(i), sherlock_target.detrend_method,
                          flatten_wl, np.std(flatten_lc_detrended) * 1e6, np.std(bin_means[~np.isnan(bin_means)]) * 1e6)
-            if self.detrend_method == 'gp':
+            if sherlock_target.detrend_method == 'gp':
                 plot_axs.set_title('ks=%s' % str(np.around(flatten_wl, decimals=4)))
             else:
                 plot_axs.set_title('ws=%s' % str(np.around(flatten_wl, decimals=4)))
@@ -952,8 +811,9 @@ class Sherlock:
         plt.close(fig)
         return final_lcs, wl
 
-    def __identify_signals(self, object_info, time, lcs, flux_err, star_info, transits_min_count, wl, id_run, cadence, report):
-        detrend_logging_customs = 'ker_size' if self.detrend_method == 'gp' else "win_size"
+    def __identify_signals(self, sherlock_target, time, lcs, flux_err, star_info, transits_min_count, wl, id_run, cadence, report):
+        object_info = sherlock_target.object_info
+        detrend_logging_customs = 'ker_size' if sherlock_target.detrend_method == 'gp' else "win_size"
         logging.info("%-12s%-12s%-10s%-8s%-18s%-14s%-14s%-12s%-12s%-14s%-16s%-14s%-12s%-25s%-10s%-18s%-20s",
                      detrend_logging_customs, "Period", "Per_err", "N.Tran", "Mean Depth (ppt)", "T. dur (min)", "T0",
                      "SNR", "SDE", "FAP", "Border_score", "Matching OI", "Harmonic", "Planet radius (R_Earth)", "Rp/Rs",
@@ -966,7 +826,7 @@ class Sherlock:
         lc_df['flux'] = lcs[0][args]
         lc_df['flux_err'] = flux_err[args]
         lc_df.to_csv(run_dir + "/lc_0.csv", index=False)
-        transit_result = self.__adjust_transit(time, lcs[0], star_info, transits_min_count, transit_results, report, cadence)
+        transit_result = self.__adjust_transit(sherlock_target, time, lcs[0], star_info, transits_min_count, transit_results, report, cadence)
         transit_results[0] = transit_result
         r_planet = self.__calculate_planet_radius(star_info, transit_result.depth)
         rp_rs = transit_result.results.rp_rs
@@ -995,7 +855,7 @@ class Sherlock:
             lc_df['flux'] = lcs[i][args]
             lc_df['flux_err'] = flux_err[args]
             lc_df.to_csv(run_dir + "/lc_" + str(i) + ".csv", index=False)
-            transit_result = self.__adjust_transit(time, lcs[i], star_info, transits_min_count, transit_results, report, cadence)
+            transit_result = self.__adjust_transit(sherlock_target, time, lcs[i], star_info, transits_min_count, transit_results, report, cadence)
             transit_results[i] = transit_result
             r_planet = self.__calculate_planet_radius(star_info, transit_result.depth)
             rp_rs = transit_result.results.rp_rs
@@ -1008,8 +868,8 @@ class Sherlock:
                      transit_result.duration * 24 * 60, transit_result.t0, transit_result.snr, transit_result.sde,
                      transit_result.fap, transit_result.border_score, oi, transit_result.harmonic, r_planet, rp_rs, a,
                      habitability_zone)
-            detrend_file_title_customs = 'ker_size' if self.detrend_method == 'gp' else 'win_size'
-            detrend_file_name_customs = 'ks' if self.detrend_method == 'gp' else 'ws'
+            detrend_file_title_customs = 'ker_size' if sherlock_target.detrend_method == 'gp' else 'win_size'
+            detrend_file_name_customs = 'ks' if sherlock_target.detrend_method == 'gp' else 'ws'
             title = 'Run ' + str(id_run) + '# ' + detrend_file_title_customs + ':' + str(format(wl[i], '.4f')) + \
                     ' # P=' + format(transit_result.period, '.2f') + 'd # T0=' + \
                     format(transit_result.t0, '.2f') + ' # Depth=' + format(transit_result.depth, '.4f') + "ppt # Dur=" + \
@@ -1033,8 +893,8 @@ class Sherlock:
             oi = ""
         return oi
 
-    def __adjust_transit(self, time, lc, star_info, transits_min_count, run_results, report, cadence):
-        oversampling = self.oversampling
+    def __adjust_transit(self, sherlock_target, time, lc, star_info, transits_min_count, run_results, report, cadence):
+        oversampling = sherlock_target.oversampling
         if oversampling is None:
             # oversampling = 450 / time_lapse
             # oversampling = oversampling if oversampling < 10 else 10
@@ -1045,10 +905,11 @@ class Sherlock:
             elif oversampling > 10:
                 oversampling = 10
         model = tls.transitleastsquares(time, lc)
-        power_args = {"transit_template": self.fit_method, "period_min": self.period_min, "period_max": self.period_max,
-                      "n_transits_min": transits_min_count, "T0_fit_margin": self.t0_fit_margin,
-                      "show_progress_bar": False, "use_threads": self.run_cores, "oversampling_factor": oversampling,
-                      "duration_grid_step": self.duration_grid_step}
+        power_args = {"transit_template": sherlock_target.fit_method, "period_min": sherlock_target.period_min,
+                      "period_max": sherlock_target.period_max, "n_transits_min": transits_min_count,
+                      "T0_fit_margin": sherlock_target.t0_fit_margin, "show_progress_bar": False,
+                      "use_threads": sherlock_target.cpu_cores, "oversampling_factor": oversampling,
+                      "duration_grid_step": sherlock_target.duration_grid_step}
         if star_info.ld_coefficients is not None:
             power_args["u"] = star_info.ld_coefficients
         if not star_info.radius_assumed:
@@ -1059,8 +920,8 @@ class Sherlock:
             power_args["M_star"] = star_info.mass
             power_args["M_star_min"] = star_info.mass_min
             power_args["M_star_max"] = star_info.mass_max
-        if self.user_transit_template is not None:
-            power_args["transit_template_generator"] = self.user_transit_template
+        if sherlock_target.custom_transit_template is not None:
+            power_args["transit_template_generator"] = sherlock_target.custom_transit_template
         results = model.power(**power_args)
         if results.T0 != 0:
             depths = results.transit_depths[~np.isnan(results.transit_depths)]
@@ -1201,10 +1062,10 @@ class Sherlock:
         fig.clf()
         plt.close(fig)
 
-    def __apply_mask_from_transit_results(self, time, lcs, transit_results, best_signal_index):
+    def __apply_mask_from_transit_results(self, sherlock_target, time, lcs, transit_results, best_signal_index):
         intransit = tls.transit_mask(time, transit_results[best_signal_index].period,
                                      2 * transit_results[best_signal_index].duration, transit_results[best_signal_index].t0)
-        if self.mask_mode == 'subtract':
+        if sherlock_target.mask_mode == 'subtract':
             model_flux, model_flux_edges, model_flux_binnumber = stats.binned_statistic(
                 transit_results[best_signal_index].results.model_lightcurve_time,
                 transit_results[best_signal_index].results.model_lightcurve_model, statistic='mean', bins=len(intransit))
