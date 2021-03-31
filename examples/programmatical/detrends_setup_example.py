@@ -3,6 +3,8 @@ from timeit import default_timer
 from sherlockpipe.sherlock import Sherlock
 from lcbuilder.objectinfo.MissionObjectInfo import MissionObjectInfo
 
+from sherlockpipe.sherlock_target import SherlockTarget
+
 
 @contextmanager
 def elapsed_timer():
@@ -26,9 +28,10 @@ with elapsed_timer() as elapsed:
     # initial detrend for it based on the selected 'auto_detrend_method' method and the value of the
     # 'auto_detrend_ratio' value, which ensures that we are detrending the light curve at 'auto_detrend_ratio' times
     # the stronger period.
-    sherlock = Sherlock([MissionObjectInfo("TIC 181804752", 'all')])\
-        .setup_detrend(initial_smooth=True, initial_rms_mask=True, initial_rms_threshold=2.5, initial_rms_bin_hours=3,
-                       n_detrends=12, detrend_method="gp", cores=2, auto_detrend_periodic_signals=True,
-                       auto_detrend_ratio=1/3, auto_detrend_method="cosine")\
+    sherlock = Sherlock(False, [SherlockTarget(object_info=MissionObjectInfo("TIC 181804752", 'all'),
+                                        smooth_enabled=True, high_rms_enabled=True, high_rms_threshold=2.5, high_rms_bin_hours=3,
+                                        detrends_number=12, detrend_method="gp", cpu_cores=2,
+                                        auto_detrend_enabled=True, auto_detrend_ratio=0.33,
+                                        auto_detrend_method="cosine")]) \
         .run()
     print("Analysis took " + elapsed() + "s")

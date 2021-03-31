@@ -1,3 +1,5 @@
+import multiprocessing
+
 from lcbuilder.objectinfo.ObjectInfo import ObjectInfo
 
 from sherlockpipe.scoring.BasicSignalSelector import BasicSignalSelector
@@ -11,21 +13,22 @@ class SherlockTarget:
     MASK_MODES = ['mask', 'subtract']
     VALID_SIGNAL_SELECTORS = ["basic", "border-correct", "quorum"]
 
-    def __init__(self, object_info: ObjectInfo, high_rms_enabled: bool, high_rms_threshold: float,
-                 high_rms_bin_hours: float, smooth_enabled: bool,
-                 auto_detrend_enabled: bool, auto_detrend_method: str, auto_detrend_ratio: float,
-                 auto_detrend_period: float,
-                 detrend_method: str, detrend_l_min: float, detrend_l_max: float, detrends_number: int, detrend_cores: int,
-                 prepare_algorithm: str, custom_selection_algorithm: str, custom_transit_template: str,
-                 search_zone: str, custom_search_zone: str,
-                 snr_min: float, sde_min: float,
-                 min_sectors: int, max_sectors: int,
-                 bin_minutes: int,
-                 mask_mode: str,
-                 cpu_cores: int, max_runs: int, period_min: float,
-                 period_max: float, period_protect: float, best_signal_algorithm: str, quorum_strength: float,
-                 min_quorum: float, fit_method: str, oversampling: float,
-                 t0_fit_margin: float, duration_grid_step: float):
+    def __init__(self, object_info, high_rms_enabled=True, high_rms_threshold=2.5,
+                 high_rms_bin_hours=4, smooth_enabled=False,
+                 auto_detrend_enabled=False, auto_detrend_method="cosine", auto_detrend_ratio=0.25,
+                 auto_detrend_period=None,
+                 detrend_method='biweight', detrend_l_min=None, detrend_l_max=None, detrends_number=10,
+                 detrend_cores=multiprocessing.cpu_count() - 1,
+                 prepare_algorithm=None, custom_selection_algorithm=None, custom_transit_template=None,
+                 search_zone=None, custom_search_zone=None,
+                 snr_min=5, sde_min=None,
+                 min_sectors=0, max_sectors=99999,
+                 bin_minutes=10,
+                 mask_mode='mask',
+                 cpu_cores=multiprocessing.cpu_count() - 1, max_runs=10, period_min=None,
+                 period_max=None, period_protect=10, best_signal_algorithm='border-correct', quorum_strength=1,
+                 min_quorum=0, fit_method='tls', oversampling=None,
+                 t0_fit_margin=0.05, duration_grid_step=1.1):
         self.min_sectors = min_sectors
         self.max_sectors = max_sectors
         self.bin_minutes = bin_minutes

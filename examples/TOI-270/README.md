@@ -25,16 +25,17 @@ We only need to prepare our user parameter file, where we specify the TIC ID and
 ### GLOBAL OBJECTS RUN SETUP - All sectors analysed at once
 ######################################################################################################################
 ###
-GLOBAL_TWO_MIN_IDS:
-  'TIC 259377017': [5]
-AUTO_DETREND_ENABLED: False
-INITIAL_HIGH_RMS_MASK: True
-INITIAL_SMOOTH_ENABLED: False
-BEST_SIGNAL_ALGORITHM: 'quorum'
-MAX_RUNS: 5
-DETRENDS_NUMBER: 12
-DETREND_CORES: 40
-CPU_CORES: 40 
+TARGETS:
+  'TIC 259377017': 
+    SECTORS: [5]
+    AUTO_DETREND_ENABLED: False
+    INITIAL_HIGH_RMS_MASK: True
+    INITIAL_SMOOTH_ENABLED: False
+    BEST_SIGNAL_ALGORITHM: 'quorum'
+    MAX_RUNS: 5
+    DETRENDS_NUMBER: 12
+    DETREND_CORES: 7
+    CPU_CORES: 7
 
 ```
 In this example, to save some computational cost, we are going to run the pipeline for Sector 5 only. However, the star was 
@@ -82,16 +83,17 @@ Let us do a trial using the algorithm, which helps to reduce the local noise via
 ### GLOBAL OBJECTS RUN SETUP - All sectors analysed at once
 ######################################################################################################################
 ###
-GLOBAL_TWO_MIN_IDS:
-  'TIC 259377017': [5]
-AUTO_DETREND_ENABLED: False
-INITIAL_HIGH_RMS_MASK: True
-INITIAL_SMOOTH_ENABLED: True
-BEST_SIGNAL_ALGORITHM: 'quorum'
-MAX_RUNS: 5
-DETRENDS_NUMBER: 12
-DETREND_CORES: 40
-CPU_CORES: 40 
+TARGETS:
+  'TIC 259377017': 
+    SECTORS: [5]
+    AUTO_DETREND_ENABLED: False
+    INITIAL_HIGH_RMS_MASK: True
+    INITIAL_SMOOTH_ENABLED: True
+    BEST_SIGNAL_ALGORITHM: 'quorum'
+    MAX_RUNS: 5
+    DETRENDS_NUMBER: 12
+    DETREND_CORES: 40
+    CPU_CORES: 40 
 
 ```    
 

@@ -28,17 +28,17 @@ We prepare our user parameter file to search for planetary candidates around TIC
 ######################################################################################################################
 ##
 ##
-GLOBAL_TWO_MIN_IDS:
-  'TIC 200322593': [6]
-AUTO_DETREND_ENABLED: True
-INITIAL_HIGH_RMS_MASK: True
-INITIAL_SMOOTH_ENABLED: True
-BEST_SIGNAL_ALGORITHM: 'quorum'
-DETRENDS_NUMBER: 12
-DETREND_CORES: 80
-CPU_CORES: 80
-MAX_RUNS: 2
-
+TARGETS:
+  'TIC 200322593': 
+    SECTORS: [6]
+    AUTO_DETREND_ENABLED: True
+    INITIAL_HIGH_RMS_MASK: True
+    INITIAL_SMOOTH_ENABLED: True
+    BEST_SIGNAL_ALGORITHM: 'quorum'
+    DETRENDS_NUMBER: 12
+    DETREND_CORES: 7
+    CPU_CORES: 7
+    MAX_RUNS: 2
 ```
 
 The parameter `AUTO_DETREND_ENABLED: True` allows SHERLOCK to search for the modulation and correct for it.
