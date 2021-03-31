@@ -633,11 +633,11 @@ class Sherlock:
         is_short_cadence = round(cadence) <= 5
         if sherlock_target.prepare_algorithm is not None:
             clean_time, clean_flux, clean_flux_err = sherlock_target.prepare_algorithm.prepare(object_info, clean_time, clean_flux, clean_flux_err)
-        if (is_short_cadence and sherlock_target.smooth_enabled) or (sherlock_target.high_rms_enabled and sherlock_target.initial_mask is None):
+        if (is_short_cadence and sherlock_target.smooth_enabled) or (sherlock_target.high_rms_enabled and object_info.initial_mask is None):
             logging.info('================================================')
             logging.info('INITIAL FLUX CLEANING')
             logging.info('================================================')
-        if sherlock_target.high_rms_enabled and sherlock_target.initial_mask is None:
+        if sherlock_target.high_rms_enabled and object_info.initial_mask is None:
             logging.info('Masking high RMS areas by a factor of %.2f with %.1f hours binning',
                          sherlock_target.high_rms_threshold, sherlock_target.high_rms_bin_hours)
             bins_per_day = 24 / sherlock_target.high_rms_bin_hours

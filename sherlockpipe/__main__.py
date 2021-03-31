@@ -33,7 +33,7 @@ def load_module(module_path):
 
 def get_star_info(target):
     input_star_info = None
-    if "STAR" in target and target["STAR"] is not None:
+    if isinstance(target, dict) and "STAR" in target and target["STAR"] is not None:
         star_properties = target["STAR"]
         input_star_info = StarInfo(id, tuple(
             star_properties["LD_COEFFICIENTS"]) if "LD_COEFFICIENTS" in star_properties else None,
@@ -76,20 +76,31 @@ def get_from_user_or_config(target, user_properties, key):
     value = None
     if key in user_properties:
         value = user_properties[key]
-    if key in target:
+    if isinstance(target, dict):
+        if key in target:
+            value = target[key]
+    return value
+
+def get_from_user(target, key):
+    value = None
+    if isinstance(target, dict) and key in target:
         value = target[key]
     return value
+
+def get_from_user_or_default(target, key, default):
+    value = None
+    if isinstance(target, dict) and key in target:
+        value = target[key]
+    return value if value is not None else default
 
 
 def get_from_user_or_config_or_default(target, user_properties, key, default):
     value = None
     if key in user_properties:
         value = user_properties[key]
-    if key in target:
+    if isinstance(target, dict) and key in target:
         value = target[key]
-    if value is None:
-        value = default
-    return value
+    return value if value is not None else default
 
 
 def extract_custom_class(module_path):
@@ -121,10 +132,10 @@ if __name__ == '__main__':
     mission_lightcurve_builder = MissionLightcurveBuilder()
     lcbuilder = LcBuilder()
     for target, target_configs in sherlock_user_properties["TARGETS"].items():
-        aperture = target_configs["APERTURE"] if "APERTURE" in target_configs else None
-        sectors = target_configs["SECTORS"] if "SECTORS" in target_configs else None
-        file = target_configs["FILE"] if "FILE" in target_configs else None
-        author = target_configs["AUTHOR"] if "AUTHOR" in target_configs else None
+        aperture = get_from_user(target_configs, "APERTURE")
+        sectors = get_from_user_or_default(target_configs, "SECTORS", "all")
+        file = get_from_user(target_configs, "FILE")
+        author = get_from_user(target_configs, "AUTHOR")
         star_info = get_star_info(target_configs)
         min_sectors = get_from_user_or_config(target_configs, sherlock_user_properties, "MIN_SECTORS")
         max_sectors = get_from_user_or_config(target_configs, sherlock_user_properties, "MAX_SECTORS")
@@ -163,10 +174,10 @@ if __name__ == '__main__':
         auto_detrend_ratio = get_from_user_or_config(target_configs, sherlock_user_properties, "AUTO_DETREND_RATIO")
         auto_detrend_method = get_from_user_or_config(target_configs, sherlock_user_properties, "AUTO_DETREND_METHOD")
         auto_detrend_enabled = get_from_user_or_config(target_configs, sherlock_user_properties, "AUTO_DETREND_ENABLED")
-        smooth_enabled = get_from_user_or_config(target_configs, sherlock_user_properties, "SMOOTH_ENABLED")
-        high_rms_bin_hours = get_from_user_or_config(target_configs, sherlock_user_properties, "HIGH_RMS_BIN_HOURS")
-        high_rms_threshold = get_from_user_or_config(target_configs, sherlock_user_properties, "HIGH_RMS_THRESHOLD")
-        high_rms_enabled = get_from_user_or_config(target_configs, sherlock_user_properties, "HIGH_RMS_ENABLED")
+        smooth_enabled = get_from_user_or_config(target_configs, sherlock_user_properties, "INITIAL_SMOOTH_ENABLED")
+        high_rms_bin_hours = get_from_user_or_config(target_configs, sherlock_user_properties, "INITIAL_HIGH_RMS_BIN_HOURS")
+        high_rms_threshold = get_from_user_or_config(target_configs, sherlock_user_properties, "INITIAL_HIGH_RMS_THRESHOLD")
+        high_rms_enabled = get_from_user_or_config(target_configs, sherlock_user_properties, "INITIAL_HIGH_RMS_MASK")
         exptime = get_from_user_or_config(target_configs, sherlock_user_properties, "EXPTIME")
         mission = None
         mode = get_from_user_or_config_or_default(target_configs, sherlock_user_properties, "MODE", "GLOBAL")
@@ -191,7 +202,7 @@ if __name__ == '__main__':
                        min_quorum, fit_method, oversampling,
                        t0_fit_margin, duration_grid_step)
         if mode == "GLOBAL" or mode == "BOTH":
-            sherlock_targets = [sherlock_target]
+            sherlock_targets.append(sherlock_target)
         if mode == "SECTOR" or mode == "BOTH" and isinstance(built_object_info, (
                 MissionObjectInfo, MissionFfiCoordsObjectInfo, MissionFfiIdObjectInfo)):
             if sectors == 'all':
@@ -218,6 +229,7 @@ if __name__ == '__main__':
                                min_quorum, fit_method, oversampling,
                                t0_fit_margin, duration_grid_step)
                 sherlock_targets.append(sherlock_target)
-        else:
+        if mode != "GLOBAL" and mode != "BOTH" and not (mode == "SECTOR" or mode == "BOTH" and isinstance(built_object_info, (
+                MissionObjectInfo, MissionFfiCoordsObjectInfo, MissionFfiIdObjectInfo))):
             raise ValueError("Not a valid run mode: " + str(mode) + " for target: " + str(target))
     sherlock.Sherlock(sherlock_user_properties["UPDATE_OIS"], sherlock_targets, args.explore).run()
