@@ -3,7 +3,7 @@ import os
 
 with open("README.md", "r") as fh:
     long_description = fh.read()
-version = "0.18"
+version = "0.19.0rc1"
 
 setuptools.setup(
     name="sherlockpipe", # Replace with your own username
@@ -45,7 +45,7 @@ setuptools.setup(
                         "scipy==1.5.4",
                         "reproject==0.4",
                         "reportlab==3.5.59",
-                        "lcbuilder==0.1.7",
+                        "lcbuilder==0.1.8",
                         "mock==4.0.3",
                         'tqdm==4.56.0',
                         'setuptools>=41.0.0',
@@ -55,7 +55,6 @@ setuptools.setup(
                         'configparser==5.0.1',
                         'pyparsing==2.4.7', # Matplotlib dependency
                         'statsmodels==0.12.2', # Allesfitter dependency
-                        'tkmatrix==0.1.9',
                         'triceratops==1.0.6'
     ]
 )
