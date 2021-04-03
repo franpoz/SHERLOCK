@@ -304,6 +304,8 @@ class Vetter:
                 index = index + 1
             os.mkdir(vetting_dir)
             self.data_dir = vetting_dir
+            ra = None
+            dec = None
             try:
                 res = self.__process(indir, tic, sectors, transit_list, t0, period, ffi)
                 ra = res['RA']
@@ -312,12 +314,22 @@ class Vetter:
                     print('something went wrong with the LATTE results')
             except Exception as e:
                 traceback.print_exc()
+                try:
+                    sectors_all, ra, dec = LATTEutils.tess_point(indir, tic)
+                except Exception as e1:
+                    traceback.print_exc()
             if self.validate:
-                result_dir, ra, dec = self.vetting_validation(cpus, indir, tic, sectors, lc_file, transit_depth, period,
-                                                              t0, duration)
-                shutil.move(result_dir, vetting_dir + "/triceratops")
-            result_dir = self.vetting_field_of_view(indir, tic, ra, dec, sectors)
-            shutil.move(result_dir, vetting_dir + "/tpfplot")
+                try:
+                    result_dir, ra, dec = self.vetting_validation(cpus, indir, tic, sectors, lc_file, transit_depth, period,
+                                                                  t0, duration)
+                    shutil.move(result_dir, vetting_dir + "/triceratops")
+                except Exception as e:
+                    traceback.print_exc()
+            if ra is not None and dec is not None:
+                result_dir = self.vetting_field_of_view(indir, tic, ra, dec, sectors)
+                shutil.move(result_dir, vetting_dir + "/tpfplot")
+            else:
+                print("Can't generate tpfplot because RA and DEC are missing.")
             # TODO improve this condition to check whether tic, sectors and transits exist
         #     if not np.isin(tic, urls_exist):
         #         # make sure the file is opened as append only
@@ -484,7 +496,7 @@ class Vetter:
         target.probs = probs_total_df
         # target.plot_fits(save=True, fname=save_dir + "/scenario_fits", time=lc.time.value, flux_0=lc.flux.value,
         #                  flux_err_0=sigma)
-        return save_dir
+        return save_dir, star[0].coords[0], star[0].coords[1]
 
     @staticmethod
     def plot_fits(target, save_file, time: np.ndarray, flux_0: np.ndarray, sigma_0: float):
