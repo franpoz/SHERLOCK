@@ -123,7 +123,7 @@ provides some methods to reduce the effects of these important systematics.
 
 ### 2.2.1 Local noise reduction
 For local noise, where very close measurements show high deviation from the local trend, we apply a
-Savitzky-Golay filter [@sg:1964]. In all our tests, this filter provided a significant improve of the signal-to-noise ratio (SNR) of previously identified transits.
+Savitzky-Golay filter [@sg:1964]. In all our tests, this filter provided a significant improvement of the signal-to-noise ratio (SNR) of previously identified transits.
 This implementation is specially interesting in the search for shallow transits. However, the number of false positives is also incremented, and the user needs to verify that 
 the proposed signal is realistic, for example checking the transit shape, duration etc. 
 This feature can be enabled/disabled by the "INITIAL SMOOTH ENABLED" flag in the [properties.yaml](https://github.com/franpoz/SHERLOCK/blob/master/sherlockpipe/properties.yaml) file.
