@@ -53,7 +53,7 @@ with elapsed_timer() as elapsed:
                  "max_runs": 10, "period_protect": 12, "period_min": 1, "period_max": 10, "bin_minutes": 20,
                  "run_cores": 3, "snr_min": 6, "sde_min": 6, "mask_mode": "subtract",
                  "best_signal_algorithm": 'quorum', "quorum_strength": 1.2}
-    sherlock = Sherlock(False, [SherlockTarget(MissionFfiIdObjectInfo("TIC 181804752", 'all'), **arguments),
+    sherlock = Sherlock([SherlockTarget(MissionFfiIdObjectInfo("TIC 181804752", 'all'), **arguments),
                                         SherlockTarget(MissionObjectInfo("TIC 259168516", [15]), **arguments),
                                         SherlockTarget(MissionObjectInfo('KIC 10905746', 'all'), **arguments),
                                         SherlockTarget(MissionObjectInfo('EPIC 249631677', 'all'), **arguments),

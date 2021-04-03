@@ -2,6 +2,7 @@ import os
 import shutil
 import sys
 import time
+import traceback
 from argparse import ArgumentParser
 import sherlockpipe.eleanor
 sys.modules['eleanor'] = sys.modules['sherlockpipe.eleanor']
@@ -53,7 +54,7 @@ class Updater:
             ois_manager.update_epic_csvs()
             with open(os.path.join(os.path.expanduser('~'), '.sherlockpipe/timestamp_ois.txt'), 'w+') as f:
                 f.write(str(time.time()))
-        if (force or time.time() - float(eleanor_timestamp) > 3600 * 24 * 7) and not ois:
+        if force or time.time() - float(eleanor_timestamp) > 3600 * 24 * 7:
             print("------------------ Reloading ELEANOR TESS FFI data ------------------")
             eleanorpath = os.path.join(os.path.expanduser('~'), '.eleanor')
             eleanormetadata = eleanorpath + "/metadata"
@@ -70,14 +71,15 @@ class Updater:
                 if not os.path.exists(sectorpath) or not os.path.isdir(sectorpath) or not os.listdir(sectorpath):
                     try:
                         eleanor.Update(sector)
-                    except:
-                        os.rmdir(sectorpath)
+                    except Exception as e:
+                        traceback.print_exc()
+                        shutil.rmtree(sectorpath)
                         break
             with open(os.path.join(os.path.expanduser('~'), '.sherlockpipe/timestamp_eleanor.txt'), 'w+') as f:
                 f.write(str(time.time()))
         if (force or time.time() - float(latte_timestamp) > 3600 * 24 * 7) and not ois:
             print("------------------ Reloading LATTE data ------------------")
-            Vetter(None).update()
+            Vetter(None, False).update()
             with open(os.path.join(os.path.expanduser('~'), '.sherlockpipe/timestamp_latte.txt'), 'w+') as f:
                 f.write(str(time.time()))
         print("DONE")

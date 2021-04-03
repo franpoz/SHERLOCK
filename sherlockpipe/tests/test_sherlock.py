@@ -14,80 +14,60 @@ from sherlockpipe.scoring.BasicSignalSelector import BasicSignalSelector
 from sherlockpipe.scoring.QuorumSnrBorderCorrectedSignalSelector import QuorumSnrBorderCorrectedSignalSelector
 from sherlockpipe.scoring.SnrBorderCorrectedSignalSelector import SnrBorderCorrectedSignalSelector
 from sherlockpipe.sherlock import Sherlock
+from sherlockpipe.sherlock_target import SherlockTarget
 
 
 class TestsSherlock(unittest.TestCase):
     def test_setup_files(self):
-        sherlock = Sherlock(False, None)
-        sherlock.setup_files(False, "inner/")
+        sherlock = Sherlock(None)
+        sherlock.setup_files(False, False, False, "inner/")
         self.assertEqual("inner/", sherlock.results_dir)
 
     def test_setup_detrend(self):
-        sherlock = Sherlock(False, None)
-        sherlock.setup_detrend(initial_smooth=False, initial_rms_mask=False, initial_rms_threshold=3,
-                               initial_rms_bin_hours=9, n_detrends=2, detrend_method="gp", cores=3,
-                               auto_detrend_periodic_signals=True, auto_detrend_ratio=1 / 2,
-                               auto_detrend_method="cosine")
-        self.assertEqual(False, sherlock.initial_smooth)
-        self.assertEqual(False, sherlock.initial_rms_mask)
-        self.assertEqual(3, sherlock.initial_rms_threshold)
-        self.assertEqual(9, sherlock.initial_rms_bin_hours)
-        self.assertEqual(2, sherlock.n_detrends)
-        self.assertEqual("gp", sherlock.detrend_method)
-        self.assertEqual(3, sherlock.detrend_cores)
-        self.assertEqual(True, sherlock.auto_detrend_periodic_signals)
-        self.assertEqual(1 / 2, sherlock.auto_detrend_ratio)
-        self.assertEqual("cosine", sherlock.auto_detrend_method)
+        sherlock = Sherlock([SherlockTarget(object_info=None, smooth_enabled=False, high_rms_enabled=False,
+                                                  high_rms_threshold=3, high_rms_bin_hours=9, detrends_number=2,
+                                                  detrend_method="gp", cpu_cores=3, auto_detrend_enabled=True,
+                                                  auto_detrend_ratio=1 / 2, auto_detrend_method="cosine")])
+        self.assertEqual(False, sherlock.sherlock_targets[0].smooth_enabled)
+        self.assertEqual(False, sherlock.sherlock_targets[0].high_rms_enabled)
+        self.assertEqual(3, sherlock.sherlock_targets[0].high_rms_threshold)
+        self.assertEqual(9, sherlock.sherlock_targets[0].high_rms_bin_hours)
+        self.assertEqual(2, sherlock.sherlock_targets[0].detrends_number)
+        self.assertEqual("gp", sherlock.sherlock_targets[0].detrend_method)
+        self.assertEqual(3, sherlock.sherlock_targets[0].cpu_cores)
+        self.assertEqual(True, sherlock.sherlock_targets[0].auto_detrend_enabled)
+        self.assertEqual(1 / 2, sherlock.sherlock_targets[0].auto_detrend_ratio)
+        self.assertEqual("cosine", sherlock.sherlock_targets[0].auto_detrend_method)
 
     def test_setup_transit_adjust_params(self):
-        sherlock = Sherlock(False, None)
-        sherlock.setup_transit_adjust_params(max_runs=5, period_protec=5, period_min=1, period_max=2, bin_minutes=5,
-                                             run_cores=3, snr_min=6, sde_min=5, fap_max=0.05, mask_mode="subtract",
-                                             best_signal_algorithm="quorum", quorum_strength=2)
-        self.assertEqual(5, sherlock.max_runs)
-        self.assertEqual(5, sherlock.period_protec)
-        self.assertEqual(1, sherlock.period_min)
-        self.assertEqual(2, sherlock.period_max)
-        self.assertEqual(5, sherlock.bin_minutes)
-        self.assertEqual(3, sherlock.run_cores)
-        self.assertEqual(6, sherlock.snr_min)
-        self.assertEqual(5, sherlock.sde_min)
-        self.assertEqual(0.05, sherlock.fap_max)
-        self.assertEqual("subtract", sherlock.mask_mode)
-        self.assertEqual("quorum", sherlock.best_signal_algorithm)
-        # TODO test quorum strength
+        sherlock = Sherlock([SherlockTarget(object_info=None, max_runs=5, period_protect=5, period_min=1,
+                                                   period_max=2, bin_minutes=5, cpu_cores=3, snr_min=6, sde_min=5,
+                                                   mask_mode="subtract", best_signal_algorithm="quorum",
+                                                   quorum_strength=2)])
+        self.assertEqual(5, sherlock.sherlock_targets[0].max_runs)
+        self.assertEqual(5, sherlock.sherlock_targets[0].period_protect)
+        self.assertEqual(1, sherlock.sherlock_targets[0].period_min)
+        self.assertEqual(2, sherlock.sherlock_targets[0].period_max)
+        self.assertEqual(5, sherlock.sherlock_targets[0].bin_minutes)
+        self.assertEqual(3, sherlock.sherlock_targets[0].cpu_cores)
+        self.assertEqual(6, sherlock.sherlock_targets[0].snr_min)
+        self.assertEqual(5, sherlock.sherlock_targets[0].sde_min)
+        self.assertEqual("subtract", sherlock.sherlock_targets[0].mask_mode)
+        self.assertEqual("quorum", sherlock.sherlock_targets[0].best_signal_algorithm)
+        self.assertEqual(2, sherlock.sherlock_targets[0].quorum_strength)
 
     def test_scoring_algorithm(self):
-        sherlock = Sherlock(False, None)
-        sherlock.setup_transit_adjust_params(best_signal_algorithm="basic")
-        self.assertTrue(isinstance(sherlock.signal_score_selectors[sherlock.best_signal_algorithm],
-                                   BasicSignalSelector))
-        sherlock.setup_transit_adjust_params(best_signal_algorithm="border-correct")
-        self.assertTrue(isinstance(sherlock.signal_score_selectors[sherlock.best_signal_algorithm],
+        sherlock = Sherlock([SherlockTarget(object_info=None, best_signal_algorithm="basic")])
+        self.assertTrue(isinstance(sherlock.sherlock_targets[0].signal_score_selectors["basic"], BasicSignalSelector))
+        sherlock = Sherlock([SherlockTarget(object_info=None, best_signal_algorithm="border-correct")])
+        self.assertTrue(isinstance(sherlock.sherlock_targets[0].signal_score_selectors["border-correct"],
                                    SnrBorderCorrectedSignalSelector))
-        sherlock.setup_transit_adjust_params(best_signal_algorithm="quorum")
-        self.assertTrue(isinstance(sherlock.signal_score_selectors[sherlock.best_signal_algorithm],
+        sherlock = Sherlock([SherlockTarget(object_info=None, best_signal_algorithm="quorum")])
+        self.assertTrue(isinstance(sherlock.sherlock_targets[0].signal_score_selectors["quorum"],
                                    QuorumSnrBorderCorrectedSignalSelector))
 
-    def test_preparer(self):
-        object_info = MissionObjectInfo("TIC 1234567", 'all')
-        sherlock = Sherlock(False, object_info)
-        self.assertTrue(isinstance(sherlock.lightcurve_builders[type(object_info)], MissionLightcurveBuilder))
-        object_info = MissionFfiIdObjectInfo("TIC 1234567", 'all')
-        sherlock = Sherlock(False, object_info)
-        self.assertTrue(isinstance(sherlock.lightcurve_builders[type(object_info)], MissionFfiLightcurveBuilder))
-        object_info = MissionFfiCoordsObjectInfo(19, 15, 'all')
-        sherlock = Sherlock(False, object_info)
-        self.assertTrue(isinstance(sherlock.lightcurve_builders[type(object_info)], MissionFfiLightcurveBuilder))
-        object_info = MissionInputObjectInfo("TIC 1234567", "testfilename.csv")
-        sherlock = Sherlock(False, object_info)
-        self.assertTrue(isinstance(sherlock.lightcurve_builders[type(object_info)], MissionInputLightcurveBuilder))
-        object_info = InputObjectInfo("testfilename.csv")
-        sherlock = Sherlock(False, object_info)
-        self.assertTrue(isinstance(sherlock.lightcurve_builders[type(object_info)], MissionInputLightcurveBuilder))
-
     def test_apdate_tois(self):
-        sherlock = Sherlock(False, None)
+        sherlock = Sherlock(None)
         sherlock.ois_manager.update_tic_csvs()
         try:
             self.assertTrue(os.path.isfile(sherlock.ois_manager.tois_csv))
@@ -95,7 +75,7 @@ class TestsSherlock(unittest.TestCase):
             os.remove(sherlock.ois_manager.tois_csv)
 
     def test_apdate_kois(self):
-        sherlock = Sherlock(False, None)
+        sherlock = Sherlock(None)
         sherlock.ois_manager.update_kic_csvs()
         try:
             self.assertTrue(os.path.isfile(sherlock.ois_manager.kic_star_csv))
@@ -107,7 +87,7 @@ class TestsSherlock(unittest.TestCase):
             os.remove(sherlock.ois_manager.kois_csv)
 
     def test_apdate_epicois(self):
-        sherlock = Sherlock(False, None)
+        sherlock = Sherlock(None)
         sherlock.ois_manager.update_epic_csvs()
         try:
             self.assertTrue(os.path.isfile(sherlock.ois_manager.epic_csv))
@@ -115,8 +95,8 @@ class TestsSherlock(unittest.TestCase):
             os.remove(sherlock.ois_manager.epic_csv)
 
     def test_ois_loaded(self):
-        sherlock = Sherlock(False, None)
-        sherlock.load_ois(True)
+        sherlock = Sherlock(None)
+        sherlock.load_ois(True, False, False)
         sherlock.filter_hj_ois()
         try:
             self.assertGreater(len(sherlock.ois.index), 100)
@@ -131,7 +111,7 @@ class TestsSherlock(unittest.TestCase):
             os.remove(sherlock.ois_manager.epic_csv)
 
     def test_run_empty(self):
-        sherlock = Sherlock(False, [])
+        sherlock = Sherlock([])
         self.assertFalse(sherlock.use_ois)
         sherlock.run()
         object_dir = "TIC181084752_FFI_all"
@@ -140,9 +120,9 @@ class TestsSherlock(unittest.TestCase):
     def test_run(self):
         run_dir = "TIC181804752_FFI_all"
         try:
-            sherlock = Sherlock(False, [MissionFfiIdObjectInfo("TIC 181804752", 'all')])
-            sherlock.setup_detrend(n_detrends=1, initial_smooth=False, initial_rms_mask=False)\
-                .setup_transit_adjust_params(max_runs=1).run()
+            Sherlock([SherlockTarget(MissionFfiIdObjectInfo("TIC 181804752", 'all'),
+                                                       detrends_number=1, smooth_enabled=False,
+                                                       high_rms_enabled=False, max_runs=1)]).run()
             self.__assert_run_files(run_dir, assert_rms_mask=False)
         finally:
             self.__clean(run_dir)
@@ -150,9 +130,8 @@ class TestsSherlock(unittest.TestCase):
     def test_run_with_rms_mask(self):
         run_dir = "TIC181804752_FFI_all"
         try:
-            sherlock = Sherlock(False, [MissionFfiIdObjectInfo("TIC 181804752", 'all')])
-            sherlock.setup_detrend(n_detrends=1, initial_rms_mask=True) \
-                .setup_transit_adjust_params(max_runs=1).run()
+            Sherlock([SherlockTarget(MissionFfiIdObjectInfo("TIC 181804752", 'all'), high_rms_enabled=True,
+                                            max_runs=1)]).run()
             self.__assert_run_files(run_dir)
         finally:
             self.__clean(run_dir)
@@ -160,9 +139,8 @@ class TestsSherlock(unittest.TestCase):
     def test_run_with_explore(self):
         run_dir = None
         try:
-            sherlock = Sherlock(False, [MissionFfiIdObjectInfo("TIC 181804752", 'all')], True)
-            sherlock.setup_detrend(n_detrends=1, initial_rms_mask=True) \
-                .setup_transit_adjust_params(max_runs=1).run()
+            Sherlock([SherlockTarget(MissionFfiIdObjectInfo("TIC 181804752", 'all'),
+                                                       detrends_number=1, high_rms_enabled=True)], True).run()
             run_dir = "TIC181804752_FFI_all"
             self.assertTrue(os.path.exists(run_dir))
             self.assertTrue(os.path.exists(run_dir + "/Periodogram_TIC181804752_FFI_all.png"))
@@ -173,21 +151,21 @@ class TestsSherlock(unittest.TestCase):
     def test_run_with_autodetrend(self):
         run_dir = None
         try:
-            sherlock = Sherlock(False, [MissionObjectInfo("TIC 259377017", [5])], True)
-            sherlock.setup_detrend(n_detrends=1, initial_rms_mask=True, auto_detrend_periodic_signals=True) \
-                .setup_transit_adjust_params(max_runs=1).run()
+            Sherlock([SherlockTarget(MissionObjectInfo("TIC 259377017", [5]), detrends_number=1,
+                                                       auto_detrend_enabled=True, max_runs=1)],
+                     True).run()
             run_dir = "TIC259377017_[5]"
             self.assertTrue(os.path.exists(run_dir))
-            self.assertTrue(os.path.exists(run_dir + "/Phase_detrend_period_TIC259377017_[5]_3.60_days.png"))
+            self.assertTrue(os.path.exists(run_dir + "/Phase_detrend_period_TIC259377017_[5]_0.52_days.png"))
         finally:
             self.__clean(run_dir)
 
     def test_run_epic_ffi(self):
         run_dir = None
         try:
-            sherlock = Sherlock(False, [MissionFfiIdObjectInfo("EPIC 249631677", 'all')], False)
-            sherlock.setup_detrend(n_detrends=1, initial_rms_mask=True, auto_detrend_periodic_signals=False) \
-                .setup_transit_adjust_params(max_runs=1).run()
+            Sherlock([SherlockTarget(MissionFfiIdObjectInfo("EPIC 249631677", 'all'),
+                                                       detrends_number=1, high_rms_enabled=True,
+                                                       auto_detrend_enabled=False, max_runs=1)], False).run()
             run_dir = "EPIC249631677_FFI_all"
             self.assertTrue(os.path.exists(run_dir))
             self.assertTrue(os.path.exists(run_dir + "/Periodogram_EPIC249631677_FFI_all.png"))
@@ -198,15 +176,14 @@ class TestsSherlock(unittest.TestCase):
     def test_run_with_star_info(self):
         run_dir = None
         try:
-            sherlock = Sherlock(False, [MissionFfiIdObjectInfo("TIC 181804752", 'all',
+            Sherlock([SherlockTarget(MissionFfiIdObjectInfo("TIC 181804752", 'all',
                                                                star_info=StarInfo(ld_coefficients=(0.15,0.25),
                                                                                   teff=4000,
                                                                                   lum=1.50, logg=0.15, radius=0.4,
                                                                                   radius_min=0.10, radius_max=0.15,
                                                                                   mass=0.3, mass_min=0.05, mass_max=0.075,
-                                                                                  ra=15, dec=87))], True)
-            sherlock.setup_detrend(n_detrends=1, initial_rms_mask=True)\
-                .setup_transit_adjust_params(max_runs=1).run()
+                                                                                  ra=15, dec=87)), detrends_number=1,
+                                                       high_rms_enabled=True, max_runs=1)], True).run()
             run_dir = "TIC181804752_FFI_all"
             self.assertTrue(os.path.exists(run_dir))
             self.assertTrue(os.path.exists(run_dir + "/Periodogram_TIC181804752_FFI_all.png"))
@@ -229,10 +206,11 @@ class TestsSherlock(unittest.TestCase):
     def test_run_with_transit_customs(self):
         run_dir = None
         try:
-            sherlock = Sherlock(False, [MissionFfiIdObjectInfo("TIC 181804752", 'all')], False)
-            sherlock.setup_detrend(n_detrends=1, initial_rms_mask=True)\
-                .setup_transit_adjust_params(max_runs=1, oversampling=5.5, t0_fit_margin=0.09, duration_grid_step=1.075,
-                                             fit_method="bls", best_signal_algorithm="quorum", quorum_strength=0.31)\
+            sherlock = Sherlock([SherlockTarget(MissionFfiIdObjectInfo("TIC 181804752", 'all'),
+                                                       detrends_number=1, high_rms_enabled=True, max_runs=1,
+                                                       oversampling=5.5, t0_fit_margin=0.09,
+                                                       duration_grid_step=1.075, fit_method="bls",
+                                                       best_signal_algorithm="quorum", quorum_strength=0.31)], False)\
                 .run()
             run_dir = "TIC181804752_FFI_all"
             with open(run_dir + '/TIC181804752_FFI_all_report.log') as f:

@@ -71,7 +71,7 @@ class Sherlock:
     ois_manager = OisManager()
     use_ois = False
 
-    def __init__(self, update_ois: bool, sherlock_targets: list, explore=False):
+    def __init__(self, sherlock_targets: list, explore=False, update_ois=False, update_force=False, update_clean=False):
         """
         Initializes a Sherlock object, loading the OIs from the csvs, setting up the detrend and transit configurations,
         storing the provided object_infos list and initializing the builders to be used to prepare the light curves for
@@ -81,7 +81,7 @@ class Sherlock:
         @param explore: whether to only run the prepare stage for all objects
         """
         self.explore = explore
-        self.setup_files(update_ois)
+        self.setup_files(update_ois, update_force, update_clean)
         self.sherlock_targets = sherlock_targets
         self.habitability_calculator = HabitabilityCalculator()
         self.detrend_plot_axis = [[1, 1], [2, 1], [3, 1], [2, 2], [3, 2], [3, 2], [3, 3], [3, 3], [3, 3], [4, 3],
@@ -91,7 +91,7 @@ class Sherlock:
         self.detrend_plot_axis.append([2, 1])
         self.detrend_plot_axis.append([3, 1])
 
-    def setup_files(self, refresh_ois, results_dir=RESULTS_DIR):
+    def setup_files(self, refresh_ois, refresh_force, refresh_clean, results_dir=RESULTS_DIR):
         """
         Loads the objects of interest data from the downloaded CSVs.
         @param refresh_ois: Flag update the TOIs, KOIs and EPICs
@@ -99,7 +99,7 @@ class Sherlock:
         @return: the Sherlock object itself
         """
         self.results_dir = results_dir
-        self.load_ois(refresh_ois)
+        self.load_ois(refresh_ois, refresh_force, refresh_clean)
         return self
 
     def refresh_ois(self):
@@ -113,14 +113,13 @@ class Sherlock:
         self.ois_manager.update_epic_csvs()
         return self
 
-    def load_ois(self, refresh_ois):
+    def load_ois(self, refresh_ois, refresh_force, refresh_clean):
         """
         Loads the csv OIs files into memory
         @return: the Sherlock object itself
         @rtype: Sherlock
         """
-        if refresh_ois:
-            Updater().update(False, True, True)
+        Updater().update(refresh_clean, refresh_ois, refresh_force)
         self.ois = self.ois_manager.load_ois()
         return self
 

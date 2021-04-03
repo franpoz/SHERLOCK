@@ -18,6 +18,6 @@ def elapsed_timer():
 with elapsed_timer() as elapsed:
     # We will use only one mission object and set the period to be initially detrended with a window size of 1/3 times
     # the given period.
-    sherlock = Sherlock(False, [SherlockTarget(MissionObjectInfo("TIC 181804752", 'all'), auto_detrend_ratio=1 / 3)])\
+    sherlock = Sherlock([SherlockTarget(MissionObjectInfo("TIC 181804752", 'all'), auto_detrend_ratio=1 / 3)])\
         .run()
     print("Analysis took " + elapsed() + "s")

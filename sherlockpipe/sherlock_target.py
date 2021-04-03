@@ -21,12 +21,12 @@ class SherlockTarget:
                  detrend_cores=multiprocessing.cpu_count() - 1,
                  prepare_algorithm=None, custom_selection_algorithm=None, custom_transit_template=None,
                  search_zone=None, custom_search_zone=None,
-                 snr_min=5, sde_min=None,
+                 snr_min=5, sde_min=5,
                  min_sectors=0, max_sectors=99999,
                  bin_minutes=10,
                  mask_mode='mask',
-                 cpu_cores=multiprocessing.cpu_count() - 1, max_runs=10, period_min=None,
-                 period_max=None, period_protect=10, best_signal_algorithm='border-correct', quorum_strength=1,
+                 cpu_cores=multiprocessing.cpu_count() - 1, max_runs=10, period_min=0.5,
+                 period_max=33, period_protect=10, best_signal_algorithm='border-correct', quorum_strength=1,
                  min_quorum=0, fit_method='tls', oversampling=None,
                  t0_fit_margin=0.05, duration_grid_step=1.1):
         self.min_sectors = min_sectors

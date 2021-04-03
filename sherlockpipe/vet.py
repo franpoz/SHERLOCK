@@ -304,14 +304,19 @@ class Vetter:
                 index = index + 1
             os.mkdir(vetting_dir)
             self.data_dir = vetting_dir
-            res = self.__process(indir, tic, sectors, transit_list, t0, period, ffi)
-            if res['TICID'] == -99:
-                print('something went wrong')
-                continue
+            try:
+                res = self.__process(indir, tic, sectors, transit_list, t0, period, ffi)
+                ra = res['RA']
+                dec = res['DEC']
+                if res['TICID'] == -99:
+                    print('something went wrong with the LATTE results')
+            except Exception as e:
+                traceback.print_exc()
             if self.validate:
-                result_dir = self.vetting_validation(cpus, indir, tic, sectors, lc_file, transit_depth, period, t0, duration)
+                result_dir, ra, dec = self.vetting_validation(cpus, indir, tic, sectors, lc_file, transit_depth, period,
+                                                              t0, duration)
                 shutil.move(result_dir, vetting_dir + "/triceratops")
-            result_dir = self.vetting_field_of_view(indir, tic, res['RA'], res['DEC'], sectors)
+            result_dir = self.vetting_field_of_view(indir, tic, ra, dec, sectors)
             shutil.move(result_dir, vetting_dir + "/tpfplot")
             # TODO improve this condition to check whether tic, sectors and transits exist
         #     if not np.isin(tic, urls_exist):

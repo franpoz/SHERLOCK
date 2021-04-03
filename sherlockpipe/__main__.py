@@ -2,6 +2,7 @@ import pickle
 import re
 import sys
 
+import lightkurve
 from lcbuilder.lcbuilder_class import LcBuilder
 from lcbuilder.objectinfo.preparer.MissionFfiLightcurveBuilder import MissionFfiLightcurveBuilder
 from lcbuilder.objectinfo.preparer.MissionLightcurveBuilder import MissionLightcurveBuilder
@@ -63,13 +64,19 @@ def get_aperture(properties, id):
 
 
 def extract_sectors(object_info):
-    lc, lc_data, object_star_info, transits_min_count, object_sectors, quarters = \
-        MissionFfiLightcurveBuilder().build(object_info, None)
-    if object_sectors is not None:
-        sections = object_sectors
-    else:
-        sections = quarters
-    return sections
+    mission, mission_prefix, id_int = LcBuilder().parse_object_info(object_info.mission_id())
+    if mission == "Kepler":
+        lcf_search_results = lightkurve.search_targetpixelfile(object_info.mission_id(), mission=object_info.mission_id(),
+                                                           cadence="long")
+        object_sectors = lcf_search_results.download_all().quarter
+    elif mission == "K2":
+        lcf_search_results = lightkurve.search_targetpixelfile(object_info.mission_id(), mission=object_info.mission_id(),
+                                                           cadence="long")
+        object_sectors = lcf_search_results.download_all().campaign
+    elif mission == "TESS":
+        lcf_search_results = lightkurve.search_tesscut(object_info.mission_id())
+        object_sectors = lcf_search_results.download_all().sector
+    return object_sectors
 
 
 def get_from_user_or_config(target, user_properties, key):
@@ -128,6 +135,8 @@ if __name__ == '__main__':
     sherlock_user_properties = yaml.load(open(file_dir), yaml.SafeLoader)
     user_properties = yaml.load(open(args.properties), yaml.SafeLoader)
     sherlock_user_properties.update(user_properties)
+    sherlock.Sherlock([], args.explore, sherlock_user_properties["UPDATE_OIS"],
+                      sherlock_user_properties["UPDATE_FORCE"], sherlock_user_properties["UPDATE_CLEAN"]).run()
     sherlock_targets = []
     mission_lightcurve_builder = MissionLightcurveBuilder()
     lcbuilder = LcBuilder()
@@ -232,4 +241,4 @@ if __name__ == '__main__':
         if mode != "GLOBAL" and mode != "BOTH" and not (mode == "SECTOR" or mode == "BOTH" and isinstance(built_object_info, (
                 MissionObjectInfo, MissionFfiCoordsObjectInfo, MissionFfiIdObjectInfo))):
             raise ValueError("Not a valid run mode: " + str(mode) + " for target: " + str(target))
-    sherlock.Sherlock(sherlock_user_properties["UPDATE_OIS"], sherlock_targets, args.explore).run()
+    sherlock.Sherlock(sherlock_targets, args.explore).run()

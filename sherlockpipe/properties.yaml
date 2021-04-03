@@ -166,3 +166,7 @@ INPUT_FILES_WITH_IDS_INITIAL_DETREND_PERIOD:
 
 # Flag to signal SHERLOCK for updating the TOIs, KOIs and EPICs
 UPDATE_OIS: False
+# Flag to signal SHERLOCK for force-updating the metadatas
+UPDATE_METADATA: False
+# Flag to signal SHERLOCK for cleaning the metadatas
+UPDATE_CLEAN: False

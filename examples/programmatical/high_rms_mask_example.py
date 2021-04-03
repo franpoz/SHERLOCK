@@ -18,7 +18,7 @@ def elapsed_timer():
 with elapsed_timer() as elapsed:
     # We will use only one mission object and will enable the automatic high RMS masking. We will set a RMS threshold
     # of 2 times the median with a binning of 3 hours.
-    sherlock = Sherlock(False, [SherlockTarget(MissionObjectInfo("TIC 181804752", 'all'), high_rms_enabled=True,
+    sherlock = Sherlock([SherlockTarget(MissionObjectInfo("TIC 181804752", 'all'), high_rms_enabled=True,
                                         high_rms_threshold=2.5, high_rms_bin_hours=3)])\
         .run()
     print("Analysis took " + elapsed() + "s")
