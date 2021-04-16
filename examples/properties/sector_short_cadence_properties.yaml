@@ -9,8 +9,11 @@
 # be processed only using its 13th sector and each of the Kepler and K2 objects sectors will be analyzed independently.
 TARGETS:
   'TIC 299798795':
+    MODE: 'SECTOR'
     SECTORS: [13]
   'KIC 10905746':
+    MODE: 'SECTOR'
     SECTORS: 'all'
   'EPIC 249631677':
+    MODE: 'SECTOR'
     SECTORS: 'all'
