@@ -469,6 +469,7 @@ class Sherlock:
             logging.info('Transit Mask: no')
         logging.info('Threshold limit for SNR: %.1f', sherlock_target.snr_min)
         logging.info('Threshold limit for SDE: %.1f', sherlock_target.sde_min)
+        logging.info('Sigma threshold for outliers clipping: %.1f', sherlock_target.outliers_sigma)
         logging.info("Fit method: %s", sherlock_target.fit_method)
         if sherlock_target.oversampling is not None:
             logging.info('Oversampling: %.3f', sherlock_target.oversampling)
