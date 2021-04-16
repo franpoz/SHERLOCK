@@ -537,7 +537,7 @@ class Sherlock:
         lc_df['flux'] = flux_float
         lc_df['flux_err'] = flux_err_float
         lc_df.to_csv(object_dir + "lc.csv", index=False)
-        lc = lc.remove_outliers(sigma_lower=float('inf'), sigma_upper=3)  # remove outliers over 3sigma
+        lc = lc.remove_outliers(sigma_lower=float('inf'), sigma_upper=sherlock_target.outliers_sigma)
         time_float = lc.time.value
         flux_float = lc.flux.value
         flux_err_float = lc.flux_err.value

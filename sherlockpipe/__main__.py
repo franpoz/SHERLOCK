@@ -187,6 +187,7 @@ if __name__ == '__main__':
         high_rms_bin_hours = get_from_user_or_config(target_configs, sherlock_user_properties, "INITIAL_HIGH_RMS_BIN_HOURS")
         high_rms_threshold = get_from_user_or_config(target_configs, sherlock_user_properties, "INITIAL_HIGH_RMS_THRESHOLD")
         high_rms_enabled = get_from_user_or_config(target_configs, sherlock_user_properties, "INITIAL_HIGH_RMS_MASK")
+        outliers_sigma = get_from_user_or_config(target_configs, sherlock_user_properties, "OUTLIERS_SIGMA")
         exptime = get_from_user_or_config(target_configs, sherlock_user_properties, "EXPTIME")
         mission = None
         mode = get_from_user_or_config_or_default(target_configs, sherlock_user_properties, "MODE", "GLOBAL")
@@ -209,7 +210,7 @@ if __name__ == '__main__':
                        cpu_cores, max_runs, period_min,
                        period_max, period_protect, best_signal_algorithm, quorum_strength,
                        min_quorum, fit_method, oversampling,
-                       t0_fit_margin, duration_grid_step)
+                       t0_fit_margin, duration_grid_step, outliers_sigma)
         if mode == "GLOBAL" or mode == "BOTH":
             sherlock_targets.append(sherlock_target)
         if mode == "SECTOR" or mode == "BOTH" and isinstance(built_object_info, (
