@@ -28,7 +28,8 @@ class SherlockTarget:
                  cpu_cores=multiprocessing.cpu_count() - 1, max_runs=10, period_min=0.5,
                  period_max=33, period_protect=10, best_signal_algorithm='border-correct', quorum_strength=1,
                  min_quorum=0, fit_method='tls', oversampling=None,
-                 t0_fit_margin=0.05, duration_grid_step=1.1):
+                 t0_fit_margin=0.05, duration_grid_step=1.1,
+                 outliers_sigma=3):
         self.min_sectors = min_sectors
         self.max_sectors = max_sectors
         self.bin_minutes = bin_minutes
@@ -65,6 +66,7 @@ class SherlockTarget:
         self.high_rms_bin_hours = high_rms_bin_hours
         self.high_rms_threshold = high_rms_threshold
         self.high_rms_enabled = high_rms_enabled
+        self.outliers_sigma = outliers_sigma
         if mask_mode not in self.MASK_MODES:
             raise ValueError("Provided mask mode '" + mask_mode + "' is not allowed.")
         if best_signal_algorithm not in self.VALID_SIGNAL_SELECTORS:
