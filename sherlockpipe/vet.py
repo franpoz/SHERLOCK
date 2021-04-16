@@ -1,5 +1,6 @@
 # from __future__ import print_function, absolute_import, division
 import copy
+import logging
 import multiprocessing
 import shutil
 import types
@@ -46,6 +47,7 @@ from triceratops.likelihoods import (simulate_TP_transit, simulate_EB_transit)
 from triceratops.funcs import (Gauss2D, query_TRILEGAL, renorm_flux, stellar_relations)
 from astropy import constants
 import uuid
+from sherlockpipe.eleanor import maxsector
 
 '''WATSON: Verboseless Vetting and Adjustments of Transits for Sherlock Objects of iNterest
 This class intends to provide a inspection and transit fitting tool for SHERLOCK Candidates.
@@ -172,6 +174,9 @@ class Vetter:
         last_time = alltime[len(alltime) - 1]
         num_of_transits = int(ceil(((last_time - t0) / period)))
         transit_lists = t0 + period * range(0, num_of_transits)
+        time_as_array = np.array(alltime)
+        transits_in_data = [time_as_array[(transit > time_as_array - 0.5) & (transit < time_as_array + 0.5)] for transit in transit_lists]
+        transit_lists = transit_lists[[len(transits_in_data_set) > 0 for transits_in_data_set in transits_in_data]]
         transit_lists = [transit_lists[x:x + 3] for x in range(0, len(transit_lists), 3)]
         for index, transit_list in enumerate(transit_lists):
             transit_results_dir = self.data_dir + "/" + str(index)
@@ -320,8 +325,10 @@ class Vetter:
                     traceback.print_exc()
             if self.validate:
                 try:
-                    result_dir, ra, dec = self.vetting_validation(cpus, indir, tic, sectors, lc_file, transit_depth, period,
+                    result_dir, ra1, dec1 = self.vetting_validation(cpus, indir, tic, sectors, lc_file, transit_depth, period,
                                                                   t0, duration)
+                    ra = ra if ra is not None else ra1
+                    dec = dec if dec is not None else dec1
                     shutil.move(result_dir, vetting_dir + "/triceratops")
                 except Exception as e:
                     traceback.print_exc()
@@ -329,7 +336,7 @@ class Vetter:
                 result_dir = self.vetting_field_of_view(indir, tic, ra, dec, sectors)
                 shutil.move(result_dir, vetting_dir + "/tpfplot")
             else:
-                print("Can't generate tpfplot because RA and DEC are missing.")
+                logging.info("Can't generate tpfplot because RA and DEC are missing.")
             # TODO improve this condition to check whether tic, sectors and transits exist
         #     if not np.isin(tic, urls_exist):
         #         # make sure the file is opened as append only
@@ -402,6 +409,11 @@ class Vetter:
         sectors = np.array(sectors)
         duration = transit_duration / 60 / 24
         target = tr.target(ID=tic, sectors=sectors)
+        sectors = sectors[sectors <= maxsector.maxsector]
+        if len(sectors) == 0:
+            logging.warning("There are no available sectors to be validated, skipping TRICERATOPS.")
+            return save_dir, None, None
+        logging.info("Will execute validation for sectors: " + str(sectors))
         # TODO allow user input apertures
         tpfs = lightkurve.search_targetpixelfile("TIC " + str(tic), mission="TESS", cadence="short", sector=sectors.tolist())\
             .download_all()
