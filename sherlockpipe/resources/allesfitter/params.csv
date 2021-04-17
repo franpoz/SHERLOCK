@@ -24,5 +24,4 @@ host_gdc_lc,0.0,0,trunc_normal 0 1 0.0 0.0,$Grav. dark._{b; \mathrm{lc}}$,
 #errors per instrument,
 ln_err_flux_lc,-7.0,1,uniform -15.0 0.0,$\log{\sigma_\mathrm{lc}}$,$\log{ \mathrm{rel. flux.} }$
 #baseline per instrument,
-baseline_gp_matern32_lnsigma_flux_lc,0.0,1,uniform -15.0 15.0,$\mathrm{gp: \ln{\sigma} (lc)}$,
-baseline_gp_matern32_lnrho_flux_lc,0.0,1,uniform -15.0 15.0,$\mathrm{gp: \ln{\rho} (lc)}$,
+${sherlock:baseline_params}

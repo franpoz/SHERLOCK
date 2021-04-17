@@ -80,6 +80,10 @@ class Fitter:
             text = re.sub('\\${sherlock:period}', str(candidate_row["period"]), text)
             text = re.sub('\\${sherlock:period_min}', str(candidate_row["period"] - candidate_row["per_err"]), text)
             text = re.sub('\\${sherlock:period_max}', str(candidate_row["period"] + candidate_row["per_err"]), text)
+            baseline_params = 'baseline_gp_matern32_lnsigma_flux_lc,0.0,1,uniform -15.0 15.0,$\mathrm{gp: \ln{\sigma} (lc)}$,\n' + \
+                'baseline_gp_matern32_lnrho_flux_lc,0.0,1,uniform -15.0 15.0,$\mathrm{gp: \ln{\rho} (lc)}$,'
+            baseline_params = "" if not self.detrend else baseline_params
+            text = re.sub('\\${sherlock:baseline_params}', baseline_params, text)
             rp_rs = candidate_row["rp_rs"] if candidate_row["rp_rs"] != "-" else 0.1
             depth = candidate_row["depth"] / 1000
             depth_err = depth * 0.2
