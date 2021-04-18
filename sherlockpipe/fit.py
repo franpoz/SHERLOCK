@@ -1,8 +1,10 @@
 # from __future__ import print_function, absolute_import, division
+import logging
 import math
 import multiprocessing
 import re
 import shutil
+import sys
 import types
 from pathlib import Path
 
@@ -43,6 +45,7 @@ class Fitter:
 
     def fit(self, candidate_df, star_df, cpus, allesfit_dir):
         candidate_row = candidate_df.iloc[0]
+        logging.info("Preparing fit files")
         sherlock_star_file = self.object_dir + "/params_star.csv"
         star_file = allesfit_dir + "/params_star.csv"
         params_file = allesfit_dir + "/params.csv"
@@ -61,6 +64,7 @@ class Fitter:
             fit_width = float(candidate_row["duration"]) / 60 / 24 * 7
         # TODO replace sherlock properties from allesfitter files
         # TODO only use params_star when the star mass or radius was not assumed
+        logging.info("Preparing fit properties")
         with open(settings_file, 'r+') as f:
             text = f.read()
             text = re.sub('\\${sherlock:cores}', str(cpus), text)
@@ -137,15 +141,21 @@ class Fitter:
             f.seek(0)
             f.write(text)
             f.truncate()
+
+        logging.info("Running initial guess")
         allesfitter.show_initial_guess(allesfit_dir)
         self.custom_plot(candidate_row["name"], candidate_row["period"], fit_width, allesfit_dir, "initial_guess")
         if not self.only_initial:
+            logging.info("Preparing bayesian fit")
             if not self.mcmc:
+                logging.info("Running dynamic nested sampling")
                 allesfitter.ns_fit(allesfit_dir)
                 allesfitter.ns_output(allesfit_dir)
             elif self.mcmc:
+                logging.info("Running MCMC")
                 allesfitter.mcmc_fit(allesfit_dir)
                 allesfitter.mcmc_output(allesfit_dir)
+            logging.info("Generating custom plots")
             self.custom_plot(candidate_row["name"], candidate_row["period"], fit_width, allesfit_dir, "posterior")
 
     def custom_plot(self, name, period, fit_width, allesfit_dir, mode="posterior"):
@@ -194,6 +204,22 @@ if __name__ == '__main__':
     ap.add_argument('--properties', help="The YAML file to be used as input.", required=False)
     args = ap.parse_args()
     fitter = Fitter(args.object_dir, args.only_initial, args.mcmc, args.detrend)
+    file_dir = fitter.object_dir + "/vetting.log"
+    if os.path.exists(file_dir):
+        os.remove(file_dir)
+    formatter = logging.Formatter('%(message)s')
+    logger = logging.getLogger()
+    while len(logger.handlers) > 0:
+        logger.handlers.pop()
+    logger.setLevel(logging.INFO)
+    handler = logging.StreamHandler(sys.stdout)
+    handler.setLevel(logging.INFO)
+    handler.setFormatter(formatter)
+    logger.addHandler(handler)
+    handler = logging.FileHandler(file_dir)
+    handler.setLevel(logging.INFO)
+    handler.setFormatter(formatter)
+    logger.addHandler(handler)
     index = 0
     fitting_dir = fitter.data_dir + "/fit_" + str(index)
     while os.path.exists(fitting_dir) or os.path.isdir(fitting_dir):
@@ -245,5 +271,5 @@ if __name__ == '__main__':
             cpus = multiprocessing.cpu_count() - 1
         else:
             cpus = args.cpus
-        print("Selected signal number " + str(candidate_selection))
+        logging.info("Selected signal number " + str(candidate_selection))
     fitter.fit(candidate, star_df, cpus, fitting_dir)

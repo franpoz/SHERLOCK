@@ -89,9 +89,9 @@ class Vetter:
         os.makedirs(indir)
         with open("{}/_config.txt".format(indir), 'w') as f:
             f.write(str(indir))
-        print("\n Download the text files required ... ")
-        print("\n Only the manifest text files (~325 M) will be downloaded and no TESS data.")
-        print("\n This step may take a while but luckily it only has to run once... \n")
+        logging.info("Download the text files required ... ")
+        logging.info("Only the manifest text files (~325 M) will be downloaded and no TESS data.")
+        logging.info("This step may take a while but luckily it only has to run once... \n")
         if not os.path.exists("{}".format(indir)):
             os.makedirs(indir)
         if not os.path.exists("{}/data".format(indir)):
@@ -120,12 +120,12 @@ class Vetter:
         candidate_df['TICID'] = candidate_df['TICID'].str.replace("TIC ", "")
         TIC_wanted = list(set(candidate_df['TICID']))
         nlc = len(TIC_wanted)
-        print("nlc length: {}".format(nlc))
-        print('{}/manifest.csv'.format(str(indir)))
+        logging.info("nlc length: {}".format(nlc))
+        logging.info('{}/manifest.csv'.format(str(indir)))
         if exists('{}/manifest.csv'.format(str(indir))):
-            print("Existing manifest file found, will skip previously processed LCs and append to end of manifest file")
+            logging.info("Existing manifest file found, will skip previously processed LCs and append to end of manifest file")
         else:
-            print("Creating new manifest file")
+            logging.info("Creating new manifest file")
             metadata_header = ['TICID', 'Marked Transits', 'Sectors', 'RA', 'DEC', 'Solar Rad', 'TMag', 'Teff',
                                'thissector', 'TOI', 'TCE', 'TCE link', 'EB', 'Systematics', 'Background Flux',
                                'Centroids Positions', 'Momentum Dumps', 'Aperture Size', 'In/out Flux', 'Keep',
@@ -145,15 +145,17 @@ class Vetter:
         @param transit_list: the list of transits for the given tic
         @return: the given tic
         """
+        logging.info("Runnint TESS Point")
         sectors_all, ra, dec = LATTEutils.tess_point(indir, tic)
         try:
             sectors = list(set(sectors_in) & set(sectors_all))
             if len(sectors) == 0:
-                print("The target was not observed in the sector(s) you stated ({}). \
+                logging.info("The target was not observed in the sector(s) you stated ({}). \
                         Therefore take all sectors that it was observed in: {}".format(sectors, sectors_all))
                 sectors = sectors_all
         except:
             sectors = sectors_all
+        logging.info("Downloading LATTE data")
         sectors = np.sort(sectors)
         if not ffi:
             alltime, allflux, allflux_err, all_md, alltimebinned, allfluxbinned, allx1, allx2, ally1, ally2, alltime12, allfbkg, start_sec, end_sec, in_sec, tessmag, teff, srad = LATTEutils.download_data(
@@ -180,6 +182,7 @@ class Vetter:
         transit_lists = [transit_lists[x:x + 3] for x in range(0, len(transit_lists), 3)]
         for index, transit_list in enumerate(transit_lists):
             transit_results_dir = self.data_dir + "/" + str(index)
+            logging.info("Brewing LATTE data for transits at T0s: %s", str(transit_list))
             try:
                 if not ffi:
                     LATTEbrew.brew_LATTE(tic, indir, syspath, transit_list, simple, BLS, model, save, DV, sectors,
@@ -203,7 +206,7 @@ class Vetter:
                 traceback.print_exc()
                 # see if it made any plots - often it just fails on the TPs as they are very large
                 if exists("{}/{}/{}_fullLC_md.png".format(indir, tic, tic)):
-                    print("couldn't download TP but continue anyway")
+                    logging.warn("couldn't download TP but continue anyway")
                     tp_downloaded = False
                     shutil.move(vetter.latte_dir + "/" + tic, transit_results_dir)
                 else:
@@ -213,7 +216,7 @@ class Vetter:
             tp_downloaded = True
         else:
             tp_downloaded = False
-            print("code ran but no TP -- continue anyway")
+            logging.warn("code ran but no TP -- continue anyway")
         # -------------
         # check whether it's a TCE or a TOI
 
@@ -316,7 +319,7 @@ class Vetter:
                 ra = res['RA']
                 dec = res['DEC']
                 if res['TICID'] == -99:
-                    print('something went wrong with the LATTE results')
+                    logging.error('something went wrong with the LATTE results')
             except Exception as e:
                 traceback.print_exc()
                 try:
@@ -420,6 +423,7 @@ class Vetter:
         star = eleanor.multi_sectors(tic=tic, sectors=sectors, tesscut_size=31, post_dir=const.USER_HOME_ELEANOR_CACHE)
         apertures = []
         sector_num = 0
+        logging.info("Calculating validation masks")
         for s in star:
             tpf_idx = [data.sector if data.sector == s.sector else -1 for data in tpfs.data]
             tpf = tpfs[np.where(tpf_idx > np.zeros(len(tpf_idx)))[0][0]]
@@ -436,17 +440,20 @@ class Vetter:
                     if not np.isnan(pipeline_mask_triceratops[i, j]).any():
                         aperture.append(pipeline_mask_triceratops[i, j])
             apertures.append(aperture)
+            logging.info("Saving validation mask plot for sector %s", s.sector)
             target.plot_field(save=True, fname=save_dir + "/field_S" + str(s.sector), sector=s.sector,
                             ap_pixels=aperture)
             sector_num = sector_num + 1
         apertures = np.array(apertures)
         depth = transit_depth / 1000
+        logging.info("Calculating validation closest stars depths")
         target.calc_depths(depth, apertures)
         target.stars.to_csv(save_dir + "/stars.csv", index=False)
         lc = pd.read_csv(lc_file, header=0)
         time, flux, flux_err = lc["#time"].values, lc["flux"].values, lc["flux_err"].values
         lc_len = len(time)
         zeros_lc = np.zeros(lc_len)
+        logging.info("Preparing validation light curve for target")
         lc = TessLightCurve(time=time, flux=flux, flux_err=flux_err, quality=zeros_lc)
         lc.extra_columns = []
         lc = lc.fold(period=period, epoch_time=t0, normalize_phase=True)
@@ -455,12 +462,15 @@ class Vetter:
         lc = lc[inner_folded_range_args]
         lc.time = lc.time * period
         sigma = np.mean(lc.flux_err)
+        logging.info("Preparing validation processes inputs")
         input_n_times = [ValidatorInput(save_dir, copy.deepcopy(target), lc.time.value, lc.flux.value, sigma, period, depth,
                                         apertures, value)
                          for value in range(0, self.validation_runs)]
         validator = Validator()
+        logging.info("Start validation processes")
         with Pool(processes=cpus) as pool:
             validation_results = pool.map(validator.validate, input_n_times)
+        logging.info("Finished validation processes")
         fpp_sum = 0
         nfpp_sum = 0
         probs_total_df = None
@@ -476,6 +486,7 @@ class Vetter:
         target.u2 = np.zeros(scenarios_num)
         target.fluxratio_EB = np.zeros(scenarios_num)
         target.fluxratio_comp = np.zeros(scenarios_num)
+        logging.info("Computing final probabilities from the %s scenarios", self.validation_runs)
         i = 0
         for fpp, nfpp, probs_df, star_num_arr, u1_arr, u2_arr, fluxratio_EB_arr, fluxratio_comp_arr in validation_results:
             if probs_total_df is None:
@@ -640,6 +651,7 @@ class Vetter:
     def vetting_field_of_view(self, indir, tic, ra, dec, sectors):
         maglim = 6
         sectors_search = None if sectors is not None and len(sectors) == 0 else sectors
+        logging.info("Preparing target pixel files for field of view plots")
         tpf_source = lightkurve.search_targetpixelfile("TIC " + str(tic), sector=sectors, mission='TESS')
         if tpf_source is None or len(tpf_source) == 0:
             ra_str = str(ra)
@@ -648,6 +660,7 @@ class Vetter:
         for i in range(0, len(tpf_source)):
             tpf = tpf_source[i].download(cutout_size=(12, 12))
             pipeline = True
+            plt.close()
             fig = plt.figure(figsize=(6.93, 5.5))
             gs = gridspec.GridSpec(1, 3, height_ratios=[1], width_ratios=[1, 0.05, 0.01])
             gs.update(left=0.05, right=0.95, bottom=0.12, top=0.95, wspace=0.01, hspace=0.03)
@@ -657,19 +670,19 @@ class Vetter:
             nx, ny = np.shape(mean_tpf)
             norm = ImageNormalize(stretch=stretching.LogStretch())
             division = np.int(np.log10(np.nanmax(tpf.flux.value)))
-            splot = plt.imshow(np.nanmean(tpf.flux, axis=0) / 10 ** division, norm=norm, \
+            splot = plt.imshow(np.nanmean(tpf.flux, axis=0) / 10 ** division, norm=norm, cmap="viridis",\
                                extent=[tpf.column, tpf.column + ny, tpf.row, tpf.row + nx], origin='lower', zorder=0)
             # Pipeline aperture
             if pipeline:  #
                 aperture_mask = tpf.pipeline_mask
                 aperture = tpf._parse_aperture_mask(aperture_mask)
                 maskcolor = 'lightgray'
-                print("    --> Using pipeline aperture...")
+                logging.info("    --> Using pipeline aperture for sector %s...", tpf.sector)
             else:
                 aperture_mask = tpf.create_threshold_mask(threshold=10, reference_pixel='center')
                 aperture = tpf._parse_aperture_mask(aperture_mask)
                 maskcolor = 'lightgray'
-                print("    --> Using threshold aperture...")
+                logging.info("    --> Using threshold aperture for target %s...", tpf.sector)
 
             for i in range(aperture.shape[0]):
                 for j in range(aperture.shape[1]):
@@ -750,8 +763,8 @@ class Vetter:
     def show_candidates(self):
         self.candidates = pd.read_csv(self.object_dir + "/candidates.csv")
         self.candidates.index = np.arange(1, len(self.candidates) + 1)
-        print("Suggested candidates are:")
-        print(self.candidates.to_markdown(index=True))
+        logging.info("Suggested candidates are:")
+        logging.info(self.candidates.to_markdown(index=True))
         pass
 
     def demand_candidate_selection(self):
@@ -768,7 +781,7 @@ class Validator:
         super().__init__()
 
     def validate(self, input):
-        input.target.calc_depths(tdepth=input.depth, all_ap_pixels=input.apertures)
+        #input.target.calc_depths(tdepth=input.depth, all_ap_pixels=input.apertures)
         input.target.calc_probs(time=input.time, flux_0=input.flux, flux_err_0=input.sigma, P_orb=input.period)
         with open(input.save_dir + "/validation_" + str(input.run) + ".csv", 'w') as the_file:
             the_file.write("FPP,NFPP\n")
@@ -802,6 +815,23 @@ if __name__ == '__main__':
                     help="Whether to avoid running statistical validation")
     args = ap.parse_args()
     vetter = Vetter(args.object_dir, args.validate)
+    file_dir = vetter.object_dir + "/vetting.log"
+    if os.path.exists(file_dir):
+        os.remove(file_dir)
+    formatter = logging.Formatter('%(message)s')
+    logger = logging.getLogger()
+    while len(logger.handlers) > 0:
+        logger.handlers.pop()
+    logger.setLevel(logging.INFO)
+    handler = logging.StreamHandler(sys.stdout)
+    handler.setLevel(logging.INFO)
+    handler.setFormatter(formatter)
+    logger.addHandler(handler)
+    handler = logging.FileHandler(file_dir)
+    handler.setLevel(logging.INFO)
+    handler.setFormatter(formatter)
+    logger.addHandler(handler)
+    logging.info("Starting vetting")
     if args.candidate is None:
         user_properties = yaml.load(open(args.properties), yaml.SafeLoader)
         candidate = pd.DataFrame(columns=['id', 'transits', 'sectors', 'FFI'])
@@ -818,7 +848,7 @@ if __name__ == '__main__':
         candidate = candidates.iloc[[candidate_selection - 1]]
         candidate['number'] = [candidate_selection]
         vetter.data_dir = vetter.object_dir
-        print("Selected signal number " + str(candidate_selection))
+        logging.info("Selected signal number " + str(candidate_selection))
         if args.cpus is None:
             cpus = multiprocessing.cpu_count() - 1
         else:
