@@ -21,7 +21,7 @@ resources_dir = path.join(path.dirname(__file__))
 
 
 class Fitter:
-    def __init__(self, object_dir, only_initial, mcmc = False, detrend = False):
+    def __init__(self, object_dir, only_initial, mcmc=False, detrend=None):
         self.args = types.SimpleNamespace()
         self.args.noshow = True
         self.args.north = False
@@ -66,8 +66,12 @@ class Fitter:
             text = re.sub('\\${sherlock:cores}', str(cpus), text)
             text = re.sub('\\${sherlock:fit_width}', str(fit_width), text)
             text = re.sub('\\${sherlock:name}', str(candidate_row["name"]), text)
-            detrend_param = "baseline_flux_lc,hybrid_offset"
-            detrend_param = detrend_param if self.detrend else detrend_param
+            if self.detrend == 'hybrid':
+                detrend_param = "baseline_flux_lc,hybrid_offset"
+            elif self.detrend == 'gp':
+                detrend_param = 'baseline_flux_lc,sample_GP_Matern32'
+            else:
+                detrend_param = ''
             text = re.sub('\\${sherlock:detrend}', detrend_param, text)
             f.seek(0)
             f.write(text)
@@ -80,9 +84,11 @@ class Fitter:
             text = re.sub('\\${sherlock:period}', str(candidate_row["period"]), text)
             text = re.sub('\\${sherlock:period_min}', str(candidate_row["period"] - candidate_row["per_err"]), text)
             text = re.sub('\\${sherlock:period_max}', str(candidate_row["period"] + candidate_row["per_err"]), text)
-            baseline_params = 'baseline_gp_matern32_lnsigma_flux_lc,0.0,1,uniform -15.0 15.0,$\mathrm{gp: \ln{\sigma} (lc)}$,\n' + \
-                'baseline_gp_matern32_lnrho_flux_lc,0.0,1,uniform -15.0 15.0,$\mathrm{gp: \ln{\rho} (lc)}$,'
-            baseline_params = "" if not self.detrend else baseline_params
+            if self.detrend == 'gp':
+                baseline_params = 'baseline_gp_matern32_lnsigma_flux_lc,0.0,1,uniform -15.0 15.0,$\mathrm{gp: \ln{\sigma} (lc)}$,\n' + \
+                    'baseline_gp_matern32_lnrho_flux_lc,0.0,1,uniform -15.0 15.0,$\mathrm{gp: \ln{\rho} (lc)}$,'
+            else:
+                baseline_params = ""
             text = re.sub('\\${sherlock:baseline_params}', baseline_params, text)
             rp_rs = candidate_row["rp_rs"] if candidate_row["rp_rs"] != "-" else 0.1
             depth = candidate_row["depth"] / 1000
@@ -183,8 +189,8 @@ if __name__ == '__main__':
     ap.set_defaults(only_initial=False)
     ap.add_argument('--cpus', type=int, default=None, help="The number of CPU cores to be used.", required=False)
     ap.add_argument('--mcmc', dest='mcmc', action='store_true', help="Whether to run using mcmc or ns. Default is ns.")
-    ap.add_argument('--detrend', dest='detrend', action='store_true', help="Whether to execute detrending in the "
-                                                                            "allesfitter runs.")
+    ap.add_argument('--detrend', dest='detrend', default=None, help="Type of detrending to be used", required=False,
+                    choices=['hybrid', 'gp'])
     ap.add_argument('--properties', help="The YAML file to be used as input.", required=False)
     args = ap.parse_args()
     fitter = Fitter(args.object_dir, args.only_initial, args.mcmc, args.detrend)
