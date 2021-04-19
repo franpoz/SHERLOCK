@@ -55,6 +55,6 @@ setuptools.setup(
                         'configparser==5.0.1',
                         'pyparsing==2.4.7', # Matplotlib dependency
                         'statsmodels==0.12.2', # Allesfitter dependency
-                        'triceratops==1.0.6'
+                        'triceratops==1.0.8'
     ]
 )
