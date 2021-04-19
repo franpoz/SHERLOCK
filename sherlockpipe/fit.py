@@ -70,8 +70,8 @@ class Fitter:
             text = re.sub('\\${sherlock:cores}', str(cpus), text)
             text = re.sub('\\${sherlock:fit_width}', str(fit_width), text)
             text = re.sub('\\${sherlock:name}', str(candidate_row["name"]), text)
-            if self.detrend == 'hybrid':
-                detrend_param = "baseline_flux_lc,hybrid_offset"
+            if self.detrend == 'hybrid_spline':
+                detrend_param = "baseline_flux_lc,hybrid_spline"
             elif self.detrend == 'gp':
                 detrend_param = 'baseline_flux_lc,sample_GP_Matern32'
             else:
@@ -96,10 +96,10 @@ class Fitter:
             text = re.sub('\\${sherlock:baseline_params}', baseline_params, text)
             rp_rs = candidate_row["rp_rs"] if candidate_row["rp_rs"] != "-" else 0.1
             depth = candidate_row["depth"] / 1000
+            # TODO calculate depth error in SHERLOCK maybe given the std deviation from the depths or even using the residuals
             depth_err = depth * 0.2
             rp_rs_err = 0.5 / math.sqrt(depth) * depth_err
             text = re.sub('\\${sherlock:rp_rs}', str(rp_rs), text)
-            # TODO calculate depth error in SHERLOCK maybe given the std deviation from the depths or even using the residuals
             rp_rs_min = rp_rs - 2 * rp_rs_err
             rp_rs_min = rp_rs_min if rp_rs_min > 0 else 0.0000001
             rp_rs_max = rp_rs + 2 * rp_rs_err
@@ -199,8 +199,8 @@ if __name__ == '__main__':
     ap.set_defaults(only_initial=False)
     ap.add_argument('--cpus', type=int, default=None, help="The number of CPU cores to be used.", required=False)
     ap.add_argument('--mcmc', dest='mcmc', action='store_true', help="Whether to run using mcmc or ns. Default is ns.")
-    ap.add_argument('--detrend', dest='detrend', default=None, help="Type of detrending to be used", required=False,
-                    choices=['hybrid', 'gp'])
+    ap.add_argument('--detrend', dest='detrend', default="hybrid_spline", help="Type of detrending to be used", required=False,
+                    choices=['no', 'gp'])
     ap.add_argument('--properties', help="The YAML file to be used as input.", required=False)
     args = ap.parse_args()
     fitter = Fitter(args.object_dir, args.only_initial, args.mcmc, args.detrend)
