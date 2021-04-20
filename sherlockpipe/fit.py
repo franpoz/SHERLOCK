@@ -204,7 +204,7 @@ if __name__ == '__main__':
     ap.add_argument('--properties', help="The YAML file to be used as input.", required=False)
     args = ap.parse_args()
     fitter = Fitter(args.object_dir, args.only_initial, args.mcmc, args.detrend)
-    file_dir = fitter.object_dir + "/vetting.log"
+    file_dir = fitter.object_dir + "/fit.log"
     if os.path.exists(file_dir):
         os.remove(file_dir)
     formatter = logging.Formatter('%(message)s')
