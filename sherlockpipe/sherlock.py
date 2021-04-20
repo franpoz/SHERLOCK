@@ -6,7 +6,9 @@ import sys
 import pandas
 import wotan
 import matplotlib.pyplot as plt
-import transitleastsquares as tls
+import sherlockpipe.transitleastsquares
+sys.modules['transitleastsquares'] = sys.modules['sherlockpipe.transitleastsquares']
+import transitleastsquares
 import lightkurve as lk
 import numpy as np
 import os
@@ -262,7 +264,6 @@ class Sherlock:
                         report['hz'] = habitability_zone
                         if star_info.radius_assumed:
                             report['rad_p'] = np.nan
-                            report['rp_rs'] = np.nan
                         else:
                             report['rad_p'] = self.__calculate_planet_radius(star_info, report["depth"])
                         logging.info("%-12s%-10.4f%-10.5f%-10.2f%-8.2f%-8.3f%-8.2f%-8.2f%-10.6f%-14.2f%-14s%-12s%-25.5f%-10.5f%-18.5f%-20s",
@@ -415,19 +416,18 @@ class Sherlock:
             logging.info('teff = %.6f', star_info.teff)
             logging.info('lum = %.6f', star_info.lum)
             logging.info('logg = %.6f', star_info.logg)
-        if not star_info.radius_assumed and not star_info.mass_assumed and star_info.teff is not None:
-            star_df = pandas.DataFrame(columns=['ra', 'dec', 'R_star', 'R_star_lerr', 'R_star_uerr', 'M_star',
-                                                'M_star_lerr', 'M_star_uerr', 'Teff_star', 'Teff_star_lerr',
-                                                'Teff_star_uerr', 'ld_a', 'ld_b'])
-            star_df = star_df.append({'ra': star_info.ra, 'dec': star_info.dec, 'R_star': star_info.radius,
-                                      'R_star_lerr': star_info.radius - star_info.radius_min,
-                            'R_star_uerr': star_info.radius_max - star_info.radius,
-                            'M_star': star_info.mass, 'M_star_lerr': star_info.mass - star_info.mass_min,
-                            'M_star_uerr': star_info.mass_max - star_info.mass,
-                            'Teff_star': star_info.teff, 'Teff_star_lerr': 200, 'Teff_star_uerr': 200,
-                                      'ld_a': star_info.ld_coefficients[0], 'ld_b': star_info.ld_coefficients[1]},
-                           ignore_index=True)
-            star_df.to_csv(object_dir + "params_star.csv", index=False)
+        star_df = pandas.DataFrame(columns=['ra', 'dec', 'R_star', 'R_star_lerr', 'R_star_uerr', 'M_star',
+                                            'M_star_lerr', 'M_star_uerr', 'Teff_star', 'Teff_star_lerr',
+                                            'Teff_star_uerr', 'ld_a', 'ld_b'])
+        star_df = star_df.append({'ra': star_info.ra, 'dec': star_info.dec, 'R_star': star_info.radius,
+                                  'R_star_lerr': star_info.radius - star_info.radius_min,
+                        'R_star_uerr': star_info.radius_max - star_info.radius,
+                        'M_star': star_info.mass, 'M_star_lerr': star_info.mass - star_info.mass_min,
+                        'M_star_uerr': star_info.mass_max - star_info.mass,
+                        'Teff_star': star_info.teff, 'Teff_star_lerr': 200, 'Teff_star_uerr': 200,
+                                  'ld_a': star_info.ld_coefficients[0], 'ld_b': star_info.ld_coefficients[1]},
+                       ignore_index=True)
+        star_df.to_csv(object_dir + "params_star.csv", index=False)
         logging.info('================================================')
         logging.info('USER DEFINITIONS')
         logging.info('================================================')
