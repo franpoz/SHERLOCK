@@ -1,18 +1,14 @@
 import pickle
-import re
 import sys
 
 import lightkurve
 from lcbuilder.lcbuilder_class import LcBuilder
-from lcbuilder.objectinfo.preparer.MissionFfiLightcurveBuilder import MissionFfiLightcurveBuilder
 from lcbuilder.objectinfo.preparer.MissionLightcurveBuilder import MissionLightcurveBuilder
 
 from lcbuilder.star.starinfo import StarInfo
 from sherlockpipe import sherlock
-from lcbuilder.objectinfo.InputObjectInfo import InputObjectInfo
 from lcbuilder.objectinfo.MissionFfiIdObjectInfo import MissionFfiIdObjectInfo
 from lcbuilder.objectinfo.MissionFfiCoordsObjectInfo import MissionFfiCoordsObjectInfo
-from lcbuilder.objectinfo.MissionInputObjectInfo import MissionInputObjectInfo
 from lcbuilder.objectinfo.MissionObjectInfo import MissionObjectInfo
 from argparse import ArgumentParser
 from os import path
