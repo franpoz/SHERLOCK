@@ -7,8 +7,10 @@ import pandas
 import wotan
 import matplotlib.pyplot as plt
 import sherlockpipe.transitleastsquares
+
 sys.modules['transitleastsquares'] = sys.modules['sherlockpipe.transitleastsquares']
-import transitleastsquares
+import transitleastsquares as tls
+from sherlockpipe.transitleastsquares import DefaultTransitTemplateGenerator
 import lightkurve as lk
 import numpy as np
 import os
@@ -425,6 +427,7 @@ class Sherlock:
                         'M_star': star_info.mass, 'M_star_lerr': star_info.mass - star_info.mass_min,
                         'M_star_uerr': star_info.mass_max - star_info.mass,
                         'Teff_star': star_info.teff, 'Teff_star_lerr': 200, 'Teff_star_uerr': 200,
+                                  'logg': star_info.logg,
                                   'ld_a': star_info.ld_coefficients[0], 'ld_b': star_info.ld_coefficients[1]},
                        ignore_index=True)
         star_df.to_csv(object_dir + "params_star.csv", index=False)
@@ -904,22 +907,33 @@ class Sherlock:
                 oversampling = 3
             elif oversampling > 10:
                 oversampling = 10
+        dif = time[1:] - time[:-1]
+        jumps = np.where(dif > 1)[0]
+        jumps = np.append(jumps, len(time))
+        previous_jump_index = 0
+        time_span_all_sectors = 0
+        for jumpIndex in jumps:
+            time_chunk = time[previous_jump_index + 1:jumpIndex] # ignoring first measurement as could be the last from the previous chunk
+            time_span_all_sectors = time_span_all_sectors + (time_chunk[-1] - time_chunk[0])
+            previous_jump_index = jumpIndex
+        period_grid = DefaultTransitTemplateGenerator()\
+            .period_grid(star_info.radius, star_info.mass, time_span_all_sectors, sherlock_target.period_min,
+                         sherlock_target.period_max, oversampling, transits_min_count)
         model = tls.transitleastsquares(time, lc)
         power_args = {"transit_template": sherlock_target.fit_method, "period_min": sherlock_target.period_min,
                       "period_max": sherlock_target.period_max, "n_transits_min": transits_min_count,
                       "T0_fit_margin": sherlock_target.t0_fit_margin, "show_progress_bar": False,
                       "use_threads": sherlock_target.cpu_cores, "oversampling_factor": oversampling,
-                      "duration_grid_step": sherlock_target.duration_grid_step}
+                      "duration_grid_step": sherlock_target.duration_grid_step,
+                      "period_grid": period_grid}
         if star_info.ld_coefficients is not None:
             power_args["u"] = star_info.ld_coefficients
-        if not star_info.radius_assumed:
-            power_args["R_star"] = star_info.radius
-            power_args["R_star_min"] = star_info.radius_min
-            power_args["R_star_max"] = star_info.radius_max
-        if not star_info.mass_assumed:
-            power_args["M_star"] = star_info.mass
-            power_args["M_star_min"] = star_info.mass_min
-            power_args["M_star_max"] = star_info.mass_max
+        power_args["R_star"] = star_info.radius
+        power_args["R_star_min"] = star_info.radius_min
+        power_args["R_star_max"] = star_info.radius_max
+        power_args["M_star"] = star_info.mass
+        power_args["M_star_min"] = star_info.mass_min
+        power_args["M_star_max"] = star_info.mass_max
         if sherlock_target.custom_transit_template is not None:
             power_args["transit_template_generator"] = sherlock_target.custom_transit_template
         results = model.power(**power_args)
