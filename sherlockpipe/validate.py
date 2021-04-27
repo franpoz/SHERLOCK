@@ -224,12 +224,20 @@ class Validator:
         inner_folded_range_args = np.where((0 - folded_plot_range < lc.time.value) & (lc.time.value < 0 + folded_plot_range))
         lc = lc[inner_folded_range_args]
         lc.time = lc.time * period
+        bin_means, bin_edges, binnumber = stats.binned_statistic(lc.time.value, lc.flux.value, statistic='mean', bins=500)
+        bin_width = (bin_edges[1] - bin_edges[0])
+        bin_centers = bin_edges[1:] - bin_width/2
         lc.plot()
         plt.title("TIC " + str(tic))
         plt.savefig(save_dir + "/folded_curve.png")
+        plt.plot(bin_centers, bin_means)
+        plt.title("TIC " + str(tic))
+        plt.xlabel("Time")
+        plt.ylabel("Flux")
+        plt.savefig(save_dir + "/folded_curve_binned.png")
         sigma = np.nanmean(lc.flux_err)
         logging.info("Preparing validation processes inputs")
-        input_n_times = [ValidatorInput(save_dir, copy.deepcopy(target), lc.time.value, lc.flux.value, sigma, period, depth,
+        input_n_times = [ValidatorInput(save_dir, copy.deepcopy(target), bin_centers, bin_means, sigma, period, depth,
                                         apertures, value)
                          for value in range(0, self.validation_runs)]
         validator = TriceratopsThreadValidator()
