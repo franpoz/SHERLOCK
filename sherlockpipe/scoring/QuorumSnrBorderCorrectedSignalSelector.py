@@ -29,7 +29,7 @@ class QuorumSnrBorderCorrectedSignalSelector(BasicSignalSelector):
             while j < len(index_snr_period_t0_array):
                 compared_period = index_snr_period_t0_array[j][2]
                 compared_t0 = index_snr_period_t0_array[j][3]
-                if abs(period - compared_period) < 0.025 and abs(t0 - compared_t0) < 0.01:
+                if abs(period - compared_period) < 0.025 and abs(t0 - compared_t0) < 0.04:
                     votes[j] = i
                 j = j + 1
             i = i + 1
