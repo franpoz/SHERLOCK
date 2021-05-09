@@ -14,6 +14,7 @@ import matplotlib.pyplot as plt
 import matplotlib.gridspec as gridspec
 import yaml
 from astropy.time import Time
+from astroquery.mast import TesscutClass
 from lcbuilder.lcbuilder_class import LcBuilder
 from lightkurve import TessLightCurve
 from matplotlib.colorbar import Colorbar
@@ -23,6 +24,7 @@ from astropy.table import Table
 from astropy.io import ascii
 import astropy.visualization as stretching
 from argparse import ArgumentParser
+from scipy import stats
 import astropy.units as u
 from sherlockpipe.eleanor import TargetData
 from sherlockpipe import constants as const
@@ -174,8 +176,23 @@ class Validator:
             os.makedirs(save_dir)
         sectors = np.array(sectors)
         duration = transit_duration / 60 / 24
+        sectors_cut = TesscutClass().get_sectors("TIC " + str(tic))
+        sectors_cut = np.array([sector_row["sector"] for sector_row in sectors_cut])
+        if len(sectors) != len(sectors_cut):
+            logging.warning("WARN: Some sectors were not found in TESSCUT")
+            logging.warning("WARN: Sherlock sectors were: " + str(sectors))
+            logging.warning("WARN: TESSCUT sectors were: " + str(sectors_cut))
+        sectors = np.intersect1d(sectors, sectors_cut)
+        if len(sectors) == 0:
+            logging.warning("There are no available sectors to be validated, skipping TRICERATOPS.")
+            return save_dir, None, None
         target = tr.target(ID=tic, sectors=sectors)
-        sectors = sectors[sectors <= maxsector.maxsector]
+        eleanor_sectors = sectors[sectors <= maxsector.maxsector]
+        if len(sectors) != len(eleanor_sectors):
+            logging.warning("WARN: Some sectors were not found in ELEANOR")
+            logging.warning("WARN: Sectors were: " + str(sectors))
+            logging.warning("WARN: ELEANOR (where maxsector is %s) sectors were: " + str(eleanor_sectors), maxsector.maxsector)
+        sectors = eleanor_sectors
         if len(sectors) == 0:
             logging.warning("There are no available sectors to be validated, skipping TRICERATOPS.")
             return save_dir, None, None
