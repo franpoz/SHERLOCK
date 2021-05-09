@@ -59,7 +59,7 @@ Motivated to make the most of this considerable abundance of data, in this work 
 
 # 1. The SHERLOCK PIPEline 
 
-The ``SHERLOCK`` (Searching for Hints of Exoplanets fRom Light curves Of spaCe-based seeKers) ``PIPEline``, in short ``SHERLOCK``, is a Python package ready-to-use and user-friendly, which aims to minimize user efforts to download, search, vet and fit planetary candidates. ``SHERLOCK`` is partially based on previous well-known and well-tested codes used by the exoplanet community to explore the public data gathered by the *Kepler*, *K2* and *TESS* missions without needing to know the finer minutiae of how these data were obtained and stored. In most cases the user only needs to provide a KIC-ID, EPIC-ID, TIC-ID or coordinates of the host star to search for exoplanets. ``SHERLOCK`` has been successfully tested for first time in @pozuelos:2020, @demory:2020 and @benni:2020. 
+The ``SHERLOCK`` (Searching for Hints of Exoplanets fRom Light curves Of spaCe-based seeKers) ``PIPEline``, in short ``SHERLOCK``, is a Python package ready-to-use and user-friendly, which aims to smooth and improve the transiting exoplanets research process by building a unique software to download, search, vet, fit and validate planetary candidates. ``SHERLOCK`` is partially based on previous well-known and well-tested codes used by the exoplanet community to explore the public data gathered by the *Kepler*, *K2* and *TESS* missions without needing to know the finer minutiae of how these data were obtained and stored. In most cases the user only needs to provide a KIC-ID, EPIC-ID, TIC-ID or coordinates of the host star to search for exoplanets. ``SHERLOCK`` has been successfully tested for first time in @pozuelos:2020, @demory:2020 and @benni:2020. 
 
 ## 1.1 Searching for candidates
 
@@ -92,7 +92,7 @@ by replacing {number_of_the_candidate} with 1, 2, 3, etc., the tool will print a
 ## 1.3 Fitting promising candidates
 
 After the vetting process, the next step would be to schedule ground-based observations to firmly confirm the event in the target star or to identify potential false positives due to variable stars,
-such as an eclipsing binary (EB). To this aim, it is critical to have the most accurate ephemeris as possible. Unfortunately, the solution currently given by the serach via``TLS`` is not optimal to this end, and it is desirable to perform a proper fitting of the transits. There are a number of available public codes which might be used to this end, where ``Juliet`` [@espinoza:2019], ``Exofast`` [@eastman:2019], and ``allesfitter`` [@gunther:2020] are some examples. 
+such as an eclipsing binary (EB). To this aim, it is critical to have the most accurate ephemeris as possible. Unfortunately, the solution currently given by the search via ``TLS`` is not optimal to this end, and it is desirable to perform a proper fitting of the transits. There are a number of available public codes which might be used to this end, where ``Juliet`` [@espinoza:2019], ``Exofast`` [@eastman:2019], and ``allesfitter`` [@gunther:2020] are some examples. 
 In ``SHERLOCK``, ``allesfitter`` is used. 
 
 To fit a candidate, the user only needs to execute: 
@@ -125,13 +125,13 @@ python3 -m sherlockpipe.validate --candidate {number_of_the_candidate}
 The light curve within which the user wants to search for exoplanets is downloaded from the NASA Mikulski Archive for Space Telescope (``MAST``). In the case of *TESS* data, the 
 Pre-search Data Conditioning Simple APerture (PDCSAP) fluxes given by the ``SPOC`` (Science Process-ing  Operations  Center) are used. For *Kepler* data, the Pre-search Data
 Conditioning (PDC) given by the ``SOC`` (Science Operations Center) are used. In both cases, these light curves are corrected for systematic error sources, such as pointing drift,
-focus changes and thermal transients. In the case of exploring the full-frame images (FFIs) from *TESS*, the default PCA (principal component analysis) 
+focus changes and thermal transients. In the case of exploring the full-frame images (FFIs) from *TESS*, the default PCA (Principal Component Analysis) 
 fluxes provided by ``ELEANOR`` can be used, although the user can choose among the different available data products such as the raw, corrected, PCA, and PSF-modelled fluxes [@eleanor:2019]. 
 
 
 ## 2.2 Pre-processing of light curve
 In many cases the user may find light curves which contain several systematics like noise, high dispersion
-near borders, intense periodicities caused by pulsators, fast rotators, etc. ``SHERLOCK`` 
+near borders, high-amplitude periodicities caused by pulsators, fast rotators, etc. ``SHERLOCK`` 
 provides some methods to reduce the effects of these important systematics.
 
 ### 2.2.1 Local noise reduction
@@ -159,9 +159,9 @@ If enabled, this feature automatically disables the automatic self-masking featu
 Some examples are provided in the [properties.yaml](https://github.com/franpoz/SHERLOCK/blob/master/sherlockpipe/properties.yaml) file, in the 
 INITIAL MASK module.
 
-### 2.2.4 Automatic detrending of intense periodicities
+### 2.2.4 Automatic detrending of high-amplitude periodicities
 Our most common foe with high periodicities are fast-rotators, which impart a highly sinusoidal-like
-trend in the PDCSAP fluxes. This is why ``SHERLOCK`` includes an automatic intense periodicity
+trend in the PDCSAP fluxes. This is why ``SHERLOCK`` includes an automatic dominant periodicity
 detection and detrending during its preparation stage. This feature is controlled by several flags in the 
 [properties.yaml](https://github.com/franpoz/SHERLOCK/blob/master/sherlockpipe/properties.yaml) file:
 "AUTO DETREND ENABLED", "AUTO DETREND METHOD", "AUTO DETREND RATIO" and "AUTO DETREND PERIOD". The reader is encouraged to consult the examples given 
@@ -171,7 +171,7 @@ details and examples.
 ### 2.2.5 Input period detrending
 If the user already knows, for example, that a given target is a fast rotator, and knows its period, this can be directly provided by the user to ``SHERLOCK``.
 This input has to be included in the "INITIAL DETREND PERIOD" module in the [properties.yaml](https://github.com/franpoz/SHERLOCK/blob/master/sherlockpipe/properties.yaml) file.
-If enabled, this feature automatically disables the automatic detrend of intense periodicities function. 
+If enabled, this feature automatically disables the automatic detrend of dominant periodicities function. 
 
 ## 2.3 Detrending process
 
@@ -185,7 +185,7 @@ the minimum value is obtained by computing the transit duration ($T_{14}$) of a 
 two transits in one *TESS* sector or one *Kepler* sub-quarter are required). To protect a transit of at least this duration from being removed, we chose a minimum window size of $3\times T_{14}$. 
 After conducting experiments, the optimal maximum value explored has been fixed to $20\times T_{14}$, which seemed sufficient to remove low-frecuency variability of most stars. As mentioned previously, these values may be refined by the users, to optimaze their findings. An example of this proccess is displayed in \autoref{fig:detrends}.
 
-![Detrended models applied to a light curve corresponding to TIC 259377017 (in sector 5) with the bi-weight method for twelve different window-sizes. Each panel indicates the window-size in units of days in the top. The black points show the PDCSAP fluxes, the solid-orange lines are the indentified trends.\label{fig:detrends}](detrends.png)
+![Detrended models applied to a light curve corresponding to TIC 259377017 (in sector 5) with the bi-weight method for twelve different window-sizes. Each panel indicates the window-size in units of days in the top. The black points show the PDCSAP fluxes, the solid-orange lines are the identified trends.\label{fig:detrends}](detrends.png)
 
 
 ## 2.4 The search
@@ -216,11 +216,11 @@ run is written at the end of the object execution.
 
 * Light curve .csv files: original (before pre-processing, that is the PDCSAP fluxes) and all the detrended light curves are saved individualy in .csv files which contain three columns: `#time`, `flux` and `flux_err`.
 
-* Lomb-Scargle periodogram: this plot corresponds to the Section "(3.2.4) Automatic detrend of intense periodicities", which shows the period strengths (see \autoref{fig:periodogram}).
+* Lomb-Scargle Periodogram: this plot corresponds to the Section "(3.2.4) Automatic detrend of high-amplitude periodicities", which shows the period amplitudes (see \autoref{fig:periodogram}).
 
-![Lomb-Scargle periodogram showing the strength of each period.\label{fig:periodogram}](Periodogram.png)
+![Lomb-Scargle Periodogram showing the highest_amplitude of each period.\label{fig:periodogram}](Periodogram.png)
 
-* Phase-folded period: in the case where auto-detrending or manual period detrending is enabled (Sections 3.2.4 and 3.2.5, respectively), it is plotted the phase-folded light curve over the strongest period in the Lomb-Scargle periodogram or the period provided by the user, respectively.
+* Phase-folded period: in the case where auto-detrending or manual period detrending is enabled (Sections 3.2.4 and 3.2.5, respectively), it is plotted the phase-folded light curve over the highest-amplitude period in the Lomb-Scargle Periodogram or the period provided by the user, respectively.
 
 ![Phase-folded light curve which provides information about the rotational period of the star.\label{fig:autodetrend}](autodetrend.png){width=80%}
 
@@ -262,7 +262,7 @@ The ``SHERLOCK PIPEline`` is specially devoted for:
 4) Search for planets in light curves processed by the user. 
  
 That is, ``SHERLOCK`` might be used for a number of projects which need to explore light curves in the search for exoplanets. For example, it is used 
-in the *SPECULOOS-TESS* alliance [@sebastian:2021], and in the hot-subdwarf survey in the search for planetary remnats [vangrootel:2021]
+in the *SPECULOOS-TESS* alliance [@sebastian:2021], and in the hot-subdwarf survey in the search for planetary remnants [vangrootel:2021]
 (see the [Hot-subdwarf catalogues](https://github.com/franpoz/Hot-Subdwarfs-Catalogues)).
 
 
@@ -273,8 +273,9 @@ relevant features that we are continuously developing and implementing. Here are
 
 ## 5.1 Pulsating stars
 
-While the automatic detrend of intense periodicities module (Section 3.2.4) allows the user to remove pulsation-like features, it is 
-very common that stars pulse in different modes, which is more complex than simple variability. To handle this issue, we will implement a more robust characterization of stellar pulsations. In particular, high-frequency pressure-mode (p-mode) pulsators which have relatively high amplitudes and can hinder the detection of shallow transits [@sowicka:2017].
+While the automatic detrend of high-amplitude periodicities module (Section 3.2.4) allows the user to remove single pulsation-like features, it is 
+very common that stars pulse in different modes, which is more complex than on-period variability. To handle this issue, we will implement a more robust characterization of stellar pulsations. 
+In general, high-frequency pulsators which have relatively high amplitudes and can hinder the detection of shallow transits [@sowicka:2017].
 
 ## 5.2 Disintegrating planets
 
