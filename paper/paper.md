@@ -78,7 +78,7 @@ python3 -m sherlockpipe --properties properties.yaml
 ## 1.2 Vetting promising signals
 
 Once the search is done and the user has found a promising candidate, the next step would be to perform some diagnostic tests to check whether the identified signal has an instrumental 
-origin and to rule out alternative astrophysical sources. For *TESS* candidates ``SHERLOCK`` uses ``LATTE`` [@eisner:2020], a user-friendly package which examines different aspects such as momentum dumps, background flux, *X-Y* centroid positions, photometric aperture effect, pixel-level centroid analysis, nearby companion stars, nearest-neighbour light curves, and pixel-level light curves. In addition, via ``tpfplotter`` [@aller:2020], a target pixel file is provided, which contains the aperture used to extract the ``PDCSAP`` fluxes (see Section 3.1) and the *Gaia* DR2 catalogue. This allows the user to identify which stars might be affecting the light curve of a given candidate. To test the alternative astrophysical sources, ``SHERLOCK`` uses ``TRICERATOPS`` [@giacalone:2021] to estimate the probabilities for different astrophysical scenarios such as transiting planet, eclipsing binary, eclipsing binary with 2$\times$ orbital period, among others. Collectively, these analyses help the user estimate the reliability of a given detection. In future releases we will extend our vetting tool to *Kepler* and *K2* data. 
+origin and to rule out alternative astrophysical sources. For *TESS* candidates ``SHERLOCK`` uses ``LATTE`` [@eisner:2020], a user-friendly package which examines different aspects such as momentum dumps, background flux, *X-Y* centroid positions, photometric aperture effect, pixel-level centroid analysis, nearby companion stars, nearest-neighbour light curves, and pixel-level light curves. In addition, via ``tpfplotter`` [@aller:2020], a target pixel file is provided, which contains the aperture used to extract the ``PDCSAP`` fluxes (see Section 3.1) and the *Gaia* DR2 catalogue. This allows the user to identify which stars might be affecting the light curve of a given candidate. Collectively, these analyses help the user estimate the reliability of a given detection. In future releases we will extend our vetting tool to *Kepler* and *K2* data. 
 
 Running this vetting tool for a particular signal is as simple as: 
  
@@ -104,7 +104,20 @@ python3 -m sherlockpipe.fit --candidate {number_of_the_candidate}
 
 Whereby ``SHERLOCK`` saves, jointly with the PDCSAP fluxes, all the light curves generated during the detrending phase. This allows the user the opportunity to use them to fit any other result. 
 
+## 1.4 Validating promising candidates
+After the vetting process, it is useful many times to run a bayesian statistical validation of the candidate. Its
+star properties, the light curve data and the closest neighbour star properties are passed to a probabilistic model
+that assesses the False Positive Probability and Nearby False Positive Probability. ``SHERLOCK`` does it by reading
+the candidate data and injecting it to a script that uses ``TRICERATOPS`` [@giacalone:2021]. It testes the alternative 
+astrophysical sources estimating the probabilities for different astrophysical scenarios such as transiting planet, 
+eclipsing binary, eclipsing binary with 2$\times$ orbital period, among others. As in the vetting features, we plan to 
+extend the validation to *Kepler* and *K2* data probably by running ``VESPA`` [@morton:2015] internally. 
 
+To run the validation the user would need to execute:
+```shell
+python3 -m sherlockpipe.validate --candidate {number_of_the_candidate}
+
+```
 
 # 2. The ``SHERLOCK PIPEline`` workflow  
 
@@ -223,6 +236,21 @@ To test the performance of ``SHERLOCK`` in comparison to other methods used to f
 
 ![Comparison between different strategies to search for planets.\label{fig:performance}](sherlock1.png)
 
+In terms of CPU power usage, ``SHERLOCK`` is very intensive, as it searches for transiting exoplanet signals among
+several detrended light curves instead of just using one. As many other pipelines from the communities, ``SHERLOCK``
+bases this search in the internal usage of ``transitleastsquares``. Despite the improvements of this method in 
+comparison to others like box least squares, it increases the computational power (O(n) where n is the number of periods
+within the period grid) as the light curve
+grows in length. This is an expected scenario for many cases. However, the TESS mission is providing a great amount
+of light curves where there are severe data gaps due to the difference of time the measured sectors were scheduled.
+For those cases, ``transitleastsquares`` still generates a period grid only based on the time difference between
+the last and first points from the light curve. Therefore, its grid becomes highly dense for cases with little
+data points, substantially increasing the CPU power (and time) consumption. To avoid this issue, ``SHERLOCK``
+incorporates a modified version of ``transitleastsquares`` where the period grid for the search can be externally
+provided. That is, ``SHERLOCK`` builds its own period grid only based on the length of the light curve where data 
+exists and passes it to ``transitleastsquares``, avoiding large period grids for simple problems and heavily
+reducing the CPU power usage of the tool for such cases.   
+
 
 # 4. Scientific cases 
 
@@ -248,7 +276,7 @@ relevant features that we are continuously developing and implementing. Here are
 While the automatic detrend of intense periodicities module (Section 3.2.4) allows the user to remove pulsation-like features, it is 
 very common that stars pulse in different modes, which is more complex than simple variability. To handle this issue, we will implement a more robust characterization of stellar pulsations. In particular, high-frequency pressure-mode (p-mode) pulsators which have relatively high amplitudes and can hinder the detection of shallow transits [@sowicka:2017].
 
-## 5.2 Disentigrating planets
+## 5.2 Disintegrating planets
 
 We are including in ``SHERLOCK`` a model for comet-like tails of disintegrating exoplanets, which highly differ from the typical shape of transiting exoplanets; see, e.g. [@rappaport:2012,@sanchis:2015]. 
 
