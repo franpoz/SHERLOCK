@@ -27,7 +27,7 @@ class SherlockTarget:
                  mask_mode='mask',
                  cpu_cores=multiprocessing.cpu_count() - 1, max_runs=10, period_min=0.5,
                  period_max=33, period_protect=10, best_signal_algorithm='border-correct', quorum_strength=1,
-                 min_quorum=0, fit_method='tls', oversampling=None,
+                 min_quorum=0, fit_method='tls', oversampling=10,
                  t0_fit_margin=0.05, duration_grid_step=1.1,
                  outliers_sigma=3):
         self.min_sectors = min_sectors

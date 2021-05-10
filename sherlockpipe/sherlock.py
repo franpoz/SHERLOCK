@@ -898,15 +898,6 @@ class Sherlock:
 
     def __adjust_transit(self, sherlock_target, time, lc, star_info, transits_min_count, run_results, report, cadence):
         oversampling = sherlock_target.oversampling
-        if oversampling is None:
-            # oversampling = 450 / time_lapse
-            # oversampling = oversampling if oversampling < 10 else 10
-            time_lapse = time[len(time) - 1] - time[0]
-            oversampling = int(600 // time_lapse)
-            if oversampling < 3:
-                oversampling = 3
-            elif oversampling > 10:
-                oversampling = 10
         dif = time[1:] - time[:-1]
         jumps = np.where(dif > 1)[0]
         jumps = np.append(jumps, len(time))
@@ -917,8 +908,8 @@ class Sherlock:
             time_span_all_sectors = time_span_all_sectors + (time_chunk[-1] - time_chunk[0])
             previous_jump_index = jumpIndex
         period_grid = DefaultTransitTemplateGenerator()\
-            .period_grid(star_info.radius, star_info.mass, time_span_all_sectors, sherlock_target.period_min,
-                         sherlock_target.period_max, oversampling, transits_min_count)
+            .period_grid(star_info.radius, star_info.mass, time[-1] - time[0], sherlock_target.period_min,
+                         sherlock_target.period_max, oversampling, transits_min_count, time_span_all_sectors)
         model = tls.transitleastsquares(time, lc)
         power_args = {"transit_template": sherlock_target.fit_method, "period_min": sherlock_target.period_min,
                       "period_max": sherlock_target.period_max, "n_transits_min": transits_min_count,
