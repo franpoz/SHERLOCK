@@ -1,2 +1,1 @@
 graft sherlockpipe/LATTE/LATTE_imgs
-include sherlockpipe/transitleastsquares/*.csv

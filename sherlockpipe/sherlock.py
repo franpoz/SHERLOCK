@@ -6,11 +6,8 @@ import sys
 import pandas
 import wotan
 import matplotlib.pyplot as plt
-import sherlockpipe.transitleastsquares
-
-sys.modules['transitleastsquares'] = sys.modules['sherlockpipe.transitleastsquares']
-import transitleastsquares as tls
-from sherlockpipe.transitleastsquares import DefaultTransitTemplateGenerator
+import foldedleastsquares as tls
+from foldedleastsquares.template_generator.default_transit_template_generator import DefaultTransitTemplateGenerator
 import lightkurve as lk
 import numpy as np
 import os

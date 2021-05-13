@@ -3,7 +3,7 @@ import os
 
 with open("README.md", "r") as fh:
     long_description = fh.read()
-version = "0.21.0"
+version = "0.22.0"
 
 setuptools.setup(
     name="sherlockpipe", # Replace with your own username
@@ -22,10 +22,7 @@ setuptools.setup(
         "Operating System :: OS Independent",
     ],
     python_requires='>=3.6.9',
-    install_requires=['numpy==1.20.1; python_version>="3.7"',
-                        'numpy==1.19; python_version<"3.7"',
-
-                        "astroquery==0.4.1",
+    install_requires=["astroquery==0.4.1",
                         "allesfitter==1.2.2",
                         'argparse==1.4.0',
                         "celerite==0.4.0", # Allesfitter dependency
@@ -45,7 +42,7 @@ setuptools.setup(
                         "scipy==1.5.4",
                         "reproject==0.4",
                         "reportlab==3.5.59",
-                        "lcbuilder==0.1.9",
+                        "lcbuilder==0.2.1",
                         "mock==4.0.3",
                         'tqdm==4.56.0',
                         'setuptools>=41.0.0',
