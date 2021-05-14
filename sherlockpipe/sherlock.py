@@ -424,8 +424,13 @@ class Sherlock:
                         'M_star': star_info.mass, 'M_star_lerr': star_info.mass - star_info.mass_min,
                         'M_star_uerr': star_info.mass_max - star_info.mass,
                         'Teff_star': star_info.teff, 'Teff_star_lerr': 200, 'Teff_star_uerr': 200,
-                                  'logg': star_info.logg,
-                                  'ld_a': star_info.ld_coefficients[0], 'ld_b': star_info.ld_coefficients[1]},
+                                  'logg': star_info.logg, 'logg_err': star_info.logg_err,
+                                  'ld_a': star_info.ld_coefficients[0], 'ld_b': star_info.ld_coefficients[1],
+                                  'feh': star_info.feh,
+                                  'feh_err': star_info.feh_err, 'j': star_info.j, 'j_err': star_info.j_err,
+                                  'k': star_info.k, 'k_err': star_info.k_err,
+                                  'h': star_info.h, 'h_err': star_info.h_err,
+                                  'kp': star_info.kp},
                        ignore_index=True)
         star_df.to_csv(object_dir + "params_star.csv", index=False)
         logging.info('================================================')
