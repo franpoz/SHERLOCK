@@ -3,7 +3,7 @@ import os
 
 with open("README.md", "r") as fh:
     long_description = fh.read()
-version = "0.22.0"
+version = "0.22.1"
 
 setuptools.setup(
     name="sherlockpipe", # Replace with your own username
@@ -42,7 +42,7 @@ setuptools.setup(
                         "scipy==1.5.4",
                         "reproject==0.4",
                         "reportlab==3.5.59",
-                        "lcbuilder==0.3.0",
+                        "lcbuilder==0.3.3",
                         "mock==4.0.3",
                         'tqdm==4.56.0',
                         'setuptools>=41.0.0',
