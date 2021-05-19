@@ -78,6 +78,7 @@ if __name__ == '__main__':
             moon_phase = astroplan.moon_illumination(midtransit_time)
             # TODO get moon distance to target
             # TODO get is_event_observable for several parts of the transit (ideally each 5 mins) to get the proper observable percent. Also with baseline
+            # TODO store transit midtime uncertainty
             observables_df = observables_df.append({"name": observatory_row["name"], "ingress": ingress_egress_for_midtransit[0].isot,
                                    "egress": ingress_egress_for_midtransit[1].isot, "midtime": midtransit_time,
                                    "observable": observable, "moon_phase": np.round(moon_phase, 2)}, ignore_index=True)
