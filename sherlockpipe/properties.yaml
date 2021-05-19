@@ -39,6 +39,8 @@ AUTO_DETREND_RATIO: 0.25
 PREPARE_ALGORITHM:
 # User defined sigma threshold for outliers clipping
 OUTLIERS_SIGMA: 3
+# Cadence of data to be retrieved
+EXPTIME:
 ######################################################################################################################
 ### TRANSIT ADJUST SETUP
 ######################################################################################################################
