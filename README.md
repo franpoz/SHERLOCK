@@ -124,6 +124,15 @@ there is a candidate from the Sherlock results which matches your desired parame
 from the sherlock results directory. This execution will automatically read the transit and star
 parameters from the Sherlock generated files.
 
+### Validation
+SHERLOCK PIPEline implements a module to execute a statistical validation of a candidate by the usage
+of 
+[TRICERATOPS](https://github.com/stevengiacalone/triceratops). By calling:
+
+```python3 -m sherlockpipe.validate --candidate ${theCandidateNumber}```
+
+you will run the validation for one of the Sherlock candidates.
+
 ## SHERLOCK PIPEline Workflow
 It is important to note that SHERLOCK PIPEline uses some csv files with TOIs, KOIs and EPIC IDs
 from the TESS, Kepler and K2 missions. Therefore your first execution of the pipeline might
