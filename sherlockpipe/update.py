@@ -9,6 +9,7 @@ sys.modules['eleanor'] = sys.modules['sherlockpipe.eleanor']
 import eleanor
 from sherlockpipe.vet import Vetter
 from sherlockpipe.ois.OisManager import OisManager
+from eleanor.maxsector import maxsector
 
 
 class Updater:
@@ -68,7 +69,7 @@ class Updater:
                 sectorpath = eleanorpath + '/metadata/s{:04d}'.format(sector)
                 if os.path.exists(sectorpath) and os.path.isdir(sectorpath) and not os.listdir(sectorpath):
                     os.rmdir(sectorpath)
-                if not os.path.exists(sectorpath) or not os.path.isdir(sectorpath) or not os.listdir(sectorpath):
+                if (not os.path.exists(sectorpath) or not os.path.isdir(sectorpath) or not os.listdir(sectorpath)) and sector <= maxsector:
                     try:
                         eleanor.Update(sector)
                     except Exception as e:
