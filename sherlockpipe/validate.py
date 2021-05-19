@@ -3,32 +3,20 @@ import copy
 import logging
 import multiprocessing
 import shutil
-import types
 from multiprocessing import Pool
-from pathlib import Path
 import traceback
 import lightkurve
 import numpy as np
 import matplotlib
 import matplotlib.pyplot as plt
-import matplotlib.gridspec as gridspec
 import yaml
-from astropy.time import Time
 from astroquery.mast import TesscutClass
 from lcbuilder.lcbuilder_class import LcBuilder
 from lightkurve import TessLightCurve
-from matplotlib.colorbar import Colorbar
-from matplotlib import patches
-from astropy.visualization.mpl_normalize import ImageNormalize
-from astropy.table import Table
-from astropy.io import ascii
-import astropy.visualization as stretching
 from argparse import ArgumentParser
 from scipy import stats
-import astropy.units as u
-from sherlockpipe.eleanor import TargetData
 from sherlockpipe import constants as const
-from sherlockpipe import tpfplotter, eleanor
+from sherlockpipe import eleanor
 import six
 import sys
 import sherlockpipe.LATTE
@@ -38,18 +26,14 @@ sys.modules['LATTE'] = sherlockpipe.LATTE
 matplotlib.use('Agg')
 import pandas as pd
 import os
-from os.path import exists
 import ast
-import csv
 from sherlockpipe.LATTE import LATTEutils, LATTEbrew
 from os import path
 import triceratops.triceratops as tr
 from matplotlib import cm, ticker
-from math import floor, ceil
 from triceratops.likelihoods import (simulate_TP_transit, simulate_EB_transit)
-from triceratops.funcs import (Gauss2D, query_TRILEGAL, renorm_flux, stellar_relations)
+from triceratops.funcs import renorm_flux
 from astropy import constants
-import uuid
 from sherlockpipe.eleanor import maxsector
 
 '''WATSON: Verboseless Vetting and Adjustments of Transits for Sherlock Objects of iNterest
@@ -71,12 +55,13 @@ class Validator:
         self.validation_runs = 5
 
     def validate(self, candidate, cpus):
-        tic = candidate["TICID"]
-        period = candidate.loc[candidate['TICID'] == tic]['period'].iloc[0]
-        duration = candidate.loc[candidate['TICID'] == tic]['duration'].iloc[0]
-        t0 = candidate.loc[candidate['TICID'] == tic]['t0'].iloc[0]
-        transit_list = ast.literal_eval(((candidate.loc[candidate['TICID'] == tic]['transits']).values)[0])
-        transit_depth = candidate.loc[candidate['TICID'] == tic]['depth'].iloc[0]
+        object_id = candidate["TICID"]
+        period = candidate.loc[candidate['TICID'] == object_id]['period'].iloc[0]
+        duration = candidate.loc[candidate['TICID'] == object_id]['duration'].iloc[0]
+        t0 = candidate.loc[candidate['TICID'] == object_id]['t0'].iloc[0]
+        transit_list = ast.literal_eval(((candidate.loc[candidate['TICID'] == object_id]['transits']).values)[0])
+        transit_depth = candidate.loc[candidate['TICID'] == object_id]['depth'].iloc[0]
+        rprs = candidate.loc[candidate['TICID'] == object_id]['rp_rs'].iloc[0]
         candidate_row = candidate.iloc[0]
         if candidate_row["number"] is None or np.isnan(candidate_row["number"]):
             lc_file = "/" + candidate_row["lc"]
@@ -84,7 +69,7 @@ class Validator:
             lc_file = "/" + str(candidate_row["number"]) + "/lc_" + str(candidate_row["curve"]) + ".csv"
         lc_file = self.data_dir + lc_file
         try:
-            sectors_in = ast.literal_eval(str(((candidate.loc[candidate['TICID'] == tic]['sectors']).values)[0]))
+            sectors_in = ast.literal_eval(str(((candidate.loc[candidate['TICID'] == object_id]['sectors']).values)[0]))
             if (type(sectors_in) == int) or (type(sectors_in) == float):
                 sectors = [sectors_in]
             else:
@@ -98,44 +83,20 @@ class Validator:
             index = index + 1
         os.mkdir(validation_dir)
         self.data_dir = validation_dir
-        tic = tic[0]
-        mission, mission_prefix, id_int = LcBuilder().parse_object_info(tic)
-        if mission == "TESS":
-            try:
-                self.execute_triceratops(cpus, validation_dir, str(id_int), sectors, lc_file, transit_depth, period,
-                                         t0, duration)
-            except Exception as e:
-                traceback.print_exc()
+        object_id = object_id[0]
+        mission, mission_prefix, id_int = LcBuilder().parse_object_info(object_id)
+        try:
+            self.execute_triceratops(cpus, validation_dir, mission, str(id_int), sectors, lc_file, transit_depth,
+                                     period, t0, duration)
+        except Exception as e:
+            traceback.print_exc()
         # try:
-        #     self.execute_vespa(cpus, validation_dir, tic, sectors, lc_file, transit_depth, period, t0, duration)
+        #     self.execute_vespa(cpus, validation_dir, object_id, sectors, lc_file, transit_depth, period, t0, duration, rprs)
         # except Exception as e:
         #     traceback.print_exc()
 
-
-    # def execute_vespa(self, cpus, indir, object_id, sectors, lc_file, transit_depth, period, epoch, duration):
-    #     vespa_dir = indir + "vespa/"
-    #     if os.path.exists(vespa_dir):
-    #         shutil.rmtree(vespa_dir, ignore_errors=True)
-    #     os.mkdir(vespa_dir)
-    #     with open(vespa_dir + "star.ini", 'r+') as f:
-    #         f.write("Teff = " + str(teff) + ", " + str(teff_err))
-    #         f.write("feh = " + str(feg) + ", " + str(feh_err))
-    #         f.write("logg = " + str(logg) + ", " + str(logg_err))
-    #         f.write("J = " + str(J) + ", " + str(J_err))
-    #         f.write("H = " + str(H) + ", " + str(H_err))
-    #         f.write("K = " + str(K) + ", " + str(K_err))
-    #         f.write("Kepler = " + str(Kp) + ", " + str(Kp_err))
-    #     with open(vespa_dir + "fpp.ini", 'r+') as f:
-    #         f.write("Name = " + str(object_id))
-    #         f.write("ra = " + str(ra))
-    #         f.write("dec = " + str(dec))
-    #         f.write("period = " + str(period))
-    #         f.write("photfile = " + str(lc_folded_file))
-    #         f.write("[constraints]")
-    #         f.write("maxrad = " + str(object_id))
-    #         #f.write("secthresh = " + str(object_id))
-
-    def execute_triceratops(self, cpus, indir, tic, sectors, lc_file, transit_depth, period, t0, transit_duration):
+    def execute_triceratops(self, cpus, indir, mission, id_int, sectors, lc_file, transit_depth, period, t0,
+                            transit_duration):
         """ Calculates probabilities of the signal being caused by any of the following astrophysical sources:
         TP No unresolved companion. Transiting planet with Porb around target star. (i, Rp)
         EB No unresolved companion. Eclipsing binary with Porb around target star. (i, qshort)
@@ -161,7 +122,7 @@ class Validator:
         when rounding to the nearest percent)
         @param cpus: number of cpus to be used
         @param indir: root directory to store the results
-        @param tic: the tess object id for which the analysis will be run
+        @param id_int: the tess object id for which the analysis will be run
         @param sectors: the sectors of the tic
         @param lc_file: the light curve source file
         @param transit_depth: the depth of the transit signal (ppts)
@@ -174,45 +135,61 @@ class Validator:
             shutil.rmtree(save_dir, ignore_errors=True)
         if not os.path.exists(save_dir):
             os.makedirs(save_dir)
-        sectors = np.array(sectors)
         duration = transit_duration / 60 / 24
-        sectors_cut = TesscutClass().get_sectors("TIC " + str(tic))
-        sectors_cut = np.array([sector_row["sector"] for sector_row in sectors_cut])
-        if len(sectors) != len(sectors_cut):
-            logging.warning("WARN: Some sectors were not found in TESSCUT")
-            logging.warning("WARN: Sherlock sectors were: " + str(sectors))
-            logging.warning("WARN: TESSCUT sectors were: " + str(sectors_cut))
-        sectors = np.intersect1d(sectors, sectors_cut)
-        if len(sectors) == 0:
-            logging.warning("There are no available sectors to be validated, skipping TRICERATOPS.")
-            return save_dir, None, None
+        if mission != "TESS":
+            star_df = pd.read_csv(self.object_dir + "/params_star.csv")
+            star = eleanor.multi_sectors(coords=(star_df.at[0, "ra"], star_df.at[0, "dec"]), sectors='all',
+                                         tesscut_size=31, post_dir=const.USER_HOME_ELEANOR_CACHE)
+            if len(star) == 0 or star[0].tic is None:
+                raise ValueError("Can't validate target as there is no data from TESS FFIs")
+            tic = star[0].tic
+            sectors = np.array([target.sector for target in star])
+        else:
+            sectors = np.array(sectors)
+            tic = id_int
+            sectors_cut = TesscutClass().get_sectors("TIC " + str(tic))
+            sectors_cut = np.array([sector_row["sector"] for sector_row in sectors_cut])
+            if len(sectors) != len(sectors_cut):
+                logging.warning("WARN: Some sectors were not found in TESSCUT")
+                logging.warning("WARN: Sherlock sectors were: " + str(sectors))
+                logging.warning("WARN: TESSCUT sectors were: " + str(sectors_cut))
+            sectors = np.intersect1d(sectors, sectors_cut)
+            eleanor_sectors = sectors[sectors <= maxsector.maxsector]
+            if len(sectors) != len(eleanor_sectors):
+                logging.warning("WARN: Some sectors were not found in ELEANOR")
+                logging.warning("WARN: Sectors were: " + str(sectors))
+                logging.warning("WARN: ELEANOR (where maxsector is %s) sectors were: " + str(eleanor_sectors),
+                                maxsector.maxsector)
+            sectors = eleanor_sectors
+            if len(sectors) == 0:
+                logging.warning("There are no available sectors to be validated, skipping TRICERATOPS.")
+                return save_dir, None, None
         target = tr.target(ID=tic, sectors=sectors)
-        eleanor_sectors = sectors[sectors <= maxsector.maxsector]
-        if len(sectors) != len(eleanor_sectors):
-            logging.warning("WARN: Some sectors were not found in ELEANOR")
-            logging.warning("WARN: Sectors were: " + str(sectors))
-            logging.warning("WARN: ELEANOR (where maxsector is %s) sectors were: " + str(eleanor_sectors), maxsector.maxsector)
-        sectors = eleanor_sectors
-        if len(sectors) == 0:
-            logging.warning("There are no available sectors to be validated, skipping TRICERATOPS.")
-            return save_dir, None, None
         logging.info("Will execute validation for sectors: " + str(sectors))
         # TODO allow user input apertures
         tpfs = lightkurve.search_targetpixelfile("TIC " + str(tic), mission="TESS", cadence="short", sector=sectors.tolist())\
             .download_all()
-        star = eleanor.multi_sectors(tic=tic, sectors=sectors, tesscut_size=31, post_dir=const.USER_HOME_ELEANOR_CACHE)
+        star = eleanor.multi_sectors(tic=tic, sectors=sectors, tesscut_size=11, post_dir=const.USER_HOME_ELEANOR_CACHE)
         apertures = []
         sector_num = 0
         logging.info("Calculating validation masks")
         for s in star:
-            tpf_idx = [data.sector if data.sector == s.sector else -1 for data in tpfs.data]
-            tpf = tpfs[np.where(tpf_idx > np.zeros(len(tpf_idx)))[0][0]]
-            pipeline_mask = tpfs[np.where(tpf_idx > np.zeros(len(tpf_idx)))[0][0]].pipeline_mask
+            if tpfs is None:
+                target_data = eleanor.TargetData(s, height=11, width=11)
+                pipeline_mask = target_data.aperture.astype(bool)
+                column = s.position_on_chip[0]
+                row = s.position_on_chip[1]
+            else:
+                tpf_idx = [data.sector if data.sector == s.sector else -1 for data in tpfs.data]
+                tpf = tpfs[np.where(tpf_idx > np.zeros(len(tpf_idx)))[0][0]]
+                pipeline_mask = tpfs[np.where(tpf_idx > np.zeros(len(tpf_idx)))[0][0]].pipeline_mask
+                column = tpf.column
+                row = tpf.row
             pipeline_mask = np.transpose(pipeline_mask)
             pipeline_mask_triceratops = np.zeros((len(pipeline_mask[0]), len(pipeline_mask[:][0]), 2))
             for i in range(0, len(pipeline_mask[0])):
                 for j in range(0, len(pipeline_mask[:][0])):
-                    pipeline_mask_triceratops[i, j] = [tpf.column + i, tpf.row + j]
+                    pipeline_mask_triceratops[i, j] = [column + i, row + j]
             pipeline_mask_triceratops[~pipeline_mask] = None
             aperture = []
             for i in range(0, len(pipeline_mask_triceratops[0])):
@@ -245,10 +222,10 @@ class Validator:
         bin_width = (bin_edges[1] - bin_edges[0])
         bin_centers = bin_edges[1:] - bin_width/2
         lc.plot()
-        plt.title("TIC " + str(tic))
+        plt.title("TIC " + str(id_int))
         plt.savefig(save_dir + "/folded_curve.png")
         plt.plot(bin_centers, bin_means)
-        plt.title("TIC " + str(tic))
+        plt.title("TIC " + str(id_int))
         plt.xlabel("Time")
         plt.ylabel("Flux")
         plt.savefig(save_dir + "/folded_curve_binned.png")
@@ -311,6 +288,162 @@ class Validator:
         # target.plot_fits(save=True, fname=save_dir + "/scenario_fits", time=lc.time.value, flux_0=lc.flux.value,
         #                  flux_err_0=sigma)
         return save_dir, star[0].coords[0], star[0].coords[1]
+
+    # def execute_vespa(self, cpus, indir, object_id, sectors, lc_file, transit_depth, period, epoch, duration, rprs):
+    #     vespa_dir = indir + "/vespa/"
+    #     if os.path.exists(vespa_dir):
+    #         shutil.rmtree(vespa_dir, ignore_errors=True)
+    #     os.mkdir(vespa_dir)
+    #     lc = pd.read_csv(lc_file, header=0)
+    #     time, flux, flux_err = lc["#time"].values, lc["flux"].values, lc["flux_err"].values
+    #     lc_len = len(time)
+    #     zeros_lc = np.zeros(lc_len)
+    #     logging.info("Preparing validation light curve for target")
+    #     lc = TessLightCurve(time=time, flux=flux, flux_err=flux_err, quality=zeros_lc)
+    #     lc.extra_columns = []
+    #     time_float = lc.time.value
+    #     cadence_array = np.diff(time_float)
+    #     cadence_array = cadence_array[~np.isnan(cadence_array)]
+    #     cadence_array = cadence_array[cadence_array > 0]
+    #     cadence_days = np.nanmedian(cadence_array)
+    #     lc = lc.fold(period=period, epoch_time=epoch, normalize_phase=True)
+    #     folded_plot_range = duration / 60 / 24 / 2 / period * 5
+    #     inner_folded_range_args = np.where(
+    #         (0 - folded_plot_range < lc.time.value) & (lc.time.value < 0 + folded_plot_range))
+    #     lc = lc[inner_folded_range_args]
+    #     lc.time = lc.time * period
+    #     bin_means, bin_edges, binnumber = stats.binned_statistic(lc.time.value, lc.flux.value, statistic='mean',
+    #                                                              bins=500)
+    #     bin_means_err, bin_edges_err, binnumber_err = stats.binned_statistic(lc.time.value, lc.flux_err.value, statistic='mean',
+    #                                                              bins=500)
+    #     bin_width = (bin_edges[1] - bin_edges[0])
+    #     bin_centers = bin_edges[1:] - bin_width / 2
+    #     lc.plot()
+    #     plt.title("Target " + str(object_id))
+    #     plt.savefig(vespa_dir + "/folded_curve.png")
+    #     plt.plot(bin_centers, bin_means)
+    #     plt.title("Target " + str(object_id))
+    #     plt.xlabel("Time")
+    #     plt.ylabel("Flux")
+    #     plt.savefig(vespa_dir + "/folded_curve_binned.png")
+    #     lc_df = pandas.DataFrame(columns=['days_from_midtransit', 'flux', 'flux_err'])
+    #     lc_df['days_from_midtransit'] = bin_centers
+    #     lc_df['flux'] = bin_means
+    #     lc_df['flux_err'] = bin_means_err
+    #     lc_df.to_csv(vespa_dir + "/lc.csv", index=False)
+    #     star_df = pd.read_csv(self.object_dir + "/params_star.csv")
+    #     with open(vespa_dir + "fpp.ini", 'w+') as f:
+    #         f.write("name = " + str(object_id) + "\n")
+    #         f.write("ra = " + str(star_df.at[0, "ra"]) + "\n")
+    #         f.write("dec = " + str(star_df.at[0, "dec"]) + "\n")
+    #         f.write("period = " + str(period) + "\n")
+    #         f.write("rprs = " + str(rprs) + "\n")
+    #         # TODO rewrite lc file to match vespa expected
+    #         f.write("photfile = " + vespa_dir + "/lc.csv" + "\n")
+    #         f.write("band = J" + "\n")
+    #         #TODO cadence
+    #         f.write("cadence = " + str(cadence_days) + "\n")
+    #         f.write("[constraints]" + "\n")
+    #         f.write("maxrad = 12" + "\n")
+    #         f.write("secthresh = 1e-4" + "\n")
+    #     try:
+    #         self.isochrones_starfit(vespa_dir, star_df)
+    #         f = FPPCalculation.from_ini(vespa_dir, ini_file="fpp.ini",
+    #                                     recalc=True,
+    #                                     refit_trap=False,
+    #                                     n=20000)
+    #         f.trsig.MCMC(refit=True)
+    #         f.trsig.save(os.path.join(vespa_dir, 'trsig.pkl'))
+    #         trap_corner_file = os.path.join(vespa_dir, 'trap_corner.png')
+    #         if not os.path.exists(trap_corner_file) or args.refit_trsig:
+    #             f.trsig.corner(outfile=trap_corner_file)
+    #         # Including artificial models
+    #         boxmodel = BoxyModel(args.artificial_prior, f['pl'].stars.slope.max())
+    #         longmodel = LongModel(args.artificial_prior, f['pl'].stars.duration.quantile(0.99))
+    #         f.add_population(boxmodel)
+    #         f.add_population(longmodel)
+    #         f.FPPplots(recalc_lhood=args.recalc_lhood)
+    #         logger.info('Re-fitting trapezoid MCMC model...')
+    #         f.bootstrap_FPP(1)
+    #         for mult, Model in zip(['single', 'binary', 'triple'],
+    #                                [StarModel, BinaryStarModel, TripleStarModel]):
+    #             starmodel_file = os.path.join(vespa_dir, '{}_starmodel_{}.h5'.format(args.ichrone, mult))
+    #             corner_file1 = os.path.join(vespa_dir,
+    #                                         '{}_corner_{}_physical.png'.format(args.ichrone, mult))
+    #             corner_file2 = os.path.join(vespa_dir,
+    #                                         '{}_corner_{}_observed.png'.format(args.ichrone, mult))
+    #             if not os.path.exists(corner_file1) or not os.path.exists(corner_file2):
+    #                 logger.info('Making StarModel corner plots...')
+    #                 starmodel = Model.load_hdf(starmodel_file)
+    #                 corner_base = os.path.join(vespa_dir,
+    #                                            '{}_corner_{}'.format(args.ichrone, mult))
+    #                 starmodel.corner_plots(corner_base)
+    #             logger.info('Bootstrap results ({}) written to {}.'.format(1,
+    #                                                                        os.path.join(os.path.abspath(vespa_dir),
+    #                                                                                     'results_bootstrap.txt')))
+    #         logger.info('VESPA FPP calculation successful. ' +
+    #                     'Results/plots written to {}.'.format(os.path.abspath(vespa_dir)))
+    #         print('VESPA FPP for {}: {}'.format(f.name, f.FPP()))
+    #         fpp_df = pandas.DataFrame(columns=['fpp'])
+    #         fpp_df.append({'name': f.name, 'fpp': f.FPP()})
+    #         fpp_df.to_csv(vespa_dir + "fpp.csv", index=False)
+    #     except KeyboardInterrupt:
+    #         raise
+    #     except:
+    #         logger.error('FPP calculation failed for {}.'.format(vespa_dir), exc_info=True)
+    #
+    # def isochrones_starfit(self, vespa_dir, star_df):
+    #     with open(vespa_dir + "star.ini", 'w+') as f:
+    #         feh = star_df.at[0, "feh"]
+    #         feh_err = star_df.at[0, "feh_err"]
+    #         logg = star_df.at[0, "logg"]
+    #         logg_err = star_df.at[0, "logg_err"]
+    #         j = star_df.at[0, "j"]
+    #         j_err = star_df.at[0, "j_err"]
+    #         h = star_df.at[0, "h"]
+    #         h_err = star_df.at[0, "h_err"]
+    #         k = star_df.at[0, "k"]
+    #         k_err = star_df.at[0, "k_err"]
+    #         kp = star_df.at[0, "kp"]
+    #         f.write("Teff = " + str(star_df.at[0, "Teff_star"]) + ", " + str(star_df.at[0, "Teff_star"] * 0.1) + "\n")
+    #         if feh is not None and not np.isnan(feh) and feh_err is not None and not np.isnan(feh_err):
+    #             f.write("feh = " + str(star_df.at[0, "feh"]) + ", " + str(star_df.at[0, "feh_err"]) + "\n")
+    #         elif feh is not None and not np.isnan(feh):
+    #             f.write("feh = " + str(star_df.at[0, "feh"]) + "\n")
+    #         if logg is not None and not np.isnan(logg) and logg_err is not None and not np.isnan(logg_err):
+    #             f.write("logg = " + str(star_df.at[0, "logg"]) + ", " + str(star_df.at[0, "logg_err"]) + "\n")
+    #         elif logg is not None and not np.isnan(logg):
+    #             f.write("logg = " + str(star_df.at[0, "logg"]) + "\n")
+    #         f.write("[sherlock]\n")
+    #         if j is not None and not np.isnan(j) and j_err is not None and not np.isnan(j_err):
+    #             f.write("J = " + str(star_df.at[0, "j"]) + ", " + str(star_df.at[0, "j_err"]) + "\n")
+    #         elif j is not None and not np.isnan(j):
+    #             f.write("J = " + str(star_df.at[0, "j"]) + "\n")
+    #         if h is not None  and not np.isnan(h) and h_err is not None and not np.isnan(h_err):
+    #             f.write("H = " + str(star_df.at[0, "h"]) + ", " + str(star_df.at[0, "h_err"]) + "\n")
+    #         elif h is not None and not np.isnan(h):
+    #             f.write("H = " + str(star_df.at[0, "h"]) + "\n")
+    #         if k is not None and not np.isnan(k) and logg_err is not None and not np.isnan(logg_err):
+    #             f.write("K = " + str(star_df.at[0, "k"]) + ", " + str(star_df.at[0, "k_err"]) + "\n")
+    #         elif k is not None:
+    #             f.write("K = " + str(star_df.at[0, "kp"]) + "\n")
+    #         if kp is not None and not np.isnan(kp):
+    #             f.write("Kepler = " + str(star_df.at[0, "kp"]) + "\n")
+    #     starfit(
+    #         vespa_dir,
+    #         multiplicities=["single", "binary", "triple"],
+    #         models="mist",
+    #         use_emcee=True,
+    #         plot_only=False,
+    #         overwrite=False,
+    #         verbose=False,
+    #         logger=None,
+    #         starmodel_type=None,
+    #         skip_initial_state_check=True,
+    #         ini_file="star.ini",
+    #         no_plots=False,
+    #         bands=None
+    #     )
 
     @staticmethod
     def plot_fits(target, save_file, time: np.ndarray, flux_0: np.ndarray, sigma_0: float):
@@ -513,8 +646,6 @@ if __name__ == '__main__':
         user_properties = yaml.load(open(args.properties), yaml.SafeLoader)
         candidate = pd.DataFrame(columns=['id', 'transits', 'sectors', 'FFI'])
         candidate = candidate.append(user_properties, ignore_index=True)
-        candidate = candidate.rename(columns={'id': 'TICID'})
-        candidate['TICID'] = candidate["TICID"].apply(str)
         cpus = user_properties["settings"]["cpus"]
     else:
         candidate_selection = int(args.candidate)
