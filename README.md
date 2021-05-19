@@ -129,7 +129,7 @@ SHERLOCK PIPEline implements a module to execute a statistical validation of a c
 of 
 [TRICERATOPS](https://github.com/stevengiacalone/triceratops). By calling:
 
-```python3 -m sherlockpipe.validate --candidate ${theCandidateNumber```
+```python3 -m sherlockpipe.validate --candidate ${theCandidateNumber}```
 
 you will run the validation for one of the Sherlock candidates.
 
