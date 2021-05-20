@@ -89,22 +89,7 @@ python3 -m sherlockpipe.vet --candidate {number_of_the_candidate}
 
 by replacing {number_of_the_candidate} with 1, 2, 3, etc., the tool will print a collection of plots. To fully understand these vetting packages, we refer the reader to @eisner:2020, @aller:2020 and @giacalone:2021 respectively.
 
-## 1.3 Fitting promising candidates
-
-After the vetting process, the next step would be to schedule ground-based observations to firmly confirm the event in the target star or to identify potential false positives due to variable stars,
-such as an eclipsing binary (EB). To this aim, it is critical to have the most accurate ephemeris as possible. Unfortunately, the solution currently given by the search via ``TLS`` is not optimal to this end, and it is desirable to perform a proper fitting of the transits. There are a number of available public codes which might be used to this end, where ``Juliet`` [@espinoza:2019], ``Exofast`` [@eastman:2019], and ``allesfitter`` [@gunther:2020] are some examples. 
-In ``SHERLOCK``, ``allesfitter`` is used. 
-
-To fit a candidate, the user only needs to execute: 
-    
-```shell 
-python3 -m sherlockpipe.fit --candidate {number_of_the_candidate} 
-
-```
-
-Whereby ``SHERLOCK`` saves, jointly with the PDCSAP fluxes, all the light curves generated during the detrending phase. This allows the user the opportunity to use them to fit any other result. 
-
-## 1.4 Validating promising candidates
+## 1.3 Validating promising candidates
 After the vetting process, it is useful many times to run a bayesian statistical validation of the candidate. Its
 star properties, the light curve data and the closest neighbour star properties are passed to a probabilistic model
 that assesses the False Positive Probability and Nearby False Positive Probability. ``SHERLOCK`` does it by reading
@@ -117,6 +102,33 @@ To run the validation the user would need to execute:
 ```shell
 python3 -m sherlockpipe.validate --candidate {number_of_the_candidate}
 
+```
+
+## 1.4 Fitting promising candidates
+
+After the vetting and/or the validation processes, the next step would be to schedule ground-based observations to firmly confirm the event in the target star or to identify potential false positives due to variable stars,
+such as an eclipsing binary (EB). To this aim, it is critical to have the most accurate ephemeris as possible. Unfortunately, the solution currently given by the search via ``TLS`` is not optimal to this end, and it is desirable to perform a proper fitting of the transits. There are a number of available public codes which might be used to this end, where ``Juliet`` [@espinoza:2019], ``Exofast`` [@eastman:2019], and ``allesfitter`` [@gunther:2020] are some examples. 
+In ``SHERLOCK``, ``allesfitter`` is used. 
+
+To fit a candidate, the user only needs to execute: 
+    
+```shell 
+python3 -m sherlockpipe.fit --candidate {number_of_the_candidate} 
+
+```
+
+Whereby ``SHERLOCK`` saves, jointly with the PDCSAP fluxes, all the light curves generated during the detrending phase. This allows the user the opportunity to use them to fit any other result. 
+
+## 1.5 Creating an observation plan
+Once the fitting is done, the candidate could be probably subject to be followed-up by ground-based observations. For that purpose
+``SHERLOCK`` includes a tool for suggesting an observation plan selecting the observable future transits given several constaints such as 
+the distance and phase of the moon or the observatories coordinates thanks to the usage of the ``Astroplan`` package [@morris:2018]. 
+At the end, a ``csv`` is generated with the transit parameters for each provided observatory, whenever the transit is observable from them.
+
+To run the plan generation the next command needs to be executed:
+```shell
+python3 -m sherlockpipe.plan --candidate {number_of_the_candidate} 
+   --observatories observatories.csv
 ```
 
 # 2. The ``SHERLOCK PIPEline`` workflow  
@@ -262,7 +274,7 @@ The ``SHERLOCK PIPEline`` is specially devoted for:
 4) Search for planets in light curves processed by the user. 
  
 That is, ``SHERLOCK`` might be used for a number of projects which need to explore light curves in the search for exoplanets. For example, it is used 
-in the *SPECULOOS-TESS* alliance [@sebastian:2021], and in the hot-subdwarf survey in the search for planetary remnants [vangrootel:2021]
+in the *SPECULOOS-TESS* alliance [@sebastian:2021], and in the hot-subdwarf survey in the search for planetary remnants [@vangrootel:2021]
 (see the [Hot-subdwarf catalogues](https://github.com/franpoz/Hot-Subdwarfs-Catalogues)).
 
 
@@ -281,18 +293,27 @@ In general, high-frequency pulsators which have relatively high amplitudes and c
 
 We are including in ``SHERLOCK`` a model for comet-like tails of disintegrating exoplanets, which highly differ from the typical shape of transiting exoplanets; see, e.g. [@rappaport:2012,@sanchis:2015]. 
 
+## 5.3 Systems stability
+A common analysis to be done to assess a candidate is the calculation of the Mean Exponential Growth of Nearby Orbits (MEGNO) initially introduced by @cincotta:2003. We will analyze a proper way to include such a stability analysis to SHERLOCK by including the ``rebound`` package [@rein:2012] or using ``SPOCK``,
+which uses machine learning techniques to improve the results over the MEGNO value for multiplanetary systems as exposed in @tamayo:2020.
+
 
 ## 6. Summary and conclusions
 
 We presented the ``SHERLOCK PIPEline``, a python package to easily search for exoplanets in light curves obtained by space-based missions such as *Kepler*, *K2* and *TESS*, or light curves directly provided by the user. ``SHERLOCK`` has proved to be robust and enfficient, specially suited for the detection of threshold-crossing events that may remain unnoticed by the automatic official pipelines. 
-The user only needs to fill the [properties.yaml](https://github.com/franpoz/SHERLOCK/blob/master/sherlockpipe/properties.yaml) file and use three command lines to search, vet and fit candidates: 
+The user only needs to fill the [properties.yaml](https://github.com/franpoz/SHERLOCK/blob/master/sherlockpipe/properties.yaml) file and use three command lines to search, vet, validate, fit and plan observations for the candidates: 
 
 ```shell
 python3 -m sherlockpipe --properties properties.yaml
 
 python3 -m sherlockpipe.vet --candidate {number_of_the_candidate} 
 
-python3 -m sherlockpipe.fit --candidate {number_of_the_candidate} 
+python3 -m sherlockpipe.validate --candidate {number_of_the_candidate} 
+
+python3 -m sherlockpipe.fit --candidate {number_of_the_candidate}
+
+python3 -m sherlockpipe.plan --candidate {number_of_the_candidate} 
+  --observatories observatories.csv
 
 ```
 
