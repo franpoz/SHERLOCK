@@ -133,6 +133,15 @@ of
 
 you will run the validation for one of the Sherlock candidates.
 
+### Observation plan
+SHERLOCK PIPEline also adds now a tool to plan your observations from ground-based observatories by using 
+[astropy](https://github.com/astropy/astropy) and [astroplan](https://github.com/astropy/astroplan). By calling:
+
+```python3 -m sherlockpipe.plan --candidate ${theCandidateNumber} --observatory observatories.csv```
+
+where the `observatories.csv` file should contain the list of available observatories for your candidate follow-up.
+As an example, you can look at the [example]()
+
 ## SHERLOCK PIPEline Workflow
 It is important to note that SHERLOCK PIPEline uses some csv files with TOIs, KOIs and EPIC IDs
 from the TESS, Kepler and K2 missions. Therefore your first execution of the pipeline might
