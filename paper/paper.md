@@ -127,7 +127,8 @@ At the end, a ``csv`` is generated with the transit parameters for each provided
 
 To run the plan generation the next command needs to be executed:
 ```shell
-python3 -m sherlockpipe.plan --candidate {number_of_the_candidate} --observatories observatories.csv
+python3 -m sherlockpipe.plan --candidate {number_of_the_candidate} 
+   --observatories observatories.csv
 ```
 
 # 2. The ``SHERLOCK PIPEline`` workflow  
