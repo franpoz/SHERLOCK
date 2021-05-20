@@ -37,7 +37,7 @@ setuptools.setup(
                         "ellc==1.8.5",
                         "seaborn==0.11.1",
                         "bokeh==2.2.3",
-                        "astroplan==0.7",
+                        "astroplan==0.8",
                         "sklearn==0.0",
                         "scipy==1.5.4",
                         "reproject==0.4",
