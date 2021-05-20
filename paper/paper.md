@@ -89,22 +89,7 @@ python3 -m sherlockpipe.vet --candidate {number_of_the_candidate}
 
 by replacing {number_of_the_candidate} with 1, 2, 3, etc., the tool will print a collection of plots. To fully understand these vetting packages, we refer the reader to @eisner:2020, @aller:2020 and @giacalone:2021 respectively.
 
-## 1.3 Fitting promising candidates
-
-After the vetting process, the next step would be to schedule ground-based observations to firmly confirm the event in the target star or to identify potential false positives due to variable stars,
-such as an eclipsing binary (EB). To this aim, it is critical to have the most accurate ephemeris as possible. Unfortunately, the solution currently given by the search via ``TLS`` is not optimal to this end, and it is desirable to perform a proper fitting of the transits. There are a number of available public codes which might be used to this end, where ``Juliet`` [@espinoza:2019], ``Exofast`` [@eastman:2019], and ``allesfitter`` [@gunther:2020] are some examples. 
-In ``SHERLOCK``, ``allesfitter`` is used. 
-
-To fit a candidate, the user only needs to execute: 
-    
-```shell 
-python3 -m sherlockpipe.fit --candidate {number_of_the_candidate} 
-
-```
-
-Whereby ``SHERLOCK`` saves, jointly with the PDCSAP fluxes, all the light curves generated during the detrending phase. This allows the user the opportunity to use them to fit any other result. 
-
-## 1.4 Validating promising candidates
+## 1.3 Validating promising candidates
 After the vetting process, it is useful many times to run a bayesian statistical validation of the candidate. Its
 star properties, the light curve data and the closest neighbour star properties are passed to a probabilistic model
 that assesses the False Positive Probability and Nearby False Positive Probability. ``SHERLOCK`` does it by reading
@@ -119,8 +104,23 @@ python3 -m sherlockpipe.validate --candidate {number_of_the_candidate}
 
 ```
 
+## 1.4 Fitting promising candidates
+
+After the vetting and/or the validation processes, the next step would be to schedule ground-based observations to firmly confirm the event in the target star or to identify potential false positives due to variable stars,
+such as an eclipsing binary (EB). To this aim, it is critical to have the most accurate ephemeris as possible. Unfortunately, the solution currently given by the search via ``TLS`` is not optimal to this end, and it is desirable to perform a proper fitting of the transits. There are a number of available public codes which might be used to this end, where ``Juliet`` [@espinoza:2019], ``Exofast`` [@eastman:2019], and ``allesfitter`` [@gunther:2020] are some examples. 
+In ``SHERLOCK``, ``allesfitter`` is used. 
+
+To fit a candidate, the user only needs to execute: 
+    
+```shell 
+python3 -m sherlockpipe.fit --candidate {number_of_the_candidate} 
+
+```
+
+Whereby ``SHERLOCK`` saves, jointly with the PDCSAP fluxes, all the light curves generated during the detrending phase. This allows the user the opportunity to use them to fit any other result. 
+
 ## 1.5 Creating an observation plan
-Maybe the candidates that are found in SHERLOCK are subject to be followed-up by ground-based observations. For that purpose
+Once the fitting is done, the candidate could be probably subject to be followed-up by ground-based observations. For that purpose
 ``SHERLOCK`` includes a tool for suggesting an observation plan selecting the observable future transits given several constaints such as 
 the distance and phase of the moon or the observatories coordinates thanks to the usage of the ``Astroplan`` package [@morris:2018]. 
 At the end, a ``csv`` is generated with the transit parameters for each provided observatory, whenever the transit is observable from them.
