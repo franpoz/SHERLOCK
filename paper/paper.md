@@ -119,6 +119,17 @@ python3 -m sherlockpipe.validate --candidate {number_of_the_candidate}
 
 ```
 
+## 1.5 Creating an observation plan
+Maybe the candidates that are found in SHERLOCK are subject to be followed-up by ground-based observations. For that purpose
+``SHERLOCK`` includes a tool for suggesting an observation plan selecting the observable future transits given several constaints such as 
+the distance and phase of the moon or the observatories coordinates thanks to the usage of the ``Astroplan`` package [@morris:2018]. 
+At the end, a ``csv`` is generated with the transit parameters for each provided observatory, whenever the transit is observable from them.
+
+To run the plan generation the next command needs to be executed:
+```shell
+python3 -m sherlockpipe.plan --candidate {number_of_the_candidate} --observatories observatories.csv
+```
+
 # 2. The ``SHERLOCK PIPEline`` workflow  
 
 ## 2.1 Data downloading
@@ -280,6 +291,10 @@ In general, high-frequency pulsators which have relatively high amplitudes and c
 ## 5.2 Disintegrating planets
 
 We are including in ``SHERLOCK`` a model for comet-like tails of disintegrating exoplanets, which highly differ from the typical shape of transiting exoplanets; see, e.g. [@rappaport:2012,@sanchis:2015]. 
+
+## 5.3 Systems stability
+A common analysis to be done to assess a candidate is the calculation of the Mean Exponential Growth of Nearby Orbits (MEGNO) initially introduced by `@cincotta:2003`. We will analyze a proper way to include such a stability analysis to SHERLOCK by including the ``rebound`` package [@rein:2012] or using ``SPOCK``,
+which uses machine learning techniques to improve the results over the MEGNO value for multiplanetary systems as exposed in `@tamayo:2020`.
 
 
 ## 6. Summary and conclusions
