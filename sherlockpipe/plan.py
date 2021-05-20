@@ -6,14 +6,11 @@ import numpy
 from astropy.coordinates import SkyCoord, get_moon
 from astropy.time import Time
 import astropy.units as u
-from astroplan import EclipsingSystem, MoonSeparationConstraint, moon_illumination, Constraint
+from astroplan import EclipsingSystem, moon_illumination, Constraint
 import pandas as pd
 import numpy as np
-from os import path
-from astroplan import (Observer, FixedTarget, PrimaryEclipseConstraint, AtNightConstraint, AltitudeConstraint,
-                       LocalTimeConstraint)
+from astroplan import (Observer, FixedTarget, AtNightConstraint, AltitudeConstraint)
 import datetime as dt
-from pytz import timezone
 
 
 class MoonIlluminationSeparationConstraint(Constraint):
@@ -141,9 +138,7 @@ if __name__ == '__main__':
             twilight_evening = observer_site.twilight_evening_nautical(midtransit_time)
             twilight_morning = observer_site.twilight_morning_nautical(midtransit_time)
             moon_phase = np.round(astroplan.moon_illumination(midtransit_time), 2)
-            # TODO get moon distance to target
             # TODO get is_event_observable for several parts of the transit (ideally each 5 mins) to get the proper observable percent. Also with baseline
-            # TODO store transit midtime uncertainty
             transits_since_epoch = round((midtransit_time.jd - epoch_bjd) / period)
             midtransit_time_low_err = np.round((transits_since_epoch * period_low_err + epoch_low_err) * 24, 2)
             midtransit_time_up_err = np.round((transits_since_epoch * period_up_err + epoch_up_err) * 24, 2)
