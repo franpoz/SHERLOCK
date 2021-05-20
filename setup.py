@@ -22,7 +22,8 @@ setuptools.setup(
         "Operating System :: OS Independent",
     ],
     python_requires='>=3.6.9',
-    install_requires=["astroquery==0.4.1",
+    install_requires=['astroplan==0.7',
+                        "astroquery==0.4.1",
                         "allesfitter==1.2.2",
                         'argparse==1.4.0',
                         "celerite==0.4.0", # Allesfitter dependency
@@ -37,7 +38,6 @@ setuptools.setup(
                         "ellc==1.8.5",
                         "seaborn==0.11.1",
                         "bokeh==2.2.3",
-                        "astroplan==0.8",
                         "sklearn==0.0",
                         "scipy==1.5.4",
                         "reproject==0.4",
