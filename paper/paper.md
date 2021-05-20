@@ -301,14 +301,19 @@ which uses machine learning techniques to improve the results over the MEGNO val
 ## 6. Summary and conclusions
 
 We presented the ``SHERLOCK PIPEline``, a python package to easily search for exoplanets in light curves obtained by space-based missions such as *Kepler*, *K2* and *TESS*, or light curves directly provided by the user. ``SHERLOCK`` has proved to be robust and enfficient, specially suited for the detection of threshold-crossing events that may remain unnoticed by the automatic official pipelines. 
-The user only needs to fill the [properties.yaml](https://github.com/franpoz/SHERLOCK/blob/master/sherlockpipe/properties.yaml) file and use three command lines to search, vet and fit candidates: 
+The user only needs to fill the [properties.yaml](https://github.com/franpoz/SHERLOCK/blob/master/sherlockpipe/properties.yaml) file and use three command lines to search, vet, validate, fit and plan observations for the candidates: 
 
 ```shell
 python3 -m sherlockpipe --properties properties.yaml
 
 python3 -m sherlockpipe.vet --candidate {number_of_the_candidate} 
 
-python3 -m sherlockpipe.fit --candidate {number_of_the_candidate} 
+python3 -m sherlockpipe.validate --candidate {number_of_the_candidate} 
+
+python3 -m sherlockpipe.fit --candidate {number_of_the_candidate}
+
+python3 -m sherlockpipe.plan --candidate {number_of_the_candidate} 
+  --observatories observatories.csv
 
 ```
 
