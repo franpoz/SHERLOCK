@@ -274,7 +274,7 @@ The ``SHERLOCK PIPEline`` is specially devoted for:
 4) Search for planets in light curves processed by the user. 
  
 That is, ``SHERLOCK`` might be used for a number of projects which need to explore light curves in the search for exoplanets. For example, it is used 
-in the *SPECULOOS-TESS* alliance [@sebastian:2021], and in the hot-subdwarf survey in the search for planetary remnants [vangrootel:2021]
+in the *SPECULOOS-TESS* alliance [@sebastian:2021], and in the hot-subdwarf survey in the search for planetary remnants [@vangrootel:2021]
 (see the [Hot-subdwarf catalogues](https://github.com/franpoz/Hot-Subdwarfs-Catalogues)).
 
 
@@ -294,8 +294,8 @@ In general, high-frequency pulsators which have relatively high amplitudes and c
 We are including in ``SHERLOCK`` a model for comet-like tails of disintegrating exoplanets, which highly differ from the typical shape of transiting exoplanets; see, e.g. [@rappaport:2012,@sanchis:2015]. 
 
 ## 5.3 Systems stability
-A common analysis to be done to assess a candidate is the calculation of the Mean Exponential Growth of Nearby Orbits (MEGNO) initially introduced by `@cincotta:2003`. We will analyze a proper way to include such a stability analysis to SHERLOCK by including the ``rebound`` package [@rein:2012] or using ``SPOCK``,
-which uses machine learning techniques to improve the results over the MEGNO value for multiplanetary systems as exposed in `@tamayo:2020`.
+A common analysis to be done to assess a candidate is the calculation of the Mean Exponential Growth of Nearby Orbits (MEGNO) initially introduced by @cincotta:2003. We will analyze a proper way to include such a stability analysis to SHERLOCK by including the ``rebound`` package [@rein:2012] or using ``SPOCK``,
+which uses machine learning techniques to improve the results over the MEGNO value for multiplanetary systems as exposed in @tamayo:2020.
 
 
 ## 6. Summary and conclusions
