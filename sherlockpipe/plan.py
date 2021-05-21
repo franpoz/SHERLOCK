@@ -4,13 +4,16 @@ from argparse import ArgumentParser
 import astroplan
 import numpy
 from astropy.coordinates import SkyCoord, get_moon
-from astropy.time import Time
 import astropy.units as u
 from astroplan import EclipsingSystem, moon_illumination, Constraint
 import pandas as pd
 import numpy as np
 from astroplan import (Observer, FixedTarget, AtNightConstraint, AltitudeConstraint)
 import datetime as dt
+import lightkurve
+
+from astropy.time import Time
+from lcbuilder.lcbuilder_class import LcBuilder
 
 
 class MoonIlluminationSeparationConstraint(Constraint):
@@ -97,8 +100,14 @@ if __name__ == '__main__':
         observatories_df = pd.DataFrame(columns=['name', 'tz', 'lat', 'long', 'alt'])
         observatories_df = observatories_df.append("Obs-1", args.tz, args.lat, args.lon, args.alt)
     # TODO probably convert epoch to proper JD
-    epoch_bjd = epoch + 2457000.0
-    primary_eclipse_time = Time(epoch_bjd, format='jd')
+    object_id = star_df.iloc[0]["obj_id"]
+    mission, mission_prefix, id_int = LcBuilder().parse_object_info(object_id)
+    if mission == "TESS":
+        primary_eclipse_time = Time(epoch, format='btjd', scale="tdb")
+    elif mission == "Kepler" or mission == "K2":
+        primary_eclipse_time = Time(epoch, format='bkjd', scale="tdb")
+    else:
+        primary_eclipse_time = Time(epoch, format='jd')
     target = FixedTarget(SkyCoord(coords, unit=(u.deg, u.deg)))
     n_transits = args.max_days // period
     obs_time = Time.now()
