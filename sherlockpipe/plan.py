@@ -180,8 +180,8 @@ if __name__ == '__main__':
             moon_phase = moon_phase_midtransit_times[i]
             # TODO get is_event_observable for several parts of the transit (ideally each 5 mins) to get the proper observable percent. Also with baseline
             transits_since_epoch = round((midtransit_time - primary_eclipse_time).jd / period)
-            midtransit_time_low_err = np.round((transits_since_epoch * period_low_err + epoch_low_err) * 24, 2)
-            midtransit_time_up_err = np.round((transits_since_epoch * period_up_err + epoch_up_err) * 24, 2)
+            midtransit_time_low_err = np.round((((transits_since_epoch * period_low_err) ** 2 + epoch_low_err ** 2) ** (1 / 2)) * 24, 2)
+            midtransit_time_up_err = np.round((((transits_since_epoch * period_up_err) ** 2 + epoch_up_err ** 2) ** (1 / 2)) * 24, 2)
             observables_df = observables_df.append({"observatory": observatory_row["name"], "ingress": ingress.isot,
                                    "egress": egress.isot, "midtime": midtransit_time,
                                    "ingress_local": ingress.to_datetime(timezone=observer_timezone),
