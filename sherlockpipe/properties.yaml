@@ -81,7 +81,7 @@ CUSTOM_TRANSIT_TEMPLATE:
 FIT_METHOD: "tls"
 # Selection of T0 fit percent over the diration (admitted range from 0.01 to 0.1). Default is None so the oversampling
 # is calculated from the entire time lapse taken by the light curve.
-OVERSAMPLING: 10
+OVERSAMPLING: 3
 # Selection of T0 fit percent over the diration (admitted range from 0.01 to 0.1)
 T0_FIT_MARGIN: 0.05
 # Selection of duration grid step (admitted range from 1.01 to 1.1)
