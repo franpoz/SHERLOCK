@@ -193,11 +193,13 @@ class Sherlock:
         mission_id = sherlock_target.object_info.mission_id()
         try:
             time, flux, flux_err, star_info, transits_min_count, cadence, sectors = self.__prepare(sherlock_target)
+            period_grid = self.__calculate_period_grid(time, sherlock_target, star_info, transits_min_count)
             id_run = 1
             best_signal_score = 1
             self.report[sherlock_id] = []
             logging.info('================================================')
-            logging.info('SEARCH RUNS')
+            logging.info('SEARCH RUNS with period grid: [%.2f - %.2f] and length %.0f', np.min(period_grid),
+                         np.max(period_grid), len(period_grid))
             logging.info('================================================')
             lcs, wl = self.__detrend(sherlock_target, time, flux, star_info)
             lcs = np.concatenate(([flux], lcs), axis=0)
@@ -208,7 +210,7 @@ class Sherlock:
                 logging.info("________________________________ run %s________________________________", id_run)
                 transit_results, signal_selection = \
                     self.__analyse(sherlock_target, time, lcs, flux_err, star_info, id_run, transits_min_count, cadence,
-                                   self.report[sherlock_id], wl)
+                                   self.report[sherlock_id], wl, period_grid)
                 best_signal_score = signal_selection.score
                 object_report["Object Id"] = mission_id
                 object_report["run"] = id_run
@@ -280,6 +282,21 @@ class Sherlock:
         except Exception as e:
             logging.exception(str(e))
             print(e)
+
+    def __calculate_period_grid(self, time, sherlock_target, star_info, transits_min_count):
+        dif = time[1:] - time[:-1]
+        jumps = np.where(dif > 1)[0]
+        jumps = np.append(jumps, len(time))
+        previous_jump_index = 0
+        time_span_all_sectors = 0
+        for jumpIndex in jumps:
+            time_chunk = time[previous_jump_index + 1:jumpIndex]  # ignoring first measurement as could be the last from the previous chunk
+            time_span_all_sectors = time_span_all_sectors + (time_chunk[-1] - time_chunk[0])
+            previous_jump_index = jumpIndex
+        return DefaultTransitTemplateGenerator() \
+            .period_grid(star_info.radius, star_info.mass, time[-1] - time[0], sherlock_target.period_min,
+                         sherlock_target.period_max, sherlock_target.oversampling, transits_min_count,
+                         time_span_all_sectors)
 
     def __init_object_dir(self, object_id, clean_dir=False):
         dir = self.results_dir + str(object_id)
@@ -744,7 +761,8 @@ class Sherlock:
                                            method=method, break_tolerance=0.5)
         return flatten_lc, lc_trend
 
-    def __analyse(self, sherlock_target, time, lcs, flux_err, star_info, id_run, transits_min_count, cadence, report, wl):
+    def __analyse(self, sherlock_target, time, lcs, flux_err, star_info, id_run, transits_min_count, cadence, report,
+                  wl, period_grid):
         logging.info('=================================')
         logging.info('SEARCH OF SIGNALS - Run %s', id_run)
         logging.info('=================================')
@@ -816,7 +834,8 @@ class Sherlock:
         plt.close(fig)
         return final_lcs, wl
 
-    def __identify_signals(self, sherlock_target, time, lcs, flux_err, star_info, transits_min_count, wl, id_run, cadence, report):
+    def __identify_signals(self, sherlock_target, time, lcs, flux_err, star_info, transits_min_count, wl, id_run,
+                           cadence, report, period_grid):
         object_info = sherlock_target.object_info
         detrend_logging_customs = 'ker_size' if sherlock_target.detrend_method == 'gp' else "win_size"
         logging.info("%-12s%-12s%-10s%-8s%-18s%-14s%-14s%-12s%-12s%-14s%-16s%-14s%-12s%-25s%-10s%-18s%-20s",
@@ -831,7 +850,8 @@ class Sherlock:
         lc_df['flux'] = lcs[0][args]
         lc_df['flux_err'] = flux_err[args]
         lc_df.to_csv(run_dir + "/lc_0.csv", index=False)
-        transit_result = self.__adjust_transit(sherlock_target, time, lcs[0], star_info, transits_min_count, transit_results, report, cadence)
+        transit_result = self.__adjust_transit(sherlock_target, time, lcs[0], star_info, transits_min_count,
+                                               transit_results, report, cadence, period_grid)
         transit_results[0] = transit_result
         r_planet = self.__calculate_planet_radius(star_info, transit_result.depth)
         rp_rs = transit_result.results.rp_rs
@@ -898,20 +918,9 @@ class Sherlock:
             oi = ""
         return oi
 
-    def __adjust_transit(self, sherlock_target, time, lc, star_info, transits_min_count, run_results, report, cadence):
+    def __adjust_transit(self, sherlock_target, time, lc, star_info, transits_min_count, run_results, report, cadence,
+                         period_grid):
         oversampling = sherlock_target.oversampling
-        dif = time[1:] - time[:-1]
-        jumps = np.where(dif > 1)[0]
-        jumps = np.append(jumps, len(time))
-        previous_jump_index = 0
-        time_span_all_sectors = 0
-        for jumpIndex in jumps:
-            time_chunk = time[previous_jump_index + 1:jumpIndex] # ignoring first measurement as could be the last from the previous chunk
-            time_span_all_sectors = time_span_all_sectors + (time_chunk[-1] - time_chunk[0])
-            previous_jump_index = jumpIndex
-        period_grid = DefaultTransitTemplateGenerator()\
-            .period_grid(star_info.radius, star_info.mass, time[-1] - time[0], sherlock_target.period_min,
-                         sherlock_target.period_max, oversampling, transits_min_count, time_span_all_sectors)
         model = tls.transitleastsquares(time, lc)
         power_args = {"transit_template": sherlock_target.fit_method, "period_min": sherlock_target.period_min,
                       "period_max": sherlock_target.period_max, "n_transits_min": transits_min_count,
