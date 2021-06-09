@@ -17,6 +17,8 @@ authors:
     affiliation: 1
   - name: Valérie Van Grootel
     affiliation: 1
+  - name: Luis Cerdeño Mota
+    affiliation: 5
   - name: Michaël Gillon
     affiliation: 1
   - name: Juan C. Suarez
@@ -32,6 +34,8 @@ affiliations:
    index: 3
  - name: Dpto. Física Teórica y del Cosmos, Universidad de Granada, 18071, Granada, Spain 
    index: 4
+ - name: No affiliation
+   index: 5
    
 
 date: 15 March 2021
