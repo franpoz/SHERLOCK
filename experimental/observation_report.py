@@ -10,6 +10,7 @@ from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
 from reportlab.platypus import BaseDocTemplate, PageTemplate, Frame, Paragraph, Spacer, PageBreak, \
     Image, Table, TableStyle
 
+
 width, height = A4
 
 
@@ -244,12 +245,15 @@ class ObservationReport:
 
         final_data = table3_header_row + table3_data2
 
-        # Creates a table variable row width:
-        table3_rowwidths = [0.2 * inch, 1.2 * inch, 1.2 * inch, 1.2 * inch, 1.2 * inch, 1.2 * inch, 1.2 * inch,
-                            1.2 * inch,
-                            1.2 * inch, 1.2 * inch, 1.2 * inch, 1.2 * inch, 1.2 * inch, 1.2 * inch, 1.2 * inch,
-                            1.2 * inch,
-                            1.2 * inch, 1.2 * inch, 1.2 * inch]
+        # Creates a table with variable number of row and width:
+        table3_number_rows = len(final_data)
+        table3_rowwidths = []
+        for x in range(table3_number_rows):
+            if x == 0:  # Table headers
+                table3_rowwidths.append(0.2 * inch)
+            else:
+                table3_rowwidths.append(1.2 * inch)
+
         # Creates a table with 5 columns, variable width:
         table3_colwidths = [1.1 * inch, 2.3 * inch, 0.7 * inch, 0.7 * inch, 2.2 * inch]
         tabla3 = Table(final_data, table3_colwidths, table3_rowwidths, repeatRows=1)
