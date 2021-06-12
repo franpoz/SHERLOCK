@@ -135,15 +135,24 @@ class ObservationReport:
         canvas.saveState()
 
         if doc.page == 1:
-            # Footer first page:
-            footer_first_page = 'Three possible observability values are defined: 1 - Entire transit is required, 0.5 - Transit midtime and either ingress or egress at least are required,'
-            footer_first_page2 = '0.25 - Only ingress or egress are required, with moon constraints of %sº as minimum distance for new moon and %sº as minimum distance for full moon' % (
-            self.min_dist, self.max_dist)
-            footer_first_page3 = 'and for the observatories listed in the Table 2.'
-            canvas.setFont("Helvetica", 7)
-            canvas.drawCentredString(10 * cm, 2.2 * cm, footer_first_page)
-            canvas.drawCentredString(10.15 * cm, 1.8 * cm, footer_first_page2)
-            canvas.drawCentredString(4.5 * cm, 1.4 * cm, footer_first_page3)
+            # Footer con superíndice:
+            textobject = canvas.beginText()
+            textobject.setTextOrigin(1.8 * cm, 2.1 * cm)
+            textobject.setFont("Helvetica", 5)
+            textobject.setRise(5)
+            textobject.textOut('1 ')
+            textobject.setRise(0)
+            textobject.setFont("Helvetica", 7)
+            pie_pagina = 'Three possible observability values are defined: 1 - Entire transit is required, ' \
+                         '0.5 - Transit midtime and either ingress or egress at least are required,\n' \
+                         '0.25 - Only ingress or egress are required, with moon constraints of % sº as minimum ' \
+                         'distance for new moon and % sº as minimum distance for full moon\n' \
+                         'and for the observatories listed in the Table 2.' % (self.min_dist, self.max_dist)
+
+            for line in pie_pagina.splitlines():
+                textobject.textLine(line)
+
+            canvas.drawText(textobject)
 
         # Powered by:
         page = "Powered by Astropy, Astroplan and ReportLab"
@@ -262,8 +271,6 @@ class ObservationReport:
 
         story.append(Spacer(1, 5))
         story.append(Paragraph(table3_descripcion, styles["ParagraphAlignJustify"]))
-
-        print(len(story))
 
         # Definimos el frame y el template sabiendo que un A4: 21 cm de ancho por 29,7 cm de altura
         global_frame = Frame(1.5 * cm, 1.1 * cm, 18 * cm, 25.4 * cm, id='normal', showBoundary=0)
