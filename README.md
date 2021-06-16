@@ -12,7 +12,7 @@ Active: <i>[F.J. Pozuelos](https://github.com/franpoz),
 [M. Dévora](https://github.com/martindevora) </i> 
 
 ## Additional contributors 
-<i>A. Thuillier</i> & <i>[L. García](https://github.com/LionelGarcia) </i>
+<i>A. Thuillier</i> & <i>[L. García](https://github.com/LionelGarcia) </i> & <i>[Luis Cerdeño Mota](https://github.com/LuisCerdenoMota)</i>
 
 ## Installation
 Some of the SHERLOCK dependencies need `numpy` and `Cython`  before being installed and therefore you should install them before trying the SHERLOCK installation. Take also into account that the dependencies brough by SHERLOCK also need additional operating system tools that need to be installed separately (C++ compiler, Fortran compiler, etc). So, be aware of counting with the next OS packages installed in your environment (e.g. for Python3.8 in a Linux distribution):
