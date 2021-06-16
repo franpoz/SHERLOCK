@@ -627,6 +627,7 @@ class Sherlock:
             initial_mask = object_info.initial_mask
             logging.info('** Applying ordered masks to the lightcurve **')
             for mask_range in initial_mask:
+                logging.info('* Initial mask since day %.0f to day %.0f. *', mask_range[0], mask_range[1])
                 mask = [(clean_time < mask_range[0] if not math.isnan(mask_range[1]) else False) |
                         (clean_time > mask_range[1] if not math.isnan(mask_range[1]) else False)]
                 clean_time = clean_time[mask]
@@ -638,7 +639,7 @@ class Sherlock:
             initial_transit_mask = object_info.initial_transit_mask
             logging.info('** Applying ordered transit masks to the lightcurve **')
             for transit_mask in initial_transit_mask:
-                logging.info('* Transit mask with P=%.2f d, T0=%.2f d, Dur=%.2f min**', transit_mask["P"],
+                logging.info('* Transit mask with P=%.2f d, T0=%.2f d, Dur=%.2f min *', transit_mask["P"],
                              transit_mask["T0"], transit_mask["D"])
                 mask = tls.transit_mask(clean_time, transit_mask["P"], transit_mask["D"] / 60 / 24, transit_mask["T0"])
                 clean_time = clean_time[~mask]
