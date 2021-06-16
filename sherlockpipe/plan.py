@@ -19,6 +19,8 @@ import matplotlib.pyplot as plt
 from astropy.time import Time
 from lcbuilder.lcbuilder_class import LcBuilder
 
+from sherlockpipe.observation_report import ObservationReport
+
 
 class MoonIlluminationSeparationConstraint(Constraint):
     """
@@ -104,8 +106,13 @@ if __name__ == '__main__':
     duration = duration_row["value"].item()
     duration_low_err = float(duration_row["lower_error"].item())
     duration_up_err = float(duration_row["upper_error"].item())
-    name = "SOI_" + str(args.candidate)
+    depth_row = fit_derived_results[fit_derived_results["#property"].str.contains("depth \(dil.\)")]
+    depth = float(depth_row["value"].item()) * 1000
+    depth_low_err = float(depth_row["lower_error"].item()) * 1000
+    depth_up_err = float(depth_row["upper_error"].item()) * 1000
     star_df = pd.read_csv(object_dir + "/params_star.csv")
+    object_id = star_df.iloc[0]["obj_id"]
+    name = object_id + "_SOI_" + str(args.candidate)
     ra = star_df.iloc[0]["ra"]
     dec = star_df.iloc[0]["dec"]
     coords = str(ra) + " " + str(dec)
@@ -115,7 +122,6 @@ if __name__ == '__main__':
         observatories_df = pd.DataFrame(columns=['name', 'tz', 'lat', 'long', 'alt'])
         observatories_df = observatories_df.append("Obs-1", args.tz, args.lat, args.lon, args.alt)
     # TODO probably convert epoch to proper JD
-    object_id = star_df.iloc[0]["obj_id"]
     mission, mission_prefix, id_int = LcBuilder().parse_object_info(object_id)
     if mission == "TESS":
         primary_eclipse_time = Time(epoch, format='btjd', scale="tdb")
@@ -135,9 +141,13 @@ if __name__ == '__main__':
                                            'twilight_morning', 'twilight_evening_local',
                                            'twilight_morning_local', 'observable', 'moon_phase', 'moon_dist'])
     plan_dir = object_dir + "/plan"
+    images_dir = plan_dir + "/images"
     if os.path.exists(plan_dir):
         shutil.rmtree(plan_dir, ignore_errors=True)
     os.mkdir(plan_dir)
+    if os.path.exists(images_dir):
+        shutil.rmtree(images_dir, ignore_errors=True)
+    os.mkdir(images_dir)
     for index, observatory_row in observatories_df.iterrows():
         observer_timezone = dt.timezone(dt.timedelta(hours=observatory_row["tz"]))
         observer_site = Observer(latitude=observatory_row["lat"], longitude=observatory_row["lon"],
@@ -236,10 +246,17 @@ if __name__ == '__main__':
             degrees_ax.set_yticklabels([90, 50, 30])
             fig = matplotlib.pyplot.gcf()
             fig.set_size_inches(1.25, 0.75)
-            plt.savefig(plan_dir + "/" + observatory_row["name"] + "_" + midtransit_time.isot + ".png",
+            plt.savefig(plan_dir + "/images/" + observatory_row["name"] + "_" + str(midtransit_time.isot)[:-4] + ".png",
                         bbox_inches='tight')
             plt.close()
             i = i + 1
     observables_df = observables_df.sort_values(["midtime", "observatory"], ascending=True)
     observables_df.to_csv(plan_dir + "/observation_plan.csv", index=False)
     print("Observation plan created in directory: " + object_dir)
+    report = ObservationReport(observatories_df, observables_df, object_id, plan_dir,
+                               epoch, epoch_low_err, epoch_up_err, period, period_low_err, period_up_err, duration,
+                               duration_low_err, duration_up_err, depth, depth_low_err, depth_up_err,
+                               args.transit_fraction, args.moon_min_dist, args.moon_max_dist, args.min_altitude,
+                               args.max_days)
+    report.create_report()
+    shutil.rmtree(images_dir, ignore_errors=True)
