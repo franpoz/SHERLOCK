@@ -183,7 +183,7 @@ if __name__ == '__main__':
             midtransit_time_low_err = np.round((((transits_since_epoch * period_low_err) ** 2 + epoch_low_err ** 2) ** (1 / 2)) * 24, 2)
             midtransit_time_up_err = np.round((((transits_since_epoch * period_up_err) ** 2 + epoch_up_err ** 2) ** (1 / 2)) * 24, 2)
             observables_df = observables_df.append({"observatory": observatory_row["name"], "ingress": ingress.isot,
-                                   "egress": egress.isot, "midtime": midtransit_time,
+                                   "egress": egress.isot, "midtime": midtransit_time.isot,
                                    "ingress_local": ingress.to_datetime(timezone=observer_timezone),
                                    "egress_local": egress.to_datetime(timezone=observer_timezone),
                                    "midtime_local": midtransit_time.to_datetime(timezone=observer_timezone),
