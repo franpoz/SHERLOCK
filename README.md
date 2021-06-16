@@ -81,9 +81,8 @@ YAML file the next line:
 
 ### Vetting
 SHERLOCK PIPEline comes with a submodule to examine the most promising transit candidates
-found by any of its executions. This is done via [LATTE](https://github.com/noraeisner/LATTE), 
-[TPFPlotter](https://github.com/jlillo/tpfplotter) and 
-[Triceratops](https://github.com/stevengiacalone/triceratops).
+found by any of its executions. This is done via [LATTE](https://github.com/noraeisner/LATTE) and 
+[TPFPlotter](https://github.com/jlillo/tpfplotter).
 Please note that this feature is only enabled for TESS candidates.
 You should be able to execute the vetting by calling:
 
