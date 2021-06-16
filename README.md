@@ -186,7 +186,7 @@ detection and detrending during its preparation stage. This feature can be disab
 
 #### Input period detrend
 If enabled, this feature automatically disables 
-[Detrend of high-amplitude periodicities](https://github.com/franpoz/SHERLOCK#detrend-of-intense-periodicities) 
+[Detrend of high-amplitude periodicities](https://github.com/franpoz/SHERLOCK#detrend-of-high-amplitude-periodicities) 
 for the assigned object. The user can input a period to be used for an initial detrend of the 
 original signal. 
 
