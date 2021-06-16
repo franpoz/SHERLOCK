@@ -144,6 +144,22 @@ class Sherlock:
         self.ois.sort_values(by=['Object Id', 'OI'])
         return self
 
+    def filter_multiplanet_ois(self):
+        """
+        Filters the in-memory OIs given some basic filters associated to multiplanet targets. This method is added
+        as an example
+        @return: the Sherlock object itself
+        @rtype: Sherlock
+        """
+        self.use_ois = True
+        self.ois = self.ois[self.ois["Disposition"].notnull()]
+        self.ois = self.ois[self.ois["Period (days)"].notnull()]
+        self.ois = self.ois[self.ois["Depth (ppm)"].notnull()]
+        self.ois = self.ois[(self.ois["Disposition"] == "KP") | (self.ois["Disposition"] == "CP") | (self.ois["Disposition"] == "PC")]
+        self.ois = self.ois[self.ois.duplicated(subset=['Object Id'], keep=False)]
+        self.ois.sort_values(by=['Object Id', 'OI'])
+        return self
+
     def filter_ois(self, function):
         """
         Applies a function accepting the Sherlock objects of interests dataframe and stores the result into the
