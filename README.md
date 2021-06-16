@@ -158,7 +158,7 @@ always use the PDCSAP signal from the ones provided by any of those two packages
 
 ### Pre-processing of light curve
 In many cases we will find light curves which contain several systematics like noise, high dispersion
-beside the borders, intense periodicities caused by pulsators, fast rotators, etc. SHERLOCK PIPEline
+beside the borders, high-amplitude periodicities caused by pulsators, fast rotators, etc. SHERLOCK PIPEline
 provides some methods to reduce these most important systematics.
 
 #### Local noise reduction
@@ -180,14 +180,14 @@ If enabled, this feature automatically disables
 for the assigned object. The user can input an array of time ranges to be masked into the 
 original signal.
 
-#### Detrend of intense periodicities
+#### Detrend of high-amplitude periodicities
 Our most common foes with high periodicities are fast-rotators, which infer a high sinusoidal-like
-trend in the PDCSAP signal. This is why SHERLOCK PIPEline includes an automatic intense periodicities
+trend in the PDCSAP signal. This is why SHERLOCK PIPEline includes an automatic high-amplitude periodicities
 detection and detrending during its preparation stage. This feature can be disabled with a flag.
 
 #### Input period detrend
 If enabled, this feature automatically disables 
-[Detrend of intense periodicities](https://github.com/franpoz/SHERLOCK#detrend-of-intense-periodicities) 
+[Detrend of high-amplitude periodicities](https://github.com/franpoz/SHERLOCK#detrend-of-intense-periodicities) 
 for the assigned object. The user can input a period to be used for an initial detrend of the 
 original signal. 
 
