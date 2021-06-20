@@ -252,9 +252,9 @@ class ObservationReport:
         story.append(Spacer(1, 30))
 
         # Generamos la tabla 3 con los observatorios:
-        table3_colwidth = [3.5 * cm, 2.5 * cm, 2.5 * cm, 2.5 * cm]
+        table3_colwidth = [3.5 * cm, 3.5 * cm, 2.5 * cm, 2.5 * cm, 2.5 * cm]
         table3_number_rows = len(self.df_observatories) + 1  # Sumamos 1 para tener en cuenta el header
-        table3_header_row = [self.df_observatories.columns[:, ].values.astype(str).tolist()]
+        table3_header_row = [['Name', 'Time Zone (from UTC)', 'Latitude (º)', 'Longitude (º)', 'Altitude (m)']]
         table3_data = self.df_observatories.values.tolist()
         tabla3 = Table(table3_header_row + table3_data, table3_colwidth, table3_number_rows * [0.75 * cm])
         tabla3.setStyle(table_style)
