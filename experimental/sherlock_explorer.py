@@ -8,6 +8,9 @@ import plotly.graph_objects as go
 import pylab
 import wotan
 from astropy.stats import sigma_clip
+from lcbuilder.lcbuilder_class import LcBuilder
+from lcbuilder.objectinfo.MissionFfiIdObjectInfo import MissionFfiIdObjectInfo
+from lcbuilder.objectinfo.ObjectInfo import ObjectInfo
 from scipy import stats, signal
 from scipy.signal import argrelextrema, savgol_filter
 from wotan import flatten
@@ -25,34 +28,28 @@ class SherlockExplorer:
     MISSION_ID_TESS = "TIC"
 
     def explore_object(self, object_id, input_lc_file=None, time_units=1, auto_detrend_periodic_signals=False,
-                       auto_detrend_ratio=1/4, detrend_method="cosine", smooth=False, sectors=None):
-        mission, mission_id, id = self.__parse_object_id(object_id)
-        if input_lc_file is None:
-            lcf = lk.search_lightcurvefile(str(object_id), mission=mission, sector=sectors).download_all()
-            lc = lcf.PDCSAP_FLUX.stitch().remove_nans()
-            if mission_id == self.MISSION_ID_KEPLER_2:
-                lc = lc.flatten().to_corrector("sff").correct(windows=20)
-        else:
-            df = pd.read_csv(input_lc_file, float_precision='round_trip', sep=',',
-                             usecols=['#time', 'flux', 'flux_err'])
-            lc = lk.LightCurve(time=df['#time'], flux=df['flux'], flux_err=df['flux_err'])
-        flux = lc.flux
-        flux_err = lc.flux_err
+                       auto_detrend_ratio=1/4, detrend_method="cosine", smooth=False, sectors=None, cadence=300):
+        lc_builder = LcBuilder()
+        object_info = lc_builder.build_object_info(object_id, None, sectors, input_lc_file, cadence, None, None, None, None, None)
+        lc, lc_data, star_info, transits_min_count, sectors, quarters = \
+            lc_builder.build(object_info, None)
+        flux = lc.flux.value
+        flux_err = lc.flux_err.value
         if time_units == 0:
             time = lc.astropy_time.jd
         else:
-            time = lc.time
+            time = lc.time.value.astype('<f4')
         if smooth:
             flux = savgol_filter(flux, 11, 2)
             flux = uniform_filter1d(flux, 11)
         lc = lk.LightCurve(time=time, flux=flux, flux_err=flux_err)
         lc = lc.remove_outliers(sigma_lower=float('inf'), sigma_upper=3)  # remove outliers over 3sigma
         lc_df = pd.DataFrame(columns=['#time', 'flux', 'flux_err'])
-        lc_df['#time'] = lc.time.astype('<f4')
-        lc_df['flux'] = lc.flux.astype('<f4')
-        lc_df['flux_err'] = lc.flux_err.astype('<f4')
+        lc_df['#time'] = lc.time.value.astype('<f4')
+        lc_df['flux'] = lc.flux.value.astype('<f4')
+        lc_df['flux_err'] = lc.flux_err.value.astype('<f4')
         lc_df = pd.DataFrame(columns=['flux'])
-        lc_df['flux'] = acf(lc.flux.astype('<f4'), nlags=7200)
+        lc_df['flux'] = acf(lc.flux.value.astype('<f4'), nlags=7200)
         test_df = pd.DataFrame(lc_df)
         ax = test_df.plot()
         ax.set_ylim(-0.1, 0.1)
@@ -61,29 +58,29 @@ class SherlockExplorer:
         #periodogram = lc.to_periodogram(oversample_factor=10)
         #fig = px.line(x=periodogram.period.astype('<f4'), y=periodogram.power.astype('<f4'), log_x=True)
         #fig.show()
-        fig = px.scatter(x=lc.time.astype('<f4'), y=lc.flux.astype('<f4'))
+        fig = px.scatter(x=lc.time.value.astype('<f4'), y=lc.flux.value.astype('<f4'))
         fig.show()
         if auto_detrend_periodic_signals:
             detrend_period = self.__calculate_max_significant_period(lc, periodogram)
             if detrend_period is not None:
                 flatten_lc, trend_lc = self.__detrend_by_period(lc, detrend_period * auto_detrend_ratio, detrend_method)
                 fig = go.Figure()
-                fig.add_trace(go.Scatter(x=lc.time.astype('<f4'), y=flux.astype('<f4'), mode='markers', name='Flux'))
-                fig.add_trace(go.Scatter(x=lc.time.astype('<f4'), y=trend_lc.astype('<f4'), mode='lines+markers',
+                fig.add_trace(go.Scatter(x=lc.time.value.astype('<f4'), y=flux.astype('<f4'), mode='markers', name='Flux'))
+                fig.add_trace(go.Scatter(x=lc.time.value.astype('<f4'), y=trend_lc.astype('<f4'), mode='lines+markers',
                                          name='Main Trend'))
                 fig.show()
                 if auto_detrend_periodic_signals:
-                    fig = px.line(x=lc.time.astype('<f4'), y=flatten_lc.astype('<f4'))
+                    fig = px.line(x=lc.time.value.astype('<f4'), y=flatten_lc.astype('<f4'))
                     fig.show()
                     lc.flux = flatten_lc
-        bin_means, bin_edges, binnumber = stats.binned_statistic(lc.time, lc.flux, statistic='mean',bins=len(time) / 5)
+        bin_means, bin_edges, binnumber = stats.binned_statistic(lc.time.value, lc.flux.value, statistic='mean',bins=len(time) / 5)
         bin_stds, _, _ = stats.binned_statistic(time, flux, statistic='std', bins=len(time) / 3)
         bin_width = (bin_edges[1] - bin_edges[0])
         bin_centers = bin_edges[1:] - bin_width / 2
         time_binned = bin_centers.astype('<f4')
         flux_binned = bin_means.astype('<f4')
         lc_binned = lk.LightCurve(time=time_binned, flux=flux_binned)
-        fig = px.scatter(x=lc.time.astype('<f4'), y=lc.flux.astype('<f4'))
+        fig = px.scatter(x=lc.time.value.astype('<f4'), y=lc.flux.value.astype('<f4'))
         fig.show()
         while True:
             try:
@@ -112,7 +109,7 @@ class SherlockExplorer:
             folded_lc = lk.LightCurve(time=lc.time, flux=lc.flux, flux_err=lc.flux_err)
             folded_lc.remove_nans()
             folded_lc = lc.fold(t0=t0, period=period)
-            folded_lc.flux_err = np.nan
+            #folded_lc.flux_err = np.nan
             #folded_lc = folded_lc.bin(bins=500)
             j = 0
             fig_transit, axs = plt.subplots(3, 1, figsize=(8, 8))
@@ -127,7 +124,7 @@ class SherlockExplorer:
                 axs[j].set_ylabel('Flux')
                 j = j + 1
             fig_transit.show()
-            fig = px.scatter(x=folded_lc.phase.astype('<f4'), y=folded_lc.flux.astype('<f4'))
+            fig = px.scatter(x=folded_lc.phase.value.astype('<f4'), y=folded_lc.flux.value.astype('<f4'))
             fig.show()
 
     def __parse_object_id(self, object_id):
@@ -165,10 +162,10 @@ class SherlockExplorer:
 
     def __detrend_by_period(self, lc, period_window, detrend_method):
         if detrend_method == 'gp':
-            flatten_lc, lc_trend = flatten(lc.time, lc.flux, method=detrend_method, kernel='matern',
+            flatten_lc, lc_trend = flatten(lc.time.value, lc.flux.value, method=detrend_method, kernel='matern',
                                    kernel_size=period_window, return_trend=True, break_tolerance=0.5)
         else:
-            flatten_lc, lc_trend = flatten(lc.time, lc.flux, window_length=period_window, return_trend=True,
+            flatten_lc, lc_trend = flatten(lc.time.value, lc.flux.value, window_length=period_window, return_trend=True,
                                    method=detrend_method, break_tolerance=0.5)
         flatten_lc = sigma_clip(flatten_lc, sigma_lower=20, sigma_upper=3)
         return flatten_lc, lc_trend

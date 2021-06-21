@@ -29,7 +29,7 @@ def elapsed_timer():
 
 with elapsed_timer() as elapsed:
     sherlock = sherlock_explorer.SherlockExplorer()
-    sherlock.explore_object("TIC 120609760", auto_detrend_periodic_signals=False, smooth=True, sectors=None)
+    sherlock.explore_object("TIC 206584346", auto_detrend_periodic_signals=False, smooth=False, sectors=[2], cadence=1800)
 
     # sherlock = sherlock_class.Sherlock(n_detrends=3, auto_detrend_periodic_signals=True,
     #                                    mission_ids=["TIC 277539431"], mask_mode="subtract", id_lc={"TIC 277539431": 'sinteticos/modeled3.csv'})
