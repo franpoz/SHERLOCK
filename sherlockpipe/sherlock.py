@@ -897,7 +897,7 @@ class Sherlock:
             lc_df['flux'] = lcs[i][args]
             lc_df['flux_err'] = flux_err[args]
             lc_df.to_csv(run_dir + "/lc_" + str(i) + ".csv", index=False)
-            transit_result = self.__adjust_transit(sherlock_target, time, lcs[i], star_info, transits_min_count, transit_results, report, cadence)
+            transit_result = self.__adjust_transit(sherlock_target, time, lcs[i], star_info, transits_min_count, transit_results, report, cadence, period_grid)
             transit_results[i] = transit_result
             r_planet = self.__calculate_planet_radius(star_info, transit_result.depth)
             rp_rs = transit_result.results.rp_rs
