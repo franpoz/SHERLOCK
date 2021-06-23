@@ -28,6 +28,7 @@ setuptools.setup(
                         'argparse==1.4.0',
                         "celerite==0.4.0", # Allesfitter dependency
                         "cython==0.29.21",
+                        "extension-helpers==0.1",
                         "requests==2.25.1",
                         "wotan==1.9",
                         "matplotlib==3.3.4",
