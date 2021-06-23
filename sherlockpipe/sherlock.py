@@ -784,7 +784,7 @@ class Sherlock:
         logging.info('SEARCH OF SIGNALS - Run %s', id_run)
         logging.info('=================================')
         transit_results = self.__identify_signals(sherlock_target, time, lcs, flux_err, star_info, transits_min_count,
-                                                  wl, id_run, cadence, report)
+                                                  wl, id_run, cadence, report, period_grid)
         signal_selection = sherlock_target.signal_score_selectors[sherlock_target.best_signal_algorithm]\
             .select(transit_results, sherlock_target.snr_min, sherlock_target.detrend_method, wl)
         logging.info(signal_selection.get_message())
