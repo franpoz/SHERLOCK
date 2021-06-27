@@ -27,10 +27,10 @@ matplotlib.use('Agg')
 import pandas as pd
 import os
 import ast
-from sherlockpipe.LATTE import LATTEutils, LATTEbrew
+from sherlockpipe.LATTE import LATTEutils
 from os import path
 import triceratops.triceratops as tr
-from matplotlib import cm, ticker
+from matplotlib import ticker
 from triceratops.likelihoods import (simulate_TP_transit, simulate_EB_transit)
 from triceratops.funcs import renorm_flux
 from astropy import constants
