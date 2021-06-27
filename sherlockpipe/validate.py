@@ -36,9 +36,7 @@ from triceratops.funcs import renorm_flux
 from astropy import constants
 from sherlockpipe.eleanor import maxsector
 
-'''WATSON: Verboseless Vetting and Adjustments of Transits for Sherlock Objects of iNterest
-This class intends to provide a inspection and transit fitting tool for SHERLOCK Candidates.
-'''
+
 # get the system path
 syspath = str(os.path.abspath(LATTEutils.__file__))[0:-14]
 # ---------
@@ -48,13 +46,16 @@ out = 'pipeline'  # or TALK or 'pipeline'
 ttran = 0.1
 resources_dir = path.join(path.dirname(__file__))
 
+'''
+This class intends to provide a validation tool for SHERLOCK Candidates.
+'''
 class Validator:
     def __init__(self, object_dir):
         self.object_dir = os.getcwd() if object_dir is None else object_dir
         self.data_dir = self.object_dir
         self.validation_runs = 5
 
-    def validate(self, candidate, cpus):
+    def validate(self, candidate, cpus, contrast_curve_file):
         object_id = candidate["TICID"]
         period = candidate.loc[candidate['TICID'] == object_id]['period'].iloc[0]
         duration = candidate.loc[candidate['TICID'] == object_id]['duration'].iloc[0]
@@ -83,11 +84,11 @@ class Validator:
             index = index + 1
         os.mkdir(validation_dir)
         self.data_dir = validation_dir
-        object_id = object_id[0]
+        object_id = object_id.iloc[0]
         mission, mission_prefix, id_int = LcBuilder().parse_object_info(object_id)
         try:
             self.execute_triceratops(cpus, validation_dir, mission, str(id_int), sectors, lc_file, transit_depth,
-                                     period, t0, duration)
+                                     period, t0, duration, contrast_curve_file)
         except Exception as e:
             traceback.print_exc()
         # try:
@@ -96,7 +97,7 @@ class Validator:
         #     traceback.print_exc()
 
     def execute_triceratops(self, cpus, indir, mission, id_int, sectors, lc_file, transit_depth, period, t0,
-                            transit_duration):
+                            transit_duration, contrast_curve_file):
         """ Calculates probabilities of the signal being caused by any of the following astrophysical sources:
         TP No unresolved companion. Transiting planet with Porb around target star. (i, Rp)
         EB No unresolved companion. Eclipsing binary with Porb around target star. (i, qshort)
@@ -203,6 +204,16 @@ class Validator:
             sector_num = sector_num + 1
         apertures = np.array(apertures)
         depth = transit_depth / 1000
+        if contrast_curve_file is not None:
+            plt.clf()
+            cc = pd.read_csv(contrast_curve_file, header=None)
+            sep, dmag = cc[0].values, cc[1].values
+            plt.plot(sep, dmag, 'k-')
+            plt.ylim(9, 0)
+            plt.ylabel("$\\Delta K_s$", fontsize=20)
+            plt.xlabel("separation ('')", fontsize=20)
+            plt.savefig(save_dir + "/contrast_curve.png")
+            plt.clf()
         logging.info("Calculating validation closest stars depths")
         target.calc_depths(depth, apertures)
         target.stars.to_csv(save_dir + "/stars.csv", index=False)
@@ -218,7 +229,7 @@ class Validator:
         inner_folded_range_args = np.where((0 - folded_plot_range < lc.time.value) & (lc.time.value < 0 + folded_plot_range))
         lc = lc[inner_folded_range_args]
         lc.time = lc.time * period
-        bin_means, bin_edges, binnumber = stats.binned_statistic(lc.time.value, lc.flux.value, statistic='mean', bins=500)
+        bin_means, bin_edges, binnumber = stats.binned_statistic(lc.time.value, lc.flux.value, statistic='mean', bins=100)
         bin_width = (bin_edges[1] - bin_edges[0])
         bin_centers = bin_edges[1:] - bin_width/2
         lc.plot()
@@ -232,7 +243,7 @@ class Validator:
         sigma = np.nanmean(lc.flux_err)
         logging.info("Preparing validation processes inputs")
         input_n_times = [ValidatorInput(save_dir, copy.deepcopy(target), bin_centers, bin_means, sigma, period, depth,
-                                        apertures, value)
+                                        apertures, value, contrast_curve_file)
                          for value in range(0, self.validation_runs)]
         validator = TriceratopsThreadValidator()
         logging.info("Start validation processes")
@@ -594,7 +605,8 @@ class TriceratopsThreadValidator:
 
     def validate(self, input):
         input.target.calc_depths(tdepth=input.depth, all_ap_pixels=input.apertures)
-        input.target.calc_probs(time=input.time, flux_0=input.flux, flux_err_0=input.sigma, P_orb=input.period)
+        input.target.calc_probs(time=input.time, flux_0=input.flux, flux_err_0=input.sigma, P_orb=input.period,
+                                contrast_curve_file=input.contrast_curve)
         with open(input.save_dir + "/validation_" + str(input.run) + ".csv", 'w') as the_file:
             the_file.write("FPP,NFPP\n")
             the_file.write(str(input.target.FPP) + "," + str(input.target.NFPP))
@@ -605,7 +617,7 @@ class TriceratopsThreadValidator:
                input.target.u2, input.target.fluxratio_EB, input.target.fluxratio_comp
 
 class ValidatorInput:
-    def __init__(self, save_dir, target, time, flux, sigma, period, depth, apertures, run):
+    def __init__(self, save_dir, target, time, flux, sigma, period, depth, apertures, run, contrast_curve):
         self.save_dir = save_dir
         self.target = target
         self.time = time
@@ -615,6 +627,7 @@ class ValidatorInput:
         self.depth = depth
         self.apertures = apertures
         self.run = run
+        self.contrast_curve = contrast_curve
 
 if __name__ == '__main__':
     ap = ArgumentParser(description='Vetting of Sherlock objects of interest')
@@ -623,6 +636,7 @@ if __name__ == '__main__':
     ap.add_argument('--candidate', type=int, default=None, help="The candidate signal to be used.", required=False)
     ap.add_argument('--properties', help="The YAML file to be used as input.", required=False)
     ap.add_argument('--cpus', type=int, default=None, help="The number of CPU cores to be used.", required=False)
+    ap.add_argument('--contrast_curve', type=str, default=None, help="The contrast curve in csv format.", required=False)
     args = ap.parse_args()
     validator = Validator(args.object_dir)
     file_dir = validator.object_dir + "/validation.log"
@@ -661,4 +675,4 @@ if __name__ == '__main__':
             cpus = multiprocessing.cpu_count() - 1
         else:
             cpus = args.cpus
-    validator.validate(candidate, cpus)
+    validator.validate(candidate, cpus, args.contrast_curve)
