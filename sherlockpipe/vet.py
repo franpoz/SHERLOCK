@@ -62,7 +62,12 @@ out = 'pipeline'  # or TALK or 'pipeline'
 ttran = 0.1
 resources_dir = path.join(path.dirname(__file__))
 
+
 class Vetter:
+    """
+    Provides transiting candidate vetting information like centroids and spaceship motion, momentum dumps, neighbours
+    curves inspection and more to give a deeper insight on the quality of the candidate signal.
+    """
     def __init__(self, object_dir, validate):
         self.args = types.SimpleNamespace()
         self.args.noshow = True
@@ -84,6 +89,9 @@ class Vetter:
         self.validate = validate
 
     def update(self):
+        """
+        Updates the LATTE metadata to be up to date with the latest TESS information.
+        """
         indir = self.latte_dir
         if os.path.exists(indir) and os.path.isdir(indir):
             shutil.rmtree(indir, ignore_errors=True)
@@ -144,6 +152,9 @@ class Vetter:
         @param tic: the tic to be processed
         @param sectors_in: the sectors to be used for the given tic
         @param transit_list: the list of transits for the given tic
+        @param t0: the candidate signal first epoch
+        @param period: the candidate signal period
+        @param ffi: Whether the candidate came from FFI data
         @return: the given tic
         """
         logging.info("Runnint TESS Point")
@@ -280,6 +291,11 @@ class Vetter:
         return mnd
 
     def vetting(self, candidate, cpus):
+        """
+        Performs the LATTE vetting procedures
+        @param candidate: the candidate dataframe containing TICID, period, t0, transits and sectors data.
+        @param cpus: the number of cpus to be used. This parameter is of no use yet.
+        """
         indir, df, TIC_wanted, ffi = self.__prepare(candidate)
         for tic in TIC_wanted:
             # check the existing manifest to see if I've processed this file!
@@ -355,134 +371,16 @@ class Vetter:
         #             writer.writerow(metadata_data)
         # return TIC_wanted
 
-    @staticmethod
-    def plot_fits(target, save_file, time: np.ndarray, flux_0: np.ndarray, sigma_0: float):
-        """
-        Plots light curve for best fit instance of each scenario.
-        Args:
-            time (numpy array): Time of each data point
-                                [days from transit midpoint].
-            flux_0 (numpy array): Normalized flux of each data point.
-            sigma_0 (numpy array): Uncertainty of flux.
-        """
-        scenario_idx = target.probs[target.probs["ID"] != 0].index.values
-        df = target.probs[target.probs["ID"] != 0]
-        star_num = target.star_num[target.probs["ID"] != 0]
-        u1s = target.u1[target.probs["ID"] != 0]
-        u2s = target.u2[target.probs["ID"] != 0]
-        fluxratios_EB = target.fluxratio_EB[target.probs["ID"] != 0]
-        fluxratios_comp = target.fluxratio_comp[target.probs["ID"] != 0]
-
-        model_time = np.linspace(min(time), max(time), 100)
-
-        f, ax = plt.subplots(
-            len(df)//3, 3, figsize=(12, len(df)//3*4), sharex=True
-            )
-        G = constants.G.cgs.value
-        M_sun = constants.M_sun.cgs.value
-        for i in range(len(df)//3):
-            for j in range(3):
-                if i == 0:
-                    k = j
-                else:
-                    k = 3*i+j
-                # subtract flux from other stars in the aperture
-                idx = np.argwhere(
-                    target.stars["ID"].values == str(df["ID"].values[k])
-                    )[0, 0]
-                flux, sigma = renorm_flux(
-                    flux_0, sigma_0, target.stars["fluxratio"].values[idx]
-                    )
-                # all TPs
-                if j == 0:
-                    if star_num[k] == 1:
-                        comp = False
-                    else:
-                        comp = True
-                    a = (
-                        (G*df["M_s"].values[k]*M_sun)/(4*np.pi**2)
-                        * (df['P_orb'].values[k]*86400)**2
-                        )**(1/3)
-                    u1, u2 = u1s[k], u2s[k]
-                    best_model = simulate_TP_transit(
-                        model_time,
-                        df['R_p'].values[k], df['P_orb'].values[k],
-                        df['inc'].values[k], a, df["R_s"].values[k],
-                        u1, u2, fluxratios_comp[k], comp
-                        )
-                # all small EBs
-                elif j == 1:
-                    if star_num[k] == 1:
-                        comp = False
-                    else:
-                        comp = True
-                    mass = df["M_s"].values[k] + df["M_EB"].values[k]
-                    a = (
-                        (G*mass*M_sun)/(4*np.pi**2)
-                        * (df['P_orb'].values[k]*86400)**2
-                        )**(1/3)
-                    u1, u2 = u1s[k], u2s[k]
-                    best_model = simulate_EB_transit(
-                        model_time,
-                        df["R_EB"].values[k], fluxratios_EB[k],
-                        df['P_orb'].values[k], df['inc'].values[k],
-                        a, df["R_s"].values[k], u1, u2,
-                        fluxratios_comp[k], comp
-                        )[0]
-                # all twin EBs
-                elif j == 2:
-                    if star_num[k] == 1:
-                        comp = False
-                    else:
-                        comp = True
-                    mass = df["M_s"].values[k] + df["M_EB"].values[k]
-                    a = (
-                        (G*mass*M_sun)/(4*np.pi**2)
-                        * (df['P_orb'].values[k]*86400)**2
-                        )**(1/3)
-                    u1, u2 = u1s[k], u2s[k]
-                    best_model = simulate_EB_transit(
-                        model_time,
-                        df["R_EB"].values[k], fluxratios_EB[k],
-                        df['P_orb'].values[k], df['inc'].values[k],
-                        a, df["R_s"].values[k], u1, u2,
-                        fluxratios_comp[k], comp
-                        )[0]
-
-                y_formatter = ticker.ScalarFormatter(useOffset=False)
-                ax[i, j].yaxis.set_major_formatter(y_formatter)
-                ax[i, j].errorbar(
-                    time, flux, sigma, fmt=".",
-                    color="blue", alpha=0.1, zorder=0
-                    )
-                ax[i, j].plot(
-                    model_time, best_model, "k-", lw=5, zorder=2
-                    )
-                ax[i, j].set_ylabel("normalized flux", fontsize=12)
-                ax[i, j].annotate(
-                    str(df["ID"].values[k]), xy=(0.05, 0.92),
-                    xycoords="axes fraction", fontsize=12
-                    )
-                ax[i, j].annotate(
-                    str(df["scenario"].values[k]), xy=(0.05, 0.05),
-                    xycoords="axes fraction", fontsize=12
-                    )
-        ax[len(df)//3-1, 0].set_xlabel(
-            "days from transit center", fontsize=12
-            )
-        ax[len(df)//3-1, 1].set_xlabel(
-            "days from transit center", fontsize=12
-            )
-        ax[len(df)//3-1, 2].set_xlabel(
-            "days from transit center", fontsize=12
-            )
-        plt.tight_layout()
-        if save_file is not None:
-            plt.savefig(save_file)
-        plt.show()
-        return
-
     def vetting_field_of_view(self, indir, tic, ra, dec, sectors):
+        """
+        Runs TPFPlotter to get field of view data.
+        @param indir: the data source directory
+        @param tic: the target id
+        @param ra: the right ascension of the target
+        @param dec: the declination of the target
+        @param sectors: the sectors where the target was observed
+        @return: the directory where resulting data is stored
+        """
         maglim = 6
         sectors_search = None if sectors is not None and len(sectors) == 0 else sectors
         logging.info("Preparing target pixel files for field of view plots")
@@ -594,49 +492,6 @@ class Vetter:
             ascii.write(data, save_dir + '/Gaia_TIC' + tic + '_S' + str(tpf.sector) + '.dat', overwrite=True)
         return save_dir
 
-    def show_candidates(self):
-        self.candidates = pd.read_csv(self.object_dir + "/candidates.csv")
-        self.candidates.index = np.arange(1, len(self.candidates) + 1)
-        logging.info("Suggested candidates are:")
-        logging.info(self.candidates.to_markdown(index=True))
-        pass
-
-    def demand_candidate_selection(self):
-        user_input = input("Select candidate number to be examined and fit: ")
-        if user_input.startswith("q"):
-            raise SystemExit("User quitted")
-        self.candidate_selection = int(user_input)
-        if self.candidate_selection < 1 or self.candidate_selection > len(self.candidates.index):
-            raise SystemExit("User selected a wrong candidate number.")
-        self.data_dir = self.object_dir + "/" + str(self.candidate_selection)
-
-class Validator:
-    def __init__(self) -> None:
-        super().__init__()
-
-    def validate(self, input):
-        #input.target.calc_depths(tdepth=input.depth, all_ap_pixels=input.apertures)
-        input.target.calc_probs(time=input.time, flux_0=input.flux, flux_err_0=input.sigma, P_orb=input.period)
-        with open(input.save_dir + "/validation_" + str(input.run) + ".csv", 'w') as the_file:
-            the_file.write("FPP,NFPP\n")
-            the_file.write(str(input.target.FPP) + "," + str(input.target.NFPP))
-        input.target.probs.to_csv(input.save_dir + "/validation_" + str(input.run) + "_scenarios.csv", index=False)
-        input.target.plot_fits(save=True, fname=input.save_dir + "/scenario_" + str(input.run) + "_fits",
-                         time=input.time, flux_0=input.flux, flux_err_0=input.sigma)
-        return input.target.FPP, input.target.NFPP, input.target.probs, input.target.star_num, input.target.u1, \
-               input.target.u2, input.target.fluxratio_EB, input.target.fluxratio_comp
-
-class ValidatorInput:
-    def __init__(self, save_dir, target, time, flux, sigma, period, depth, apertures, run):
-        self.save_dir = save_dir
-        self.target = target
-        self.time = time
-        self.flux = flux
-        self.sigma = sigma
-        self.period = period
-        self.depth = depth
-        self.apertures = apertures
-        self.run = run
 
 if __name__ == '__main__':
     ap = ArgumentParser(description='Vetting of Sherlock objects of interest')
