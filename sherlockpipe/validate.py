@@ -55,7 +55,14 @@ class Validator:
         self.data_dir = self.object_dir
         self.validation_runs = 5
 
+
     def validate(self, candidate, cpus, contrast_curve_file):
+        """
+        @param candidate: a candidate dataframe containing TICID, period, duration, t0, transits, depth, rp_rs, number,
+        curve and sectors data.
+        @param cpus: the number of cpus to be used.
+        @param contrast_curve_file: the auxiliary contrast curve file to give more information to the validation engine.
+        """
         object_id = candidate["TICID"]
         period = candidate.loc[candidate['TICID'] == object_id]['period'].iloc[0]
         duration = candidate.loc[candidate['TICID'] == object_id]['duration'].iloc[0]
@@ -130,6 +137,7 @@ class Validator:
         @param period: the period of the transit signal /days)
         @param t0: the t0 of the transit signal (days)
         @param transit_duration: the duration of the transit signal (minutes)
+        @param contrast_curve_file: the auxiliary contrast curve file to give more information to the validation engine.
         """
         save_dir = indir + "/triceratops"
         if os.path.exists(save_dir):
@@ -583,22 +591,6 @@ class Validator:
         plt.show()
         return
 
-    def show_candidates(self):
-        self.candidates = pd.read_csv(self.object_dir + "/candidates.csv")
-        self.candidates.index = np.arange(1, len(self.candidates) + 1)
-        logging.info("Suggested candidates are:")
-        logging.info(self.candidates.to_markdown(index=True))
-        pass
-
-    def demand_candidate_selection(self):
-        user_input = input("Select candidate number to be examined and fit: ")
-        if user_input.startswith("q"):
-            raise SystemExit("User quitted")
-        self.candidate_selection = int(user_input)
-        if self.candidate_selection < 1 or self.candidate_selection > len(self.candidates.index):
-            raise SystemExit("User selected a wrong candidate number.")
-        self.data_dir = self.object_dir + "/" + str(self.candidate_selection)
-
 class TriceratopsThreadValidator:
     def __init__(self) -> None:
         super().__init__()
@@ -628,6 +620,7 @@ class ValidatorInput:
         self.apertures = apertures
         self.run = run
         self.contrast_curve = contrast_curve
+
 
 if __name__ == '__main__':
     ap = ArgumentParser(description='Vetting of Sherlock objects of interest')
