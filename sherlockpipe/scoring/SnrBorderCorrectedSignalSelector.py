@@ -5,6 +5,10 @@ from sherlockpipe.scoring.SignalSelector import SignalSelection
 
 
 class SnrBorderCorrectedSignalSelector(BasicSignalSelector):
+    """
+    Selects the best signal among the SNR border-corrected signals. The applied correction consists in calculating how
+    many transits occur in times very close to observation starts/ends.
+    """
     def __init__(self):
         super().__init__()
 

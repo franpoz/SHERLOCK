@@ -5,6 +5,11 @@ from sherlockpipe.scoring.SnrBorderCorrectedSignalSelector import CorrectedBorde
 
 
 class QuorumSnrBorderCorrectedSignalSelector(BasicSignalSelector):
+    """
+    Given the same correction applied in SnrBorderCorrectedSignalSelector, the best signal is selected by a voting
+    mechanism. Those signals with same epoch and period vote for the same signal, whose SNR gets proportionally
+    increased by the number of votes.
+    """
     def __init__(self, strength=1, min_quorum=0):
         super().__init__()
         self.strength = strength

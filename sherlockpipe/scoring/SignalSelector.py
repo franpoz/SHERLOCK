@@ -2,11 +2,21 @@ from abc import ABC, abstractmethod
 
 
 class SignalSelector(ABC):
+    """
+    Base class to perform a selection of the best candidate signal among a list of them.
+    """
     def __init__(self):
         pass
 
     @abstractmethod
     def select(self, transit_result_detrends, snr_min, detrend_method, wl):
+        """
+        @param transit_result_detrends: a list of transit results to be explored.
+        @param snr_min: the minimum snr to allow a signal to be considered good enough.
+        @param detrend_method: the detrend method used to obtain the candidate transit results
+        @param wl: the window length used by the detrend method used.
+        @return a SignalSelection with the parameters that characterize the best selection.
+        """
         pass
 
 class SignalSelection:

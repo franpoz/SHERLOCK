@@ -4,6 +4,9 @@ from sherlockpipe.scoring.SignalSelector import SignalSelector, SignalSelection
 
 
 class BasicSignalSelector(SignalSelector):
+    """
+    Selects the signal with best SNR
+    """
     def __init__(self):
         super().__init__()
 
