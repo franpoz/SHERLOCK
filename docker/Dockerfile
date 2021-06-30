@@ -13,5 +13,5 @@ RUN python3.8 -m pip install pip -U
 RUN python3.8 -m pip install setuptools -U
 RUN python3.8 -m pip install Cython
 RUN python3.8 -m pip install numpy
-RUN python3.8 -m pip install sherlockpipe --pre
+RUN python3.8 -m pip install sherlockpipe --pre --ignore-installed PyYAML
 CMD ["/bin/bash"]
