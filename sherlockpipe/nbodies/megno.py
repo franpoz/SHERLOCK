@@ -26,7 +26,7 @@ class MegnoStabilityCalculator(StabilityCalculator):
             megno = sim.calculate_megno()
             megno = megno if megno < 10 else 10
         except rebound.Escape:
-            megno = 10  # At least one particle got ejected, returning large MEGNO
+            megno = 10
         return {"star_mass": simulation_input.star_mass,
                 "periods": ",".join([str(planet_period) for planet_period in simulation_input.planet_periods]),
                 "masses": ",".join([str(mass_value) for mass_value in simulation_input.mass_arr]),
