@@ -16,16 +16,18 @@ class StabilityCalculator(ABC):
     def __init__(self):
         pass
 
-    def mass_from_radius(self, radius):
+    @staticmethod
+    def mass_from_radius(radius):
         """
         Computation of mass-radius relationship from
-        Bashi D., Helled R., Zucker S., Mordasini C., 2017, A\&A, 604, A83. doi:10.1051/0004-6361/201629922
+        Bashi D., Helled R., Zucker S., Mordasini C., 2017, A&A, 604, A83. doi:10.1051/0004-6361/201629922
         @param radius: the radius value in earth radius
         @return: the mass in earth masses
         """
         return radius ** (1 / 0.55) if radius <= 12.1 else radius ** (1 / 0.01)
 
-    def prepare_star_masses(self, star_mass_low, star_mass_up):
+    @staticmethod
+    def prepare_star_masses(star_mass_low, star_mass_up):
         """
         Creates a star masses grid
         @param star_mass_low: the lowest star mass value
@@ -35,14 +37,15 @@ class StabilityCalculator(ABC):
         return np.linspace(star_mass_low, star_mass_up, 3) if star_mass_low != star_mass_up \
             else np.linspace(star_mass_low, star_mass_up, 1)
 
-    def prepare_planet_params(self, planet_params):
+    @staticmethod
+    def prepare_planet_params(planet_params):
         """
         Fills the planet masses if missing
         @param planet_params: the planet inputs
         @return: the planet inputs with the filled masses
         """
         for planet_param in planet_params:
-            guessed_mass = self.mass_from_radius(planet_param.radius)
+            guessed_mass = StabilityCalculator.mass_from_radius(planet_param.radius)
             guessed_mass_low = guessed_mass - 0.2 if guessed_mass - 0.2 > 0 else guessed_mass
             planet_param.mass_low = planet_param.mass_low if planet_param.mass_low is not None else guessed_mass_low
             planet_param.mass_up = planet_param.mass_up if planet_param.mass_up is not None else guessed_mass + 0.2
@@ -77,8 +80,8 @@ class StabilityCalculator(ABC):
         @param planet_params: the planet inputs containing the planets parameters
         @param cpus: the number of cpus to be used
         """
-        planet_params = self.prepare_planet_params(planet_params)
-        star_masses = self.prepare_star_masses(star_mass_low, star_mass_up)
+        planet_params = StabilityCalculator.prepare_planet_params(planet_params)
+        star_masses = StabilityCalculator.prepare_star_masses(star_mass_low, star_mass_up)
         planet_masses = []
         planet_periods = []
         planet_ecc = []
