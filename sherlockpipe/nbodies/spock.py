@@ -11,10 +11,10 @@ class SpockStabilityCalculator(StabilityCalculator):
     """
     def run_simulation(self, simulation_input):
         sim = self.init_rebound_simulation(simulation_input)
-        featureClassifierModel = FeatureClassifier()
-        deepRegressorModel = DeepRegressor()
-        stability_probability = featureClassifierModel.predict_stable(sim)
-        median, lower, upper = deepRegressorModel.predict_instability_time(sim, samples=10000)
+        feature_classifier_model = FeatureClassifier()
+        deep_regressor_model = DeepRegressor()
+        stability_probability = feature_classifier_model.predict_stable(sim)
+        median, lower, upper = deep_regressor_model.predict_instability_time(sim, samples=10000)
         return {"star_mass": simulation_input.star_mass,
                 "periods": ",".join([str(planet_period) for planet_period in simulation_input.planet_periods]),
                 "masses": ",".join([str(mass_value) for mass_value in simulation_input.mass_arr]),
