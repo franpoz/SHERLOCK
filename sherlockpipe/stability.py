@@ -3,6 +3,7 @@ import os
 import sys
 from argparse import ArgumentParser
 
+import json
 import yaml
 import pandas as pd
 from sherlockpipe.nbodies.megno import MegnoStabilityCalculator
@@ -21,6 +22,8 @@ if __name__ == '__main__':
                     required=False)
     ap.add_argument('--properties', help="The YAML file to be used as input.", required=False)
     ap.add_argument('--cpus', type=int, default=4, help="The number of CPU cores to be used.", required=False)
+    ap.add_argument('--megno', dest='use_megno', action='store_true',
+                    help="Whether to force the usage of megno even for multiplanetary systems.")
     args = ap.parse_args()
     planets = args.planets.split(",") if args.planets is not None else None
     object_dir = os.getcwd() if args.object_dir is None else args.object_dir
@@ -70,9 +73,16 @@ if __name__ == '__main__':
                                       mass_low=planet["M_LOW"], mass_max=planet["M_UP"],
                                       eccentricity_low=planet["ECC_LOW"], eccentricity_up=planet["ECC_UP"],
                                       mass_bins=planet["M_BINS"], ecc_bins=planet["ECC_BINS"])
-                          for planet in user_properties["PLANETS"]]
+                          for planet in user_properties["BODIES"]]
         if "STAR" in user_properties:
             star_mass_low = star_mass_low if "M_LOW" not in user_properties["STAR"] else user_properties["STAR"]["M_LOW"]
             star_mass_up = star_mass_up if "M_UP" not in user_properties["STAR"] else user_properties["STAR"]["M_UP"]
-    stability_calculator = MegnoStabilityCalculator() if len(planets_params) < 3 else SpockStabilityCalculator()
+    stability_calculator = MegnoStabilityCalculator() if len(planets_params) < 3 or args.use_megno else SpockStabilityCalculator()
+    logger.info("%.0f planets to be simulated. %s will be used", len(planets_params),
+                type(stability_calculator).__name__)
+    logger.info("Lowest star mass: %.2f", star_mass_low)
+    logger.info("Highest star mass: %.2f", star_mass_up)
+    for key, body in enumerate(planets_params):
+        logger.info("Body %.0f: %s", key, json.dumps(body.__dict__))
     stability_calculator.run(stability_dir, star_mass_low, star_mass_up, planets_params, args.cpus)
+

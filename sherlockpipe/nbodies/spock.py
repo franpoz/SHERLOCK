@@ -1,25 +1,16 @@
-import multiprocessing
-
-import numpy as np
 from spock import FeatureClassifier, DeepRegressor
 import rebound
-from sherlockpipe.nbodies.planet_input import PlanetInput
 from sherlockpipe.nbodies.stability_calculator import StabilityCalculator
 import pandas as pd
 
+
 class SpockStabilityCalculator(StabilityCalculator):
+    """
+    Runs the stability computation by computing the stability probability and the median expected instability time for
+    each scenario
+    """
     def run_simulation(self, simulation_input):
-        sim = rebound.Simulation()
-        sim.integrator = "whfast"
-        sim.ri_whfast.safe_mode = 0
-        sim.dt = 1e-2
-        sim.add(m=1.0)
-        for planet_key, mass in enumerate(simulation_input.mass_arr):
-            period = simulation_input.planet_periods[planet_key]
-            ecc = simulation_input.ecc_arr[planet_key]
-            sim.add(m=mass * 0.000003003 / simulation_input.star_mass, P=period, e=ecc, omega=0)
-        # sim.status()
-        sim.move_to_com()
+        sim = self.init_rebound_simulation(simulation_input)
         featureClassifierModel = FeatureClassifier()
         deepRegressorModel = DeepRegressor()
         stability_probability = featureClassifierModel.predict_stable(sim)
@@ -45,4 +36,3 @@ class SpockStabilityCalculator(StabilityCalculator):
 # for i in par_e:
 #     for j in par_e1:
 #         sc.run(0.53, [PlanetInput(1.17, 0.01749, 11.76943, i), PlanetInput(1.37, 0.03088, 2.97, j), PlanetInput(2.45, 0, 3.9, 0)])
-

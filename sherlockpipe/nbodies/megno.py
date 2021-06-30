@@ -1,27 +1,16 @@
-import multiprocessing
-from multiprocessing import Pool
-
 import rebound
 import numpy as np
-from rebound import InterruptiblePool
 
 from sherlockpipe.nbodies.stability_calculator import StabilityCalculator
 import pandas as pd
 
 
 class MegnoStabilityCalculator(StabilityCalculator):
+    """
+    Runs the stability computations by calculating the MEGNO score.
+    """
     def run_simulation(self, simulation_input):
-        sim = rebound.Simulation()
-        sim.integrator = "whfast"
-        sim.ri_whfast.safe_mode = 0
-        sim.dt = 1e-2
-        sim.add(m=simulation_input.star_mass)
-        for planet_key, mass in enumerate(simulation_input.mass_arr):
-            period = simulation_input.planet_periods[planet_key]
-            ecc = simulation_input.ecc_arr[planet_key]
-            sim.add(m=mass * 0.000003003 / simulation_input.star_mass, P=period, e=ecc, omega=0)
-        # sim.status()
-        sim.move_to_com()
+        sim = self.init_rebound_simulation(simulation_input)
         sim.init_megno()
         sim.exit_max_distance = 20.
         megno = 10
@@ -50,27 +39,3 @@ class MegnoStabilityCalculator(StabilityCalculator):
         results_df = results_df.append(simulation_results, ignore_index=True)
         results_df = results_df.sort_values('megno')
         results_df.to_csv(result_file, index=False)
-
-
-# parameters.append(PlanetInput(5.43440, 1.68792, 0))
-# parameters.append(PlanetInput(1.74542, 1.12207, 0))
-# parameters.append(PlanetInput(4.02382, 1.34990, 0))
-# parameters.append(PlanetInput(2.8611, 1.17643, 0))
-# parameters.append(PlanetInput(1.58834, 1.07459, 0))
-# result = StabilityCalculator(0.211299).run(parameters)
-# print("MEGNO: " + str(result))
-
-# pool = InterruptiblePool()
-# results = pool.map(StabilityCalculator(0.211299).run, parameters)
-# results2d = np.array(results).reshape(grid, grid)
-# fig = plt.figure(figsize=(7, 5))
-# ax = plt.subplot(111)
-# extent = [min(par_e), max(par_e), min(par_e1), max(par_e1)]
-# ax.set_xlim(extent[0], extent[1])
-# ax.set_xlabel("ecc1 $e$")
-# ax.set_ylim(extent[2], extent[3])
-# ax.set_ylabel("ecc2 $e1$")
-# im = ax.imshow(results2d, interpolation="none", vmin=1.9, vmax=10, cmap="RdYlGn_r", origin="lower", aspect='auto', extent=extent)
-# cb = plt.colorbar(im, ax=ax)
-# cb.set_label("MEGNO $\\langle Y \\rangle$")
-# plt.show()

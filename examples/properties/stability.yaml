@@ -1,0 +1,19 @@
+STAR:
+  M_LOW: 1.0
+  M_UP: 1.3
+  M_BINS: 2
+BODIES:
+  - P: 15
+    M_LOW: 1.5
+    M_UP: 1.5
+    M_BINS: 5
+    E_LOW: 0
+    E_UP: 0.1
+    E_BINS: 5
+  - P: 10
+    M_LOW: 2
+    M_UP: 2.4
+    M_BINS: 5
+    E_LOW: 0
+    E_UP: 0.1
+    E_BINS: 5
