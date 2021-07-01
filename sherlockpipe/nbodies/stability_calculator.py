@@ -130,7 +130,7 @@ class StabilityCalculator(ABC):
     def log_and_run_simulation(self, simulation_input):
         logging.info("Running scenario number %.0f: %s", simulation_input.index, json.dumps(simulation_input.__dict__,
                                                                                             cls=NumpyEncoder))
-        self.run_simulation(simulation_input)
+        return self.run_simulation(simulation_input)
 
     @abstractmethod
     def run_simulation(self, simulation_input):
