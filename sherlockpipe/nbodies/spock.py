@@ -1,5 +1,4 @@
 from spock import FeatureClassifier, DeepRegressor
-import rebound
 from sherlockpipe.nbodies.stability_calculator import StabilityCalculator
 import pandas as pd
 

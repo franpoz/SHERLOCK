@@ -112,18 +112,25 @@ class StabilityCalculator(ABC):
         masses_grid = np.array(np.meshgrid(*np.array(planet_masses))).T.reshape(-1, len(planet_masses))
         ecc_grid = np.array(np.meshgrid(*np.array(planet_ecc))).T.reshape(-1, len(planet_ecc))
         simulation_inputs = []
+        i = 0
         for star_mass in star_masses:
             for mass_key, mass_arr in enumerate(masses_grid):
                 for ecc_key, ecc_arr in enumerate(ecc_grid):
-                    simulation_inputs.append(SimulationInput(star_mass, mass_arr, planet_periods, ecc_arr))
+                    simulation_inputs.append(SimulationInput(star_mass, mass_arr, planet_periods, ecc_arr, i))
+                    i = i + 1
         logging.info("%.0f star mass scenarios.", len(star_masses))
         logging.info("%.0f bodies mass scenarios.", len(masses_grid))
         logging.info("%.0f eccentricity scenarios.", len(ecc_grid))
         logging.info("%.0f x %.0f x %.0f = %.0f total scenarios to be computed.", len(star_masses), len(masses_grid),
                      len(ecc_grid), len(simulation_inputs))
         with Pool(processes=cpus) as pool:
-            simulation_results = pool.map(self.run_simulation, simulation_inputs)
+            simulation_results = pool.map(self.log_and_run_simulation, simulation_inputs)
         self.store_simulation_results(simulation_results, results_dir)
+
+    def log_and_run_simulation(self, simulation_input):
+        logging.info("Running scenario number %.0f: %s", simulation_input.index, json.dumps(simulation_input.__dict__,
+                                                                                            cls=NumpyEncoder))
+        self.run_simulation(simulation_input)
 
     @abstractmethod
     def run_simulation(self, simulation_input):
@@ -147,8 +154,20 @@ class SimulationInput:
     """
     Used as input for the simulations done for each scenario
     """
-    def __init__(self, star_mass, mass_arr, planet_periods, ecc_arr):
+    def __init__(self, star_mass, mass_arr, planet_periods, ecc_arr, index):
         self.star_mass = star_mass
         self.mass_arr = mass_arr
         self.planet_periods = planet_periods
         self.ecc_arr = ecc_arr
+        self.index = index
+
+class NumpyEncoder(json.JSONEncoder):
+    """ Special json encoder for numpy types. Got from https://stackoverflow.com/a/49677241/4198726"""
+    def default(self, obj):
+        if isinstance(obj, np.integer):
+            return int(obj)
+        elif isinstance(obj, np.floating):
+            return float(obj)
+        elif isinstance(obj, np.ndarray):
+            return obj.tolist()
+        return json.JSONEncoder.default(self, obj)

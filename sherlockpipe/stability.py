@@ -32,7 +32,7 @@ if __name__ == '__main__':
     ap.add_argument('--cpus', type=int, default=4, help="The number of CPU cores to be used.", required=False)
     ap.add_argument('--ecc_bins', type=int, default=None, help="The number of eccentricity bins to use.", required=False)
     ap.add_argument('--mass_bins', type=int, default=None, help="The number of mass bins to use.", required=False)
-    ap.add_argument('--star_mass_bins', type=int, default=None, help="The number of star mass bins to use.",
+    ap.add_argument('--star_mass_bins', type=int, default=3, help="The number of star mass bins to use.",
                     required=False)
     ap.add_argument('--megno', dest='use_megno', action='store_true',
                     help="Whether to force the usage of megno even for multiplanetary systems.")
@@ -79,7 +79,7 @@ if __name__ == '__main__':
                                  for index, planet in planets_df.iterrows()]
     star_mass_low = star_mass if star_mass_low_err is None else star_mass - star_mass_low_err
     star_mass_up = star_mass if star_mass_up_err is None else star_mass + star_mass_up_err
-    star_mass_bins = None
+    star_mass_bins = args.star_mass_bins
     if args.properties is not None:
         user_properties = yaml.load(open(args.properties), yaml.SafeLoader)
         user_planet_params = []
