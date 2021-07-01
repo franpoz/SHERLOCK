@@ -302,8 +302,8 @@ if __name__ == '__main__':
     observatories_df, observables_df, plan_dir, images_dir = create_observation_observables(object_id, object_dir, name, epoch,
                                                         epoch_low_err, epoch_up_err, period, period_low_err,
                                                         period_up_err, duration, args.observatories, args.tz, args.lat,
-                                                        args.lon, args.alt, args.max_days, args.moon_min_dist,
-                                                        args.moon_max_dist, args.transit_fraction)
+                                                        args.lon, args.alt, args.max_days, args.min_altitude,
+                                                        args.moon_min_dist, args.moon_max_dist, args.transit_fraction)
     report = ObservationReport(observatories_df, observables_df, object_id, plan_dir,
                                epoch, epoch_low_err, epoch_up_err, period, period_low_err, period_up_err, duration,
                                duration_low_err, duration_up_err, depth, depth_low_err, depth_up_err,
