@@ -1,3 +1,4 @@
+import json
 import logging
 import multiprocessing
 from abc import ABC, abstractmethod
@@ -27,14 +28,15 @@ class StabilityCalculator(ABC):
         return radius ** (1 / 0.55) if radius <= 12.1 else radius ** (1 / 0.01)
 
     @staticmethod
-    def prepare_star_masses(star_mass_low, star_mass_up):
+    def prepare_star_masses(star_mass_low, star_mass_up, star_mass_bins):
         """
         Creates a star masses grid
         @param star_mass_low: the lowest star mass value
         @param star_mass_up: the highest star mass value
+        @param star_mass_bins: the number of star masses to sample. It will be ignored if star_mass_low == star_mass_up.
         @return: the star masses grid
         """
-        return np.linspace(star_mass_low, star_mass_up, 3) if star_mass_low != star_mass_up \
+        return np.linspace(star_mass_low, star_mass_up, star_mass_bins) if star_mass_low != star_mass_up \
             else np.linspace(star_mass_low, star_mass_up, 1)
 
     @staticmethod
@@ -45,10 +47,14 @@ class StabilityCalculator(ABC):
         @return: the planet inputs with the filled masses
         """
         for planet_param in planet_params:
-            guessed_mass = StabilityCalculator.mass_from_radius(planet_param.radius)
-            guessed_mass_low = guessed_mass - 0.2 if guessed_mass - 0.2 > 0 else guessed_mass
-            planet_param.mass_low = planet_param.mass_low if planet_param.mass_low is not None else guessed_mass_low
-            planet_param.mass_up = planet_param.mass_up if planet_param.mass_up is not None else guessed_mass + 0.2
+            if planet_param.radius is None and (planet_param.mass_low is None or planet_param.mass_up is None):
+                raise ValueError("There is one body without either radius or mass information: " +
+                                 json.dumps(planet_param.__dict__))
+            if planet_param.radius is not None:
+                guessed_mass = StabilityCalculator.mass_from_radius(planet_param.radius)
+                guessed_mass_low = guessed_mass - 0.2 if guessed_mass - 0.2 > 0 else guessed_mass
+                planet_param.mass_low = planet_param.mass_low if planet_param.mass_low is not None else guessed_mass_low
+                planet_param.mass_up = planet_param.mass_up if planet_param.mass_up is not None else guessed_mass + 0.2
         return planet_params
 
     def init_rebound_simulation(self, simulation_input):
@@ -70,26 +76,39 @@ class StabilityCalculator(ABC):
         sim.move_to_com()
         return sim
 
-    def run(self, results_dir, star_mass_low, star_mass_up, planet_params, cpus=multiprocessing.cpu_count() - 1):
+    def run(self, results_dir, star_mass_low, star_mass_up, star_mass_bins, planet_params, cpus=multiprocessing.cpu_count() - 1):
         """
         Creates possible scenarios of stellar masses, planet masses and planet eccentricities. Afterwards a stability
         analysis is run for each of the scenarios and the results are stored in a file.
         @param results_dir: the directory where the results will be written into
         @param star_mass_low: the lowest star mass
         @param star_mass_up: the highest star mass
+        @param star_mass_bins: the number of star masses to sample
         @param planet_params: the planet inputs containing the planets parameters
         @param cpus: the number of cpus to be used
         """
         planet_params = StabilityCalculator.prepare_planet_params(planet_params)
-        star_masses = StabilityCalculator.prepare_star_masses(star_mass_low, star_mass_up)
+        star_masses = StabilityCalculator.prepare_star_masses(star_mass_low, star_mass_up, star_mass_bins)
         planet_masses = []
         planet_periods = []
         planet_ecc = []
         for planet_param in planet_params:
-            planet_masses.append(np.linspace(planet_param.mass_low, planet_param.mass_up, planet_param.mass_bins))
+            if planet_param.mass_bins == 1:
+                mass_grid = np.full(1, (planet_param.mass_low + planet_param.mass_up) / 2)
+            elif planet_param.mass_low == planet_param.mass_up:
+                mass_grid = np.full(1, planet_param.mass_low)
+            else:
+                mass_grid = np.linspace(planet_param.mass_low, planet_param.mass_up, planet_param.mass_bins)
+            planet_masses.append(mass_grid)
+            if planet_param.ecc_bins == 1:
+                ecc_grid = np.full(1, (planet_param.eccentricity_low + planet_param.eccentricity_up) / 2)
+            elif planet_param.eccentricity_low == planet_param.eccentricity_up:
+                ecc_grid = np.full(1, planet_param.eccentricity_low)
+            else:
+                ecc_grid = np.linspace(planet_param.eccentricity_low, planet_param.eccentricity_up,
+                                        planet_param.ecc_bins)
+            planet_ecc.append(ecc_grid)
             planet_periods.append(planet_param.period)
-            planet_ecc.append(np.linspace(planet_param.eccentricity_low, planet_param.eccentricity_up,
-                                          planet_param.ecc_bins))
         masses_grid = np.array(np.meshgrid(*np.array(planet_masses))).T.reshape(-1, len(planet_masses))
         ecc_grid = np.array(np.meshgrid(*np.array(planet_ecc))).T.reshape(-1, len(planet_ecc))
         simulation_inputs = []

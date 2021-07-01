@@ -10,6 +10,14 @@ from sherlockpipe.nbodies.megno import MegnoStabilityCalculator
 from sherlockpipe.nbodies.planet_input import PlanetInput
 from sherlockpipe.nbodies.spock import SpockStabilityCalculator
 
+
+def get_from_user(target, key):
+    value = None
+    if isinstance(target, dict) and key in target:
+        value = target[key]
+    return value
+
+
 if __name__ == '__main__':
     ap = ArgumentParser(description='Validation of system stability')
     ap.add_argument('--object_dir', help="If the object directory is not your current one you need to provide the "
@@ -22,6 +30,10 @@ if __name__ == '__main__':
                     required=False)
     ap.add_argument('--properties', help="The YAML file to be used as input.", required=False)
     ap.add_argument('--cpus', type=int, default=4, help="The number of CPU cores to be used.", required=False)
+    ap.add_argument('--ecc_bins', type=int, default=None, help="The number of eccentricity bins to use.", required=False)
+    ap.add_argument('--mass_bins', type=int, default=None, help="The number of mass bins to use.", required=False)
+    ap.add_argument('--star_mass_bins', type=int, default=None, help="The number of star mass bins to use.",
+                    required=False)
     ap.add_argument('--megno', dest='use_megno', action='store_true',
                     help="Whether to force the usage of megno even for multiplanetary systems.")
     args = ap.parse_args()
@@ -67,22 +79,36 @@ if __name__ == '__main__':
                                  for index, planet in planets_df.iterrows()]
     star_mass_low = star_mass if star_mass_low_err is None else star_mass - star_mass_low_err
     star_mass_up = star_mass if star_mass_up_err is None else star_mass + star_mass_up_err
+    star_mass_bins = None
     if args.properties is not None:
         user_properties = yaml.load(open(args.properties), yaml.SafeLoader)
-        planets_params = planets_params + [PlanetInput(period=planet["P"], radius=planet["R"],
-                                      mass_low=planet["M_LOW"], mass_max=planet["M_UP"],
-                                      eccentricity_low=planet["ECC_LOW"], eccentricity_up=planet["ECC_UP"],
-                                      mass_bins=planet["M_BINS"], ecc_bins=planet["ECC_BINS"])
-                          for planet in user_properties["BODIES"]]
+        user_planet_params = []
+        for planet in user_properties["BODIES"]:
+            ecc_bins = args.ecc_bins if "E_BINS" not in planet or args.ecc_bins is not None else planet["E_BINS"]
+            mass_bins = args.mass_bins if "M_BINS" not in planet or args.mass_bins is not None else planet["M_BINS"]
+            user_planet_params.append(PlanetInput(period=get_from_user(planet, "P"),
+                                                  radius=get_from_user(planet, "R"),
+                                                  mass_low=get_from_user(planet, "M_LOW"),
+                                                  mass_max=get_from_user(planet, "M_UP"),
+                                                  eccentricity_low=get_from_user(planet, "E_LOW"),
+                                                  eccentricity_up=get_from_user(planet, "E_UP"),
+                                                  mass_bins=mass_bins,
+                                                  ecc_bins=ecc_bins))
+        planets_params = planets_params + user_planet_params
         if "STAR" in user_properties:
             star_mass_low = star_mass_low if "M_LOW" not in user_properties["STAR"] else user_properties["STAR"]["M_LOW"]
             star_mass_up = star_mass_up if "M_UP" not in user_properties["STAR"] else user_properties["STAR"]["M_UP"]
-    stability_calculator = MegnoStabilityCalculator() if len(planets_params) < 3 or args.use_megno else SpockStabilityCalculator()
+            star_mass_bins = args.star_mass_bins if "M_BINS" not in user_properties["STAR"] \
+                                                    or args.star_mass_bins is not None \
+                                                 else user_properties["STAR"]["M_BINS"]
+    stability_calculator = MegnoStabilityCalculator() if len(planets_params) < 3 or args.use_megno \
+        else SpockStabilityCalculator()
     logger.info("%.0f planets to be simulated. %s will be used", len(planets_params),
                 type(stability_calculator).__name__)
     logger.info("Lowest star mass: %.2f", star_mass_low)
     logger.info("Highest star mass: %.2f", star_mass_up)
+    logger.info("Star mass bins: %.0f", star_mass_bins)
     for key, body in enumerate(planets_params):
         logger.info("Body %.0f: %s", key, json.dumps(body.__dict__))
-    stability_calculator.run(stability_dir, star_mass_low, star_mass_up, planets_params, args.cpus)
+    stability_calculator.run(stability_dir, star_mass_low, star_mass_up, star_mass_bins, planets_params, args.cpus)
 
