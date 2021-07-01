@@ -132,6 +132,27 @@ of
 
 you will run the validation for one of the Sherlock candidates.
 
+### Stability
+SHERLOCK PIPEline also implements a module to execute a system stability computation by the usage
+of 
+[Rebound](https://github.com/hannorein/rebound) and [SPOCK](https://github.com/dtamayo/spock). By calling:
+
+```python3 -m sherlockpipe.stability --bodies 1,2,4```
+
+where the `--bodies` parameter is the set of the SHERLOCK accepted signals as CSV to be used in the scenarios 
+simulation. You can also provide a 
+[stability properties file](https://github.com/franpoz/SHERLOCK/tree/master/examples/properties/stability.yaml))
+to run a custom stability simulation:
+
+```python3 -m sherlockpipe.stability --properties stability.yaml```
+
+and you can even combine SHERLOCK accepted signals with some additional bodies provided by the properties file:
+
+```python3 -m sherlockpipe.stability --bodies 1,2,4 --properties stability.yaml```
+
+The results will be stored into a `stability` directory containing the execution log and a `stability.csv`
+containing one line per simulated scenario, sorted by the best results score.
+
 ### Observation plan
 SHERLOCK PIPEline also adds now a tool to plan your observations from ground-based observatories by using 
 [astropy](https://github.com/astropy/astropy) and [astroplan](https://github.com/astropy/astroplan). By calling:

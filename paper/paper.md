@@ -99,8 +99,8 @@ star properties, the light curve data and the closest neighbour star properties 
 that assesses the False Positive Probability and Nearby False Positive Probability. ``SHERLOCK`` does it by reading
 the candidate data and injecting it to a script that uses ``TRICERATOPS`` [@giacalone:2021]. It testes the alternative 
 astrophysical sources estimating the probabilities for different astrophysical scenarios such as transiting planet, 
-eclipsing binary, eclipsing binary with 2$\times$ orbital period, among others. As in the vetting features, we plan to 
-extend the validation to *Kepler* and *K2* data probably by running ``VESPA`` [@morton:2015] internally. 
+eclipsing binary, eclipsing binary with 2$\times$ orbital period, among others. As opposite to our vetting tool, 
+*Kepler* and *K2* results can be validated thanks to a contribution we have done into the ``TRICERATOPS`` project.
 
 To run the validation the user would need to execute:
 ```shell
@@ -108,7 +108,34 @@ python3 -m sherlockpipe.validate --candidate {number_of_the_candidate}
 
 ```
 
-## 1.4 Fitting promising candidates
+## 1.4 System stability analysis
+There are cases where ``SHERLOCK`` could be finding several signals that could form a compact planetary system.
+For those situations, ``SHERLOCK`` incorporates a system stability analysis tool that will use ``Rebound`` [] 
+and ``SPOCK`` [@tamayo:2020] to compute the stability probabilities. The former uses N-bodies simulations, which we use
+to compute the Mean Exponential Growth for Nearby Objects score [@cincotta:2000], meanwhile the latter creates 
+pre-trainig machine learning models to assess the system stability probability. For both algorithms we prepare a grid 
+of several possible star masses, planet masses and orbit eccentricities to gather at the end a complete report of the 
+most stable configurations.
+ 
+To run the stability tool the user would execute: 
+
+```python3 -m sherlockpipe.stability --bodies 1,2,4```
+
+where the `--bodies` parameter is the set of the SHERLOCK accepted signals as CSV to be used in the scenarios 
+simulation. You can also provide a 
+[stability properties file](https://github.com/franpoz/SHERLOCK/tree/master/examples/properties/stability.yaml))
+to run a custom stability simulation:
+
+```python3 -m sherlockpipe.stability --properties stability.yaml```
+
+and you can even combine SHERLOCK accepted signals with some additional bodies provided by the properties file:
+
+```python3 -m sherlockpipe.stability --bodies 1,2,4 --properties stability.yaml```
+
+The results will be stored into a `stability` directory containing the execution log and a `stability.csv`
+containing one line per simulated scenario, sorted by the best results scores.
+
+## 1.5 Fitting promising candidates
 
 After the vetting and/or the validation processes, the next step would be to schedule ground-based observations to firmly confirm the event in the target star or to identify potential false positives due to variable stars,
 such as an eclipsing binary (EB). To this aim, it is critical to have the most accurate ephemeris as possible. Unfortunately, the solution currently given by the search via ``TLS`` is not optimal to this end, and it is desirable to perform a proper fitting of the transits. There are a number of available public codes which might be used to this end, where ``Juliet`` [@espinoza:2019], ``Exofast`` [@eastman:2019], and ``allesfitter`` [@gunther:2020] are some examples. 
@@ -123,7 +150,7 @@ python3 -m sherlockpipe.fit --candidate {number_of_the_candidate}
 
 Whereby ``SHERLOCK`` saves, jointly with the PDCSAP fluxes, all the light curves generated during the detrending phase. This allows the user the opportunity to use them to fit any other result. 
 
-## 1.5 Creating an observation plan
+## 1.6 Creating an observation plan
 Once the fitting is done, the candidate could be probably subject to be followed-up by ground-based observations. For that purpose
 ``SHERLOCK`` includes a tool for suggesting an observation plan selecting the observable future transits given several constaints such as 
 the distance and phase of the moon or the observatories coordinates thanks to the usage of the ``Astroplan`` package [@morris:2018]. 
