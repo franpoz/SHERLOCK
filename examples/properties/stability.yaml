@@ -1,3 +1,9 @@
+# Example properties file for calculating a stability scenario with two planets:
+# 0: The star with a lowest mass value of 1.0R_sun and an highest mass value of 1.3R_sun, sampled in 2 bins.
+# 1: A planet with a period of 15 days and a lowest and highest mass with the same value of 1.5R_earth. The
+# eccentricity will be sampled in 2 bins from 0 to 0.1
+# 1: A planet with a period of 15 days and a lowest mass of 2R_earth and highest mass of 2.4R_earth. The
+# eccentricity lowest value is 0 and the highest is 0.1.
 STAR:
   M_LOW: 1.0
   M_UP: 1.3
@@ -6,14 +12,11 @@ BODIES:
   - P: 15
     M_LOW: 1.5
     M_UP: 1.5
-    M_BINS: 5
     E_LOW: 0
     E_UP: 0.1
-    E_BINS: 5
+    E_BINS: 2
   - P: 10
     M_LOW: 2
     M_UP: 2.4
-    M_BINS: 5
     E_LOW: 0
     E_UP: 0.1
-    E_BINS: 5
