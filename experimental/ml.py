@@ -1,7 +1,7 @@
 import os
 import pandas as pd
 import lightkurve as lk
-import transitleastsquares as tls
+import foldedleastsquares as tls
 import matplotlib.pyplot as plt
 import astropy.units as u
 from astropy.coordinates import SkyCoord
@@ -119,9 +119,15 @@ def download_neighbours(ID: int, sectors: np.ndarray, search_radius: int = 10):
 
 
 dir = "training_data/"
+positive_dir = dir + "/tp/"
+negative_dir = dir + "/ntp/"
 if not os.path.isdir(dir):
     os.mkdir(dir)
-tic_list = [251848941]
+if not os.path.isdir(positive_dir):
+    os.mkdir(positive_dir)
+if not os.path.isdir(negative_dir):
+    os.mkdir(negative_dir)
+tp_tic_list = [251848941]
 ois = OisManager().load_ois()
 ois = ois[(ois["Disposition"] == "CP") | (ois["Disposition"] == "KP")]
 mission_lightcurve_builder = MissionLightcurveBuilder()
@@ -131,9 +137,9 @@ excluded_ois = {}
 # TODO fill additional_ois from given csv file with their ephemeris
 additional_ois_df = pd.DataFrame(columns=['Object Id', 'name', 'period', 'period_err', 't0', 'to_err', 'depth',
                                           'depth_err', 'duration', 'duration_err'])
-for tic in tic_list:
+for tic in tp_tic_list:
     tic_id = "TIC " + str(tic)
-    target_dir = dir + tic_id + "/"
+    target_dir = positive_dir + tic_id + "/"
     if not os.path.isdir(target_dir):
         os.mkdir(target_dir)
     lc_short, lc_data, star_info, transits_count, sectors, quarters = \
@@ -153,6 +159,7 @@ for tic in tic_list:
     lcf_long = lc_long.remove_nans()
     tpf_short = lk.search_targetpixelfile(tic_id, cadence="short", author="spoc").download_all()
     tpf_long = lk.search_targetpixelfile(tic_id, cadence="long", author="spoc").download_all()
+    # TODO somehow store tpfs images
     short_periodogram = lc_short.to_periodogram(oversample_factor=5)
     periodogram_df = pd.DataFrame(columns=['period', 'power'])
     periodogram_df["period"] = short_periodogram.period
@@ -168,7 +175,6 @@ for tic in tic_list:
     target_ois = ois[ois["Object Id"] == tic_id]
     target_ois = target_ois[(target_ois["Disposition"] == "CP") | (target_ois["Disposition"] == "KP")]
     target_ois_df = pd.DataFrame(columns=['id', 'name', 'period', 'period_err', 't0', 'to_err', 'depth', 'depth_err', 'duration', 'duration_err'])
-    # TODO generate light curve of classified transits
     tags_series_short = np.full(len(lc_short.time), "BL")
     tags_series_long = np.full(len(lc_long.time), "BL")
     for index, row in target_ois.iterrows():
@@ -199,10 +205,33 @@ for tic in tic_list:
     lc_classified_long = pd.DataFrame.from_dict({"time": lc_long.time.value, "flux": lc_long.flux.value, "tag": tags_series_long})
     lc_classified_long.to_csv(target_dir + "lc_classified_long.csv")
     # TODO store folded light curves -with local and global views-(masking previous candidates?)
+tsfresh_short_df = pd.DataFrame(columns=['id', 'time', 'flux', 'flux_err', 'background_flux', 'quality', 'centroids_x',
+                                   'centroids_y', 'motion_x', 'motion_y'])
+tsfresh_long_df = pd.DataFrame(columns=['id', 'time', 'flux', 'flux_err', 'background_flux', 'quality', 'centroids_x',
+                                   'centroids_y', 'motion_x', 'motion_y'])
+tsfresh_tags = []
+for tic_dir in os.listdir(positive_dir):
+    lc_short_df = pd.read_csv(positive_dir + "/" + tic_dir + "/time_series_short.csv")
+    lc_short_long = pd.read_csv(positive_dir + "/" + tic_dir + "/time_series_long.csv")
+    lc_short_df['id'] = tic_dir
+    lc_short_long['id'] = tic_dir
+    tsfresh_short_df.append(lc_short_df)
+    tsfresh_long_df.append(lc_short_long)
+    tsfresh_tags.append([tic_dir, 1])
+for tic_dir in os.listdir(negative_dir):
+    lc_short_df = pd.read_csv(negative_dir + "/" + tic_dir + "/time_series_short.csv")
+    lc_short_long = pd.read_csv(negative_dir + "/" + tic_dir + "/time_series_long.csv")
+    lc_short_df['id'] = tic_dir
+    lc_short_long['id'] = tic_dir
+    tsfresh_short_df.append(lc_short_df)
+    tsfresh_long_df.append(lc_short_long)
+    tsfresh_tags.append([tic_dir, 0])
+tsfresh_tags = pd.Series(tsfresh_tags)
 # TODO tsfresh needs a dataframe with all the "time series" data (centroids, motion, flux, bck_flux...)
 # TODO with an id column specifying the target id and a "y" as a df containing the target ids and the classification
 # TODO tag. We need to check how to make this compatible with transit times tagging instead of entire curve
 # TODO classification. Maybe https://tsfresh.readthedocs.io/en/latest/text/forecasting.html is helpful.
-# extracted_features = tsfresh.extract_features(timeseries_df, column_id="id", column_sort="time")
-# impute(extracted_features)
-# features_filtered = tsfresh.select_features(extracted_features, y)
+extracted_features_short = tsfresh.extract_relevant_features(tsfresh_short_df, tsfresh_tags, column_id='id',
+                                                             column_sort='time')
+extracted_features_long = tsfresh.extract_relevant_features(tsfresh_long_df, tsfresh_tags, column_id='id',
+                                                            column_sort='time')
