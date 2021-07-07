@@ -187,6 +187,7 @@ if __name__ == '__main__':
             high_rms_enabled = get_from_user_or_config(target_configs, sherlock_user_properties, "INITIAL_HIGH_RMS_MASK")
             outliers_sigma = get_from_user_or_config(target_configs, sherlock_user_properties, "OUTLIERS_SIGMA")
             exptime = get_from_user_or_config(target_configs, sherlock_user_properties, "EXPTIME")
+            eleanor_corr_flux = get_from_user_or_config(target_configs, sherlock_user_properties, "ELEANOR_CORRECTED_FLUX")
             mission = None
             mode = get_from_user_or_config_or_default(target_configs, sherlock_user_properties, "MODE", "GLOBAL")
             built_object_info = lcbuilder.build_object_info(target, author, sectors, file, exptime,
@@ -218,7 +219,7 @@ if __name__ == '__main__':
                 for sector in sectors:
                     object_info = lcbuilder.build_object_info(target, author, [sector], file, exptime,
                                                             initial_mask, initial_transit_mask, auto_detrend_period,
-                                                            star_info, aperture)
+                                                            star_info, aperture, eleanor_corr_flux)
                     sherlock_target = SherlockTarget(object_info, high_rms_enabled, high_rms_threshold,
                                    high_rms_bin_hours, smooth_enabled,
                                    auto_detrend_enabled, auto_detrend_method, auto_detrend_ratio,

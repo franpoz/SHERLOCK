@@ -4,8 +4,8 @@ import sys
 import time
 import traceback
 from argparse import ArgumentParser
-import sherlockpipe.eleanor
-sys.modules['eleanor'] = sys.modules['sherlockpipe.eleanor']
+import lcbuilder.eleanor
+sys.modules['eleanor'] = sys.modules['lcbuilder.eleanor']
 import eleanor
 from sherlockpipe.vet import Vetter
 from sherlockpipe.ois.OisManager import OisManager

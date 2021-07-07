@@ -14,7 +14,7 @@ from lcbuilder.objectinfo.preparer.MissionFfiLightcurveBuilder import MissionFfi
 from lcbuilder.objectinfo.MissionObjectInfo import MissionObjectInfo
 from lcbuilder.objectinfo.preparer.MissionLightcurveBuilder import MissionLightcurveBuilder
 from sherlockpipe.eleanor import TargetData
-from sherlockpipe import eleanor
+from lcbuilder import eleanor
 from lcbuilder.star.TicStarCatalog import TicStarCatalog
 import numpy as np
 import tsfresh

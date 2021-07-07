@@ -16,7 +16,7 @@ from lightkurve import TessLightCurve
 from argparse import ArgumentParser
 from scipy import stats
 from sherlockpipe import constants as const
-from sherlockpipe import eleanor
+from lcbuilder import eleanor
 import six
 import sys
 import sherlockpipe.LATTE
