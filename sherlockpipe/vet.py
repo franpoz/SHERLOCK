@@ -24,9 +24,10 @@ from astropy.io import ascii
 import astropy.visualization as stretching
 from argparse import ArgumentParser
 import astropy.units as u
-from sherlockpipe.eleanor import TargetData
+from lcbuilder.eleanor import TargetData
 from sherlockpipe import constants as const
-from sherlockpipe import tpfplotter, eleanor
+from sherlockpipe import tpfplotter
+from lcbuilder import eleanor
 import six
 import sys
 import sherlockpipe.LATTE
