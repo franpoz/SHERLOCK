@@ -8,9 +8,4 @@
 	url = https://github.com/martindevora/LATTE
     branch = master
 	update = merge
-[submodule "sherlockpipe/eleanorSub"]
-	path = sherlockpipe/eleanorSub
-	url = https://github.com/martindevora/eleanor
-[submodule "sherlockpipe/tlsSub"]
-	path = sherlockpipe/tlsSub
-	url = https://github.com/martindevora/tls
+
