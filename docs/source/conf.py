@@ -18,11 +18,12 @@
 # -- Project information -----------------------------------------------------
 
 project = 'SHERLOCK PIPEline'
-copyright = '2021, Francisco Pozuelos & Martín Dévora-Pajares'
-author = 'Francisco Pozuelos & Martín Dévora-Pajares'
+copyright = '2021, Francisco J. Pozuelos & Martín Dévora-Pajares'
+author = 'Francisco J. Pozuelos & Martín Dévora-Pajares'
 
 # The full version, including alpha/beta/rc tags
 release = '0.26.0'
+html_style = "/default.css"
 
 
 # -- General configuration ---------------------------------------------------
