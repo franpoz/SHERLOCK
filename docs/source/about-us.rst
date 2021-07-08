@@ -8,5 +8,7 @@ Who we are
 
 We are the PlanetHunters group from University of Liège and University of Granada. Our group is formed by
 several members and the current maintainers of SHERLOCK are:
+
 * Martín Dévora-Pajares
+
 * Francisco J. Pozuelos

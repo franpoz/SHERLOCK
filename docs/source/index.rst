@@ -6,12 +6,14 @@
 Welcome to SHERLOCK PIPEline's documentation!
 =============================================
 .. image:: _static/sherlock2.png
+   :width: 200px
    :align: center
+   :height: 300px
+   :alt: SHERLOCK PIPEline Logo
 
 .. toctree::
    :maxdepth: 2
    :caption: Contents:
-
    installation
    about-us
 
