@@ -68,17 +68,17 @@ Integration
 Testing
 --------
 
-*SHERLOCK* comes with a light automated tests suite that can be executed with:
+**SHERLOCK** comes with a light automated tests suite that can be executed with:
 
 ``tox``
 
 This suite tests several points from the pipeline for the supported *Python* versions:
 
-* The construction of the Sherlock object.
-* The parameters setup of the Sherlock object.
+* The construction of the ``Sherlock`` *Python* object.
+* The parameters setup of the ``Sherlock`` *Python* object.
 * The provisioning of objects of interest files.
 * Load and filtering of objects of interest.
-* Different kind of short Sherlock executions.
+* Different kind of short **SHERLOCK** executions.
 
 In case you want to test the entire *SHERLOCK* functionality we encourage you to
 run some (or all) the `manual examples <https://github.com/franpoz/SHERLOCK/tree/master/examples>`_.

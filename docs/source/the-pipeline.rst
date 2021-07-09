@@ -17,6 +17,5 @@ finishing into their ground-based observation plans. These are the steps that it
    :maxdepth: 2
    :caption: Contents:
 
-   prepare
    search-proc
 
