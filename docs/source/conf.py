@@ -14,6 +14,7 @@
 # import sys
 # sys.path.insert(0, os.path.abspath('.'))
 import sphinx_rtd_theme
+import sphinxcontrib.mermaid
 
 # -- Project information -----------------------------------------------------
 
@@ -25,6 +26,7 @@ author = 'Francisco J. Pozuelos & Martín Dévora-Pajares'
 release = '0.26.0'
 extensions = [
     "sphinx_rtd_theme",
+    "sphinxcontrib.mermaid"
 ]
 
 # Add any paths that contain templates here, relative to this directory.

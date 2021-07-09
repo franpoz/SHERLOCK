@@ -15,6 +15,8 @@ Welcome to SHERLOCK PIPEline's documentation!
    :maxdepth: 2
    :caption: Contents:
    installation
+   the-pipeline
+      prepare
    about-us
 
 
