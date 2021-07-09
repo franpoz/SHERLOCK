@@ -38,6 +38,8 @@ The easiest way to depict the process is by following the next diagram:
            StarInfo --> Target_lightcurve(Prepared data)
 
            E --> HasName{Has target name?}
+           File[/CSV File\] -.-> BuildFromFile
+           File[/CSV File\] -.-> BuildFromFile1
            HasName --> No --> BuildFromFile[Build lightcurve]
            HasName --> Yes --> BuildFromFile1[Build lightcurve]
            BuildFromFile --> Target_lightcurve

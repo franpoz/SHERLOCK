@@ -12,3 +12,9 @@ many of the tools needed to perform his job in the discovery phase of new candid
 by abstracting the scientist of cumbersome, monotone and sometimes code-demanding tasks. At the end, SHERLOCK has
 become into an end-to-end scientific software starting from the plain search of transiting exoplanet candidates and
 finishing into their ground-based observation plans. These are the steps that it provides:
+
+.. toctree::
+   :maxdepth: 2
+   :caption: Contents:
+
+   prepare

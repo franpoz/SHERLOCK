@@ -17,7 +17,6 @@ Welcome to SHERLOCK PIPEline's documentation!
 
    installation
    the-pipeline
-   prepare
    about-us
 
 
