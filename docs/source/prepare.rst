@@ -3,8 +3,9 @@
    You can adapt this file completely to your liking, but it should at least
    contain the root `toctree` directive.
 
+=================
 Preparation stage
-=============================================
+=================
 
 SHERLOCK needs to identify the type of source[s] that the user has selected in order to choose the proper data cooking
 flow to finally provide standard information for the target star and the photometric measurements in time series format.

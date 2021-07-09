@@ -14,6 +14,7 @@ Welcome to SHERLOCK PIPEline's documentation!
 .. toctree::
    :maxdepth: 2
    :caption: Contents:
+
    installation
    the-pipeline
    prepare
