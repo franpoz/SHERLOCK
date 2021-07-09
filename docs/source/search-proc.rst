@@ -10,21 +10,84 @@ Candidates Search
 Once the preparation stage is already performed, the search iterations begin. SHERLOCK uses wotan to generate ``N``
 different lightcurves whose main difference is the window size of the detrending algorithm used to generate them. That
 is, we increase the window size from the lowest possible value that would not affect a long transit until an upper value
-that can be customized by the user.
+that can be customized by the user. To illustrate the search algorithm we provide the next figure:
 
 .. mermaid::
 
    flowchart TB
        A[Detrend target lightcurve] --> B[/Detrended light curves\]
        B --> C[Search for candidate]
-       C --> D[Compute best signal for lightcurve]
+       C --> D[Compute best candidate for lightcurve]
        D --> F{More detrends?}
        F -- Yes --> G[Select different window size]
        G --> C
        F -- No --> Compute[Compute Best Signal]
+       D -.-> Signals[/Selected signals set\]
        Signals[/Selected signals set\] -.-> Compute
-       SelectionAlgorithm[/SelectionAlgorithm/] -.-> Compute
+       SelectionAlgorithm[/Selection Algorithm/] -.-> Compute
        Compute --> Good{Bad signal or max runs reached?}
        Good -- No --> Mask[Mask selected signal]
        Mask --> B
        Good -- Yes --> End(No more signals)
+
+The possible ``Selection Algorithms`` that the user can choose from are:
+
+* **Basic**: SHERLOCK will select the signal with highest SNR from all the detrended lightcurves for the current run.
+* **Border correct**: SHERLOCK will perform a correction on the SNR values of the selected signals from each detrended lightcurve depending on how many of their transits take place besides empty-data measurement gaps. This was developed because the quantity of false positives is highly increased when there are events close to those gaps affecting the folded lightcurve detected signal.
+* **Quorum algorithm**: Built upon the ``Border correct`` algorithm, this one will correct the SNR of the selected signal for each detrended lightcurve also by counting the number of detrends that selected the same signal.
+* **Custom algorithm**: The user can also inject his own signal selection algorithm by implementing the `SignalSelector <https://github.com/franpoz/SHERLOCK/tree/master/sherlockpipe/scoring/SignalSelector.py>`_ class. See the `example <https://github.com/franpoz/SHERLOCK/tree/master/examples/properties/custom_algorithms.yaml>`_.
+
+---------
+Reporting
+---------
+
+SHERLOCK produces several information items under a new directory for every analysed object:
+
+* **Object report log**: The entire log of the object run is written here.
+* **Most Promising Candidates log**: A summary of the parameters of the best transits found for each run is written at the end of the object execution. Example content:
+
+   .. code-block::
+
+      Listing most promising candidates for ID MIS_TIC 470381900_all:
+      Detrend no. Period  Duration  T0      SNR     SDE     FAP       Border_score  Matching OI   Semi-major axis   Habitability Zone
+      1           2.5013  50.34     1816.69 13.30   14.95   0.000080  1.00          TOI 1696.01   0.02365           I
+      4           0.5245  29.65     1816.56 8.34    6.26    0.036255  1.00          nan           0.00835           I
+      5           0.6193  29.19     1816.43 8.76    6.57    0.019688  1.00          nan           0.00933           I
+      1           0.8111  29.04     1816.10 9.08    5.88    0.068667  0.88          nan           0.01116           I
+      2           1.0093  32.41     1817.05 8.80    5.59    nan       0.90          nan           0.01291           I
+      6           3.4035  45.05     1819.35 6.68    5.97    0.059784  1.00          nan           0.02904           I
+
+* **Runs directories**: Containing png images of the detrended fluxes and their suggested transits. Example of one detrended flux transit selection image:
+
+   .. image:: _static/example_run.png
+      :alt: Example Run
+
+* **Light curve csv file**: The original (before pre-processing) PDCSAP signal stored in three columns:
+
+   .. code-block::
+
+      #time,flux,flux_err
+      1816.0895073542242,0.9916135,0.024114653
+      1816.0908962630185,1.0232307,0.024185425
+      1816.0922851713472,1.0293404,0.024151148
+      1816.0936740796774,1.000998,0.024186047
+      1816.0950629880074,1.0168158,0.02415397
+      1816.0964518968017,1.0344968,0.024141008
+      1816.0978408051305,1.0061758,0.024101004
+      ...
+
+* **Candidates csv file**: Containing the same information than the Most Promising Candidates log but in a csv format so it can be read by future additions to the pipeline like vetting or fitting endpoints.
+* **Lomb-Scargle periodogram plot**: Showing the period strengths. Example:
+
+   .. image:: _static/periodogram.png
+      :alt: Periodogram
+
+* **RMS masking plot**: In case the High RMS masking pre-processing is enabled. Example:
+
+   .. image:: _static/rms.png
+      :alt: RMS
+
+* **Phase-folded period plot**: In case auto-detrend or manual period detrend is enabled.
+
+   .. image:: _static/autodetrend.png
+      :alt: RMS
