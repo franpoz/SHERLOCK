@@ -18,3 +18,5 @@ finishing into their ground-based observation plans. These are the steps that it
    :caption: Contents:
 
    prepare
+   search-proc
+
