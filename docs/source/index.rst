@@ -6,7 +6,7 @@
 Welcome to SHERLOCK PIPEline's documentation!
 =============================================
 .. image:: _static/sherlock2.png
-   :width: 200px
+   :width: 300px
    :align: center
    :height: 300px
    :alt: SHERLOCK PIPEline Logo
@@ -16,7 +16,7 @@ Welcome to SHERLOCK PIPEline's documentation!
    :caption: Contents:
    installation
    the-pipeline
-      prepare
+   prepare
    about-us
 
 
