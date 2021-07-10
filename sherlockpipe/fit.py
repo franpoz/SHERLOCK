@@ -44,24 +44,17 @@ class Fitter:
         self.detrend = detrend
 
     def fit(self, candidate_df, star_df, cpus, allesfit_dir):
-        candidate_row = candidate_df.iloc[0]
         logging.info("Preparing fit files")
         sherlock_star_file = self.object_dir + "/params_star.csv"
         star_file = allesfit_dir + "/params_star.csv"
         params_file = allesfit_dir + "/params.csv"
         settings_file = allesfit_dir + "/settings.csv"
-        if candidate_row["number"] is None or np.isnan(candidate_row["number"]):
-            lc_file = "/" + candidate_row["lc"]
-        else:
-            lc_file = "/" + str(candidate_row["number"]) + "/lc_" + str(candidate_row["curve"]) + ".csv"
+        lc_file = self.select_lc_file(candidate_df)
         shutil.copyfile(self.object_dir + lc_file, allesfit_dir + "/lc.csv")
         if os.path.exists(sherlock_star_file) and os.path.isfile(sherlock_star_file):
             shutil.copyfile(sherlock_star_file, star_file)
-        shutil.copyfile(resources_dir + "/resources/allesfitter/params.csv", params_file)
         shutil.copyfile(resources_dir + "/resources/allesfitter/settings.csv", settings_file)
-        fit_width = 0.3333333
-        if candidate_row["duration"] is not None:
-            fit_width = float(candidate_row["duration"]) / 60 / 24 * 7
+        fit_width = self.select_fit_width(candidate_df)
         # TODO replace sherlock properties from allesfitter files
         # TODO only use params_star when the star mass or radius was not assumed
         logging.info("Preparing fit properties")
@@ -69,7 +62,7 @@ class Fitter:
             text = f.read()
             text = re.sub('\\${sherlock:cores}', str(cpus), text)
             text = re.sub('\\${sherlock:fit_width}', str(fit_width), text)
-            text = re.sub('\\${sherlock:name}', str(candidate_row["name"]), text)
+            text = re.sub('\\${sherlock:names}', ' '.join(candidate_df["name"].astype('str')), text)
             if self.detrend == 'hybrid_spline':
                 detrend_param = "baseline_flux_lc,hybrid_spline"
             elif self.detrend == 'gp':
@@ -80,71 +73,13 @@ class Fitter:
             f.seek(0)
             f.write(text)
             f.truncate()
-        with open(params_file, 'r+') as f:
-            text = f.read()
-            text = re.sub('\\${sherlock:t0}', str(candidate_row["t0"]), text)
-            text = re.sub('\\${sherlock:t0_min}', str(candidate_row["t0"] - 0.02), text)
-            text = re.sub('\\${sherlock:t0_max}', str(candidate_row["t0"] + 0.02), text)
-            text = re.sub('\\${sherlock:period}', str(candidate_row["period"]), text)
-            text = re.sub('\\${sherlock:period_min}', str(candidate_row["period"] - candidate_row["per_err"]), text)
-            text = re.sub('\\${sherlock:period_max}', str(candidate_row["period"] + candidate_row["per_err"]), text)
-            if self.detrend == 'gp':
-                baseline_params = 'baseline_gp_matern32_lnsigma_flux_lc,0.0,1,uniform -15.0 15.0,$\mathrm{gp: \ln{\sigma} (lc)}$,\n' + \
-                    'baseline_gp_matern32_lnrho_flux_lc,0.0,1,uniform -15.0 15.0,$\mathrm{gp: \ln{\rho} (lc)}$,'
-            else:
-                baseline_params = ""
-            text = re.sub('\\${sherlock:baseline_params}', baseline_params, text)
-            rp_rs = candidate_row["rp_rs"] if candidate_row["rp_rs"] != "-" else 0.1
-            depth = candidate_row["depth"] / 1000
-            # TODO calculate depth error in SHERLOCK maybe given the std deviation from the depths or even using the residuals
-            depth_err = depth * 0.2
-            rp_rs_err = 0.5 / math.sqrt(depth) * depth_err
-            text = re.sub('\\${sherlock:rp_rs}', str(rp_rs), text)
-            rp_rs_min = rp_rs - 2 * rp_rs_err
-            rp_rs_min = rp_rs_min if rp_rs_min > 0 else 0.0000001
-            rp_rs_max = rp_rs + 2 * rp_rs_err
-            rp_rs_max = rp_rs_max if rp_rs_max < 1 else 0.9999
-            text = re.sub('\\${sherlock:rp_rs_min}', str(rp_rs_min), text)
-            text = re.sub('\\${sherlock:rp_rs_max}', str(rp_rs_max), text)
-            G = 6.674e-11
-            mstar_kg = star_df.iloc[0]["M_star"] * 2e30
-            mstar_kg_lerr = star_df.iloc[0]["M_star_lerr"] * 2e30
-            mstar_kg_uerr = star_df.iloc[0]["M_star_uerr"] * 2e30
-            rstar_au = star_df.iloc[0]['R_star'] * 0.00465047
-            rstar_lerr_au = star_df.iloc[0]["R_star_lerr"] * 0.00465047
-            rstar_uerr_au = star_df.iloc[0]["R_star_uerr"] * 0.00465047
-            per = candidate_row["period"] * 24 * 3600
-            per_err = candidate_row["per_err"] * 24 * 3600
-            a = (G * mstar_kg * per ** 2 / 4. / (np.pi ** 2)) ** (1. / 3.)
-            a_au = a / 1.496e11
-            sum_rp_rs_a = (np.sqrt(depth) + 1.) * rstar_au / a_au
-            sum_rp_rs_a_lerr = np.sqrt(
-                np.square(0.5 * depth_err / depth) + np.square(rstar_lerr_au / rstar_au) + np.square(
-                    2 * per_err / 3. / per) + np.square(mstar_kg_lerr / 3. / mstar_kg)) * sum_rp_rs_a
-            sum_rp_rs_a_uerr = np.sqrt(
-                np.square(0.5 * depth_err / depth) + np.square(rstar_uerr_au / rstar_au) + np.square(
-                    2 * per_err / 3. / per) + np.square(mstar_kg_uerr / 3. / mstar_kg)) * sum_rp_rs_a
-            sum_rp_rs_a_min = sum_rp_rs_a - 2 * sum_rp_rs_a_lerr
-            sum_rp_rs_a_max = sum_rp_rs_a + 2 * sum_rp_rs_a_uerr
-            sum_rp_rs_a_min = sum_rp_rs_a_min if sum_rp_rs_a_min > 0 else 0.0000001
-            text = re.sub('\\${sherlock:sum_rp_rs_a}', str(sum_rp_rs_a), text)
-            text = re.sub('\\${sherlock:sum_rp_rs_a_min}', str(sum_rp_rs_a_min), text)
-            text = re.sub('\\${sherlock:sum_rp_rs_a_max}', str(sum_rp_rs_a_max), text)
-            text = re.sub('\\${sherlock:name}', str(candidate_row["name"]), text)
-            # TODO this check is wrong and might need to check whether ld_a and ld_b exist within the dataframe
-            if os.path.exists(sherlock_star_file) and os.path.isfile(sherlock_star_file):
-                text = re.sub('\\${sherlock:ld_a}', str(star_df.iloc[0]["ld_a"]), text)
-                text = re.sub('\\${sherlock:ld_b}', str(star_df.iloc[0]["ld_b"]), text)
-            else:
-                text = re.sub('\\${sherlock:ld_a}', "0.5", text)
-                text = re.sub('\\${sherlock:ld_b}', "0.5", text)
-            f.seek(0)
-            f.write(text)
+        with open(params_file, 'w') as f:
+            f.write(self.fill_candidates_params(candidate_df, star_df))
             f.truncate()
-
         logging.info("Running initial guess")
         allesfitter.show_initial_guess(allesfit_dir)
-        self.custom_plot(candidate_row["name"], candidate_row["period"], fit_width, allesfit_dir, "initial_guess")
+        # TODO fix custom_plot for all candidates
+        #self.custom_plot(candidate_row["name"], candidate_row["period"], fit_width, allesfit_dir, "initial_guess")
         if not self.only_initial:
             logging.info("Preparing bayesian fit")
             if not self.mcmc:
@@ -156,7 +91,27 @@ class Fitter:
                 allesfitter.mcmc_fit(allesfit_dir)
                 allesfitter.mcmc_output(allesfit_dir)
             logging.info("Generating custom plots")
-            self.custom_plot(candidate_row["name"], candidate_row["period"], fit_width, allesfit_dir, "posterior")
+            # TODO fix custom_plot for all candidates
+            #self.custom_plot(candidate_row["name"], candidate_row["period"], fit_width, allesfit_dir, "posterior")
+
+    def select_lc_file(self, candidate_df):
+        if len(candidate_df) > 1:
+            lc_file = "/lc.csv"
+        else:
+            candidate_row = candidate_df.iloc[0]
+            if candidate_row["number"] is None or np.isnan(candidate_row["number"]):
+                lc_file = "/" + candidate_row["lc"]
+            else:
+                lc_file = "/" + str(candidate_row["number"]) + "/lc_" + str(candidate_row["curve"]) + ".csv"
+        return lc_file
+
+    def select_fit_width(self, candidate_df):
+        fit_width = 0
+        for key, row in candidate_df.iterrows():
+            if row["duration"] is not None:
+                row_fit_width = float(row["duration"]) / 60 / 24 * 7
+                fit_width = fit_width if fit_width > row_fit_width else row_fit_width
+        return fit_width
 
     def custom_plot(self, name, period, fit_width, allesfit_dir, mode="posterior"):
         allesclass = allesfitter.allesclass(allesfit_dir)
@@ -187,13 +142,110 @@ class Fitter:
         style = ['phasezoom_occ']
         style = ['phase_variations']
 
+    def fill_candidates_params(self, candidate_df, star_df):
+        candidate_priors_text = ""
+        for key, row in candidate_df.iterrows():
+            candidate_priors_text = candidate_priors_text + \
+                                    self.fill_candidate_params(row, star_df)
+        return candidate_priors_text + self.fill_instrument_params(star_df)
+
+
+    def fill_candidate_params(self, candidate_row, star_df):
+        candidate_params = """#name,value,fit,bounds,label,unit
+#companion b astrophysical params,,,,,
+${sherlock:name}_rr,${sherlock:rp_rs},1,uniform ${sherlock:rp_rs_min} ${sherlock:rp_rs_max},$R_b / R_\star$,
+${sherlock:name}_rsuma,${sherlock:sum_rp_rs_a},1,uniform ${sherlock:sum_rp_rs_a_min} ${sherlock:sum_rp_rs_a_max},$(R_\star + R_b) / a_b$,
+${sherlock:name}_cosi,0.0,1,uniform 0.0 0.06,$\cos{i_b}$,
+${sherlock:name}_epoch,${sherlock:t0},1,uniform ${sherlock:t0_min} ${sherlock:t0_max},$T_{0;b}$,$\mathrm{BJD}$
+${sherlock:name}_period,${sherlock:period},1,uniform ${sherlock:period_min} ${sherlock:period_max},$P_b$,$\mathrm{d}$
+${sherlock:name}_f_c,0.0,1,uniform -1.0 1.0,$\sqrt{e_b} \cos{\omega_b}$,
+${sherlock:name}_f_s,0.0,1,uniform -1.0 1.0,$\sqrt{e_b} \sin{\omega_b}$,
+"""
+        candidate_params = re.sub('\\${sherlock:t0}', str(candidate_row["t0"]), candidate_params)
+        candidate_params = re.sub('\\${sherlock:t0_min}', str(candidate_row["t0"] - 0.02), candidate_params)
+        candidate_params = re.sub('\\${sherlock:t0_max}', str(candidate_row["t0"] + 0.02), candidate_params)
+        candidate_params = re.sub('\\${sherlock:period}', str(candidate_row["period"]), candidate_params)
+        candidate_params = re.sub('\\${sherlock:period_min}', str(candidate_row["period"] - candidate_row["per_err"]), candidate_params)
+        candidate_params = re.sub('\\${sherlock:period_max}', str(candidate_row["period"] + candidate_row["per_err"]), candidate_params)
+        rp_rs = candidate_row["rp_rs"] if candidate_row["rp_rs"] != "-" else 0.1
+        depth = candidate_row["depth"] / 1000
+        # TODO calculate depth error in SHERLOCK maybe given the std deviation from the depths or even using the residuals
+        depth_err = depth * 0.2
+        rp_rs_err = 0.5 / math.sqrt(depth) * depth_err
+        candidate_params = re.sub('\\${sherlock:rp_rs}', str(rp_rs), candidate_params)
+        rp_rs_min = rp_rs - 2 * rp_rs_err
+        rp_rs_min = rp_rs_min if rp_rs_min > 0 else 0.0000001
+        rp_rs_max = rp_rs + 2 * rp_rs_err
+        rp_rs_max = rp_rs_max if rp_rs_max < 1 else 0.9999
+        candidate_params = re.sub('\\${sherlock:rp_rs_min}', str(rp_rs_min), candidate_params)
+        candidate_params = re.sub('\\${sherlock:rp_rs_max}', str(rp_rs_max), candidate_params)
+        G = 6.674e-11
+        mstar_kg = star_df.iloc[0]["M_star"] * 2e30
+        mstar_kg_lerr = star_df.iloc[0]["M_star_lerr"] * 2e30
+        mstar_kg_uerr = star_df.iloc[0]["M_star_uerr"] * 2e30
+        rstar_au = star_df.iloc[0]['R_star'] * 0.00465047
+        rstar_lerr_au = star_df.iloc[0]["R_star_lerr"] * 0.00465047
+        rstar_uerr_au = star_df.iloc[0]["R_star_uerr"] * 0.00465047
+        per = candidate_row["period"] * 24 * 3600
+        per_err = candidate_row["per_err"] * 24 * 3600
+        a = (G * mstar_kg * per ** 2 / 4. / (np.pi ** 2)) ** (1. / 3.)
+        a_au = a / 1.496e11
+        sum_rp_rs_a = (np.sqrt(depth) + 1.) * rstar_au / a_au
+        sum_rp_rs_a_lerr = np.sqrt(
+            np.square(0.5 * depth_err / depth) + np.square(rstar_lerr_au / rstar_au) + np.square(
+                2 * per_err / 3. / per) + np.square(mstar_kg_lerr / 3. / mstar_kg)) * sum_rp_rs_a
+        sum_rp_rs_a_uerr = np.sqrt(
+            np.square(0.5 * depth_err / depth) + np.square(rstar_uerr_au / rstar_au) + np.square(
+                2 * per_err / 3. / per) + np.square(mstar_kg_uerr / 3. / mstar_kg)) * sum_rp_rs_a
+        sum_rp_rs_a_min = sum_rp_rs_a - 2 * sum_rp_rs_a_lerr
+        sum_rp_rs_a_max = sum_rp_rs_a + 2 * sum_rp_rs_a_uerr
+        sum_rp_rs_a_min = sum_rp_rs_a_min if sum_rp_rs_a_min > 0 else 0.0000001
+        candidate_params = re.sub('\\${sherlock:sum_rp_rs_a}', str(sum_rp_rs_a), candidate_params)
+        candidate_params = re.sub('\\${sherlock:sum_rp_rs_a_min}', str(sum_rp_rs_a_min), candidate_params)
+        candidate_params = re.sub('\\${sherlock:sum_rp_rs_a_max}', str(sum_rp_rs_a_max), candidate_params)
+        candidate_params = re.sub('\\${sherlock:name}', str(candidate_row["name"]), candidate_params)
+        return candidate_params
+
+    def fill_instrument_params(self, star_df):
+        instrument_params = """#dilution per instrument,,,,,
+dil_lc,0.0,0,trunc_normal 0 1 0.0 0.0,$D_\mathrm{0; lc}$,
+#limb darkening coefficients per instrument,,,,,
+host_ldc_q1_lc,${sherlock:ld_a},1,uniform 0.0 1.0,$q_{1; \mathrm{lc}}$,
+host_ldc_q2_lc,${sherlock:ld_b},1,uniform 0.0 1.0,$q_{2; \mathrm{lc}}$,
+#surface brightness per instrument and companion,,,,,
+host_sbratio_lc,0.0,0,trunc_normal 0 1 0.0 0.0,$J_{b; \mathrm{lc}}$,
+#albedo per instrument and companion,,,,,
+host_geom_albedo_lc,0.0,0,trunc_normal 0 1 0.0 0.0,$A_{\mathrm{geom}; host; \mathrm{lc}}$,
+${sherlock:name}_geom_albedo_lc,0.0,0,trunc_normal 0 1 0.0 0.0,$A_{\mathrm{geom}; b; \mathrm{lc}}$,
+#gravity darkening per instrument and companion,,,,,
+host_gdc_lc,0.0,0,trunc_normal 0 1 0.0 0.0,$Grav. dark._{b; \mathrm{lc}}$,
+#spots per instrument and companion,,,,,
+#errors per instrument,
+ln_err_flux_lc,-7.0,1,uniform -15.0 0.0,$\log{\sigma_\mathrm{lc}}$,$\log{ \mathrm{rel. flux.} }$
+#baseline per instrument,
+${sherlock:baseline_params}
+"""
+        if star_df.iloc[0]["ld_a"] is not None and not np.isnan(star_df.iloc[0]["ld_a"]):
+            instrument_params = re.sub('\\${sherlock:ld_a}', str(star_df.iloc[0]["ld_a"]), instrument_params)
+            instrument_params = re.sub('\\${sherlock:ld_b}', str(star_df.iloc[0]["ld_b"]), instrument_params)
+        else:
+            instrument_params = re.sub('\\${sherlock:ld_a}', "0.5", instrument_params)
+            instrument_params = re.sub('\\${sherlock:ld_b}', "0.5", instrument_params)
+        if self.detrend == 'gp':
+            baseline_params = 'baseline_gp_matern32_lnsigma_flux_lc,0.0,1,uniform -15.0 15.0,$\mathrm{gp: \ln{\sigma} (lc)}$,\n' + \
+                              'baseline_gp_matern32_lnrho_flux_lc,0.0,1,uniform -15.0 15.0,$\mathrm{gp: \ln{\rho} (lc)}$,'
+        else:
+            baseline_params = ""
+        instrument_params = re.sub('\\${sherlock:baseline_params}', baseline_params, instrument_params)
+        return instrument_params
+
 
 if __name__ == '__main__':
     ap = ArgumentParser(description='Fitting of Sherlock objects of interest')
     ap.add_argument('--object_dir',
                     help="If the object directory is not your current one you need to provide the ABSOLUTE path",
                     required=False)
-    ap.add_argument('--candidate', type=int, default=None, help="The candidate signal to be used.", required=False)
+    ap.add_argument('--candidate', type=str, default=None, help="The CSV candidate signals to be used.", required=False)
     ap.add_argument('--only_initial', dest='only_initial', action='store_true',
                         help="Whether to only run an initial guess of the transit")
     ap.set_defaults(only_initial=False)
@@ -228,10 +280,11 @@ if __name__ == '__main__':
     os.mkdir(fitting_dir)
     fitter.data_dir = fitter.object_dir
     star_df = pd.read_csv(fitter.data_dir + "/params_star.csv")
+    candidate_selections = None
     if args.candidate is None:
         user_properties = yaml.load(open(args.properties), yaml.SafeLoader)
-        candidate = pd.DataFrame(columns=['id', 'period', 't0', 'cpus', 'rp_rs', 'a', 'number', 'name', 'lc'])
-        candidate = candidate.append(user_properties["planet"], ignore_index=True)
+        candidates_df = pd.DataFrame(columns=['id', 'period', 't0', 'cpus', 'rp_rs', 'a', 'number', 'name', 'lc'])
+        candidates_df = candidates_df.append(user_properties["planet"], ignore_index=True)
         user_star_df = pd.DataFrame(columns=['R_star', 'M_star'])
         if "star" in user_properties and user_properties["star"] is not None:
             user_star_df = user_star_df.append(user_properties["star"], ignore_index=True)
@@ -245,31 +298,35 @@ if __name__ == '__main__':
                 star_df.at[0, "ld_b"] = user_star_df.iloc[0]["ld_b"]
             if ("a" not in user_properties["planet"] or user_properties["planet"]["a"] is None)\
                     and star_df.iloc[0]["M_star"] is not None and not np.isnan(star_df.iloc[0]["M_star"]):
-                candidate.at[0, "a"] = HabitabilityCalculator() \
+                candidates_df.at[0, "a"] = HabitabilityCalculator() \
                     .calculate_semi_major_axis(user_properties["planet"]["period"],
                                                user_properties["star"]["M_star"])
             elif ("a" not in user_properties["planet"] or user_properties["planet"]["a"] is None)\
                     and (star_df.iloc[0]["M_star"] is None or np.isnan(star_df.iloc[0]["M_star"])):
                 raise ValueError("Cannot guess semi-major axis without star mass.")
-        if candidate.iloc[0]["a"] is None or np.isnan(candidate.iloc[0]["a"]):
+        if candidates_df.iloc[0]["a"] is None or np.isnan(candidates_df.iloc[0]["a"]):
             raise ValueError("Semi-major axis is neither provided nor inferred.")
-        if candidate.iloc[0]["name"] is None:
+        if candidates_df.iloc[0]["name"] is None:
             raise ValueError("You need to provide a name for your candidate.")
-        if candidate.iloc[0]["lc"] is None:
+        if candidates_df.iloc[0]["lc"] is None:
             raise ValueError("You need to provide a light curve relative path for your candidate.")
         cpus = user_properties["settings"]["cpus"]
     else:
-        candidate_selection = int(args.candidate)
-        candidates = pd.read_csv(fitter.object_dir + "/candidates.csv")
-        if candidate_selection < 1 or candidate_selection > len(candidates.index):
-            raise SystemExit("User selected a wrong candidate number.")
-        candidates = candidates.rename(columns={'Object Id': 'TICID'})
-        candidate = candidates.iloc[[candidate_selection - 1]]
-        candidate['number'] = [candidate_selection]
-        candidate['name'] = 'SOI_' + candidate['number'].astype(str)
+        candidate_selections = str(args.candidate)
+        candidate_selections = candidate_selections.split(",")
+        candidate_selections = list(map(int, candidate_selections))
+        candidates_df = pd.read_csv(fitter.object_dir + "/candidates.csv")
+        candidates_df = candidates_df.rename(columns={'Object Id': 'TICID'})
+        candidates_df["number"] = ""
+        candidates_df["name"] = ""
+        for candidate_selection in candidate_selections:
+            candidates_df['number'][candidate_selection - 1] = candidate_selection
+            candidates_df['name'][candidate_selection - 1] = 'SOI_' + \
+                                                            str(candidates_df['number'][candidate_selection - 1])
         if args.cpus is None:
             cpus = multiprocessing.cpu_count() - 1
         else:
             cpus = args.cpus
-        logging.info("Selected signal number " + str(candidate_selection))
-    fitter.fit(candidate, star_df, cpus, fitting_dir)
+        logging.info("Selected signal numbers " + str(candidate_selections))
+    fitter.fit(candidates_df.iloc[[candidate_selection - 1 for candidate_selection in candidate_selections]],
+               star_df, cpus, fitting_dir)
