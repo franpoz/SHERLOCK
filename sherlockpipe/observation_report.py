@@ -19,12 +19,13 @@ resources_dir = path.join(path.dirname(__file__))
 class ObservationReport:
     LOGO_IMAGE = resources_dir + "/resources/images/sherlock3.png"
 
-    def __init__(self, df_observatories, df, object_id, working_path, t0, t0_low_err, t0_up_err, period, period_low_err,
-                 period_up_err, duration, duration_low_err, duration_up_err, depth, depth_low_err, depth_up_err,
-                 observable, min_dist, max_dist, min_altitude, max_days):
+    def __init__(self, df_observatories, df, object_id, name, working_path, t0, t0_low_err, t0_up_err, period,
+                 period_low_err, period_up_err, duration, duration_low_err, duration_up_err, depth, depth_low_err,
+                 depth_up_err, observable, min_dist, max_dist, min_altitude, max_days):
         self.df = df
         self.df_observatories = df_observatories
         self.object_id = object_id
+        self.name = name
         self.working_path = working_path
         self.images_path = working_path + "/images/"
         self.observable = observable
@@ -322,7 +323,7 @@ class ObservationReport:
         global_template = PageTemplate(id='UnaColumna', frames=global_frame,
                                        onPage=self.create_header, onPageEnd=self.create_footer)
         # Construimos el documento:
-        doc = BaseDocTemplate(self.working_path + "/" + self.object_id + "_observation_plan.pdf", pagesize=A4,
+        doc = BaseDocTemplate(self.working_path + "/" + self.name + "_observation_plan.pdf", pagesize=A4,
                               rightMargin=40, leftMargin=40,
                               topMargin=95, bottomMargin=15,
                               pageTemplates=global_template)

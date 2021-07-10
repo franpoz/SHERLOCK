@@ -275,39 +275,41 @@ if __name__ == '__main__':
     ns_file = object_dir + "/results/ns_table.csv"
     if not os.path.exists(ns_derived_file) or not os.path.exists(ns_file):
         raise ValueError("Bayesian fit posteriors files {" + ns_file + ", " + ns_derived_file + "} not found")
-    fit_derived_results = pd.read_csv(object_dir + "/results/ns_derived_table.csv")
-    fit_results = pd.read_csv(object_dir + "/results/ns_table.csv")
-    period_row = fit_results[fit_results["#name"].str.contains("_period")]
-    period = period_row["median"].item()
-    period_low_err = float(period_row["lower_error"].item())
-    period_up_err = float(period_row["upper_error"].item())
-    epoch_row = fit_results[fit_results["#name"].str.contains("_epoch")]
-    epoch = epoch_row["median"].item()
-    epoch_low_err = float(epoch_row["lower_error"].item())
-    epoch_up_err = float(epoch_row["upper_error"].item())
-    duration_row = fit_derived_results[fit_derived_results["#property"].str.contains("Total transit duration")]
-    duration = duration_row["value"].item()
-    duration_low_err = float(duration_row["lower_error"].item())
-    duration_up_err = float(duration_row["upper_error"].item())
-    depth_row = fit_derived_results[fit_derived_results["#property"].str.contains("depth \(dil.\)")]
-    depth = float(depth_row["value"].item()) * 1000
-    depth_low_err = float(depth_row["lower_error"].item()) * 1000
-    depth_up_err = float(depth_row["upper_error"].item()) * 1000
     star_df = pd.read_csv(object_dir + "/params_star.csv")
     object_id = star_df.iloc[0]["obj_id"]
-    name = object_id + "_SOI_" + str(args.candidate)
     ra = star_df.iloc[0]["ra"]
     dec = star_df.iloc[0]["dec"]
     coords = str(ra) + " " + str(dec)
-    observatories_df, observables_df, plan_dir, images_dir = create_observation_observables(object_id, object_dir, name, epoch,
-                                                        epoch_low_err, epoch_up_err, period, period_low_err,
-                                                        period_up_err, duration, args.observatories, args.tz, args.lat,
-                                                        args.lon, args.alt, args.max_days, args.min_altitude,
-                                                        args.moon_min_dist, args.moon_max_dist, args.transit_fraction)
-    report = ObservationReport(observatories_df, observables_df, object_id, plan_dir,
-                               epoch, epoch_low_err, epoch_up_err, period, period_low_err, period_up_err, duration,
-                               duration_low_err, duration_up_err, depth, depth_low_err, depth_up_err,
-                               args.transit_fraction, args.moon_min_dist, args.moon_max_dist, args.min_altitude,
-                               args.max_days)
-    report.create_report()
-    shutil.rmtree(images_dir, ignore_errors=True)
+    fit_derived_results = pd.read_csv(object_dir + "/results/ns_derived_table.csv")
+    fit_results = pd.read_csv(object_dir + "/results/ns_table.csv")
+    candidates_count = len(fit_results[fit_results["#name"].str.contains("_period")])
+    for i in np.arange(0, candidates_count):
+        period_row = fit_results[fit_results["#name"].str.contains("_period")].iloc[i]
+        period = period_row["median"]
+        period_low_err = period_row["lower_error"]
+        period_up_err = period_row["upper_error"]
+        name = object_id + "_" + period_row["#name"].replace("_period", "")
+        epoch_row = fit_results[fit_results["#name"].str.contains("_epoch")].iloc[i]
+        epoch = epoch_row["median"].item()
+        epoch_low_err = epoch_row["lower_error"]
+        epoch_up_err = epoch_row["upper_error"]
+        duration_row = fit_derived_results[fit_derived_results["#property"].str.contains("Total transit duration")].iloc[i]
+        duration = duration_row["value"].item()
+        duration_low_err = duration_row["lower_error"]
+        duration_up_err = duration_row["upper_error"]
+        depth_row = fit_derived_results[fit_derived_results["#property"].str.contains("depth \(dil.\)")].iloc[i]
+        depth = depth_row["value"] * 1000
+        depth_low_err = depth_row["lower_error"] * 1000
+        depth_up_err = depth_row["upper_error"] * 1000
+        observatories_df, observables_df, plan_dir, images_dir = create_observation_observables(object_id, object_dir, name, epoch,
+                                                            epoch_low_err, epoch_up_err, period, period_low_err,
+                                                            period_up_err, duration, args.observatories, args.tz, args.lat,
+                                                            args.lon, args.alt, args.max_days, args.min_altitude,
+                                                            args.moon_min_dist, args.moon_max_dist, args.transit_fraction)
+        report = ObservationReport(observatories_df, observables_df, object_id, name, plan_dir,
+                                   epoch, epoch_low_err, epoch_up_err, period, period_low_err, period_up_err, duration,
+                                   duration_low_err, duration_up_err, depth, depth_low_err, depth_up_err,
+                                   args.transit_fraction, args.moon_min_dist, args.moon_max_dist, args.min_altitude,
+                                   args.max_days)
+        report.create_report()
+        shutil.rmtree(images_dir, ignore_errors=True)
