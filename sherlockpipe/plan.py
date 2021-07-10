@@ -252,7 +252,6 @@ if __name__ == '__main__':
     ap.add_argument('--object_dir',
                     help="If the object directory is not your current one you need to provide the ABSOLUTE path",
                     required=False)
-    ap.add_argument('--candidate', help="Candidate number from promising list", required=True)
     ap.add_argument("--observatories", help="Csv file containing the observatories coordinates", required=False)
     ap.add_argument('--lat', help="Observer latitude", required=False)
     ap.add_argument('--lon', help="Observer longitude", required=False)
