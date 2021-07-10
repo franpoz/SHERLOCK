@@ -282,6 +282,7 @@ if __name__ == '__main__':
     star_df = pd.read_csv(fitter.data_dir + "/params_star.csv")
     candidate_selections = None
     if args.candidate is None:
+        #TODO allow several candidates to be fit
         user_properties = yaml.load(open(args.properties), yaml.SafeLoader)
         candidates_df = pd.DataFrame(columns=['id', 'period', 't0', 'cpus', 'rp_rs', 'a', 'number', 'name', 'lc'])
         candidates_df = candidates_df.append(user_properties["planet"], ignore_index=True)
