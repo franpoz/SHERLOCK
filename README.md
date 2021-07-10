@@ -2,10 +2,32 @@
   <img width="350" src="https://github.com/franpoz/SHERLOCK/blob/master/images/sherlock3.png?raw=true">
 </p>
 
-The <b>SHERLOCK</b> (<b>S</b>earching for <b>H</b>ints of <b>E</b>xoplanets f<b>R</b>om <b>L</b>ightcurves 
-<b>O</b>f spa<b>C</b>e-based see<b>K</b>ers) <b>PIPE</b>line is a user-friendly pipeline, which
-minimizes the interaction of the user to the minimum when using data coming from Kepler or TESS missions. SHERLOCK makes use of previous well-known and well-tested codes which allow the exoplanets community to explore the public data from space-based missions without need of a deep knowledge of how the data are built and stored. 
+<b>SHERLOCK</b> (Searching for Hints of Exoplanets fRom Lightcurves Of spaCe-based seeKers; Pozuelos et al. 2020) is a friendly-user open-source package that has five different modules that allow to: (1) search for planetary candidates; (2) perform vetting of the most promising signals; (3) compute a statistical validation; (4) model the signals to refine the ephemerids; and (5) compute the observational windows from ground-based observatories. SHERLOCK has direct access to short- and long-cadence data observed by Kepler/K2 and TESS. Hence, SHERLOCK is a fully operational powerful tool that allows the user to perform planet searches in space-based data robustly.
 In most of cases the user only needs to provide with a KIC-ID, EPIC-ID, TIC-ID or coordinates of the host star where wants to search for exoplanets.
+
+## Citation
+We are currently working in a specific article for SHERLOCK. In addition, the best curent way to cite SHERLOCK is by referencing the first paper where it was firstly used (Pozuelos et al. 2020):
+
+```
+@ARTICLE{2020A&A...641A..23P,
+       author = {{Pozuelos}, Francisco J. and {Su{\'a}rez}, Juan C. and {de El{\'\i}a}, Gonzalo C. and {Berdi{\~n}as}, Zaira M. and {Bonfanti}, Andrea and {Dugaro}, Agust{\'\i}n and {Gillon}, Micha{\"e}l and {Jehin}, Emmanu{\"e}l and {G{\"u}nther}, Maximilian N. and {Van Grootel}, Val{\'e}rie and {Garcia}, Lionel J. and {Thuillier}, Antoine and {Delrez}, Laetitia and {Rod{\'o}n}, Jose R.},
+        title = "{GJ 273: on the formation, dynamical evolution, and habitability of a planetary system hosted by an M dwarf at 3.75 parsec}",
+      journal = {\aap},
+     keywords = {planets and satellites: dynamical evolution and stability, planets and satellites: formation, Astrophysics - Earth and Planetary Astrophysics, Astrophysics - Solar and Stellar Astrophysics},
+         year = 2020,
+        month = sep,
+       volume = {641},
+          eid = {A23},
+        pages = {A23},
+          doi = {10.1051/0004-6361/202038047},
+archivePrefix = {arXiv},
+       eprint = {2006.09403},
+ primaryClass = {astro-ph.EP},
+       adsurl = {https://ui.adsabs.harvard.edu/abs/2020A&A...641A..23P},
+      adsnote = {Provided by the SAO/NASA Astrophysics Data System}
+}
+
+```
 
 ## Main Developers
 Active: <i>[F.J. Pozuelos](https://github.com/franpoz), 
@@ -13,9 +35,6 @@ Active: <i>[F.J. Pozuelos](https://github.com/franpoz),
 
 ## Additional contributors 
 <i>A. Thuillier</i> & <i>[L. García](https://github.com/LionelGarcia) </i> & <i>[Luis Cerdeño Mota](https://github.com/LuisCerdenoMota)</i>
-
-## Citation
-...
 
 ## Launch
 You can run SHERLOCK PIPEline as a standalone package by using:
