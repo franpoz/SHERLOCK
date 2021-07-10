@@ -2,7 +2,7 @@
   <img width="350" src="https://github.com/franpoz/SHERLOCK/blob/master/images/sherlock3.png?raw=true">
 </p>
 
-<b>SHERLOCK</b> (Searching for Hints of Exoplanets fRom Lightcurves Of spaCe-based seeKers; Pozuelos et al. 2020) is a friendly-user open-source package (fully available at https://github.com/franpoz/SHERLOCK) that has five different modules that allow to: (1) search for planetary candidates; (2) perform vetting of the most promising signals; (3) compute a statistical validation; (4) model the signals to refine the ephemerids; and (5) compute the observational windows from ground-based observatories. SHERLOCK has direct access to short- and long-cadence data observed by Kepler/K2 and TESS. Hence, SHERLOCK is a fully operational powerful tool that allows the user to perform planet searches in space-based data robustly.
+<b>SHERLOCK</b> (Searching for Hints of Exoplanets fRom Lightcurves Of spaCe-based seeKers; Pozuelos et al. 2020) is a friendly-user open-source package that has five different modules that allow to: (1) search for planetary candidates; (2) perform vetting of the most promising signals; (3) compute a statistical validation; (4) model the signals to refine the ephemerids; and (5) compute the observational windows from ground-based observatories. SHERLOCK has direct access to short- and long-cadence data observed by Kepler/K2 and TESS. Hence, SHERLOCK is a fully operational powerful tool that allows the user to perform planet searches in space-based data robustly.
 In most of cases the user only needs to provide with a KIC-ID, EPIC-ID, TIC-ID or coordinates of the host star where wants to search for exoplanets.
 
 ## Citation
