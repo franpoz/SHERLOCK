@@ -1,4 +1,5 @@
 import logging
+import math
 import os
 import sys
 from argparse import ArgumentParser
@@ -6,6 +7,9 @@ from argparse import ArgumentParser
 import json
 import yaml
 import pandas as pd
+import numpy as np
+from numpy import arange
+
 from sherlockpipe.nbodies.megno import MegnoStabilityCalculator
 from sherlockpipe.nbodies.planet_input import PlanetInput
 from sherlockpipe.nbodies.spock import SpockStabilityCalculator
@@ -22,25 +26,22 @@ if __name__ == '__main__':
     ap = ArgumentParser(description='Validation of system stability')
     ap.add_argument('--object_dir', help="If the object directory is not your current one you need to provide the "
                                          "ABSOLUTE path", required=False)
-    ap.add_argument('--planets', type=str, default=None,
-                    help="Comma separated string of assumed existing planets.",
-                    required=False)
     ap.add_argument('--max_ecc', type=float, default=0.1,
                     help="Upper limit for the eccentricity grid.",
                     required=False)
     ap.add_argument('--properties', help="The YAML file to be used as input.", required=False)
     ap.add_argument('--cpus', type=int, default=4, help="The number of CPU cores to be used.", required=False)
     ap.add_argument('--ecc_bins', type=int, default=None, help="The number of eccentricity bins to use.", required=False)
+    ap.add_argument('--inc_bins', type=int, default=None, help="The number of inclination bins to use.", required=False)
+    ap.add_argument('--omega_bins', type=int, default=None, help="The number of argument of periastron bins to use.",
+                    required=False)
     ap.add_argument('--mass_bins', type=int, default=None, help="The number of mass bins to use.", required=False)
     ap.add_argument('--star_mass_bins', type=int, default=3, help="The number of star mass bins to use.",
                     required=False)
-    ap.add_argument('--megno', dest='use_megno', action='store_true',
+    ap.add_argument('--spock', dest='use_spock', action='store_true',
                     help="Whether to force the usage of megno even for multiplanetary systems.")
     args = ap.parse_args()
-    planets = args.planets.split(",") if args.planets is not None else None
     object_dir = os.getcwd() if args.object_dir is None else args.object_dir
-    if planets is None and args.properties is None:
-        print("Can't execute validation without assumed signals or properties file")
     index = 0
     stability_dir = object_dir + "/stability_" + str(index)
     while os.path.exists(stability_dir) or os.path.isdir(stability_dir):
@@ -68,19 +69,53 @@ if __name__ == '__main__':
     star_mass = star_df.iloc[0]["M_star"]
     star_mass_low_err = star_df.iloc[0]["M_star_lerr"]
     star_mass_up_err = star_df.iloc[0]["M_star_uerr"]
-    candidates = pd.read_csv(object_dir + "/candidates.csv")
+    candidates = pd.read_csv(object_dir + "/../candidates.csv")
     planets_params = []
-    if planets is not None:
-        planets = map(int, planets)
-        planets = [planets - 1 for planets in planets]
-        planets_df = candidates.iloc[planets]
-        planets_params = [PlanetInput(planet["period"], planet["rad_p"], eccentricity_low=0,
-                                      eccentricity_up=args.max_ecc)
-                                 for index, planet in planets_df.iterrows()]
-    star_mass_low = star_mass if star_mass_low_err is None else star_mass - star_mass_low_err
-    star_mass_up = star_mass if star_mass_up_err is None else star_mass + star_mass_up_err
-    star_mass_bins = args.star_mass_bins
-    if args.properties is not None:
+    if args.properties is None:
+        #TODO check fit_dir is relative or absolute
+        ns_derived_file = object_dir + "/results/ns_derived_table.csv"
+        ns_file = object_dir + "/results/ns_table.csv"
+        if not os.path.exists(ns_derived_file) or not os.path.exists(ns_file):
+            raise ValueError("Bayesian fit posteriors files {" + ns_file + ", " + ns_derived_file + "} not found")
+        fit_derived_results = pd.read_csv(object_dir + "/results/ns_derived_table.csv")
+        fit_results = pd.read_csv(object_dir + "/results/ns_table.csv")
+        candidates_count = len(fit_results[fit_results["#name"].str.contains("_period")])
+        for i in arange(0, candidates_count):
+            period_row = fit_results[fit_results["#name"].str.contains("_period")].iloc[i]
+            period = period_row["median"]
+            period_low_err = period_row["lower_error"]
+            period_up_err = period_row["upper_error"]
+            inc_row = fit_derived_results[fit_derived_results["#property"].str.contains("Inclination")].iloc[i]
+            inclination = inc_row["value"]
+            inc_low_err = inc_row["lower_error"]
+            inc_up_err = inc_row["upper_error"]
+            duration_row = fit_derived_results[fit_derived_results["#property"].str.contains("Total transit duration")].iloc[i]
+            duration = duration_row["value"]
+            duration_low_err = duration_row["lower_error"]
+            duration_up_err = duration_row["upper_error"]
+            radius_row = fit_derived_results[fit_derived_results["#property"].str.contains("R_\{\\\\oplus}")].iloc[i]
+            radius = duration_row["value"]
+            radius_low_err = duration_row["lower_error"]
+            radius_up_err = duration_row["upper_error"]
+            ecc_row = fit_derived_results[fit_derived_results["#property"].str.contains("Eccentricity")].iloc[i]
+            eccentricity = ecc_row["value"]
+            ecc_low_err = ecc_row["lower_error"]
+            ecc_up_err = ecc_row["upper_error"]
+            arg_periastron_row = fit_derived_results[fit_derived_results["#property"].str.contains("Argument of periastron")].iloc[i]
+            arg_periastron = ecc_row["value"]
+            arg_periastron_low_err = ecc_row["lower_error"]
+            arg_periastron_up_err = ecc_row["upper_error"]
+            planets_params = planets_params.append(
+                PlanetInput(period=period, period_low_err=period_low_err, period_up_err=period_up_err,
+                            radius=radius, radius_low_err=radius_low_err, radius_up_err=radius_up_err,
+                            eccentricity=eccentricity, ecc_low_err=ecc_low_err, ecc_up_err=ecc_up_err,
+                            inclination=inclination, inc_low_err=inc_low_err, inc_up_err=inc_up_err,
+                            omega=arg_periastron, omega_low_err=arg_periastron_low_err,
+                            omega_up_err=arg_periastron_up_err))
+    else:
+        star_mass_low = star_mass if star_mass_low_err is None else star_mass - star_mass_low_err
+        star_mass_up = star_mass if star_mass_up_err is None else star_mass + star_mass_up_err
+        star_mass_bins = args.star_mass_bins
         user_properties = yaml.load(open(args.properties), yaml.SafeLoader)
         user_planet_params = []
         for planet in user_properties["BODIES"]:
@@ -101,8 +136,8 @@ if __name__ == '__main__':
             star_mass_bins = args.star_mass_bins if "M_BINS" not in user_properties["STAR"] \
                                                     or args.star_mass_bins is not None \
                                                  else user_properties["STAR"]["M_BINS"]
-    stability_calculator = MegnoStabilityCalculator() if len(planets_params) < 3 or args.use_megno \
-        else SpockStabilityCalculator()
+    stability_calculator = SpockStabilityCalculator() if len(planets_params) >= 3 or args.use_spock \
+                           else MegnoStabilityCalculator() #TODO add check of periods ratio less than 2 for spock
     logger.info("%.0f planets to be simulated. %s will be used", len(planets_params),
                 type(stability_calculator).__name__)
     logger.info("Lowest star mass: %.2f", star_mass_low)
@@ -111,4 +146,3 @@ if __name__ == '__main__':
     for key, body in enumerate(planets_params):
         logger.info("Body %.0f: %s", key, json.dumps(body.__dict__))
     stability_calculator.run(stability_dir, star_mass_low, star_mass_up, star_mass_bins, planets_params, args.cpus)
-
