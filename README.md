@@ -36,6 +36,9 @@ Active: <i>[F.J. Pozuelos](https://github.com/franpoz),
 ## Additional contributors 
 <i>A. Thuillier</i> & <i>[L. García](https://github.com/LionelGarcia) </i> & <i>[Luis Cerdeño Mota](https://github.com/LuisCerdenoMota)</i>
 
+## Documentation
+Please visit [https://sherlockpipe.readthedocs.io](https://sherlockpipe.readthedocs.io) to get a complete set of explanations and tutorials to get started with <b>SHERLOCK</b>.
+
 ## Launch
 You can run SHERLOCK PIPEline as a standalone package by using:
 
