@@ -25,8 +25,8 @@ author = 'Francisco J. Pozuelos & Martín Dévora-Pajares'
 release = '0.26.0'
 extensions = [
     "sphinx_rtd_theme",
-    "sphinxcontrib.mermaid",
-    "nbsphinx"
+    "nbsphinx",
+    "sphinxcontrib.mermaid"
 ]
 
 # Add any paths that contain templates here, relative to this directory.

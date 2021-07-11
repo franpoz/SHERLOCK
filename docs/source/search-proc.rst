@@ -35,39 +35,43 @@ SHERLOCK needs to identify the type of source[s] that the user has selected in o
 flow to finally provide standard information for the target star and the photometric measurements in time series format.
 The easiest way to depict the process is by following the next diagram:
 
-.. mermaid::
+..
+   .. mermaid::
 
-   flowchart TB
-       A[Prepare data] --> B{Check mode}
-           B --> C[Long cadence target]
-           B --> D[Short cadence target]
-           B --> E[File target]
-           C --> F{Mission}
+      flowchart TB
+          A[Prepare data] --> B{Check mode}
+              B --> C[Long cadence target]
+              B --> D[Short cadence target]
+              B --> E[File target]
+              C --> F{Mission}
 
-           D --> Short_builder[Build Lightcurve]
-           Lightkurve[/Lightcurve\] -.-> Short_builder
-           Short_builder --> StarInfo[Get Star Params]
+              D --> Short_builder[Build Lightcurve]
+              Lightkurve[/Lightcurve\] -.-> Short_builder
+              Short_builder --> StarInfo[Get Star Params]
 
-           F --> TESS_Long[Build TESS Lightcurve]
-           F --> Kepler_Long[Build Kepler Lightcurve]
-           F --> K2_Long[Build K2 Lightcurve]
-           ELEANOR[/ELEANOR Postcard/TessCut\] -.-> TESS_Long
-           LightKurve[/Kepler TargetPixelFile\] -.-> Kepler_Long
-           LightKurve[/Kepler TargetPixelFile\] -.-> K2_Long
-           TESS_Long --> StarInfo[Get Star Params]
-           TESS_Long --> StarInfo
-           Kepler_Long --> StarInfo
-           K2_Long --> StarInfo
+              F --> TESS_Long[Build TESS Lightcurve]
+              F --> Kepler_Long[Build Kepler Lightcurve]
+              F --> K2_Long[Build K2 Lightcurve]
+              ELEANOR[/ELEANOR Postcard/TessCut\] -.-> TESS_Long
+              LightKurve[/Kepler TargetPixelFile\] -.-> Kepler_Long
+              LightKurve[/Kepler TargetPixelFile\] -.-> K2_Long
+              TESS_Long --> StarInfo[Get Star Params]
+              TESS_Long --> StarInfo
+              Kepler_Long --> StarInfo
+              K2_Long --> StarInfo
 
-           StarInfo --> Target_lightcurve(Prepared data)
+              StarInfo --> Target_lightcurve(Prepared data)
 
-           E --> HasName{Has target name?}
-           File[/CSV File\] -.-> BuildFromFile
-           File[/CSV File\] -.-> BuildFromFile1
-           HasName -- No --> BuildFromFile[Build lightcurve]
-           HasName -- Yes --> BuildFromFile1[Build lightcurve]
-           BuildFromFile --> Target_lightcurve
-           BuildFromFile1 --> StarInfo
+              E --> HasName{Has target name?}
+              File[/CSV File\] -.-> BuildFromFile
+              File[/CSV File\] -.-> BuildFromFile1
+              HasName -- No --> BuildFromFile[Build lightcurve]
+              HasName -- Yes --> BuildFromFile1[Build lightcurve]
+              BuildFromFile --> Target_lightcurve
+              BuildFromFile1 --> StarInfo
+
+.. image:: _static/search_flow.png
+   :alt: Example Run
 
 ---------------
 Search stage
@@ -77,23 +81,27 @@ different lightcurves whose main difference is the window size of the detrending
 is, we increase the window size from the lowest possible value that would not affect a long transit until an upper value
 that can be customized by the user. To illustrate the search algorithm we provide the next figure:
 
-.. mermaid::
+..
+   .. mermaid::
 
-   flowchart TB
-       A[Detrend target lightcurve] --> B[/Detrended light curves\]
-       B --> C[Search for candidate]
-       C --> D[Compute best candidate for lightcurve]
-       D --> F{More detrends?}
-       F -- Yes --> G[Select different window size]
-       G --> C
-       F -- No --> Compute[Compute Best Signal]
-       D -.-> Signals[/Selected signals set\]
-       Signals[/Selected signals set\] -.-> Compute
-       SelectionAlgorithm[/Selection Algorithm/] -.-> Compute
-       Compute --> Good{Bad signal or max runs reached?}
-       Good -- No --> Mask[Mask selected signal]
-       Mask --> B
-       Good -- Yes --> End(No more signals)
+      flowchart TB
+          A[Detrend target lightcurve] --> B[/Detrended light curves\]
+          B --> C[Search for candidate]
+          C --> D[Compute best candidate for lightcurve]
+          D --> F{More detrends?}
+          F -- Yes --> G[Select different window size]
+          G --> C
+          F -- No --> Compute[Compute Best Signal]
+          D -.-> Signals[/Selected signals set\]
+          Signals[/Selected signals set\] -.-> Compute
+          SelectionAlgorithm[/Selection Algorithm/] -.-> Compute
+          Compute --> Good{Bad signal or max runs reached?}
+          Good -- No --> Mask[Mask selected signal]
+          Mask --> B
+          Good -- Yes --> End(No more signals)
+
+.. image:: _static/selection.png
+   :alt: Example Run
 
 The possible ``Selection Algorithms`` that the user can choose from are:
 
@@ -161,6 +169,7 @@ SHERLOCK produces several information items under a new directory for every anal
 ---------------
 Tutorials
 ---------------
+
 .. toctree::
    :maxdepth: 2
    :caption: Contents:
