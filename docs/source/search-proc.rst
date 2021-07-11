@@ -157,3 +157,14 @@ SHERLOCK produces several information items under a new directory for every anal
 
    .. image:: _static/autodetrend.png
       :alt: RMS
+
+---------------
+Tutorials
+---------------
+.. toctree::
+   :maxdepth: 2
+   :caption: Contents:
+
+   toi-178-programmatical
+
+
