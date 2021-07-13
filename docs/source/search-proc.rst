@@ -60,7 +60,7 @@ The easiest way to depict the process is by following the next diagram:
               Kepler_Long --> StarInfo
               K2_Long --> StarInfo
 
-              StarInfo --> Target_lightcurve(Prepared data)
+              StarInfo --> Target_lightcurve(Prepared lightcurve and star params)
 
               E --> HasName{Has target name?}
               File[/CSV File\] -.-> BuildFromFile
@@ -70,8 +70,25 @@ The easiest way to depict the process is by following the next diagram:
               BuildFromFile --> Target_lightcurve
               BuildFromFile1 --> StarInfo
 
+              Target_lightcurve --> SelectPeriods[Select Period Limits]
+              SearchZone[/Search Zone Selector/] -.-> SelectPeriods
+              SelectPeriods --> CleanCurve[Clean light curve]
+              CustomPreparer[/User Clean Algorithm/] -.-> CleanCurve[Clean lightcurve]
+              SGRMS[/SG Smooth and RMS clean/] -.-> CleanCurve
+              CleanCurve --> HighPeriod[Detrend high-amplitude freq]
+              HighPeriod --> ApplyMask[Apply time and transit masks]
+              ApplyMask --> PreparedData(Prepared data)
+
 .. image:: _static/search_flow.png
    :alt: Example Run
+
+In the preparation stage the user also would be able to select some pre-settings that would modify the search
+pre-conditions. One of them is the *Search Zone Selector* which will allow you to tell *SHERLOCK* to only search for candidates around the optimistic habitable zone or the
+restricted habitable zone of the star. In addition, you could give your own `SearchZone <https://github.com/franpoz/SHERLOCK/tree/master/sherlockpipe/sherlockpipe/search_zones/SearchZone.py>`_ implementation based
+on the star properties.
+
+For a complete custom *SHERLOCK* pre-processing we added the *User clean Algorithm* that you can provide with an implementation
+of the base `CurvePreparer <https://github.com/franpoz/SHERLOCK/tree/master/sherlockpipe/sherlockpipe/curve_preparer/CurvePreparer.py>`_.
 
 ---------------
 Search stage
@@ -85,8 +102,10 @@ that can be customized by the user. To illustrate the search algorithm we provid
    .. mermaid::
 
       flowchart TB
-          A[Detrend target lightcurve] --> B[/Detrended light curves\]
-          B --> C[Search for candidate]
+          A[Detrend target lightcurve] -.-> B[/Detrended light curves\]
+          A --> C[Search for candidate]
+          ModelTemplate[/Transit Template/] -.-> C
+          B -.-> C
           C --> D[Compute best candidate for lightcurve]
           D --> F{More detrends?}
           F -- Yes --> G[Select different window size]
@@ -97,17 +116,26 @@ that can be customized by the user. To illustrate the search algorithm we provid
           SelectionAlgorithm[/Selection Algorithm/] -.-> Compute
           Compute --> Good{Bad signal or max runs reached?}
           Good -- No --> Mask[Mask selected signal]
-          Mask --> B
+          Mask --> C
           Good -- Yes --> End(No more signals)
 
 .. image:: _static/selection.png
    :alt: Example Run
 
-The possible ``Selection Algorithms`` that the user can choose from are:
+We will proceed to explain some of the boxes from the diagram. The *Transit Template* one represents the selected option
+of the kind of transit shape to be searched for into the folded light curve:
+
+* **tls**: A batman-modeled transit shape.
+* **bls**: The classical Box-Least Squares model.
+* **grazing**: A grazing transit model
+* **tailed**: An approach to a tailed-object transit model like comets or disintegrating planets (this is currently included as an experimental feature).
+* **custom**: You can even implement your own transit model by extending our custom ``foldedleastsquares`` (fork from ``transitleastsquares``) `TransitTemplateGenerator <https://github.com/martindevora/tls/blob/master/transitleastsquares/template_generator/transit_template_generator.py>`_ class.
+
+The injected *Selection Algorithms* is the selection of the user of the way to decide which signal is the best one for each run:
 
 * **Basic**: SHERLOCK will select the signal with highest SNR from all the detrended lightcurves for the current run.
 * **Border correct**: SHERLOCK will perform a correction on the SNR values of the selected signals from each detrended lightcurve depending on how many of their transits take place besides empty-data measurement gaps. This was developed because the quantity of false positives is highly increased when there are events close to those gaps affecting the folded lightcurve detected signal.
-* **Quorum algorithm**: Built upon the ``Border correct`` algorithm, this one will correct the SNR of the selected signal for each detrended lightcurve also by counting the number of detrends that selected the same signal.
+* **Quorum algorithm**: Built on top of the ``Border correct`` algorithm, this one will correct the SNR of the selected signal for each detrended lightcurve also by counting the number of detrends that selected the same signal.
 * **Custom algorithm**: The user can also inject his own signal selection algorithm by implementing the `SignalSelector <https://github.com/franpoz/SHERLOCK/tree/master/sherlockpipe/scoring/SignalSelector.py>`_ class. See the `example <https://github.com/franpoz/SHERLOCK/tree/master/examples/properties/custom_algorithms.yaml>`_.
 
 ---------------
