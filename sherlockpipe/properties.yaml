@@ -46,32 +46,42 @@ EXPTIME:
 ######################################################################################################################
 ### TRANSIT ADJUST SETUP
 ######################################################################################################################
+# Maximum number of runs of SHERLOCK
 MAX_RUNS: 10
+# Minimum number of SECTORS for an execution
 MIN_SECTORS: 1
+# Maximum number of SECTORS for an execution. If the target contains more, it will be skipped.
 MAX_SECTORS: 999999
+# SNR threshold for a candidate to be accepted and finish the execution.
 SNR_MIN: 7
+# SDE threshold for a candidate to be accepted and finish the execution.
 SDE_MIN: 5
-FAP_MAX: 0.1
+# Number of processes to be spawned by SHERLOCK search.
 CPU_CORES: 7
 # Search zone can be 'hz' or 'ohz' for habitable and optimistic habitable zones. This will override period_min and
 # period_max values
 SEARCH_ZONE:
 # User defined python class extending SHERLOCK SearchZone abstract class. An absolute path to the file must be provided.
 CUSTOM_SEARCH_ZONE:
+# Minimum period for the search period grid
 PERIOD_MIN: 0.5
+# Maximum period for the search period grid
 PERIOD_MAX: 33
+# The period to be used to calculate the transit duration used as limit to define the lowest detrend window size.
 PERIOD_PROTECT: 10
+# The binning to be applied to RMS calculations
 BIN_MINUTES: 10
 # Found transits can be masked or can be reduced to 1. Thus 'mask' and 'subtract' methods are provided. 'subtract' is
 # discouraged as it is partially implemented and hasn't been tested properly.
 MASK_MODE: 'mask'
-# Three modes are available: basic (best SNR), border-correct (best SNR*border_score) and quorum (agreement based
-# on every valid signal best fit). Careful, quorum is already awaiting for testing so it is not advised.
+# Three modes are available: basic (best SNR), border-correct (best SNR*border_score) and quorum (border-corrected
+# agreement-based on every valid signal best fit).
 BEST_SIGNAL_ALGORITHM: 'border-correct'
-# If BEST_SIGNAL_ALGORITHM is set to 'quorum', this value is used as a scale factor for the quorum voting.
+# If BEST_SIGNAL_ALGORITHM is set to 'quorum', this value is used as a scale factor for the quorum votes.
 QUORUM_STRENGTH: 1
 # If QUORUM is used as BEST_SIGNAL_ALGORITHM, this variable is used to decide when SHERLOCK should be stopped because of
-# lack of persistence in the found signals of the last executed run.
+# lack of persistence in the found signals of the last executed run (maximum of agreed votes over the entire number of
+# signals)
 MIN_QUORUM: 0
 # User defined python class extending SHERLOCK SignalSelector abstract class. An absolute path to the file must be
 # provided.
@@ -79,12 +89,12 @@ CUSTOM_SELECTION_ALGORITHM:
 # User defined template to be used to perform the least squares algorithm. If provided, it will replace the FIT_METHOD
 # selection.
 CUSTOM_TRANSIT_TEMPLATE:
-# Selection of fit method ("tls", "bls", "grazing")
+# Selection of fit method ("tls", "bls", "grazing", "tailed")
 FIT_METHOD: "tls"
 # Selection of T0 fit percent over the diration (admitted range from 0.01 to 0.1). Default is None so the oversampling
 # is calculated from the entire time lapse taken by the light curve.
 OVERSAMPLING: 3
-# Selection of T0 fit percent over the diration (admitted range from 0.01 to 0.1)
+# Selection of T0 fit percent over the duration (admitted range from 0.01 to 0.1)
 T0_FIT_MARGIN: 0.05
 # Selection of duration grid step (admitted range from 1.01 to 1.1)
 DURATION_GRID_STEP: 1.1
@@ -104,74 +114,29 @@ STAR:
 #    LUM: 1.25
 #    LOGG: 0.15
 #    LD_COEFFICIENTS: [0.25, 0.64]
+
 ######################################################################################################################
 ### INITIAL MASK
 ######################################################################################################################
-# The initial mask of time ranges to be applied to short cadence light curves with mission id.
-# TESS/Kepler/K2 ids array. E.g: {"TIC 181804752": [[1546.25, 1550.5], [1561, 1563]]}
-# 36724087 181804752 243185500 318022259 54962195
+# The initial mask of time ranges to be applied. E.g: [[1546.25, 1550.5], [1561, 1563]]
+INITIAL_MASK:
+
+# The initial mask of known transiting candidates to be applied. E.g:
+# INITIAL_TRANSIT_MASK:
+#   - T0: 1354.5510
+#     P: 20.70573
+#     D: 136.9
+INITIAL_TRANSIT_MASK:
+
+# The aperture file to be used to create the light curve
 APERTURE:
-
-# TESS ONLY ids dictionary with mask ranges. E.g: {"TIC 181804752": [[1546.25, 1550.5]]}
-TWO_MIN_MASKS:
-# TESS ONLY ids dictionary with mask ranges. E.g: {"TIC 181804752": [[1546.25, 1550.5]]}
-FFI_IDS_MASKS:
-# A dict of RA_Dec (degrees) keys with mask ranges. E.g: {"15.0_24.2": [[1546.25, 1550.5]]}
-FFI_COORDINATES_MASKS:
-# A dict of file names (degrees) keys with mask ranges. E.g: {"model1.csv": [[1546.25, 1550.5]]}
-INPUT_FILES_MASKS:
-# The initial mask of time ranges to be applied to input light curves with mission id.
-# TESS/Kepler/K2 ids array. E.g: {"TIC 181804752": [[1546.25, 1550.5]]}
-INPUT_FILES_WITH_IDS_MASKS:
-
-# TESS ONLY ids dictionary with transit ephemeris to be masked. E.g:
-# TIC 251848941:
-#   - T0: 1354.5510
-#     P: 20.70573
-#     D: 136.9
-TWO_MIN_TRANSIT_MASKS:
-# TESS ONLY ids dictionary with transit ephemeris to be masked. E.g:
-# TIC 251848941:
-#   - T0: 1354.5510
-#     P: 20.70573
-#     D: 136.9
-FFI_IDS_TRANSIT_MASKS:
-# A dict of RA_Dec (degrees) keys with mask ranges. . E.g:
-## "yourRA_yourDec":
-##   - T0: 1354.5510
-##     P: 20.70573
-##     D: 136.9
-FFI_COORDINATES_TRANSIT_MASKS:
-# A dict of file names (degrees) keys with mask ranges. E.g:
-## "model1.csv":
-##   - T0: 1354.5510
-##     P: 20.70573
-##     D: 136.9
-INPUT_FILES_TRANSIT_MASKS:
-# The initial mask of time ranges to be applied to input light curves with mission id.
-# TESS/Kepler/K2 ids array. E.g:
-### TIC 251848941:
-###   - T0: 1354.5510
-###     P: 20.70573
-###     D: 136.9
-INPUT_FILES_WITH_IDS_TRANSIT_MASKS:
 
 ######################################################################################################################
 ### INITIAL DETREND PERIOD - If any value of this section overlaps any auto-detrend setup, auto-detrend will be
 # disabled for the overlapping objects.
 ######################################################################################################################
-# The detrend period to be used as an initial detrend to the PDCSAP_FLUX short cadence light curves with mission id.
-# TESS/Kepler/K2 ids array. E.g: {"TIC 181804752": 0.19}
-TWO_MIN_INITIAL_DETREND_PERIOD:
-# TESS ONLY ids dictionary with initial detrend periods. E.g: {"TIC 181804752": 0.19}
-FFI_IDS_INITIAL_DETREND_PERIOD:
-# A dict of RA_Dec (degrees) keys with initial detrend periods. E.g: {"15.0_24.2": 0.19}
-FFI_COORDINATES_INITIAL_DETREND_PERIOD:
-# A dict of file names (degrees) keys with initial detrend periods. E.g: {"model1.csv": 0.19}
-INPUT_FILES_INITIAL_DETREND_PERIOD:
-# The initial detrend period to be applied to input light curves with mission id.
-# TESS/Kepler/K2 ids array. E.g: {"TIC 181804752": 0.19}
-INPUT_FILES_WITH_IDS_INITIAL_DETREND_PERIOD:
+# The detrend period to be used as an initial detrend to the PDCSAP_FLUX light curves
+INITIAL_DETREND_PERIOD:
 
 # Flag to signal SHERLOCK for updating the TOIs, KOIs and EPICs
 UPDATE_OIS: False
