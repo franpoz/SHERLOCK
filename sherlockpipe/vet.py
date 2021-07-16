@@ -1,10 +1,8 @@
 # from __future__ import print_function, absolute_import, division
-import copy
 import logging
 import multiprocessing
 import shutil
 import types
-from multiprocessing import Pool
 from pathlib import Path
 import traceback
 import lightkurve
@@ -13,9 +11,6 @@ import matplotlib
 import matplotlib.pyplot as plt
 import matplotlib.gridspec as gridspec
 import yaml
-from astropy.time import Time
-from lcbuilder.lcbuilder_class import LcBuilder
-from lightkurve import TessLightCurve
 from matplotlib.colorbar import Colorbar
 from matplotlib import patches
 from astropy.visualization.mpl_normalize import ImageNormalize
@@ -23,11 +18,7 @@ from astropy.table import Table
 from astropy.io import ascii
 import astropy.visualization as stretching
 from argparse import ArgumentParser
-import astropy.units as u
-from lcbuilder.eleanor import TargetData
-from sherlockpipe import constants as const
 from sherlockpipe import tpfplotter
-from lcbuilder import eleanor
 import six
 import sys
 import sherlockpipe.LATTE
@@ -42,18 +33,9 @@ import ast
 import csv
 from sherlockpipe.LATTE import LATTEutils, LATTEbrew
 from os import path
-import triceratops.triceratops as tr
-from matplotlib import cm, ticker
-from math import floor, ceil
-from triceratops.likelihoods import (simulate_TP_transit, simulate_EB_transit)
-from triceratops.funcs import (Gauss2D, query_TRILEGAL, renorm_flux, stellar_relations)
-from astropy import constants
-import uuid
-from sherlockpipe.eleanor import maxsector
+from math import ceil
 
-'''WATSON: Verboseless Vetting and Adjustments of Transits for Sherlock Objects of iNterest
-This class intends to provide a inspection and transit fitting tool for SHERLOCK Candidates.
-'''
+
 # get the system path
 syspath = str(os.path.abspath(LATTEutils.__file__))[0:-14]
 # ---------
