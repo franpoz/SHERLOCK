@@ -51,10 +51,9 @@ class StabilityCalculator(ABC):
                 raise ValueError("There is one body without either radius or mass information: " +
                                  json.dumps(planet_param.__dict__))
             if planet_param.radius is not None:
-                guessed_mass = StabilityCalculator.mass_from_radius(planet_param.radius)
-                guessed_mass_low = guessed_mass - 0.2 if guessed_mass - 0.2 > 0 else guessed_mass
-                planet_param.mass_low = planet_param.mass_low if planet_param.mass_low is not None else guessed_mass_low
-                planet_param.mass_up = planet_param.mass_up if planet_param.mass_up is not None else guessed_mass + 0.2
+                planet_params.mass = StabilityCalculator.mass_from_radius(planet_param.radius)
+                planet_param.mass_low_err = (planet_params.mass - StabilityCalculator.mass_from_radius(planet_param.radius - planet_param.radius_low_err)) * 2
+                planet_param.mass_up_err = (StabilityCalculator.mass_from_radius(planet_param.radius + planet_param.radius_up_err) - planet_params.mass) * 2
         return planet_params
 
     def init_rebound_simulation(self, simulation_input):
@@ -71,7 +70,9 @@ class StabilityCalculator(ABC):
         for planet_key, mass in enumerate(simulation_input.mass_arr):
             period = simulation_input.planet_periods[planet_key]
             ecc = simulation_input.ecc_arr[planet_key]
-            sim.add(m=mass * self.EARTH_TO_SUN_MASS / simulation_input.star_mass, P=period, e=ecc, omega=0)
+            inc = np.deg2rad(simulation_input.inc_arr[planet_key])
+            omega = np.deg2rad(simulation_input.omega_arr[planet_key])
+            sim.add(m=mass * self.EARTH_TO_SUN_MASS / simulation_input.star_mass, P=period, e=ecc, omega=omega, inc=inc)
         # sim.status()
         sim.move_to_com()
         return sim
@@ -90,34 +91,61 @@ class StabilityCalculator(ABC):
         planet_params = StabilityCalculator.prepare_planet_params(planet_params)
         star_masses = StabilityCalculator.prepare_star_masses(star_mass_low, star_mass_up, star_mass_bins)
         planet_masses = []
-        planet_periods = []
+        planet_period = []
         planet_ecc = []
+        planet_inc = []
+        planet_omega = []
         for planet_param in planet_params:
-            if planet_param.mass_bins == 1:
-                mass_grid = np.full(1, (planet_param.mass_low + planet_param.mass_up) / 2)
-            elif planet_param.mass_low == planet_param.mass_up:
-                mass_grid = np.full(1, planet_param.mass_low)
+            if planet_param.period_bins == 1 or planet_param.period_low_err == planet_param.period_up_err == 0:
+                period_grid = np.full(1, planet_param.period)
             else:
-                mass_grid = np.linspace(planet_param.mass_low, planet_param.mass_up, planet_param.mass_bins)
+                period_grid = np.linspace(planet_param.period - planet_param.period_low_err,
+                                        planet_param.period + planet_param.period_up_err,
+                                        planet_param.period_bins)
+            planet_period.append(period_grid)
+            if planet_param.mass_bins == 1 or planet_param.mass_low_err == planet_param.mass_up_err == 0:
+                mass_grid = np.full(1, planet_param.mass)
+            else:
+                mass_grid = np.linspace(planet_param.mass - planet_param.mass_low_err,
+                                        planet_param.mass + planet_param.mass_up_err,
+                                        planet_param.mass_bins)
             planet_masses.append(mass_grid)
-            if planet_param.ecc_bins == 1:
-                ecc_grid = np.full(1, (planet_param.eccentricity_low + planet_param.eccentricity_up) / 2)
-            elif planet_param.eccentricity_low == planet_param.eccentricity_up:
-                ecc_grid = np.full(1, planet_param.eccentricity_low)
+            if planet_param.ecc_bins == 1 or planet_param.eccentricity_low_err == planet_param.eccentricity_up_err == 0:
+                ecc_grid = np.full(1, planet_param.eccentricity)
             else:
-                ecc_grid = np.linspace(planet_param.eccentricity_low, planet_param.eccentricity_up,
-                                        planet_param.ecc_bins)
+                ecc_grid = np.linspace(planet_param.eccentricity - planet_param.ecc_low_err,
+                                       planet_param.eccentricity + planet_param.ecc_up_err,
+                                       planet_param.ecc_bins)
             planet_ecc.append(ecc_grid)
-            planet_periods.append(planet_param.period)
+            if planet_param.inc_bins == 1 or planet_param.inc_low_err == planet_param.inc_up_err == 0:
+                inc_grid = np.full(1, planet_param.inclination)
+            else:
+                inc_grid = np.linspace(planet_param.inclination - planet_param.inc_low_err,
+                                       planet_param.inclination + planet_param.inc_up_err,
+                                       planet_param.inc_bins)
+            planet_inc.append(inc_grid)
+            if planet_param.omega_bins == 1 or planet_param.omega_low_err == planet_param.omega_up_err == 0:
+                omega_grid = np.full(1, planet_param.omega)
+            else:
+                omega_grid = np.linspace(planet_param.omega - planet_param.omega_low_err,
+                                         planet_param.omega + planet_param.omega_up_err,
+                                         planet_param.omega_bins)
+            planet_omega.append(omega_grid)
+        period_grid = np.array(np.meshgrid(*np.array(planet_period))).T.reshape(-1, len(planet_period))
         masses_grid = np.array(np.meshgrid(*np.array(planet_masses))).T.reshape(-1, len(planet_masses))
         ecc_grid = np.array(np.meshgrid(*np.array(planet_ecc))).T.reshape(-1, len(planet_ecc))
+        inc_grid = np.array(np.meshgrid(*np.array(planet_inc))).T.reshape(-1, len(planet_inc))
+        omega_grid = np.array(np.meshgrid(*np.array(planet_omega))).T.reshape(-1, len(planet_omega))
         simulation_inputs = []
         i = 0
         for star_mass in star_masses:
-            for mass_key, mass_arr in enumerate(masses_grid):
-                for ecc_key, ecc_arr in enumerate(ecc_grid):
-                    simulation_inputs.append(SimulationInput(star_mass, mass_arr, planet_periods, ecc_arr, i))
-                    i = i + 1
+            for period_key, period_arr in enumerate(period_grid):
+                for mass_key, mass_arr in enumerate(masses_grid):
+                    for inc_key, inc_arr in enumerate(inc_grid):
+                        for ecc_key, ecc_arr in enumerate(ecc_grid):
+                            for omega_key, omega_arr in enumerate(omega_grid):
+                                simulation_inputs.append(SimulationInput(star_mass, mass_arr, period_arr, ecc_arr, inc_arr, omega_arr, i))
+                                i = i + 1
         logging.info("%.0f star mass scenarios.", len(star_masses))
         logging.info("%.0f bodies mass scenarios.", len(masses_grid))
         logging.info("%.0f eccentricity scenarios.", len(ecc_grid))
@@ -154,11 +182,13 @@ class SimulationInput:
     """
     Used as input for the simulations done for each scenario
     """
-    def __init__(self, star_mass, mass_arr, planet_periods, ecc_arr, index):
+    def __init__(self, star_mass, mass_arr, planet_periods, ecc_arr, inc_arr, omega_arr, index):
         self.star_mass = star_mass
         self.mass_arr = mass_arr
         self.planet_periods = planet_periods
         self.ecc_arr = ecc_arr
+        self.inc_arr = inc_arr
+        self.omega_arr = omega_arr
         self.index = index
 
 class NumpyEncoder(json.JSONEncoder):
