@@ -5,18 +5,39 @@
 # 1: A planet with a period of 15 days and a lowest mass of 2R_earth and highest mass of 2.4R_earth. The
 # eccentricity lowest value is 0 and the highest is 0.1.
 STAR:
-  M_LOW: 1.0
-  M_UP: 1.3
+  M: 1.1
+  M_LOW: 0.1
+  M_UP: 0.2
   M_BINS: 2
 BODIES:
   - P: 15
-    M_LOW: 1.5
-    M_UP: 1.5
+    P_LOW: 0.05
+    P_UP: 0.05
+    M: 1.5
+    M_LOW: 0.0
+    M_UP: 0.0
+    E: 0.05
     E_LOW: 0
     E_UP: 0.1
     E_BINS: 2
+    I: 89
+    I_LOW: 1
+    I_UP: 1
+    O: 0
+    O_LOW: 10
+    O_UP: 10
   - P: 10
-    M_LOW: 2
-    M_UP: 2.4
-    E_LOW: 0
-    E_UP: 0.1
+    P_LOW: 0.04
+    P_UP: 0.04
+    M: 2.2
+    M_LOW: 0.2
+    M_UP: 0.2
+    E: 0.05
+    E_LOW: 0.05
+    E_UP: 0.05
+    I: 89
+    I_LOW: 1
+    I_UP: 1
+    O: 0
+    O_LOW: 10
+    O_UP: 10

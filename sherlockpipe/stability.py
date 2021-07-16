@@ -69,6 +69,9 @@ if __name__ == '__main__':
     star_mass = star_df.iloc[0]["M_star"]
     star_mass_low_err = star_df.iloc[0]["M_star_lerr"]
     star_mass_up_err = star_df.iloc[0]["M_star_uerr"]
+    star_mass_low = star_mass if star_mass_low_err is None else star_mass - star_mass_low_err
+    star_mass_up = star_mass if star_mass_up_err is None else star_mass + star_mass_up_err
+    star_mass_bins = args.star_mass_bins
     candidates = pd.read_csv(object_dir + "/../candidates.csv")
     planets_params = []
     if args.properties is None:
@@ -113,26 +116,38 @@ if __name__ == '__main__':
                             omega=arg_periastron, omega_low_err=arg_periastron_low_err,
                             omega_up_err=arg_periastron_up_err))
     else:
-        star_mass_low = star_mass if star_mass_low_err is None else star_mass - star_mass_low_err
-        star_mass_up = star_mass if star_mass_up_err is None else star_mass + star_mass_up_err
-        star_mass_bins = args.star_mass_bins
         user_properties = yaml.load(open(args.properties), yaml.SafeLoader)
         user_planet_params = []
         for planet in user_properties["BODIES"]:
             ecc_bins = args.ecc_bins if "E_BINS" not in planet or args.ecc_bins is not None else planet["E_BINS"]
             mass_bins = args.mass_bins if "M_BINS" not in planet or args.mass_bins is not None else planet["M_BINS"]
+            inc_bins = args.inc_bins if "I_BINS" not in planet or args.mass_bins is not None else planet["I_BINS"]
+            om_bins = args.omega_bins if "O_BINS" not in planet or args.mass_bins is not None else planet["O_BINS"]
             user_planet_params.append(PlanetInput(period=get_from_user(planet, "P"),
+                                                  period_low_err=get_from_user(planet, "P_LOW"),
+                                                  period_up_err=get_from_user(planet, "P_UP"),
                                                   radius=get_from_user(planet, "R"),
-                                                  mass_low=get_from_user(planet, "M_LOW"),
-                                                  mass_max=get_from_user(planet, "M_UP"),
-                                                  eccentricity_low=get_from_user(planet, "E_LOW"),
-                                                  eccentricity_up=get_from_user(planet, "E_UP"),
-                                                  mass_bins=mass_bins,
-                                                  ecc_bins=ecc_bins))
+                                                  radius_low_err=get_from_user(planet, "R_LOW"),
+                                                  radius_up_err=get_from_user(planet, "R_UP"),
+                                                  mass=get_from_user(planet, "M"),
+                                                  mass_low_err=get_from_user(planet, "M_LOW"),
+                                                  mass_up_err=get_from_user(planet, "M_UP"),
+                                                  eccentricity=get_from_user(planet, "E_LOW"),
+                                                  ecc_low_err=get_from_user(planet, "E_LOW"),
+                                                  ecc_up_err=get_from_user(planet, "E_UP"),
+                                                  inclination=get_from_user(planet, "I"),
+                                                  inc_low_err=get_from_user(planet, "I_LOW"),
+                                                  inc_up_err=get_from_user(planet, "I_UP"),
+                                                  omega=get_from_user(planet, "O"),
+                                                  omega_low_err=get_from_user(planet, "O_LOW"),
+                                                  omega_up_err=get_from_user(planet, "O_UP"),
+                                                  mass_bins=mass_bins, ecc_bins=ecc_bins, inc_bins=inc_bins,
+                                                  omega_bins=om_bins))
         planets_params = planets_params + user_planet_params
         if "STAR" in user_properties:
-            star_mass_low = star_mass_low if "M_LOW" not in user_properties["STAR"] else user_properties["STAR"]["M_LOW"]
-            star_mass_up = star_mass_up if "M_UP" not in user_properties["STAR"] else user_properties["STAR"]["M_UP"]
+            star_mass = star_mass_low if "M_LOW" not in user_properties["STAR"] else user_properties["STAR"]["M_LOW"]
+            star_mass_low = star_mass_low if "M_LOW" not in user_properties["STAR"] else star_mass - user_properties["STAR"]["M_LOW"]
+            star_mass_up = star_mass_up if "M_UP" not in user_properties["STAR"] else star_mass + user_properties["STAR"]["M_UP"]
             star_mass_bins = args.star_mass_bins if "M_BINS" not in user_properties["STAR"] \
                                                     or args.star_mass_bins is not None \
                                                  else user_properties["STAR"]["M_BINS"]
