@@ -62,6 +62,7 @@ class Fitter:
             text = f.read()
             text = re.sub('\\${sherlock:cores}', str(cpus), text)
             text = re.sub('\\${sherlock:fit_width}', str(fit_width), text)
+            text = re.sub('\\${sherlock:fit_ttvs}', "False", text)
             text = re.sub('\\${sherlock:names}', ' '.join(candidate_df["name"].astype('str')), text)
             if self.detrend == 'hybrid_spline':
                 detrend_param = "baseline_flux_lc,hybrid_spline"
