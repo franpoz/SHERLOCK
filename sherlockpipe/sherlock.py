@@ -684,10 +684,10 @@ class Sherlock:
             axs[0].set_title(str(sherlock_target.high_rms_bin_hours) + " hours binned RMS")
             axs[1].set_title("Total and masked high RMS flux")
             fig.suptitle(str(star_info.object_id) + " High RMS Mask")
-            axs[0].set_xlabel('Time')
+            axs[0].set_xlabel('Time (d)')
             axs[0].set_ylabel('Flux RMS')
-            axs[1].set_xlabel('Time')
-            axs[1].set_ylabel('Flux')
+            axs[1].set_xlabel('Time (d)')
+            axs[1].set_ylabel('Flux norm.')
             dif = time[1:] - time[:-1]
             jumps = np.where(dif > 3)[0]
             jumps = np.append(jumps, len(clean_time))
@@ -717,7 +717,7 @@ class Sherlock:
                 previous_jump_index = jumpIndex
             axs[0].plot(entire_bin_centers, entire_bin_stds, color='black', alpha=0.75, rasterized=True, label="RMS")
             axs[0].plot(entire_bin_centers, entire_rms_threshold_array, color='red', rasterized=True, label='Mask Threshold')
-            axs[1].scatter(clean_time, before_flux, color='gray', alpha=0.5, rasterized=True, label="Flux")
+            axs[1].scatter(clean_time, before_flux, color='gray', alpha=0.5, rasterized=True, label="Flux norm.")
             axs[1].scatter(clean_time[entire_high_rms_mask], before_flux[entire_high_rms_mask], linewidth=1, color='red',
                            alpha=1.0,
                            label="High RMS")
@@ -840,11 +840,12 @@ class Sherlock:
             if sherlock_target.detrend_method == 'gp':
                 plot_axs.set_title('ks=%s' % str(np.around(flatten_wl, decimals=4)))
             else:
-                plot_axs.set_title('ws=%s' % str(np.around(flatten_wl, decimals=4)))
+                plot_axs.set_title('ws=%s d' % str(np.around(flatten_wl, decimals=4)))
             plot_axs.plot(time, lc, linewidth=0.05, color='black', alpha=0.75, rasterized=True)
             plot_axs.plot(time, lc_trend, linewidth=1, color='orange', alpha=1.0)
+            plot_axs.set_ylabel("Flux norm.")
+            plot_axs.set_xlabel("Time (d)")
             i = i + 1
-
         plot_dir = self.__init_object_dir(star_info.object_id)
         plt.savefig(plot_dir + 'Detrends_' + str(star_info.object_id) + '.png', dpi=200)
         fig.clf()
