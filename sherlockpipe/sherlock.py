@@ -680,14 +680,6 @@ class Sherlock:
             logging.info('Masking high RMS areas by a factor of %.2f with %.1f hours binning',
                          sherlock_target.high_rms_threshold, sherlock_target.high_rms_bin_hours)
             bins_per_day = 24 / sherlock_target.high_rms_bin_hours
-            fig, axs = plt.subplots(2, 1, figsize=(8, 8), constrained_layout=True)
-            axs[0].set_title(str(sherlock_target.high_rms_bin_hours) + " hours binned RMS")
-            axs[1].set_title("Total and masked high RMS flux")
-            fig.suptitle(str(star_info.object_id) + " High RMS Mask")
-            axs[0].set_xlabel('Time (d)')
-            axs[0].set_ylabel('Flux RMS')
-            axs[1].set_xlabel('Time (d)')
-            axs[1].set_ylabel('Flux norm.')
             dif = time[1:] - time[:-1]
             jumps = np.where(dif > 3)[0]
             jumps = np.append(jumps, len(clean_time))
@@ -715,17 +707,13 @@ class Sherlock:
                 entire_bin_stds = np.append(entire_bin_stds, bin_stds)
                 entire_rms_threshold_array = np.append(entire_rms_threshold_array, rms_threshold_array)
                 previous_jump_index = jumpIndex
-            axs[0].plot(entire_bin_centers, entire_bin_stds, color='black', alpha=0.75, rasterized=True, label="RMS")
-            axs[0].plot(entire_bin_centers, entire_rms_threshold_array, color='red', rasterized=True, label='Mask Threshold')
-            axs[1].scatter(clean_time, before_flux, color='gray', alpha=0.5, rasterized=True, label="Flux norm.")
-            axs[1].scatter(clean_time[entire_high_rms_mask], before_flux[entire_high_rms_mask], linewidth=1, color='red',
-                           alpha=1.0,
-                           label="High RMS")
-            axs[0].legend(loc="upper right")
-            axs[1].legend(loc="upper right")
-            plot_dir = self.__init_object_dir(star_info.object_id)
-            fig.savefig(plot_dir + 'High_RMS_Mask_' + str(star_info.object_id) + '.png')
-            fig.clf()
+                self.__plot_rms_mask(star_info.object_id, sherlock_target.high_rms_bin_hours, bin_centers,
+                                     bin_stds, rms_threshold_array, high_std_mask, time_partial, flux_partial,
+                                     'High_RMS_Mask_' + str(star_info.object_id) + '_time_' +
+                                     str(time_partial[1]) + '_' + str(time_partial[-1]))
+            self.__plot_rms_mask(star_info.object_id, sherlock_target.high_rms_bin_hours, entire_bin_centers,
+                                 entire_bin_stds, entire_rms_threshold_array, entire_high_rms_mask, clean_time,
+                                 clean_flux, 'High_RMS_Mask_' + str(star_info.object_id))
         if is_short_cadence and sherlock_target.smooth_enabled:
             #logging.info('Applying Smooth phase (savgol + weighted average)')
             logging.info('Applying Smooth phase (savgol)')
@@ -738,6 +726,31 @@ class Sherlock:
             #clean_flux = uniform_filter1d(clean_flux, 11)
             #clean_flux = self.flatten_bw(self.FlattenInput(clean_time, clean_flux, 0.02))[0]
         return clean_time, clean_flux, clean_flux_err
+
+    def __plot_rms_mask(self, object_id, rms_bin_hours, bin_centers, bin_stds, rms_threshold_array, rms_mask,
+                        time, flux, filename):
+        plot_dir = self.__init_object_dir(object_id) + "/rms_mask/"
+        if not os.path.exists(plot_dir):
+            os.mkdir(plot_dir)
+        fig, axs = plt.subplots(2, 1, figsize=(8, 8), constrained_layout=True)
+        axs[0].set_title(str(rms_bin_hours) + " hours binned RMS")
+        axs[1].set_title("Total and masked high RMS flux")
+        fig.suptitle(str(object_id) + " High RMS Mask")
+        axs[0].set_xlabel('Time (d)')
+        axs[0].set_ylabel('Flux RMS')
+        axs[1].set_xlabel('Time (d)')
+        axs[1].set_ylabel('Flux norm.')
+        axs[0].plot(bin_centers, bin_stds, color='black', alpha=0.75, rasterized=True, label="RMS")
+        axs[0].plot(bin_centers, rms_threshold_array, color='red', rasterized=True,
+                    label='Mask Threshold')
+        axs[1].scatter(time[1:], flux[1:], color='gray', alpha=0.5, rasterized=True, label="Flux norm.")
+        axs[1].scatter(time[rms_mask][1:], flux[rms_mask][1:], linewidth=1, color='red',
+                       alpha=1.0,
+                       label="High RMS")
+        axs[0].legend(loc="upper right")
+        axs[1].legend(loc="upper right")
+        fig.savefig(plot_dir + filename + '.png')
+        fig.clf()
 
     def smooth(self, flux, window_len=11, window='blackman'):
         clean_flux = savgol_filter(flux, window_len, 3)
@@ -805,14 +818,6 @@ class Sherlock:
         wl_step = (wl_max - wl_min) / sherlock_target.detrends_number
         wl = np.arange(wl_min, wl_max, wl_step)  # we define all the posibles window_length that we apply
         final_lcs = np.zeros((len(wl), len(lc)))
-        ## save in a plot all the detrendings and all the data to inspect visually.
-        figsize = (8, 8)  # x,y
-        rows = self.detrend_plot_axis[sherlock_target.detrends_number - 1][0]
-        cols = self.detrend_plot_axis[sherlock_target.detrends_number - 1][1]
-        shift = 2 * (1.0 - (np.min(lc)))  # shift in the between the raw and detrended data
-        fig, axs = plt.subplots(rows, cols, figsize=figsize, constrained_layout=True)
-        if sherlock_target.detrends_number > 1:
-            axs = self.__trim_axs(axs, len(wl))
         flatten_inputs = []
         flattener = Flattener()
         if sherlock_target.detrend_cores > 1:
@@ -830,27 +835,62 @@ class Sherlock:
                 else:
                     flatten_results.append(flattener.flatten_bw(FlattenInput(time, lc, wl[i], sherlock_target.bin_minutes)))
         i = 0
-        plot_axs = axs
+        # Plot entire curve detrends
         for flatten_lc_detrended, lc_trend, bin_centers, bin_means, flatten_wl in flatten_results:
-            if sherlock_target.detrends_number > 1:
-                plot_axs = axs[i]
             final_lcs[i] = flatten_lc_detrended
-            logging.info("%-25s%-17s%-15.4f%-11.2f%-15.2f", 'flatten_lc & trend_lc ' + str(i), sherlock_target.detrend_method,
+            logging.info("%-25s%-17s%-15.4f%-11.2f%-15.2f", 'flatten_lc & trend_lc ' + str(i),
+                         sherlock_target.detrend_method,
                          flatten_wl, np.std(flatten_lc_detrended) * 1e6, np.std(bin_means[~np.isnan(bin_means)]) * 1e6)
-            if sherlock_target.detrend_method == 'gp':
+            self.__plot_detrends(star_info.object_id, sherlock_target.detrends_number,
+                                 sherlock_target.detrend_method, wl, time, lc, flatten_results, 0, len(time) - 1,
+                                 'Detrends_' + str(star_info.object_id) + '.png')
+            i = i + 1
+        # Plot tokenized curve detrends
+        dif = time[1:] - time[:-1]
+        jumps = np.where(dif > 3)[0]
+        jumps = np.append(jumps, len(time))
+        previous_jump_index = 0
+        for jumpIndex in jumps:
+            self.__plot_detrends(star_info.object_id, sherlock_target.detrends_number, sherlock_target.detrend_method,
+                                 wl, time, lc, flatten_results, previous_jump_index, jumpIndex)
+            previous_jump_index = jumpIndex
+        return final_lcs, wl
+
+    def __plot_detrends(self, object_id, detrends_number, detrend_method, window_lengths, time, original_lc,
+                        flatten_results, low_index, high_index, filename=None):
+        plot_dir = self.__init_object_dir(object_id) + "/detrends/"
+        if not os.path.exists(plot_dir):
+            os.mkdir(plot_dir)
+        figsize = (8, 8)  # x,y
+        rows = self.detrend_plot_axis[detrends_number - 1][0]
+        cols = self.detrend_plot_axis[detrends_number - 1][1]
+        shift = 2 * (1.0 - (np.min(original_lc)))  # shift in the between the raw and detrended data
+        fig, axs = plt.subplots(rows, cols, figsize=figsize, constrained_layout=True)
+        if detrends_number > 1:
+            axs = self.__trim_axs(axs, len(window_lengths))
+        plot_axs = axs
+        i = 0
+        time_partial = time[low_index:high_index]
+        original_lc_partial = original_lc[low_index:high_index]
+        for flatten_lc_detrended, lc_trend, bin_centers, bin_means, flatten_wl in flatten_results:
+            lc_trend_partial = lc_trend[low_index:high_index]
+            if detrends_number > 1:
+                plot_axs = axs[i]
+            if detrend_method == 'gp':
                 plot_axs.set_title('ks=%s' % str(np.around(flatten_wl, decimals=4)))
             else:
                 plot_axs.set_title('ws=%s d' % str(np.around(flatten_wl, decimals=4)))
-            plot_axs.plot(time, lc, linewidth=0.05, color='black', alpha=0.75, rasterized=True)
-            plot_axs.plot(time, lc_trend, linewidth=1, color='orange', alpha=1.0)
+            plot_axs.plot(time_partial[1:], original_lc_partial[1:], linewidth=0.05, color='black', alpha=0.75,
+                          rasterized=True)
+            plot_axs.plot(time_partial[1:], lc_trend_partial[1:], linewidth=1, color='orange', alpha=1.0)
             plot_axs.set_ylabel("Flux norm.")
             plot_axs.set_xlabel("Time (d)")
             i = i + 1
-        plot_dir = self.__init_object_dir(star_info.object_id)
-        plt.savefig(plot_dir + 'Detrends_' + str(star_info.object_id) + '.png', dpi=200)
+        filename = filename if filename is not None else 'Detrends_' + str(object_id) + '_time_' + \
+                                                         str(time_partial[1]) + '_' + str(time_partial[-1]) + '.png'
+        plt.savefig(plot_dir + filename, dpi=200)
         fig.clf()
         plt.close(fig)
-        return final_lcs, wl
 
     def __identify_signals(self, sherlock_target, time, lcs, flux_err, star_info, transits_min_count, wl, id_run,
                            cadence, report, period_grid):
