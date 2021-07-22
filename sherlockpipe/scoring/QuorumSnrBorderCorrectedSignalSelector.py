@@ -1,3 +1,5 @@
+import math
+
 import numpy as np
 
 from sherlockpipe.scoring.BasicSignalSelector import BasicSignalSelector
@@ -34,8 +36,7 @@ class QuorumSnrBorderCorrectedSignalSelector(BasicSignalSelector):
             while j < len(index_snr_period_t0_array):
                 compared_period = index_snr_period_t0_array[j][2]
                 compared_t0 = index_snr_period_t0_array[j][3]
-                if abs(period - compared_period) < 0.025 and abs(t0 - compared_t0) < 0.04:
-                    votes[j] = i
+                votes[j] = i if self.is_harmonic(t0, compared_t0, period, compared_period) else votes[j]
                 j = j + 1
             i = i + 1
         votes_counts = [votes.count(vote) for vote in votes]
@@ -62,6 +63,37 @@ class QuorumSnrBorderCorrectedSignalSelector(BasicSignalSelector):
                                                     transit_results[basic_signal_selection.curve_index],
                                                     best_signal_snr_index, best_signal,
                                                     votes_counts[best_signal_snr_index])
+
+    def is_harmonic(self, a_t0, b_t0, a_period, b_period):
+        multiplicity = self.multiple_of(a_period, b_period, 0.025)
+        return multiplicity != 0 and self.matches_t0(a_t0, b_t0, a_period, multiplicity, 0.04)
+
+    def multiple_of(self, a, b, tolerance=0.05):
+        a = np.float(a)
+        b = np.float(b)
+        mod_ab = a % b
+        mod_ba = b % a
+        is_a_multiple_of_b = a >= b and a < b * 3 + tolerance * 3 and (
+            (mod_ab < 1 and abs(mod_ab % 1) <= tolerance) or ((b - mod_ab) < 1 and abs((b - mod_ab) % 1) <= tolerance))
+        if is_a_multiple_of_b:
+            return round(a / b)
+        is_b_multiple_of_a = b >= a and a > b / 3 - tolerance / 3 and (
+            (mod_ba < 1 and abs(mod_ba % 1) <= tolerance) or ((a - mod_ba) < 1 and abs((a - mod_ba) % 1) <= tolerance))
+        if is_b_multiple_of_a:
+            return - round(b / a)
+        return 0
+
+    def matches_t0(self, a_t0, b_t0, a_period, multiplicity, tolerance=0.02):
+        if multiplicity == 1:
+            return abs(b_t0 - a_t0) < tolerance
+        elif multiplicity < 0:
+            allowed_t0s_centers = np.linspace(a_t0 - a_period * (-multiplicity), a_t0 + a_period * (-multiplicity), -2 * multiplicity + 1)
+        elif multiplicity > 0:
+            allowed_t0s_centers = np.linspace(a_t0 - a_period, a_t0 + a_period, 2 * multiplicity + 1)
+        else:
+            return False
+        matching_t0s = [abs(b_t0 - allowed_t0_center) <= tolerance for allowed_t0_center in allowed_t0s_centers]
+        return True in matching_t0s
 
 class CorrectedQuorumBorderSignalSelection(CorrectedBorderSignalSelection):
     def __init__(self, score, corrected_snr, original_curve_index, original_transit_result, final_curve_index,
