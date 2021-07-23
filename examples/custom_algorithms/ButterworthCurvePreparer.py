@@ -1,7 +1,7 @@
 from scipy import signal
 from scipy.signal import savgol_filter
 
-from sherlockpipe.curve_preparer.CurvePreparer import CurvePreparer
+from lcbuilder.curve_preparer.CurvePreparer import CurvePreparer
 import numpy as np
 
 

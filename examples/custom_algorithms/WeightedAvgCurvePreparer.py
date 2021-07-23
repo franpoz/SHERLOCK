@@ -1,6 +1,6 @@
 import pylab
 
-from sherlockpipe.curve_preparer.CurvePreparer import CurvePreparer
+from lcbuilder.curve_preparer.CurvePreparer import CurvePreparer
 import numpy as np
 
 
