@@ -17,8 +17,8 @@ from lcbuilder.lcbuilder_class import LcBuilder
 from scipy.ndimage import uniform_filter1d
 from lcbuilder.star.starinfo import StarInfo
 from astropy import units as u
-from sherlockpipe.curve_preparer.Flattener import Flattener
-from sherlockpipe.curve_preparer.Flattener import FlattenInput
+from lcbuilder.curve_preparer.Flattener import Flattener
+from lcbuilder.curve_preparer.Flattener import FlattenInput
 from lcbuilder.objectinfo.MissionObjectInfo import MissionObjectInfo
 from lcbuilder.objectinfo.MissionFfiIdObjectInfo import MissionFfiIdObjectInfo
 from lcbuilder.objectinfo.MissionFfiCoordsObjectInfo import MissionFfiCoordsObjectInfo
@@ -208,7 +208,10 @@ class Sherlock:
         sherlock_id = sherlock_target.object_info.sherlock_id()
         mission_id = sherlock_target.object_info.mission_id()
         try:
-            time, flux, flux_err, star_info, transits_min_count, cadence, sectors = self.__prepare(sherlock_target)
+            lc, star_info, transits_min_count, cadence, sectors = self.__prepare(sherlock_target)
+            time = lc.time.value
+            flux = lc.flux.value
+            flux_err = lc.time.value
             period_grid = self.__calculate_period_grid(time, sherlock_target, star_info, transits_min_count)
             id_run = 1
             best_signal_score = 1
@@ -374,98 +377,11 @@ class Sherlock:
         handler.setFormatter(formatter)
         logger.addHandler(handler)
 
-    def __complete_star_info(self, input_star_info, catalogue_star_info):
-        if catalogue_star_info is None:
-            catalogue_star_info = StarInfo()
-        result_star_info = catalogue_star_info
-        if input_star_info is None:
-            input_star_info = StarInfo()
-        if input_star_info.radius is not None:
-            result_star_info.radius = input_star_info.radius
-            result_star_info.radius_assumed = False
-        if input_star_info.radius_min is not None:
-            result_star_info.radius_min = input_star_info.radius_min
-        if input_star_info.radius_max is not None:
-            result_star_info.radius_max = input_star_info.radius_max
-        if input_star_info.mass is not None:
-            result_star_info.mass = input_star_info.mass
-            result_star_info.mass_assumed = False
-        if input_star_info.mass_min is not None:
-            result_star_info.mass_min = input_star_info.mass_min
-        if input_star_info.mass_max is not None:
-            result_star_info.mass_max = input_star_info.mass_max
-        if input_star_info.ra is not None:
-            result_star_info.ra = input_star_info.ra
-        if input_star_info.dec is not None:
-            result_star_info.dec = input_star_info.dec
-        if input_star_info.teff is not None:
-            result_star_info.teff = input_star_info.teff
-        if input_star_info.lum is not None:
-            result_star_info.lum = input_star_info.lum
-        if input_star_info.logg is not None:
-            result_star_info.logg = input_star_info.logg
-        if input_star_info.ld_coefficients is not None:
-            result_star_info.ld_coefficients = input_star_info.ld_coefficients
-        return result_star_info
-
     def __prepare(self, sherlock_target):
         object_info = sherlock_target.object_info
         sherlock_id = object_info.sherlock_id()
         object_dir = self.__setup_object_logging(sherlock_id)
         logging.info('ID: %s', sherlock_id)
-        lc, lc_data, star_info, transits_min_count, sectors, quarters = LcBuilder().build(object_info, object_dir)
-        star_info = self.__complete_star_info(object_info.star_info, star_info)
-        if star_info is not None:
-            logging.info('================================================')
-            logging.info('STELLAR PROPERTIES FOR THE SIGNAL SEARCH')
-            logging.info('================================================')
-            logging.info("Star catalog info downloaded.")
-            if star_info.mass is None or np.isnan(star_info.mass):
-                logging.info("Star catalog doesn't provide mass. Assuming M=0.1Msun")
-                star_info.assume_model_mass()
-            if star_info.radius is None or np.isnan(star_info.radius):
-                logging.info("Star catalog doesn't provide radius. Assuming R=0.1Rsun")
-                star_info.assume_model_radius()
-            if star_info.mass_min is None or np.isnan(star_info.mass_min):
-                star_info.mass_min = star_info.mass - (0.5 if star_info.mass > 0.5 else star_info.mass / 2)
-                logging.info("Star catalog doesn't provide M_low_err. Assuming M_low_err=%.3fMsun", star_info.mass_min)
-            if star_info.mass_max is None or np.isnan(star_info.mass_max):
-                star_info.mass_max = star_info.mass + 0.5
-                logging.info("Star catalog doesn't provide M_up_err. Assuming M_low_err=%.3fMsun", star_info.mass_max)
-            if star_info.radius_min is None or np.isnan(star_info.radius_min):
-                star_info.radius_min = star_info.radius - (0.5 if star_info.radius > 0.5 else star_info.radius / 2)
-                logging.info("Star catalog doesn't provide R_low_err. Assuming R_low_err=%.3fRsun", star_info.radius_min)
-            if star_info.radius_max is None or np.isnan(star_info.radius_max):
-                star_info.radius_max = star_info.radius + 0.5
-                logging.info("Star catalog doesn't provide R_up_err. Assuming R_up_err=%.3fRsun", star_info.radius_max)
-            logging.info('limb-darkening estimates using quadratic LD (a,b)= %s', star_info.ld_coefficients)
-            logging.info('mass = %.6f', star_info.mass)
-            logging.info('mass_min = %.6f', star_info.mass_min)
-            logging.info('mass_max = %.6f', star_info.mass_max)
-            logging.info('radius = %.6f', star_info.radius)
-            logging.info('radius_min = %.6f', star_info.radius_min)
-            logging.info('radius_max = %.6f', star_info.radius_max)
-            logging.info('teff = %.6f', star_info.teff)
-            logging.info('lum = %.6f', star_info.lum)
-            logging.info('logg = %.6f', star_info.logg)
-        star_df = pandas.DataFrame(columns=['obj_id', 'ra', 'dec', 'R_star', 'R_star_lerr', 'R_star_uerr', 'M_star',
-                                            'M_star_lerr', 'M_star_uerr', 'Teff_star', 'Teff_star_lerr',
-                                            'Teff_star_uerr', 'ld_a', 'ld_b'])
-        star_df = star_df.append({'obj_id': object_info.mission_id(), 'ra': star_info.ra, 'dec': star_info.dec, 'R_star': star_info.radius,
-                                  'R_star_lerr': star_info.radius - star_info.radius_min,
-                        'R_star_uerr': star_info.radius_max - star_info.radius,
-                        'M_star': star_info.mass, 'M_star_lerr': star_info.mass - star_info.mass_min,
-                        'M_star_uerr': star_info.mass_max - star_info.mass,
-                        'Teff_star': star_info.teff, 'Teff_star_lerr': 200, 'Teff_star_uerr': 200,
-                                  'logg': star_info.logg, 'logg_err': star_info.logg_err,
-                                  'ld_a': star_info.ld_coefficients[0], 'ld_b': star_info.ld_coefficients[1],
-                                  'feh': star_info.feh,
-                                  'feh_err': star_info.feh_err, 'j': star_info.j, 'j_err': star_info.j_err,
-                                  'k': star_info.k, 'k_err': star_info.k_err,
-                                  'h': star_info.h, 'h_err': star_info.h_err,
-                                  'kp': star_info.kp},
-                       ignore_index=True)
-        star_df.to_csv(object_dir + "params_star.csv", index=False)
         logging.info('================================================')
         logging.info('USER DEFINITIONS')
         logging.info('================================================')
@@ -474,26 +390,7 @@ class Sherlock:
         else:
             logging.info('Detrend method: Bi-Weight')
         logging.info('No of detrend models applied: %s', sherlock_target.detrends_number)
-        logging.info('Minimum number of transits: %s', transits_min_count)
         logging.info('Period planet protected: %.1f', sherlock_target.period_protect)
-        lightcurve_timespan = lc.time[len(lc.time) - 1] - lc.time[0]
-        if sherlock_target.search_zone is not None and not (star_info.mass_assumed or star_info.radius_assumed):
-            logging.info("Selected search zone: %s. Minimum and maximum periods will be calculated.", sherlock_target.search_zone)
-            min_and_max_period = sherlock_target.search_zones_resolvers[sherlock_target.search_zone].calculate_period_range(star_info)
-            if min_and_max_period is None:
-                logging.info("Selected search zone was %s but cannot be calculated. Defaulting to minimum and " +
-                             "maximum input periods", sherlock_target.search_zone)
-            else:
-                logging.info("Selected search zone periods are [%.2f, %.2f] days", min_and_max_period[0], min_and_max_period[1])
-                if min_and_max_period[0] > lightcurve_timespan or min_and_max_period[1] > lightcurve_timespan:
-                    logging.info("Selected search zone period values are greater than lightcurve dataset. " +
-                                 "Defaulting to minimum and maximum input periods.")
-                else:
-                    sherlock_target.period_min = min_and_max_period[0]
-                    sherlock_target.period_max = min_and_max_period[1]
-        elif sherlock_target.search_zone is not None:
-            logging.info("Selected search zone was %s but star catalog info was not found or wasn't complete. " +
-                         "Defaulting to minimum and maximum input periods.", sherlock_target.search_zone)
         logging.info('Minimum Period (d): %.1f', sherlock_target.period_min)
         logging.info('Maximum Period (d): %.1f', sherlock_target.period_max)
         logging.info('Binning size (min): %.1f', sherlock_target.bin_minutes)
@@ -507,7 +404,7 @@ class Sherlock:
             logging.info('Transit Mask: no')
         logging.info('Threshold limit for SNR: %.1f', sherlock_target.snr_min)
         logging.info('Threshold limit for SDE: %.1f', sherlock_target.sde_min)
-        logging.info('Sigma threshold for outliers clipping: %.1f', sherlock_target.outliers_sigma)
+        logging.info('Sigma threshold for outliers clipping: %.1f', object_info.outliers_sigma)
         logging.info("Fit method: %s", sherlock_target.fit_method)
         if sherlock_target.oversampling is not None:
             logging.info('Oversampling: %.3f', sherlock_target.oversampling)
@@ -519,30 +416,41 @@ class Sherlock:
         if sherlock_target.best_signal_algorithm == self.VALID_SIGNAL_SELECTORS[2]:
             logging.info('Quorum algorithm vote strength: %.2f',
                          sherlock_target.signal_score_selectors[self.VALID_SIGNAL_SELECTORS[2]].strength)
+        lc, lc_data, star_info, transits_min_count, cadence, detrend_period, sectors = \
+            LcBuilder().build(object_info, object_dir)
+        logging.info('Minimum number of transits: %s', transits_min_count)
+        lightcurve_timespan = lc.time[len(lc.time) - 1] - lc.time[0]
+        if sherlock_target.search_zone is not None and not (star_info.mass_assumed or star_info.radius_assumed):
+            logging.info("Selected search zone: %s. Minimum and maximum periods will be calculated.",
+                         sherlock_target.search_zone)
+            min_and_max_period = sherlock_target.search_zones_resolvers[
+                sherlock_target.search_zone].calculate_period_range(star_info)
+            if min_and_max_period is None:
+                logging.info("Selected search zone was %s but cannot be calculated. Defaulting to minimum and " +
+                             "maximum input periods", sherlock_target.search_zone)
+            else:
+                logging.info("Selected search zone periods are [%.2f, %.2f] days", min_and_max_period[0],
+                             min_and_max_period[1])
+                if min_and_max_period[0] > lightcurve_timespan or min_and_max_period[1] > lightcurve_timespan:
+                    logging.info("Selected search zone period values are greater than lightcurve dataset. " +
+                                 "Defaulting to minimum and maximum input periods.")
+                else:
+                    sherlock_target.period_min = min_and_max_period[0]
+                    sherlock_target.period_max = min_and_max_period[1]
+        elif sherlock_target.search_zone is not None:
+            logging.info("Selected search zone was %s but star catalog info was not found or wasn't complete. " +
+                         "Defaulting to minimum and maximum input periods.", sherlock_target.search_zone)
         if sectors is not None:
             sectors_count = len(sectors)
             logging.info('================================================')
-            logging.info('SECTORS INFO')
+            logging.info('SECTORS/QUARTERS/CAMPAIGNS INFO')
             logging.info('================================================')
-            logging.info('Sectors : %s', sectors)
-            logging.info('No of sectors available: %s', len(sectors))
+            logging.info('Sectors/Quarters/Campaigns : %s', sectors)
             if sectors_count < sherlock_target.min_sectors or sectors_count > sherlock_target.max_sectors:
                 raise InvalidNumberOfSectorsError("The object " + sherlock_id + " contains " + str(sectors_count) +
-                                                  " sectors and the min and max selected are [" +
-                                                  str(sherlock_target.min_sectors) + ", " + str(sherlock_target.max_sectors) + "].")
-        if quarters is not None:
-            sectors_count = len(quarters)
-            logging.info('================================================')
-            logging.info('QUARTERS INFO')
-            logging.info('================================================')
-            logging.info('Quarters : %s', quarters)
-            if sectors_count < sherlock_target.min_sectors or sectors_count > sherlock_target.max_sectors:
-                raise InvalidNumberOfSectorsError("The object " + sherlock_id + " contains " + str(sectors_count) +
-                                                  " quarters and the min and max selected are [" +
-                                                  str(sherlock_target.min_sectors) + ", " + str(sherlock_target.max_sectors) + "].")
-        flux = lc.flux
-        flux_err = lc.flux_err
-        time = lc.time
+                                                  " sectors/quarters/campaigns and the min and max selected are [" +
+                                                  str(sherlock_target.min_sectors) + ", " + str(
+                    sherlock_target.max_sectors) + "].")
         logging.info('================================================')
         logging.info("Detrend Window length / Kernel size")
         logging.info('================================================')
@@ -567,229 +475,10 @@ class Sherlock:
         logging.info("wl/ks_min: %.2f", self.wl_min[sherlock_id])
         logging.info("wl/ks_max: %.2f", self.wl_max[sherlock_id])
         logging.info('================================================')
-        time_float = lc.time.value
-        flux_float = lc.flux.value
-        flux_err_float = lc.flux_err.value
-        lc = lk.LightCurve(time=time_float, flux=flux_float, flux_err=flux_err_float)
-        lc_df = pandas.DataFrame(columns=['#time', 'flux', 'flux_err'])
-        lc_df['#time'] = time_float
-        lc_df['flux'] = flux_float
-        lc_df['flux_err'] = flux_err_float
-        lc_df.to_csv(object_dir + "lc.csv", index=False)
-        lc = lc.remove_outliers(sigma_lower=float('inf'), sigma_upper=sherlock_target.outliers_sigma)
-        time_float = lc.time.value
-        flux_float = lc.flux.value
-        flux_err_float = lc.flux_err.value
-        cadence_array = np.diff(time_float) * 24 * 60
-        cadence_array = cadence_array[~np.isnan(cadence_array)]
-        cadence_array = cadence_array[cadence_array > 0]
-        cadence = np.nanmedian(cadence_array)
-        clean_time, flatten_flux, clean_flux_err = self.__clean_initial_flux(sherlock_target, time_float, flux_float,
-                                                                             flux_err_float, star_info, cadence)
-        lc = lk.LightCurve(time=clean_time, flux=flatten_flux, flux_err=clean_flux_err)
-        self.rotator_period = None
-        periodogram = lc.to_periodogram(minimum_period=0.05, maximum_period=15, oversample_factor=10)
-        # power_norm = self.running_median(periodogram.power.value, 20)
-        periodogram.plot(view='period', scale='log')
-        plt.title(str(sherlock_id) + " Lightcurve periodogram")
-        plt.savefig(object_dir + "Periodogram_" + str(sherlock_id) + ".png", bbox_inches='tight')
-        plt.clf()
-        # power_mod = periodogram.power.value - power_norm
-        # power_mod = power_mod / np.mean(power_mod)
-        # periodogram.power = power_mod * u.d / u.d
-        # periodogram.plot(view='period', scale='log')
-        # plt.title(str(sherlock_id) + " Lightcurve normalized periodogram")
-        # plt.savefig(object_dir + "PeriodogramNorm_" + str(sherlock_id) + ".png", bbox_inches='tight')
-        # plt.clf()
-        if object_info.initial_detrend_period is not None:
-            self.rotator_period = object_info.initial_detrend_period
-        elif sherlock_target.auto_detrend_enabled:
-            self.rotator_period = self.__calculate_max_significant_period(lc, periodogram)
-        if self.rotator_period is not None:
-            logging.info('================================================')
-            logging.info('AUTO-DETREND EXECUTION')
-            logging.info('================================================')
-            logging.info("Period = %.3f", self.rotator_period)
-            lc.fold(self.rotator_period).scatter()
-            plt.title("Phase-folded period: " + format(self.rotator_period, ".2f") + " days")
-            plt.savefig(object_dir + "Phase_detrend_period_" + str(sherlock_id) + "_" + format(self.rotator_period, ".2f") + "_days.png", bbox_inches='tight')
-            plt.clf()
-            flatten_flux, lc_trend = self.__detrend_by_period(sherlock_target.auto_detrend_method, clean_time,
-                                                              flatten_flux,
-                                                              self.rotator_period * sherlock_target.auto_detrend_ratio)
-            if not sherlock_target.period_min:
-                sherlock_target.period_min = self.rotator_period * 4
-                logging.info("Setting Min Period to %.3f", sherlock_target.period_min)
-        if object_info.initial_mask is not None:
-            logging.info('================================================')
-            logging.info('INITIAL MASKING')
-            logging.info('================================================')
-            initial_mask = object_info.initial_mask
-            logging.info('** Applying ordered masks to the lightcurve **')
-            for mask_range in initial_mask:
-                logging.info('* Initial mask since day %.0f to day %.0f. *', mask_range[0], mask_range[1])
-                mask = [(clean_time < mask_range[0] if not math.isnan(mask_range[1]) else False) |
-                        (clean_time > mask_range[1] if not math.isnan(mask_range[1]) else False)]
-                clean_time = clean_time[mask]
-                flatten_flux = flatten_flux[mask]
-        if object_info.initial_transit_mask is not None:
-            logging.info('================================================')
-            logging.info('INITIAL TRANSIT MASKING')
-            logging.info('================================================')
-            initial_transit_mask = object_info.initial_transit_mask
-            logging.info('** Applying ordered transit masks to the lightcurve **')
-            for transit_mask in initial_transit_mask:
-                logging.info('* Transit mask with P=%.2f d, T0=%.2f d, Dur=%.2f min *', transit_mask["P"],
-                             transit_mask["T0"], transit_mask["D"])
-                mask = tls.transit_mask(clean_time, transit_mask["P"], transit_mask["D"] / 60 / 24, transit_mask["T0"])
-                clean_time = clean_time[~mask]
-                flatten_flux = flatten_flux[~mask]
-                clean_flux_err = clean_flux_err[~mask]
-        return clean_time, flatten_flux, clean_flux_err, star_info, transits_min_count, cadence, \
-               sectors if sectors is not None else quarters
-
-    def running_median(self, data, kernel):
-        """Returns sliding median of width 'kernel' and same length as data """
-        idx = np.arange(kernel) + np.arange(len(data) - kernel + 1)[:, None]
-        med = np.percentile(data[idx], 90, axis=1)
-
-        # Append the first/last value at the beginning/end to match the length of
-        # data and returned median
-        first_values = med[0]
-        last_values = med[-1]
-        missing_values = len(data) - len(med)
-        values_front = int(missing_values * 0.5)
-        values_end = missing_values - values_front
-        med = np.append(np.full(values_front, first_values), med)
-        med = np.append(med, np.full(values_end, last_values))
-        return med
-
-    def __clean_initial_flux(self, sherlock_target, time, flux, flux_err, star_info, cadence):
-        clean_time = time
-        clean_flux = flux
-        clean_flux_err = flux_err
-        object_info = sherlock_target.object_info
-        is_short_cadence = round(cadence) <= 5
-        if sherlock_target.prepare_algorithm is not None:
-            clean_time, clean_flux, clean_flux_err = sherlock_target.prepare_algorithm.prepare(object_info, clean_time, clean_flux, clean_flux_err)
-        if (is_short_cadence and sherlock_target.smooth_enabled) or (sherlock_target.high_rms_enabled and object_info.initial_mask is None):
-            logging.info('================================================')
-            logging.info('INITIAL FLUX CLEANING')
-            logging.info('================================================')
-        if sherlock_target.high_rms_enabled and object_info.initial_mask is None:
-            logging.info('Masking high RMS areas by a factor of %.2f with %.1f hours binning',
-                         sherlock_target.high_rms_threshold, sherlock_target.high_rms_bin_hours)
-            bins_per_day = 24 / sherlock_target.high_rms_bin_hours
-            dif = time[1:] - time[:-1]
-            jumps = np.where(dif > 3)[0]
-            jumps = np.append(jumps, len(clean_time))
-            before_flux = clean_flux
-            previous_jump_index = 0
-            entire_high_rms_mask = np.array([], dtype=bool)
-            entire_bin_centers = np.array([])
-            entire_bin_stds = np.array([])
-            entire_rms_threshold_array = np.array([])
-            for jumpIndex in jumps:
-                time_partial = clean_time[previous_jump_index:jumpIndex]
-                flux_partial = clean_flux[previous_jump_index:jumpIndex]
-                before_flux_partial = before_flux[previous_jump_index:jumpIndex]
-                bins = (time_partial[len(time_partial) - 1] - time_partial[0]) * bins_per_day
-                bin_stds, bin_edges, binnumber = stats.binned_statistic(time_partial, flux_partial, statistic='std', bins=bins)
-                stds_median = np.nanmedian(bin_stds[bin_stds > 0])
-                stds_median_array = np.full(len(bin_stds), stds_median)
-                rms_threshold_array = stds_median_array * sherlock_target.high_rms_threshold
-                too_high_bin_stds_indexes = np.argwhere(bin_stds > rms_threshold_array)
-                high_std_mask = np.array([bin_id - 1 in too_high_bin_stds_indexes for bin_id in binnumber])
-                entire_high_rms_mask = np.append(entire_high_rms_mask, high_std_mask)
-                bin_width = (bin_edges[1] - bin_edges[0])
-                bin_centers = bin_edges[1:] - bin_width / 2
-                entire_bin_centers = np.append(entire_bin_centers, bin_centers)
-                entire_bin_stds = np.append(entire_bin_stds, bin_stds)
-                entire_rms_threshold_array = np.append(entire_rms_threshold_array, rms_threshold_array)
-                previous_jump_index = jumpIndex
-                self.__plot_rms_mask(star_info.object_id, sherlock_target.high_rms_bin_hours, bin_centers,
-                                     bin_stds, rms_threshold_array, high_std_mask, time_partial, flux_partial,
-                                     'High_RMS_Mask_' + str(star_info.object_id) + '_time_' +
-                                     str(time_partial[1]) + '_' + str(time_partial[-1]))
-            self.__plot_rms_mask(star_info.object_id, sherlock_target.high_rms_bin_hours, entire_bin_centers,
-                                 entire_bin_stds, entire_rms_threshold_array, entire_high_rms_mask, clean_time,
-                                 clean_flux, 'High_RMS_Mask_' + str(star_info.object_id))
-        if is_short_cadence and sherlock_target.smooth_enabled:
-            #logging.info('Applying Smooth phase (savgol + weighted average)')
-            logging.info('Applying Smooth phase (savgol)')
-            clean_flux = self.smooth(clean_flux)
-            # TODO to use convolve we need to remove the borders effect
-            # clean_flux = np.convolve(clean_flux, [0.025, 0.05, 0.1, 0.155, 0.34, 0.155, 0.1, 0.05, 0.025], "same")
-            # clean_flux = np.convolve(clean_flux, [0.025, 0.05, 0.1, 0.155, 0.34, 0.155, 0.1, 0.05, 0.025], "same")
-            # clean_flux[0:5] = 1
-            # clean_flux[len(clean_flux) - 6: len(clean_flux) - 1] = 1
-            #clean_flux = uniform_filter1d(clean_flux, 11)
-            #clean_flux = self.flatten_bw(self.FlattenInput(clean_time, clean_flux, 0.02))[0]
-        return clean_time, clean_flux, clean_flux_err
-
-    def __plot_rms_mask(self, object_id, rms_bin_hours, bin_centers, bin_stds, rms_threshold_array, rms_mask,
-                        time, flux, filename):
-        plot_dir = self.__init_object_dir(object_id) + "/rms_mask/"
-        if not os.path.exists(plot_dir):
-            os.mkdir(plot_dir)
-        fig, axs = plt.subplots(2, 1, figsize=(8, 8), constrained_layout=True)
-        axs[0].set_title(str(rms_bin_hours) + " hours binned RMS")
-        axs[1].set_title("Total and masked high RMS flux")
-        fig.suptitle(str(object_id) + " High RMS Mask")
-        axs[0].set_xlabel('Time (d)')
-        axs[0].set_ylabel('Flux RMS')
-        axs[1].set_xlabel('Time (d)')
-        axs[1].set_ylabel('Flux norm.')
-        axs[0].plot(bin_centers, bin_stds, color='black', alpha=0.75, rasterized=True, label="RMS")
-        axs[0].plot(bin_centers, rms_threshold_array, color='red', rasterized=True,
-                    label='Mask Threshold')
-        axs[1].scatter(time[1:], flux[1:], color='gray', alpha=0.5, rasterized=True, label="Flux norm.")
-        axs[1].scatter(time[rms_mask][1:], flux[rms_mask][1:], linewidth=1, color='red',
-                       alpha=1.0,
-                       label="High RMS")
-        axs[0].legend(loc="upper right")
-        axs[1].legend(loc="upper right")
-        fig.savefig(plot_dir + filename + '.png')
-        fig.clf()
-
-    def smooth(self, flux, window_len=11, window='blackman'):
-        clean_flux = savgol_filter(flux, window_len, 3)
-        # if window_len < 3:
-        #     return flux
-        # if not window in ['flat', 'hanning', 'hamming', 'bartlett', 'blackman']:
-        #     raise ValueError("Window is on of 'flat', 'hanning', 'hamming', 'bartlett', 'blackman'")
-        # s = np.r_[np.ones(window_len//2), clean_flux, np.ones(window_len//2)]
-        # # print(len(s))
-        # if window == 'flat':  # moving average
-        #     w = np.ones(window_len, 'd')
-        # else:
-        #     w = eval('np.' + window + '(window_len)')
-        # # TODO probably problematic with big gaps in the middle of the curve
-        # clean_flux = np.convolve(w / w.sum(), s, mode='valid')
-        return clean_flux
-
-    def __calculate_max_significant_period(self, lc, periodogram):
-        #max_accepted_period = (lc.time[len(lc.time) - 1] - lc.time[0]) / 4
-        max_accepted_period = np.float64(10)
-        # TODO related to https://github.com/franpoz/SHERLOCK/issues/29 check whether this fits better
-        max_power_index = np.argmax(periodogram.power)
-        period = periodogram.period[max_power_index]
-        if max_power_index > 0.0008:
-            period = period.value
-            logging.info("Auto-Detrend found the strong period: " + str(period) + ".")
-        else:
-            logging.info("Auto-Detrend did not find relevant periods.")
-            period = None
-        return period
-
-    def __detrend_by_period(self, method, time, flux, period_window):
-        if method == 'gp':
-            flatten_lc, lc_trend = flatten(time, flux, method=method, kernel='matern',
-                                   kernel_size=period_window, return_trend=True, break_tolerance=0.5)
-        else:
-            flatten_lc, lc_trend = flatten(time, flux, window_length=period_window, return_trend=True,
-                                           method=method, break_tolerance=0.5)
-        return flatten_lc, lc_trend
+        if not sherlock_target.period_min:
+            sherlock_target.period_min = detrend_period * 4
+            logging.info("Setting Min Period to %.3f due to auto_detrend period", sherlock_target.period_min)
+        return lc, star_info, transits_min_count, cadence, sectors
 
     def __analyse(self, sherlock_target, time, lcs, flux_err, star_info, id_run, transits_min_count, cadence, report,
                   wl, period_grid):

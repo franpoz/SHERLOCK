@@ -88,7 +88,7 @@ restricted habitable zone of the star. In addition, you could give your own `Sea
 on the star properties.
 
 For a complete custom *SHERLOCK* pre-processing we added the *User clean Algorithm* that you can provide with an implementation
-of the base `CurvePreparer <https://github.com/franpoz/SHERLOCK/tree/master/sherlockpipe/sherlockpipe/curve_preparer/CurvePreparer.py>`_.
+of the base `CurvePreparer <https://github.com/PlanetHunters/lcbuilder/tree/master/lcbuilder/lcbuilder/curve_preparer/CurvePreparer.py>`_.
 
 ---------------
 Search stage
