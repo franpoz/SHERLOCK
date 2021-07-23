@@ -62,6 +62,7 @@ def get_aperture(properties, id):
 
 def extract_sectors(object_info):
     mission, mission_prefix, id_int = LcBuilder().parse_object_info(object_info.mission_id())
+    object_sectors = None
     if mission == "Kepler":
         lcf_search_results = lightkurve.search_targetpixelfile(object_info.mission_id(), mission=object_info.mission_id(),
                                                            cadence="long")
@@ -191,14 +192,13 @@ if __name__ == '__main__':
             mission = None
             mode = get_from_user_or_config_or_default(target_configs, sherlock_user_properties, "MODE", "GLOBAL")
             built_object_info = lcbuilder.build_object_info(target, author, sectors, file, exptime,
-                                                            initial_mask, initial_transit_mask, auto_detrend_period,
-                                                            star_info, aperture)
-            sherlock_target = SherlockTarget(built_object_info, high_rms_enabled, high_rms_threshold,
-                           high_rms_bin_hours, smooth_enabled,
-                           auto_detrend_enabled, auto_detrend_method, auto_detrend_ratio,
-                           auto_detrend_period,
+                                                            initial_mask, initial_transit_mask,
+                                                            star_info, aperture, eleanor_corr_flux, outliers_sigma,
+                                                            high_rms_enabled, high_rms_threshold, high_rms_bin_hours,
+                                                            smooth_enabled, auto_detrend_enabled, auto_detrend_method,
+                                                            auto_detrend_ratio, auto_detrend_period, prepare_algorithm)
+            sherlock_target = SherlockTarget(built_object_info,
                            detrend_method, detrend_l_min, detrend_l_max, detrends_number, detrend_cores,
-                           prepare_algorithm,
                            custom_selection_algorithm,
                            custom_transit_template,
                            search_zone, custom_search_zone,
@@ -209,7 +209,7 @@ if __name__ == '__main__':
                            cpu_cores, max_runs, period_min,
                            period_max, period_protect, best_signal_algorithm, quorum_strength,
                            min_quorum, fit_method, oversampling,
-                           t0_fit_margin, duration_grid_step, outliers_sigma)
+                           t0_fit_margin, duration_grid_step)
             if mode == "GLOBAL" or mode == "BOTH":
                 sherlock_targets.append(sherlock_target)
             if mode == "SECTOR" or mode == "BOTH" and isinstance(built_object_info, (
@@ -218,14 +218,13 @@ if __name__ == '__main__':
                     sectors = extract_sectors(built_object_info)
                 for sector in sectors:
                     object_info = lcbuilder.build_object_info(target, author, [sector], file, exptime,
-                                                            initial_mask, initial_transit_mask, auto_detrend_period,
-                                                            star_info, aperture, eleanor_corr_flux)
-                    sherlock_target = SherlockTarget(object_info, high_rms_enabled, high_rms_threshold,
-                                   high_rms_bin_hours, smooth_enabled,
-                                   auto_detrend_enabled, auto_detrend_method, auto_detrend_ratio,
-                                   auto_detrend_period,
+                                                            initial_mask, initial_transit_mask,
+                                                            star_info, aperture, eleanor_corr_flux, outliers_sigma,
+                                                            high_rms_enabled, high_rms_threshold, high_rms_bin_hours,
+                                                            smooth_enabled, auto_detrend_enabled, auto_detrend_method,
+                                                            auto_detrend_ratio, auto_detrend_period, prepare_algorithm)
+                    sherlock_target = SherlockTarget(object_info,
                                    detrend_method, detrend_l_min, detrend_l_max, detrends_number, detrend_cores,
-                                   prepare_algorithm,
                                    custom_selection_algorithm,
                                    custom_transit_template,
                                    search_zone, custom_search_zone,
@@ -236,7 +235,7 @@ if __name__ == '__main__':
                                    cpu_cores, max_runs, period_min,
                                    period_max, period_protect, best_signal_algorithm, quorum_strength,
                                    min_quorum, fit_method, oversampling,
-                                   t0_fit_margin, duration_grid_step, outliers_sigma)
+                                   t0_fit_margin, duration_grid_step)
                     sherlock_targets.append(sherlock_target)
             if mode != "GLOBAL" and mode != "BOTH" and not (mode == "SECTOR" or mode == "BOTH" and isinstance(built_object_info, (
                     MissionObjectInfo, MissionFfiCoordsObjectInfo, MissionFfiIdObjectInfo))):
