@@ -208,7 +208,7 @@ class Sherlock:
         sherlock_id = sherlock_target.object_info.sherlock_id()
         mission_id = sherlock_target.object_info.mission_id()
         try:
-            lc, star_info, transits_min_count, cadence, sectors = self.__prepare(sherlock_target)
+            lc, star_info, transits_min_count, cadence, sectors, detrend_source_period = self.__prepare(sherlock_target)
             time = lc.time.value
             flux = lc.flux.value
             flux_err = lc.time.value
@@ -229,7 +229,7 @@ class Sherlock:
                 logging.info("________________________________ run %s________________________________", id_run)
                 transit_results, signal_selection = \
                     self.__analyse(sherlock_target, time, lcs, flux_err, star_info, id_run, transits_min_count, cadence,
-                                   self.report[sherlock_id], wl, period_grid)
+                                   self.report[sherlock_id], wl, period_grid, detrend_source_period)
                 best_signal_score = signal_selection.score
                 object_report["Object Id"] = mission_id
                 object_report["run"] = id_run
@@ -478,15 +478,15 @@ class Sherlock:
         if not sherlock_target.period_min:
             sherlock_target.period_min = detrend_period * 4
             logging.info("Setting Min Period to %.3f due to auto_detrend period", sherlock_target.period_min)
-        return lc, star_info, transits_min_count, cadence, sectors
+        return lc, star_info, transits_min_count, cadence, sectors, detrend_period
 
     def __analyse(self, sherlock_target, time, lcs, flux_err, star_info, id_run, transits_min_count, cadence, report,
-                  wl, period_grid):
+                  wl, period_grid, detrend_source_period):
         logging.info('=================================')
         logging.info('SEARCH OF SIGNALS - Run %s', id_run)
         logging.info('=================================')
         transit_results = self.__identify_signals(sherlock_target, time, lcs, flux_err, star_info, transits_min_count,
-                                                  wl, id_run, cadence, report, period_grid)
+                                                  wl, id_run, cadence, report, period_grid, detrend_source_period)
         signal_selection = sherlock_target.signal_score_selectors[sherlock_target.best_signal_algorithm]\
             .select(transit_results, sherlock_target.snr_min, sherlock_target.detrend_method, wl)
         logging.info(signal_selection.get_message())
@@ -582,7 +582,7 @@ class Sherlock:
         plt.close(fig)
 
     def __identify_signals(self, sherlock_target, time, lcs, flux_err, star_info, transits_min_count, wl, id_run,
-                           cadence, report, period_grid):
+                           cadence, report, period_grid, detrend_source_period):
         object_info = sherlock_target.object_info
         detrend_logging_customs = 'ker_size' if sherlock_target.detrend_method == 'gp' else "win_size"
         logging.info("%-12s%-12s%-10s%-8s%-18s%-14s%-14s%-12s%-12s%-14s%-16s%-14s%-12s%-25s%-10s%-18s%-20s",
@@ -598,7 +598,7 @@ class Sherlock:
         lc_df['flux_err'] = flux_err[args]
         lc_df.to_csv(run_dir + "/lc_0.csv", index=False)
         transit_result = self.__adjust_transit(sherlock_target, time, lcs[0], star_info, transits_min_count,
-                                               transit_results, report, cadence, period_grid)
+                                               transit_results, report, cadence, period_grid, detrend_source_period)
         transit_results[0] = transit_result
         r_planet = self.__calculate_planet_radius(star_info, transit_result.depth)
         rp_rs = transit_result.results.rp_rs
@@ -627,7 +627,8 @@ class Sherlock:
             lc_df['flux'] = lcs[i][args]
             lc_df['flux_err'] = flux_err[args]
             lc_df.to_csv(run_dir + "/lc_" + str(i) + ".csv", index=False)
-            transit_result = self.__adjust_transit(sherlock_target, time, lcs[i], star_info, transits_min_count, transit_results, report, cadence, period_grid)
+            transit_result = self.__adjust_transit(sherlock_target, time, lcs[i], star_info, transits_min_count,
+                                                   transit_results, report, cadence, period_grid, detrend_source_period)
             transit_results[i] = transit_result
             r_planet = self.__calculate_planet_radius(star_info, transit_result.depth)
             rp_rs = transit_result.results.rp_rs
@@ -666,7 +667,7 @@ class Sherlock:
         return oi
 
     def __adjust_transit(self, sherlock_target, time, lc, star_info, transits_min_count, run_results, report, cadence,
-                         period_grid):
+                         period_grid, detrend_source_period):
         oversampling = sherlock_target.oversampling
         model = tls.transitleastsquares(time, lc)
         power_args = {"transit_template": sherlock_target.fit_method, "period_min": sherlock_target.period_min,
@@ -702,7 +703,7 @@ class Sherlock:
                                             - results['model_folded_phase'][intransit_folded_model[0]])
         else:
             duration = results['duration']
-        harmonic = self.__is_harmonic(results, run_results, report)
+        harmonic = self.__is_harmonic(results, run_results, report, detrend_source_period)
         return TransitResult(results, results.period, results.period_uncertainty, duration,
                              results.T0, depths, depth, transit_count, results.snr,
                              results.SDE, results.FAP, border_score, in_transit, harmonic)
@@ -739,10 +740,10 @@ class Sherlock:
             border_score = 1 - transits_in_edge_count / len(transit_depths)
         return border_score if border_score >= 0 else 0
 
-    def __is_harmonic(self, tls_results, run_results, report):
+    def __is_harmonic(self, tls_results, run_results, report, detrend_source_period):
         scales = [0.25, 0.5, 1, 2, 4]
-        if self.rotator_period is not None:
-            rotator_scale = round(tls_results.period / self.rotator_period, 2)
+        if detrend_source_period is not None:
+            rotator_scale = round(tls_results.period / detrend_source_period, 2)
             rotator_harmonic = np.array(np.argwhere((np.array(scales) > rotator_scale - 0.02) & (np.array(scales) < rotator_scale + 0.02))).flatten()
             if len(rotator_harmonic) > 0:
                 return str(scales[rotator_harmonic[0]]) + "*source"
