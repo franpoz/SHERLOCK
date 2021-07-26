@@ -3,14 +3,19 @@ import logging
 import multiprocessing
 import shutil
 import types
+from distutils.dir_util import copy_tree
 from pathlib import Path
 import traceback
+
+import batman
+import foldedleastsquares
 import lightkurve
 import numpy as np
 import matplotlib
 import matplotlib.pyplot as plt
 import matplotlib.gridspec as gridspec
 import yaml
+from lightkurve import TessLightCurve
 from matplotlib.colorbar import Colorbar
 from matplotlib import patches
 from astropy.visualization.mpl_normalize import ImageNormalize
@@ -18,6 +23,9 @@ from astropy.table import Table
 from astropy.io import ascii
 import astropy.visualization as stretching
 from argparse import ArgumentParser
+
+from scipy import stats
+
 from sherlockpipe import tpfplotter
 import six
 import sys
@@ -127,7 +135,7 @@ class Vetter:
                 writer.writerow(metadata_header)
         return indir, candidate_df, TIC_wanted, candidate_df.iloc[0]["ffi"]
 
-    def __process(self, indir, tic, sectors_in, transit_list, t0, period, ffi):
+    def __process(self, candidate, indir, tic, sectors_in, transit_list, t0, period, duration, depth, ffi):
         """
         Performs the LATTE analysis to generate PNGs and also the TPFPlotter analysis to get the field of view
         information.
@@ -137,10 +145,12 @@ class Vetter:
         @param transit_list: the list of transits for the given tic
         @param t0: the candidate signal first epoch
         @param period: the candidate signal period
+        @param duration: the candidate signal duration
+        @param depth: the candidate signal depth in ppts
         @param ffi: Whether the candidate came from FFI data
         @return: the given tic
         """
-        logging.info("Runnint TESS Point")
+        logging.info("Running TESS Point")
         sectors_all, ra, dec = LATTEutils.tess_point(indir, tic)
         try:
             sectors = list(set(sectors_in) & set(sectors_all))
@@ -166,6 +176,19 @@ class Vetter:
         model = False
         save = True
         DV = True
+        if candidate["number"] is None or np.isnan(candidate["number"]):
+            lc_file = "/" + candidate["lc"]
+        else:
+            lc_file = "/" + str(candidate["number"]) + "/lc_" + str(candidate["curve"]) + ".csv"
+        lc_file = self.object_dir + lc_file
+        lc = pd.read_csv(lc_file, header=0)
+        time, flux, flux_err = lc["#time"].values, lc["flux"].values, lc["flux_err"].values
+        lc_len = len(time)
+        zeros_lc = np.zeros(lc_len)
+        logging.info("Preparing folded light curves for target")
+        lc = TessLightCurve(time=time, flux=flux, flux_err=flux_err, quality=zeros_lc)
+        lc.extra_columns = []
+        self.plot_folded_curve(self.data_dir, "TIC " + tic, lc, period, t0, duration, depth / 1000)
         # TODO decide whether to use transit_list or period
         transit_list = []
         last_time = alltime[len(alltime) - 1]
@@ -177,6 +200,9 @@ class Vetter:
         transit_lists = [transit_lists[x:x + 3] for x in range(0, len(transit_lists), 3)]
         for index, transit_list in enumerate(transit_lists):
             transit_results_dir = self.data_dir + "/" + str(index)
+            if not os.path.exists(transit_results_dir):
+                os.mkdir(transit_results_dir)
+            Vetter.plot_single_transits(transit_results_dir, "TIC " + str(tic), lc, transit_list, duration, depth / 1000)
             logging.info("Brewing LATTE data for transits at T0s: %s", str(transit_list))
             try:
                 if not ffi:
@@ -196,7 +222,8 @@ class Vetter:
                 #                      ally1, ally2, alltime12, allfbkg, start_sec, end_sec, in_sec, tessmag, teff, srad, ra,
                 #                      dec, self.args)
                 tp_downloaded = True
-                shutil.move(vetter.latte_dir + "/" + tic, transit_results_dir)
+                copy_tree(vetter.latte_dir + "/" + tic, transit_results_dir)
+                shutil.rmtree(vetter.latte_dir + "/" + tic, ignore_errors=True)
             except Exception as e:
                 traceback.print_exc()
                 # see if it made any plots - often it just fails on the TPs as they are very large
@@ -228,10 +255,9 @@ class Vetter:
             TCE_links = np.sort(TCE_links)
             TCE_link = TCE_links[0]  # this link should allow you to acess the MAST DV report
             TCE = True
-        # TOI -----
-        TOI_planets = pd.read_csv('{}/data/TOI_list.txt'.format(indir), comment="#")
-        TOIpl = TOI_planets.loc[TOI_planets['TIC'] == float(tic)]
-        TOI = False
+        # TOI -----TOI_planets = pd.read_csv('{}/data/TOI_list.txt'.format(indir), comment="#")
+        # TOIpl = TOI_planets.loc[TOI_planets['TIC'] == float(tic)]
+        #TOI = False
         # TODO check why TOI is useful
         # else:
         #     TOI = True
@@ -250,10 +276,7 @@ class Vetter:
         mnd['Teff'] = teff
         mnd['thissector'] = sectors
         # make empty fields for the test to be checked
-        if TOI == True:
-            mnd['TOI'] = TOI_name
-        else:
-            mnd['TOI'] = " "
+        mnd['TOI'] = " "
         if TCE == True:
             mnd['TCE'] = "Yes"
             mnd['TCE_link'] = TCE_link
@@ -273,6 +296,150 @@ class Vetter:
         mnd['starttime'] = np.nanmin(alltime) if not isinstance(alltime, str) else "-"
         return mnd
 
+    @staticmethod
+    def plot_single_transits(file_dir, id, lc, transit_times, duration, depth):
+        """
+        Plots the phase-folded curve of the candidate for period, 2 * period and period / 2.
+        @param file_dir: the directory to store the plot
+        @param id: the target id
+        @param lc: the input light curve with the data
+        @param transit_times: the single transits T0s
+        @param duration: the transit duration
+        @param depth: the transit depth
+        """
+        duration = duration / 60 / 24
+        figsize = (8, 8)  # x,y
+        rows = len(transit_times)
+        cols = 1
+        fig, axs = plt.subplots(rows, cols, figsize=figsize, constrained_layout=True)
+        for index in np.arange(0, len(transit_times)):
+            Vetter.plot_single_transit(id, axs[index], lc, transit_times[index], depth, duration)
+        plt.savefig(file_dir + "/single_transits.png", dpi=200)
+        fig.clf()
+        plt.close(fig)
+
+    @staticmethod
+    def plot_single_transit(id, axs, lc, transit_time, depth, duration):
+        sort_args = np.argsort(lc.time.value)
+        time = lc.time.value[sort_args]
+        flux = lc.flux.value[sort_args]
+        flux_err = lc.flux_err.value[sort_args]
+        folded_plot_range = duration * 2
+        folded_phase_zoom_mask = np.where((time > transit_time - folded_plot_range) &
+                                          (time < transit_time + folded_plot_range))
+        folded_phase = time[folded_phase_zoom_mask]
+        folded_y = flux[folded_phase_zoom_mask]
+        in_transit = (folded_phase > transit_time - duration / 2) & (folded_phase < transit_time + duration / 2)
+        in_transit_center = (np.abs(folded_phase - transit_time)).argmin()
+        model_flux = Vetter.get_transit_model(in_transit, in_transit_center, depth)
+        axs.plot(folded_phase, model_flux, color="red")
+        axs.scatter(folded_phase[~in_transit], folded_y[~in_transit], color="gray")
+        axs.scatter(folded_phase[in_transit], folded_y[in_transit], color="darkorange")
+        axs.set_xlim([transit_time - folded_plot_range, transit_time + folded_plot_range])
+        axs.set_title(str(id) + " Single Transit at T={:.2f}d".format(transit_time))
+        #axs.set_ylim([1 - 3 * depth, 1 + 3 * depth])
+        axs.set_xlim([transit_time - folded_plot_range, transit_time + folded_plot_range])
+        logging.info("Processed single transit plot for T0=%.2f", transit_time)
+
+    @staticmethod
+    def plot_folded_curve(file_dir, id, lc, period, epoch, duration, depth):
+        """
+        Plots the phase-folded curve of the candidate for period, 2 * period and period / 2.
+        @param file_dir: the directory to store the plot
+        @param id: the target id
+        @param period: the transit period
+        @param epoch: the transit epoch
+        @param duration: the transit duration
+        @param depth: the transit depth
+        """
+        duration = duration / 60 / 24
+        figsize = (16, 16)  # x,y
+        rows = 3
+        cols = 2
+        fig, axs = plt.subplots(rows, cols, figsize=figsize, constrained_layout=True)
+        logging.info("Preparing folded light curves for target")
+        Vetter.plot_phase_folded_axs(id, axs[0][0], lc, period, epoch + period / 2, depth, duration)
+        Vetter.plot_phase_folded_axs(id, axs[0][1], lc, period, epoch, depth, duration)
+        period = 2 * period
+        Vetter.plot_phase_folded_axs(id, axs[1][0], lc, period, epoch + period / 2, depth, duration)
+        Vetter.plot_phase_folded_axs(id, axs[1][1], lc, period, epoch, depth, duration)
+        period = period / 4
+        Vetter.plot_phase_folded_axs(id, axs[2][0], lc, period, epoch + period / 2, depth, duration)
+        Vetter.plot_phase_folded_axs(id, axs[2][1], lc, period, epoch, depth, duration)
+        plt.savefig(file_dir + "/odd_even_folded_curves.png", dpi=200)
+        fig.clf()
+        plt.close(fig)
+
+    @staticmethod
+    def plot_phase_folded_axs(id, axs, lc, period, epoch, depth, duration):
+        """
+        Phase-folds the input light curve and plots it centered in the given epoch
+        @param id: the candidate name
+        @param axs: the plot axis to be drawn
+        @param lc: the lightkurve object containing the data
+        @param period: the period for the phase-folding
+        @param epoch: the epoch to center the fold
+        @param depth: the transit depth
+        @param duration: the transit duration
+        @return: the drawn axis
+        """
+        time = foldedleastsquares.core.fold(lc.time.value, period, epoch)
+        axs.scatter(time, lc.flux.value, 2, color="blue", alpha=0.1)
+        sort_args = np.argsort(time)
+        time = time[sort_args]
+        flux = lc.flux.value[sort_args]
+        half_duration_phase = duration / 2 / period
+        folded_plot_range = half_duration_phase * 5
+        folded_phase_zoom_mask = np.where((time > 0.5 - folded_plot_range) &
+                                          (time < 0.5 + folded_plot_range))
+        folded_phase = time[folded_phase_zoom_mask]
+        folded_y = flux[folded_phase_zoom_mask]
+        axs.set_xlim([0.5 - folded_plot_range, 0.5 + folded_plot_range])
+        # TODO if FFI no binning
+        binning_enabled = True
+        if binning_enabled:
+            bin_means, bin_edges, binnumber = stats.binned_statistic(folded_phase, folded_y,
+                                                                     statistic='mean', bins=80)
+            bin_width = (bin_edges[1] - bin_edges[0])
+            bin_centers = bin_edges[1:] - bin_width / 2
+            bin_stds, _, _ = stats.binned_statistic(folded_phase, folded_y, statistic='std', bins=80)
+            axs.errorbar(bin_centers, bin_means, yerr=bin_stds / 2, xerr=bin_width / 2, marker='o', markersize=4,
+                         color='darkorange', alpha=1, linestyle='none')
+        in_transit = (folded_phase > 0.5 - half_duration_phase) & (folded_phase < 0.5 + half_duration_phase)
+        in_transit_center = (np.abs(folded_phase - 0.5)).argmin()
+        model_flux = Vetter.get_transit_model(in_transit, in_transit_center, depth)
+        axs.plot(folded_phase, model_flux, color="red")
+        axs.set_title(str(id) + " Folded Curve with P={:.2f}d and T0={:.2f}".format(period, epoch))
+        #axs.set_ylim([1 - 3 * depth, 1 + 3 * depth])
+        logging.info("Processed phase-folded plot for P=%.2f and T0=%.2f", period, epoch)
+        return axs
+
+    @staticmethod
+    def get_transit_model(in_transit, in_transit_center, depth):
+        t = np.linspace(-3, 3, 10000)
+        ma = batman.TransitParams()
+        ma.t0 = 0  # time of inferior conjunction
+        ma.per = 365  # orbital period, use Earth as a reference
+        ma.rp = 0.1  # planet radius (in units of stellar radii)
+        ma.a = 50  # semi-major axis (in units of stellar radii)
+        ma.inc = 90  # orbital inclination (in degrees)
+        ma.ecc = 0  # eccentricity
+        ma.w = 0  # longitude of periastron (in degrees)
+        ma.u = [0.4804, 0.1867]  # limb darkening coefficients
+        ma.limb_dark = "quadratic"  # limb darkening model
+        m = batman.TransitModel(ma, t)  # initializes model
+        model = m.light_curve(ma)  # calculates light curve
+        model_depth_args = np.argwhere(model < 1)
+        model_intransit = model[model_depth_args].flatten()
+        model_time_intransit = t[model_depth_args].flatten()
+        in_transit_points = len(in_transit[in_transit])
+        bin_means, bin_edges, binnumber = stats.binned_statistic(model_time_intransit, model_intransit,
+                                                                 statistic='mean', bins=in_transit_points)
+        model_flux = np.full((len(in_transit)), 1.0)
+        model_flux[in_transit_center - in_transit_points // 2:in_transit_center - in_transit_points // 2 + in_transit_points] = bin_means
+        model_flux[model_flux < 1] = 1 - ((1 - model_flux[model_flux < 1]) * depth / (1 - np.min(model_flux)))
+        return model_flux
+
     def vetting(self, candidate, cpus):
         """
         Performs the LATTE vetting procedures
@@ -288,6 +455,8 @@ class Vetter:
             # get the transit time list
             period = df.loc[df['TICID'] == tic]['period'].iloc[0]
             t0 = df.loc[df['TICID'] == tic]['t0'].iloc[0]
+            duration = df.loc[df['TICID'] == tic]['duration'].iloc[0]
+            depth = df.loc[df['TICID'] == tic]['depth'].iloc[0]
             transit_list = ast.literal_eval(((df.loc[df['TICID'] == tic]['transits']).values)[0])
             candidate_row = candidate.iloc[0]
             try:
@@ -308,7 +477,7 @@ class Vetter:
             ra = None
             dec = None
             try:
-                res = self.__process(indir, tic, sectors, transit_list, t0, period, ffi)
+                res = self.__process(candidate_row, indir, tic, sectors, transit_list, t0, period, duration, depth, ffi)
                 ra = res['RA']
                 dec = res['DEC']
                 if res['TICID'] == -99:
