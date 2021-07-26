@@ -31,7 +31,7 @@ ns_modus,dynamic
 ns_nlive,500
 ns_bound,single
 ns_sample,rwalk
-ns_tol,0.01
+ns_tol,${sherlock:tolerance}
 ###############################################################################,
 # Limb darkening law per object and instrument,
 # if 'lin' one corresponding parameter called 'ldc_q1_inst' has to be given in params.csv,
