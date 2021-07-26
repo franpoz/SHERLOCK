@@ -43,7 +43,7 @@ class Fitter:
         self.mcmc = mcmc
         self.detrend = detrend
 
-    def fit(self, candidate_df, star_df, cpus, allesfit_dir):
+    def fit(self, candidate_df, star_df, cpus, allesfit_dir, tolerance):
         logging.info("Preparing fit files")
         sherlock_star_file = self.object_dir + "/params_star.csv"
         star_file = allesfit_dir + "/params_star.csv"
@@ -64,6 +64,7 @@ class Fitter:
             text = re.sub('\\${sherlock:fit_width}', str(fit_width), text)
             text = re.sub('\\${sherlock:fit_ttvs}', "False", text)
             text = re.sub('\\${sherlock:names}', ' '.join(candidate_df["name"].astype('str')), text)
+            text = re.sub('\\${sherlock:tolerance}', str(tolerance), text)
             if self.detrend == 'hybrid_spline':
                 detrend_param = "baseline_flux_lc,hybrid_spline"
             elif self.detrend == 'gp':
@@ -251,6 +252,8 @@ if __name__ == '__main__':
                         help="Whether to only run an initial guess of the transit")
     ap.set_defaults(only_initial=False)
     ap.add_argument('--cpus', type=int, default=None, help="The number of CPU cores to be used.", required=False)
+    ap.add_argument('--tolerance', type=float, default=0.01, help="The tolerance of the nested sampling algorithm.",
+                    required=False)
     ap.add_argument('--mcmc', dest='mcmc', action='store_true', help="Whether to run using mcmc or ns. Default is ns.")
     ap.add_argument('--detrend', dest='detrend', default="hybrid_spline", help="Type of detrending to be used", required=False,
                     choices=['no', 'gp'])
@@ -331,4 +334,4 @@ if __name__ == '__main__':
             cpus = args.cpus
         logging.info("Selected signal numbers " + str(candidate_selections))
     fitter.fit(candidates_df.iloc[[candidate_selection - 1 for candidate_selection in candidate_selections]],
-               star_df, cpus, fitting_dir)
+               star_df, cpus, fitting_dir, args.tolerance)
