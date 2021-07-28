@@ -43,7 +43,7 @@ setuptools.setup(
                         "reportlab==3.5.59",
                         "rebound==3.17.3",
                         "spock==1.3.1",
-                        "lcbuilder==0.4.0",
+                        "lcbuilder==0.4.2",
                         "mock==4.0.3",
                         'tqdm==4.56.0',
                         'setuptools>=41.0.0',
