@@ -79,19 +79,28 @@ class Fitter:
             f.write(self.fill_candidates_params(candidate_df, star_df))
             f.truncate()
         logging.info("Running initial guess")
-        allesfitter.show_initial_guess(allesfit_dir)
+        try:
+            allesfitter.show_initial_guess(allesfit_dir)
+        except Exception as e:
+            logging.exception(str(e))
         # TODO fix custom_plot for all candidates
         #self.custom_plot(candidate_row["name"], candidate_row["period"], fit_width, allesfit_dir, "initial_guess")
         if not self.only_initial:
             logging.info("Preparing bayesian fit")
             if not self.mcmc:
                 logging.info("Running dynamic nested sampling")
-                allesfitter.ns_fit(allesfit_dir)
-                allesfitter.ns_output(allesfit_dir)
+                try:
+                    allesfitter.ns_fit(allesfit_dir)
+                    allesfitter.ns_output(allesfit_dir)
+                except Exception as e:
+                    logging.exception(str(e))
             elif self.mcmc:
                 logging.info("Running MCMC")
-                allesfitter.mcmc_fit(allesfit_dir)
-                allesfitter.mcmc_output(allesfit_dir)
+                try:
+                    allesfitter.mcmc_fit(allesfit_dir)
+                    allesfitter.mcmc_output(allesfit_dir)
+                except Exception as e:
+                    logging.exception(str(e))
             logging.info("Generating custom plots")
             # TODO fix custom_plot for all candidates
             #self.custom_plot(candidate_row["name"], candidate_row["period"], fit_width, allesfit_dir, "posterior")
