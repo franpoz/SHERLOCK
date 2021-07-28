@@ -135,14 +135,13 @@ class Vetter:
                 writer.writerow(metadata_header)
         return indir, candidate_df, TIC_wanted, candidate_df.iloc[0]["ffi"]
 
-    def __process(self, candidate, indir, tic, sectors_in, transit_list, t0, period, duration, depth, ffi):
+    def __process(self, candidate, indir, tic, sectors_in, t0, period, duration, depth, ffi):
         """
         Performs the LATTE analysis to generate PNGs and also the TPFPlotter analysis to get the field of view
         information.
         @param indir: the vetting source and resources directory
         @param tic: the tic to be processed
         @param sectors_in: the sectors to be used for the given tic
-        @param transit_list: the list of transits for the given tic
         @param t0: the candidate signal first epoch
         @param period: the candidate signal period
         @param duration: the candidate signal duration
@@ -179,7 +178,7 @@ class Vetter:
         if candidate["number"] is None or np.isnan(candidate["number"]):
             lc_file = "/" + candidate["lc"]
         else:
-            lc_file = "/" + str(candidate["number"]) + "/lc_" + str(candidate["curve"]) + ".csv"
+            lc_file = "/" + str(int(candidate["number"])) + "/lc_" + str(int(candidate["curve"])) + ".csv"
         lc_file = self.object_dir + lc_file
         lc = pd.read_csv(lc_file, header=0)
         time, flux, flux_err = lc["#time"].values, lc["flux"].values, lc["flux_err"].values
@@ -189,7 +188,6 @@ class Vetter:
         lc = TessLightCurve(time=time, flux=flux, flux_err=flux_err, quality=zeros_lc)
         lc.extra_columns = []
         self.plot_folded_curve(self.data_dir, "TIC " + tic, lc, period, t0, duration, depth / 1000)
-        # TODO decide whether to use transit_list or period
         transit_list = []
         last_time = alltime[len(alltime) - 1]
         num_of_transits = int(ceil(((last_time - t0) / period)))
@@ -415,6 +413,7 @@ class Vetter:
         return axs
 
     @staticmethod
+    #TODO build model from selected transit_template
     def get_transit_model(in_transit, in_transit_center, depth):
         t = np.linspace(-3, 3, 10000)
         ma = batman.TransitParams()
@@ -457,7 +456,6 @@ class Vetter:
             t0 = df.loc[df['TICID'] == tic]['t0'].iloc[0]
             duration = df.loc[df['TICID'] == tic]['duration'].iloc[0]
             depth = df.loc[df['TICID'] == tic]['depth'].iloc[0]
-            transit_list = ast.literal_eval(((df.loc[df['TICID'] == tic]['transits']).values)[0])
             candidate_row = candidate.iloc[0]
             try:
                 sectors_in = ast.literal_eval(str(((df.loc[df['TICID'] == tic]['sectors']).values)[0]))
@@ -477,7 +475,7 @@ class Vetter:
             ra = None
             dec = None
             try:
-                res = self.__process(candidate_row, indir, tic, sectors, transit_list, t0, period, duration, depth, ffi)
+                res = self.__process(candidate_row, indir, tic, sectors, t0, period, duration, depth, ffi)
                 ra = res['RA']
                 dec = res['DEC']
                 if res['TICID'] == -99:
@@ -675,11 +673,10 @@ if __name__ == '__main__':
     logging.info("Starting vetting")
     if args.candidate is None:
         user_properties = yaml.load(open(args.properties), yaml.SafeLoader)
-        candidate = pd.DataFrame(columns=['id', 'transits', 'sectors', 'FFI'])
+        candidate = pd.DataFrame(columns=['id', 'period', 'depth', 't0', 'sectors', 'ffi', 'number', 'lc'])
         candidate = candidate.append(user_properties, ignore_index=True)
         candidate = candidate.rename(columns={'id': 'TICID'})
         candidate['TICID'] = candidate["TICID"].apply(str)
-        cpus = user_properties["settings"]["cpus"]
     else:
         candidate_selection = int(args.candidate)
         candidates = pd.read_csv(vetter.object_dir + "/candidates.csv")
@@ -690,8 +687,8 @@ if __name__ == '__main__':
         candidate['number'] = [candidate_selection]
         vetter.data_dir = vetter.object_dir
         logging.info("Selected signal number " + str(candidate_selection))
-        if args.cpus is None:
-            cpus = multiprocessing.cpu_count() - 1
-        else:
-            cpus = args.cpus
+    if args.cpus is None:
+        cpus = multiprocessing.cpu_count() - 1
+    else:
+        cpus = args.cpus
     vetter.vetting(candidate, cpus)
