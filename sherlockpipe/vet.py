@@ -14,6 +14,7 @@ import numpy as np
 import matplotlib
 import matplotlib.pyplot as plt
 import matplotlib.gridspec as gridspec
+import scipy
 import yaml
 from lightkurve import TessLightCurve
 from matplotlib.colorbar import Colorbar
@@ -337,6 +338,8 @@ class Vetter:
         axs.set_title(str(id) + " Single Transit at T={:.2f}d".format(transit_time))
         #axs.set_ylim([1 - 3 * depth, 1 + 3 * depth])
         axs.set_xlim([transit_time - folded_plot_range, transit_time + folded_plot_range])
+        axs.set_xlabel("Time (d)")
+        axs.set_ylabel("Flux norm.")
         logging.info("Processed single transit plot for T0=%.2f", transit_time)
 
     @staticmethod
@@ -408,6 +411,8 @@ class Vetter:
         model_flux = Vetter.get_transit_model(in_transit, in_transit_center, depth)
         axs.plot(folded_phase, model_flux, color="red")
         axs.set_title(str(id) + " Folded Curve with P={:.2f}d and T0={:.2f}".format(period, epoch))
+        axs.set_xlabel("Time (d)")
+        axs.set_ylabel("Flux norm.")
         #axs.set_ylim([1 - 3 * depth, 1 + 3 * depth])
         logging.info("Processed phase-folded plot for P=%.2f and T0=%.2f", period, epoch)
         return axs
@@ -432,10 +437,10 @@ class Vetter:
         model_intransit = model[model_depth_args].flatten()
         model_time_intransit = t[model_depth_args].flatten()
         in_transit_points = len(in_transit[in_transit])
-        bin_means, bin_edges, binnumber = stats.binned_statistic(model_time_intransit, model_intransit,
-                                                                 statistic='mean', bins=in_transit_points)
+        scaled_intransit = np.interp(np.linspace(model_time_intransit[0], model_time_intransit[-1], in_transit_points),
+                  model_time_intransit, model_intransit)
         model_flux = np.full((len(in_transit)), 1.0)
-        model_flux[in_transit_center - in_transit_points // 2:in_transit_center - in_transit_points // 2 + in_transit_points] = bin_means
+        model_flux[in_transit_center - in_transit_points // 2:in_transit_center - in_transit_points // 2 + in_transit_points] = scaled_intransit
         model_flux[model_flux < 1] = 1 - ((1 - model_flux[model_flux < 1]) * depth / (1 - np.min(model_flux)))
         return model_flux
 
