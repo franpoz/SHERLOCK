@@ -34,7 +34,7 @@ from matplotlib import ticker
 from triceratops.likelihoods import (simulate_TP_transit, simulate_EB_transit)
 from triceratops.funcs import renorm_flux
 from astropy import constants
-from sherlockpipe.eleanor import maxsector
+from lcbuilder.eleanor import maxsector
 
 
 # get the system path
