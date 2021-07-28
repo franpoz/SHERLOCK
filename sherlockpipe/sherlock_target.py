@@ -73,8 +73,8 @@ class SherlockTarget:
             self.fit_method = "box"
         elif fit_method is not None and fit_method.lower() == 'grazing':
             self.fit_method = "grazing"
-        elif fit_method is not None and fit_method.lower() == 'comet':
-            self.fit_method = "comet"
+        elif fit_method is not None and fit_method.lower() == 'tailed':
+            self.fit_method = "tailed"
         self.oversampling = oversampling
         if self.oversampling is not None:
             self.oversampling = int(self.oversampling)
