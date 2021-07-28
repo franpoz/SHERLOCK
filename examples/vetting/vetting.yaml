@@ -1,6 +1,14 @@
 # Thise YAML file illustrates how to provide data for the vetting process. Comma separated sectors and transit times
 # are required among the TESS id and a flag to specify whether to look into Full Frame Images.
-id: 231663901
-sectors: 1,27
-transits: 1326.004206688168,1327.4351200447586,1328.8660334013491,1330.2969467579396,1331.7278601145301,1333.1587734711206,1334.5896868277111,1336.0206001843017,1337.4515135408922,1340.3133402540732,1341.7442536106637,1343.1751669672542,1344.6060803238447,1346.0369936804352,1347.4679070370257,1348.8988203936162,1350.3297337502067,1351.7606471067973
-FFI: True
+id: 467179528
+sectors: 14,15,21,22
+period: 14.54432
+t0: 1690.4715
+duration: 128.1
+depth: 0.315
+ffi: False
+# The run where the lightcurve is loaded
+number: 5
+# The light curve number to load
+curve: 4
+
