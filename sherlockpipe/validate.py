@@ -50,9 +50,9 @@ resources_dir = path.join(path.dirname(__file__))
 This class intends to provide a validation tool for SHERLOCK Candidates.
 '''
 class Validator:
-    def __init__(self, object_dir):
+    def __init__(self, object_dir, validation_dir):
         self.object_dir = os.getcwd() if object_dir is None else object_dir
-        self.data_dir = self.object_dir
+        self.data_dir = validation_dir
         self.validation_runs = 5
 
 
@@ -63,33 +63,33 @@ class Validator:
         @param cpus: the number of cpus to be used.
         @param contrast_curve_file: the auxiliary contrast curve file to give more information to the validation engine.
         """
-        object_id = candidate["TICID"]
-        period = candidate.loc[candidate['TICID'] == object_id]['period'].iloc[0]
-        duration = candidate.loc[candidate['TICID'] == object_id]['duration'].iloc[0]
-        t0 = candidate.loc[candidate['TICID'] == object_id]['t0'].iloc[0]
-        transit_list = ast.literal_eval(((candidate.loc[candidate['TICID'] == object_id]['transits']).values)[0])
-        transit_depth = candidate.loc[candidate['TICID'] == object_id]['depth'].iloc[0]
-        rprs = candidate.loc[candidate['TICID'] == object_id]['rp_rs'].iloc[0]
-        candidate_row = candidate.iloc[0]
-        if candidate_row["number"] is None or np.isnan(candidate_row["number"]):
-            lc_file = "/" + candidate_row["lc"]
-        else:
-            lc_file = "/" + str(candidate_row["number"]) + "/lc_" + str(candidate_row["curve"]) + ".csv"
+        object_id = candidate["id"]
+        period = candidate.loc[candidate['id'] == object_id]['period'].iloc[0]
+        duration = candidate.loc[candidate['id'] == object_id]['duration'].iloc[0]
+        t0 = candidate.loc[candidate['id'] == object_id]['t0'].iloc[0]
+        transit_depth = candidate.loc[candidate['id'] == object_id]['depth'].iloc[0]
+        run = int(candidate.loc[candidate['id'] == object_id]['number'].iloc[0])
+        curve = int(candidate.loc[candidate['id'] == object_id]['curve'].iloc[0])
+        logging.info("------------------")
+        logging.info("Candidate info")
+        logging.info("------------------")
+        logging.info("Period (d): %.2f", period)
+        logging.info("Epoch (d): %.2f", t0)
+        logging.info("Duration (min): %.2f", duration)
+        logging.info("Depth (ppt): %.2f", transit_depth)
+        logging.info("Run: %.0f", run)
+        logging.info("Detrend curve: %.0f", curve)
+        logging.info("Contrast curve file %s", contrast_curve_file)
+        lc_file = "/" + str(run) + "/lc_" + str(curve) + ".csv"
         lc_file = self.data_dir + lc_file
         try:
-            sectors_in = ast.literal_eval(str(((candidate.loc[candidate['TICID'] == object_id]['sectors']).values)[0]))
+            sectors_in = ast.literal_eval(str(((candidate.loc[candidate['id'] == object_id]['sectors']).values)[0]))
             if (type(sectors_in) == int) or (type(sectors_in) == float):
                 sectors = [sectors_in]
             else:
                 sectors = list(sectors_in)
         except:
             sectors = [0]
-        index = 0
-        validation_dir = self.data_dir + "/validation_" + str(index)
-        while os.path.exists(validation_dir) or os.path.isdir(validation_dir):
-            validation_dir = self.data_dir + "/validation_" + str(index)
-            index = index + 1
-        os.mkdir(validation_dir)
         self.data_dir = validation_dir
         object_id = object_id.iloc[0]
         mission, mission_prefix, id_int = LcBuilder().parse_object_info(object_id)
@@ -145,6 +145,10 @@ class Validator:
         if not os.path.exists(save_dir):
             os.makedirs(save_dir)
         duration = transit_duration / 60 / 24
+        logging.info("----------------------")
+        logging.info("Validation procedures")
+        logging.info("----------------------")
+        logging.info("Pre-processing sectors")
         if mission != "TESS":
             star_df = pd.read_csv(self.object_dir + "/params_star.csv")
             star = eleanor.multi_sectors(coords=(star_df.at[0, "ra"], star_df.at[0, "dec"]), sectors='all',
@@ -173,15 +177,17 @@ class Validator:
             if len(sectors) == 0:
                 logging.warning("There are no available sectors to be validated, skipping TRICERATOPS.")
                 return save_dir, None, None
-        target = tr.target(ID=tic, sectors=sectors)
         logging.info("Will execute validation for sectors: " + str(sectors))
+        logging.info("Acquiring triceratops target")
+        target = tr.target(ID=tic, sectors=sectors)
         # TODO allow user input apertures
+        logging.info("Acquiring TPFs to build apertures")
         tpfs = lightkurve.search_targetpixelfile("TIC " + str(tic), mission="TESS", cadence="short", sector=sectors.tolist())\
             .download_all()
         star = eleanor.multi_sectors(tic=tic, sectors=sectors, tesscut_size=11, post_dir=const.USER_HOME_ELEANOR_CACHE)
         apertures = []
         sector_num = 0
-        logging.info("Calculating validation masks")
+        logging.info("Building apertures")
         for s in star:
             if tpfs is None:
                 target_data = eleanor.TargetData(s, height=11, width=11)
@@ -206,13 +212,14 @@ class Validator:
                     if not np.isnan(pipeline_mask_triceratops[i, j]).any():
                         aperture.append(pipeline_mask_triceratops[i, j])
             apertures.append(aperture)
-            logging.info("Saving validation mask plot for sector %s", s.sector)
+            logging.info("Saving aperture plot for sector %s", s.sector)
             target.plot_field(save=True, fname=save_dir + "/field_S" + str(s.sector), sector=s.sector,
                             ap_pixels=aperture)
             sector_num = sector_num + 1
         apertures = np.array(apertures)
         depth = transit_depth / 1000
         if contrast_curve_file is not None:
+            logging.info("Reading contrast curve %s", contrast_curve_file)
             plt.clf()
             cc = pd.read_csv(contrast_curve_file, header=None)
             sep, dmag = cc[0].values, cc[1].values
@@ -631,8 +638,14 @@ if __name__ == '__main__':
     ap.add_argument('--cpus', type=int, default=None, help="The number of CPU cores to be used.", required=False)
     ap.add_argument('--contrast_curve', type=str, default=None, help="The contrast curve in csv format.", required=False)
     args = ap.parse_args()
-    validator = Validator(args.object_dir)
-    file_dir = validator.object_dir + "/validation.log"
+    index = 0
+    validation_dir = args.object_dir + "/validation_" + str(index)
+    while os.path.exists(validation_dir) or os.path.isdir(validation_dir):
+        validation_dir = args.object_dir + "/validation_" + str(index)
+        index = index + 1
+    os.mkdir(validation_dir)
+    validator = Validator(args.object_dir, validation_dir)
+    file_dir = validation_dir + "/validation.log"
     if os.path.exists(file_dir):
         os.remove(file_dir)
     formatter = logging.Formatter('%(message)s')
@@ -650,10 +663,11 @@ if __name__ == '__main__':
     logger.addHandler(handler)
     logging.info("Starting validation")
     if args.candidate is None:
+        logging.info("Reading validation input from properties file: %s", args.properties)
         user_properties = yaml.load(open(args.properties), yaml.SafeLoader)
-        candidate = pd.DataFrame(columns=['id', 'transits', 'sectors', 'FFI'])
+        candidate = pd.DataFrame(columns=['id', 'period', 'depth', 't0', 'sectors', 'ffi', 'number', 'lc'])
         candidate = candidate.append(user_properties, ignore_index=True)
-        cpus = user_properties["settings"]["cpus"]
+        candidate['id'] = candidate["id"].apply(str)
     else:
         candidate_selection = int(args.candidate)
         candidates = pd.read_csv(validator.object_dir + "/candidates.csv")
@@ -664,8 +678,8 @@ if __name__ == '__main__':
         candidate['number'] = [candidate_selection]
         validator.data_dir = validator.object_dir
         logging.info("Selected signal number " + str(candidate_selection))
-        if args.cpus is None:
-            cpus = multiprocessing.cpu_count() - 1
-        else:
-            cpus = args.cpus
+    if args.cpus is None:
+        cpus = multiprocessing.cpu_count() - 1
+    else:
+        cpus = args.cpus
     validator.validate(candidate, cpus, args.contrast_curve)

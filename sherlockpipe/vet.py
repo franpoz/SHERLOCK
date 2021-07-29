@@ -136,7 +136,7 @@ class Vetter:
                 writer.writerow(metadata_header)
         return indir, candidate_df, TIC_wanted, candidate_df.iloc[0]["ffi"]
 
-    def __process(self, candidate, indir, tic, sectors_in, t0, period, duration, depth, ffi):
+    def __process(self, indir, tic, sectors_in, t0, period, duration, depth, ffi, run, curve):
         """
         Performs the LATTE analysis to generate PNGs and also the TPFPlotter analysis to get the field of view
         information.
@@ -148,6 +148,8 @@ class Vetter:
         @param duration: the candidate signal duration
         @param depth: the candidate signal depth in ppts
         @param ffi: Whether the candidate came from FFI data
+        @param run: The run where the selected light curve appeared
+        @param curve: The selected light curve in the given run
         @return: the given tic
         """
         logging.info("Running TESS Point")
@@ -176,10 +178,7 @@ class Vetter:
         model = False
         save = True
         DV = True
-        if candidate["number"] is None or np.isnan(candidate["number"]):
-            lc_file = "/" + candidate["lc"]
-        else:
-            lc_file = "/" + str(int(candidate["number"])) + "/lc_" + str(int(candidate["curve"])) + ".csv"
+        lc_file = "/" + str(run) + "/lc_" + str(curve) + ".csv"
         lc_file = self.object_dir + lc_file
         lc = pd.read_csv(lc_file, header=0)
         time, flux, flux_err = lc["#time"].values, lc["flux"].values, lc["flux_err"].values
@@ -454,14 +453,24 @@ class Vetter:
         for tic in TIC_wanted:
             # check the existing manifest to see if I've processed this file!
             manifest_table = pd.read_csv('{}/manifest.csv'.format(str(indir)))
-            # get a list of the current URLs that exist in the manifest
-            urls_exist = manifest_table['TICID']
             # get the transit time list
             period = df.loc[df['TICID'] == tic]['period'].iloc[0]
             t0 = df.loc[df['TICID'] == tic]['t0'].iloc[0]
             duration = df.loc[df['TICID'] == tic]['duration'].iloc[0]
             depth = df.loc[df['TICID'] == tic]['depth'].iloc[0]
-            candidate_row = candidate.iloc[0]
+            ffi = df.loc[df['TICID'] == tic]['ffi'].iloc[0]
+            run = int(candidate.loc[candidate['id'] == tic]['number'].iloc[0])
+            curve = int(candidate.loc[candidate['id'] == tic]['curve'].iloc[0])
+            logging.info("------------------")
+            logging.info("Candidate info")
+            logging.info("------------------")
+            logging.info("Period (d): %.2f", period)
+            logging.info("Epoch (d): %.2f", t0)
+            logging.info("Duration (min): %.2f", duration)
+            logging.info("Depth (ppt): %.2f", depth)
+            logging.info("FFI: %s", ffi)
+            logging.info("Run: %.0f", run)
+            logging.info("Detrend curve: %.0f", curve)
             try:
                 sectors_in = ast.literal_eval(str(((df.loc[df['TICID'] == tic]['sectors']).values)[0]))
                 if (type(sectors_in) == int) or (type(sectors_in) == float):
@@ -480,7 +489,7 @@ class Vetter:
             ra = None
             dec = None
             try:
-                res = self.__process(candidate_row, indir, tic, sectors, t0, period, duration, depth, ffi)
+                res = self.__process(indir, tic, sectors, t0, period, duration, depth, ffi, run, curve)
                 ra = res['RA']
                 dec = res['DEC']
                 if res['TICID'] == -99:
@@ -496,35 +505,6 @@ class Vetter:
                 shutil.move(result_dir, vetting_dir + "/tpfplot")
             else:
                 logging.info("Can't generate tpfplot because RA and DEC are missing.")
-            # TODO improve this condition to check whether tic, sectors and transits exist
-        #     if not np.isin(tic, urls_exist):
-        #         # make sure the file is opened as append only
-        #         with open('{}/manifest.csv'.format(str(indir)), 'a') as tic:  # save in the photometry folder
-        #             writer = csv.writer(tic, delimiter=',')
-        #             metadata_data = [res['TICID']]
-        #             metadata_data.append(res['MarkedTransits'])
-        #             metadata_data.append(res['Sectors'])
-        #             metadata_data.append(res['RA'])
-        #             metadata_data.append(res['DEC'])
-        #             metadata_data.append(res['SolarRad'])
-        #             metadata_data.append(res['TMag'])
-        #             metadata_data.append(res['Teff'])
-        #             metadata_data.append(res['thissector'])
-        #             metadata_data.append(res['TOI'])
-        #             metadata_data.append(res['TCE'])
-        #             metadata_data.append(res['TCE_link'])
-        #             metadata_data.append(res['EB'])
-        #             metadata_data.append(res['Systematics'])
-        #             metadata_data.append(res['BackgroundFlux'])
-        #             metadata_data.append(res['CentroidsPositions'])
-        #             metadata_data.append(res['MomentumDumps'])
-        #             metadata_data.append(res['ApertureSize'])
-        #             metadata_data.append(res['InoutFlux'])
-        #             metadata_data.append(res['Keep'])
-        #             metadata_data.append(res['Comment'])
-        #             metadata_data.append(res['starttime'])
-        #             writer.writerow(metadata_data)
-        # return TIC_wanted
 
     def vetting_field_of_view(self, indir, tic, ra, dec, sectors):
         """
