@@ -31,11 +31,11 @@ if __name__ == '__main__':
                     required=False)
     ap.add_argument('--properties', help="The YAML file to be used as input.", required=False)
     ap.add_argument('--cpus', type=int, default=4, help="The number of CPU cores to be used.", required=False)
-    ap.add_argument('--ecc_bins', type=int, default=None, help="The number of eccentricity bins to use.", required=False)
-    ap.add_argument('--inc_bins', type=int, default=None, help="The number of inclination bins to use.", required=False)
-    ap.add_argument('--omega_bins', type=int, default=None, help="The number of argument of periastron bins to use.",
+    ap.add_argument('--ecc_bins', type=int, default=3, help="The number of eccentricity bins to use.", required=False)
+    ap.add_argument('--inc_bins', type=int, default=3, help="The number of inclination bins to use.", required=False)
+    ap.add_argument('--omega_bins', type=int, default=3, help="The number of argument of periastron bins to use.",
                     required=False)
-    ap.add_argument('--mass_bins', type=int, default=None, help="The number of mass bins to use.", required=False)
+    ap.add_argument('--mass_bins', type=int, default=3, help="The number of mass bins to use.", required=False)
     ap.add_argument('--star_mass_bins', type=int, default=3, help="The number of star mass bins to use.",
                     required=False)
     ap.add_argument('--spock', dest='use_spock', action='store_true',
@@ -75,7 +75,6 @@ if __name__ == '__main__':
     candidates = pd.read_csv(object_dir + "/../candidates.csv")
     planets_params = []
     if args.properties is None:
-        #TODO check fit_dir is relative or absolute
         ns_derived_file = object_dir + "/results/ns_derived_table.csv"
         ns_file = object_dir + "/results/ns_table.csv"
         if not os.path.exists(ns_derived_file) or not os.path.exists(ns_file):
