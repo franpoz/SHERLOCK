@@ -1,0 +1,13 @@
+# Thise YAML file illustrates how to provide data for the validation process. Comma separated sectors and transit times
+# are required among the mission id and a flag to specify whether to look into Full Frame Images.
+id: 426017070
+sectors: 2,13,27,28,29
+period: 0.59925
+t0: 1354.5807
+duration: 200
+depth: 25
+ffi: False
+# The run where the lightcurve is loaded
+number: 1
+# The light curve number to load
+curve: 0
