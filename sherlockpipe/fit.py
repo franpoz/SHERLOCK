@@ -23,7 +23,7 @@ resources_dir = path.join(path.dirname(__file__))
 
 
 class Fitter:
-    def __init__(self, object_dir, only_initial, mcmc=False, detrend=None):
+    def __init__(self, object_dir, fit_dir, only_initial, mcmc=False, detrend=None):
         self.args = types.SimpleNamespace()
         self.args.noshow = True
         self.args.north = False
@@ -38,7 +38,7 @@ class Fitter:
         self.latte_dir = str(Path.home()) + "/.sherlockpipe/latte/"
         if not os.path.exists(self.latte_dir):
             os.mkdir(self.latte_dir)
-        self.data_dir = self.object_dir
+        self.data_dir = fit_dir
         self.only_initial = only_initial
         self.mcmc = mcmc
         self.detrend = detrend
@@ -110,10 +110,7 @@ class Fitter:
             lc_file = "/lc.csv"
         else:
             candidate_row = candidate_df.iloc[0]
-            if candidate_row["number"] is None or np.isnan(candidate_row["number"]):
-                lc_file = "/" + candidate_row["lc"]
-            else:
-                lc_file = "/" + str(candidate_row["number"]) + "/lc_" + str(candidate_row["curve"]) + ".csv"
+            lc_file = "/" + str(candidate_row["number"]) + "/lc_" + str(candidate_row["curve"]) + ".csv"
         return lc_file
 
     def select_fit_width(self, candidate_df):
@@ -268,10 +265,16 @@ if __name__ == '__main__':
                     choices=['no', 'gp'])
     ap.add_argument('--properties', help="The YAML file to be used as input.", required=False)
     args = ap.parse_args()
-    fitter = Fitter(args.object_dir, args.only_initial, args.mcmc, args.detrend)
-    file_dir = fitter.object_dir + "/fit.log"
+    index = 0
+    fitting_dir = args.object_dir + "/fit_" + str(index)
+    while os.path.exists(fitting_dir) or os.path.isdir(fitting_dir):
+        fitting_dir = args.object_dir + "/fit_" + str(index)
+        index = index + 1
+    os.mkdir(fitting_dir)
+    file_dir = fitting_dir + "/fit.log"
     if os.path.exists(file_dir):
         os.remove(file_dir)
+    fitter = Fitter(args.object_dir, fitting_dir, args.only_initial, args.mcmc, args.detrend)
     formatter = logging.Formatter('%(message)s')
     logger = logging.getLogger()
     while len(logger.handlers) > 0:
@@ -285,20 +288,13 @@ if __name__ == '__main__':
     handler.setLevel(logging.INFO)
     handler.setFormatter(formatter)
     logger.addHandler(handler)
-    index = 0
-    fitting_dir = fitter.data_dir + "/fit_" + str(index)
-    while os.path.exists(fitting_dir) or os.path.isdir(fitting_dir):
-        fitting_dir = fitter.data_dir + "/fit_" + str(index)
-        index = index + 1
-    os.mkdir(fitting_dir)
-    fitter.data_dir = fitter.object_dir
     star_df = pd.read_csv(fitter.data_dir + "/params_star.csv")
     candidate_selections = None
     if args.candidate is None:
         #TODO allow several candidates to be fit
         user_properties = yaml.load(open(args.properties), yaml.SafeLoader)
         candidates_df = pd.DataFrame(columns=['id', 'period', 't0', 'cpus', 'rp_rs', 'a', 'number', 'name', 'lc'])
-        candidates_df = candidates_df.append(user_properties["planet"], ignore_index=True)
+        candidates_df = candidates_df.append(user_properties["planets"], ignore_index=True)
         user_star_df = pd.DataFrame(columns=['R_star', 'M_star'])
         if "star" in user_properties and user_properties["star"] is not None:
             user_star_df = user_star_df.append(user_properties["star"], ignore_index=True)
@@ -324,7 +320,6 @@ if __name__ == '__main__':
             raise ValueError("You need to provide a name for your candidate.")
         if candidates_df.iloc[0]["lc"] is None:
             raise ValueError("You need to provide a light curve relative path for your candidate.")
-        cpus = user_properties["settings"]["cpus"]
     else:
         candidate_selections = str(args.candidate)
         candidate_selections = candidate_selections.split(",")
@@ -337,10 +332,10 @@ if __name__ == '__main__':
             candidates_df['number'][candidate_selection - 1] = candidate_selection
             candidates_df['name'][candidate_selection - 1] = 'SOI_' + \
                                                             str(candidates_df['number'][candidate_selection - 1])
-        if args.cpus is None:
-            cpus = multiprocessing.cpu_count() - 1
-        else:
-            cpus = args.cpus
         logging.info("Selected signal numbers " + str(candidate_selections))
+    if args.cpus is None:
+        cpus = multiprocessing.cpu_count() - 1
+    else:
+        cpus = args.cpus
     fitter.fit(candidates_df.iloc[[candidate_selection - 1 for candidate_selection in candidate_selections]],
                star_df, cpus, fitting_dir, args.tolerance)
