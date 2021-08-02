@@ -382,6 +382,9 @@ class Sherlock:
         sherlock_id = object_info.sherlock_id()
         object_dir = self.__setup_object_logging(sherlock_id)
         logging.info('ID: %s', sherlock_id)
+        if sherlock_target.source_properties_file is not None:
+            logging.info("Storing properties file %s", sherlock_target.source_properties_file)
+            shutil.copy(sherlock_target.source_properties_file, object_dir + "/properties.yaml")
         logging.info('================================================')
         logging.info('USER DEFINITIONS')
         logging.info('================================================')

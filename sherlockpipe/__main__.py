@@ -209,7 +209,7 @@ if __name__ == '__main__':
                            cpu_cores, max_runs, period_min,
                            period_max, period_protect, best_signal_algorithm, quorum_strength,
                            min_quorum, fit_method, oversampling,
-                           t0_fit_margin, duration_grid_step)
+                           t0_fit_margin, duration_grid_step, args.properties)
             if mode == "GLOBAL" or mode == "BOTH":
                 sherlock_targets.append(sherlock_target)
             if mode == "SECTOR" or mode == "BOTH" and isinstance(built_object_info, (
@@ -235,7 +235,7 @@ if __name__ == '__main__':
                                    cpu_cores, max_runs, period_min,
                                    period_max, period_protect, best_signal_algorithm, quorum_strength,
                                    min_quorum, fit_method, oversampling,
-                                   t0_fit_margin, duration_grid_step)
+                                   t0_fit_margin, duration_grid_step, args.properties)
                     sherlock_targets.append(sherlock_target)
             if mode != "GLOBAL" and mode != "BOTH" and not (mode == "SECTOR" or mode == "BOTH" and isinstance(built_object_info, (
                     MissionObjectInfo, MissionFfiCoordsObjectInfo, MissionFfiIdObjectInfo))):
