@@ -30,7 +30,9 @@ class MegnoStabilityCalculator(StabilityCalculator):
         return {"star_mass": simulation_input.star_mass,
                 "periods": ",".join([str(planet_period) for planet_period in simulation_input.planet_periods]),
                 "masses": ",".join([str(mass_value) for mass_value in simulation_input.mass_arr]),
+                "inclinations": ",".join([str(ecc_value) for ecc_value in simulation_input.inc_arr]),
                 "eccentricities": ",".join([str(ecc_value) for ecc_value in simulation_input.ecc_arr]),
+                "arg_periastron": ",".join([str(ecc_value) for ecc_value in simulation_input.omega_arr]),
                 "megno": megno}
 
     def store_simulation_results(self, simulation_results, results_dir):

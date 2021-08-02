@@ -51,9 +51,9 @@ class StabilityCalculator(ABC):
                 raise ValueError("There is one body without either radius or mass information: " +
                                  json.dumps(planet_param.__dict__))
             if planet_param.radius is not None:
-                planet_params.mass = StabilityCalculator.mass_from_radius(planet_param.radius)
-                planet_param.mass_low_err = (planet_params.mass - StabilityCalculator.mass_from_radius(planet_param.radius - planet_param.radius_low_err)) * 2
-                planet_param.mass_up_err = (StabilityCalculator.mass_from_radius(planet_param.radius + planet_param.radius_up_err) - planet_params.mass) * 2
+                planet_param.mass = StabilityCalculator.mass_from_radius(planet_param.radius)
+                planet_param.mass_low_err = (planet_param.mass - StabilityCalculator.mass_from_radius(planet_param.radius - planet_param.radius_low_err)) * 2
+                planet_param.mass_up_err = (StabilityCalculator.mass_from_radius(planet_param.radius + planet_param.radius_up_err) - planet_param.mass) * 2
         return planet_params
 
     def init_rebound_simulation(self, simulation_input):
@@ -110,7 +110,7 @@ class StabilityCalculator(ABC):
                                         planet_param.mass + planet_param.mass_up_err,
                                         planet_param.mass_bins)
             planet_masses.append(mass_grid)
-            if planet_param.ecc_bins == 1 or planet_param.eccentricity_low_err == planet_param.eccentricity_up_err == 0:
+            if planet_param.ecc_bins == 1 or planet_param.ecc_low_err == planet_param.ecc_up_err == 0:
                 ecc_grid = np.full(1, planet_param.eccentricity)
             else:
                 ecc_grid = np.linspace(planet_param.eccentricity - planet_param.ecc_low_err,
@@ -138,6 +138,24 @@ class StabilityCalculator(ABC):
         omega_grid = np.array(np.meshgrid(*np.array(planet_omega))).T.reshape(-1, len(planet_omega))
         simulation_inputs = []
         i = 0
+        star_masses_scenario_num = len(star_masses)
+        masses_scenario_num = len(masses_grid)
+        period_scenario_num = len(period_grid)
+        inc_scenario_num = len(inc_grid)
+        ecc_scenario_num = len(ecc_grid)
+        omega_scenario_num = len(omega_grid)
+        scenarios_num = star_masses_scenario_num * masses_scenario_num * period_scenario_num * inc_scenario_num * \
+                        ecc_scenario_num * omega_scenario_num
+        logging.info("Preparing system values for all scenarios")
+        logging.info("%.0f star mass scenarios.", len(star_masses))
+        logging.info("%.0f bodies mass scenarios.", len(masses_grid))
+        logging.info("%.0f period scenarios.", len(period_grid))
+        logging.info("%.0f inclination scenarios.", len(inc_grid))
+        logging.info("%.0f eccentricity scenarios.", len(ecc_grid))
+        logging.info("%.0f arg of periastron scenarios.", len(omega_grid))
+        logging.info("%.0f x %.0f x %.0f x %.0f x %.0f x %.0f = %.0f total scenarios.", star_masses_scenario_num,
+                     masses_scenario_num, period_scenario_num, inc_scenario_num, ecc_scenario_num, omega_scenario_num,
+                     scenarios_num)
         for star_mass in star_masses:
             for period_key, period_arr in enumerate(period_grid):
                 for mass_key, mass_arr in enumerate(masses_grid):
@@ -146,11 +164,7 @@ class StabilityCalculator(ABC):
                             for omega_key, omega_arr in enumerate(omega_grid):
                                 simulation_inputs.append(SimulationInput(star_mass, mass_arr, period_arr, ecc_arr, inc_arr, omega_arr, i))
                                 i = i + 1
-        logging.info("%.0f star mass scenarios.", len(star_masses))
-        logging.info("%.0f bodies mass scenarios.", len(masses_grid))
-        logging.info("%.0f eccentricity scenarios.", len(ecc_grid))
-        logging.info("%.0f x %.0f x %.0f = %.0f total scenarios to be computed.", len(star_masses), len(masses_grid),
-                     len(ecc_grid), len(simulation_inputs))
+        logging.info("Finished preparing scenarios")
         with Pool(processes=cpus) as pool:
             simulation_results = pool.map(self.log_and_run_simulation, simulation_inputs)
         self.store_simulation_results(simulation_results, results_dir)

@@ -5,7 +5,7 @@ class PlanetInput:
     def __init__(self, period, period_low_err, period_up_err,
                  radius, radius_low_err, radius_up_err, eccentricity, ecc_low_err, ecc_up_err,
                  inclination, inc_low_err, inc_up_err, omega, omega_low_err, omega_up_err,
-                 mass=None, mass_low_err=None, mass_up_err=None,
+                 mass=None, mass_low_err=None, mass_up_err=None, period_bins=3,
                  mass_bins=3, ecc_bins=3, inc_bins=3, omega_bins=3):
         self.period = period
         self.period_low_err = period_low_err
@@ -26,6 +26,7 @@ class PlanetInput:
         self.mass_low_err = mass_low_err
         self.mass_up_err = mass_up_err
         self.mass_bins = mass_bins if mass_bins is not None else 3
+        self.period_bins = period_bins if period_bins is not None else 3
         self.ecc_bins = ecc_bins if ecc_bins is not None else 3
         self.inc_bins = inc_bins if inc_bins is not None else 3
         self.omega_bins = omega_bins if omega_bins is not None else 3

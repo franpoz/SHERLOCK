@@ -31,12 +31,13 @@ if __name__ == '__main__':
                     required=False)
     ap.add_argument('--properties', help="The YAML file to be used as input.", required=False)
     ap.add_argument('--cpus', type=int, default=4, help="The number of CPU cores to be used.", required=False)
-    ap.add_argument('--ecc_bins', type=int, default=3, help="The number of eccentricity bins to use.", required=False)
-    ap.add_argument('--inc_bins', type=int, default=3, help="The number of inclination bins to use.", required=False)
-    ap.add_argument('--omega_bins', type=int, default=3, help="The number of argument of periastron bins to use.",
+    ap.add_argument('--period_bins', type=int, default=1, help="The number of period bins to use.", required=False)
+    ap.add_argument('--ecc_bins', type=int, default=1, help="The number of eccentricity bins to use.", required=False)
+    ap.add_argument('--inc_bins', type=int, default=1, help="The number of inclination bins to use.", required=False)
+    ap.add_argument('--omega_bins', type=int, default=1, help="The number of argument of periastron bins to use.",
                     required=False)
-    ap.add_argument('--mass_bins', type=int, default=3, help="The number of mass bins to use.", required=False)
-    ap.add_argument('--star_mass_bins', type=int, default=3, help="The number of star mass bins to use.",
+    ap.add_argument('--mass_bins', type=int, default=1, help="The number of mass bins to use.", required=False)
+    ap.add_argument('--star_mass_bins', type=int, default=1, help="The number of star mass bins to use.",
                     required=False)
     ap.add_argument('--spock', dest='use_spock', action='store_true',
                     help="Whether to force the usage of megno even for multiplanetary systems.")
@@ -84,44 +85,46 @@ if __name__ == '__main__':
         candidates_count = len(fit_results[fit_results["#name"].str.contains("_period")])
         for i in arange(0, candidates_count):
             period_row = fit_results[fit_results["#name"].str.contains("_period")].iloc[i]
-            period = period_row["median"]
-            period_low_err = period_row["lower_error"]
-            period_up_err = period_row["upper_error"]
+            period = float(period_row["median"])
+            period_low_err = float(period_row["lower_error"])
+            period_up_err = float(period_row["upper_error"])
             inc_row = fit_derived_results[fit_derived_results["#property"].str.contains("Inclination")].iloc[i]
-            inclination = inc_row["value"]
-            inc_low_err = inc_row["lower_error"]
-            inc_up_err = inc_row["upper_error"]
+            inclination = float(inc_row["value"])
+            inc_low_err = float(inc_row["lower_error"])
+            inc_up_err = float(inc_row["upper_error"])
             duration_row = fit_derived_results[fit_derived_results["#property"].str.contains("Total transit duration")].iloc[i]
-            duration = duration_row["value"]
-            duration_low_err = duration_row["lower_error"]
-            duration_up_err = duration_row["upper_error"]
+            duration = float(duration_row["value"])
+            duration_low_err = float(duration_row["lower_error"])
+            duration_up_err = float(duration_row["upper_error"])
             radius_row = fit_derived_results[fit_derived_results["#property"].str.contains("R_\{\\\\oplus}")].iloc[i]
-            radius = duration_row["value"]
-            radius_low_err = duration_row["lower_error"]
-            radius_up_err = duration_row["upper_error"]
+            radius = float(radius_row["value"])
+            radius_low_err = float(radius_row["lower_error"])
+            radius_up_err = float(radius_row["upper_error"])
             ecc_row = fit_derived_results[fit_derived_results["#property"].str.contains("Eccentricity")].iloc[i]
-            eccentricity = ecc_row["value"]
-            ecc_low_err = ecc_row["lower_error"]
-            ecc_up_err = ecc_row["upper_error"]
+            eccentricity = float(ecc_row["value"])
+            ecc_low_err = float(ecc_row["lower_error"])
+            ecc_up_err = float(ecc_row["upper_error"])
             arg_periastron_row = fit_derived_results[fit_derived_results["#property"].str.contains("Argument of periastron")].iloc[i]
-            arg_periastron = ecc_row["value"]
-            arg_periastron_low_err = ecc_row["lower_error"]
-            arg_periastron_up_err = ecc_row["upper_error"]
-            planets_params = planets_params.append(
+            arg_periastron = float(arg_periastron_row["value"])
+            arg_periastron_low_err = float(arg_periastron_row["lower_error"])
+            arg_periastron_up_err = float(arg_periastron_row["upper_error"])
+            planets_params.append(
                 PlanetInput(period=period, period_low_err=period_low_err, period_up_err=period_up_err,
                             radius=radius, radius_low_err=radius_low_err, radius_up_err=radius_up_err,
                             eccentricity=eccentricity, ecc_low_err=ecc_low_err, ecc_up_err=ecc_up_err,
                             inclination=inclination, inc_low_err=inc_low_err, inc_up_err=inc_up_err,
                             omega=arg_periastron, omega_low_err=arg_periastron_low_err,
-                            omega_up_err=arg_periastron_up_err))
+                            omega_up_err=arg_periastron_up_err, mass_bins=args.mass_bins, period_bins=args.period_bins,
+                            ecc_bins=args.ecc_bins, inc_bins=args.inc_bins, omega_bins=args.omega_bins))
     else:
         user_properties = yaml.load(open(args.properties), yaml.SafeLoader)
         user_planet_params = []
         for planet in user_properties["BODIES"]:
+            period_bins = args.ecc_bins if "P_BINS" not in planet or args.period_bins is not None else planet["P_BINS"]
             ecc_bins = args.ecc_bins if "E_BINS" not in planet or args.ecc_bins is not None else planet["E_BINS"]
             mass_bins = args.mass_bins if "M_BINS" not in planet or args.mass_bins is not None else planet["M_BINS"]
-            inc_bins = args.inc_bins if "I_BINS" not in planet or args.mass_bins is not None else planet["I_BINS"]
-            om_bins = args.omega_bins if "O_BINS" not in planet or args.mass_bins is not None else planet["O_BINS"]
+            inc_bins = args.inc_bins if "I_BINS" not in planet or args.inc_bins is not None else planet["I_BINS"]
+            om_bins = args.omega_bins if "O_BINS" not in planet or args.omega_bins is not None else planet["O_BINS"]
             user_planet_params.append(PlanetInput(period=get_from_user(planet, "P"),
                                                   period_low_err=get_from_user(planet, "P_LOW"),
                                                   period_up_err=get_from_user(planet, "P_UP"),
@@ -140,8 +143,8 @@ if __name__ == '__main__':
                                                   omega=get_from_user(planet, "O"),
                                                   omega_low_err=get_from_user(planet, "O_LOW"),
                                                   omega_up_err=get_from_user(planet, "O_UP"),
-                                                  mass_bins=mass_bins, ecc_bins=ecc_bins, inc_bins=inc_bins,
-                                                  omega_bins=om_bins))
+                                                  period_bins=period_bins, mass_bins=mass_bins, ecc_bins=ecc_bins,
+                                                  inc_bins=inc_bins, omega_bins=om_bins))
         planets_params = planets_params + user_planet_params
         if "STAR" in user_properties:
             star_mass = star_mass_low if "M_LOW" not in user_properties["STAR"] else user_properties["STAR"]["M_LOW"]
@@ -150,7 +153,7 @@ if __name__ == '__main__':
             star_mass_bins = args.star_mass_bins if "M_BINS" not in user_properties["STAR"] \
                                                     or args.star_mass_bins is not None \
                                                  else user_properties["STAR"]["M_BINS"]
-    stability_calculator = SpockStabilityCalculator() if len(planets_params) >= 3 or args.use_spock \
+    stability_calculator = SpockStabilityCalculator() if len(planets_params) >= 3 and args.use_spock \
                            else MegnoStabilityCalculator() #TODO add check of periods ratio less than 2 for spock
     logger.info("%.0f planets to be simulated. %s will be used", len(planets_params),
                 type(stability_calculator).__name__)
