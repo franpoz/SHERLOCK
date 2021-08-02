@@ -37,7 +37,8 @@ class MegnoStabilityCalculator(StabilityCalculator):
 
     def store_simulation_results(self, simulation_results, results_dir):
         result_file = results_dir + "/stability_megno.csv"
-        results_df = pd.DataFrame(columns=['star_mass', 'periods', 'masses', 'eccentricities', 'megno'])
+        results_df = pd.DataFrame(columns=['star_mass', 'periods', 'masses', 'inclinations', 'eccentricities',
+                                           'arg_periastron', 'megno'])
         results_df = results_df.append(simulation_results, ignore_index=True)
         results_df = results_df.sort_values('megno')
         results_df.to_csv(result_file, index=False)

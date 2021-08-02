@@ -17,21 +17,16 @@ class SpockStabilityCalculator(StabilityCalculator):
         return {"star_mass": simulation_input.star_mass,
                 "periods": ",".join([str(planet_period) for planet_period in simulation_input.planet_periods]),
                 "masses": ",".join([str(mass_value) for mass_value in simulation_input.mass_arr]),
+                "inclinations": ",".join([str(ecc_value) for ecc_value in simulation_input.inc_arr]),
                 "eccentricities": ",".join([str(ecc_value) for ecc_value in simulation_input.ecc_arr]),
+                "arg_periastron": ",".join([str(ecc_value) for ecc_value in simulation_input.omega_arr]),
                 "stability_probability": stability_probability, "median_expected_instability_time": median}
 
     def store_simulation_results(self, simulation_results, results_dir):
         result_file = results_dir + "/stability_spock.csv"
-        results_df = pd.DataFrame(columns=['star_mass', 'periods', 'masses', 'eccentricities', 'stability_probability',
+        results_df = pd.DataFrame(columns=['star_mass', 'periods', 'masses', 'inclinations', 'eccentricities',
+                                           'arg_periastron', 'stability_probability',
                                            'median_expected_instability_time'])
         results_df = results_df.append(simulation_results, ignore_index=True)
         results_df = results_df.sort_values('stability_probability', ascending=False)
         results_df.to_csv(result_file, index=False)
-
-# grid = 5
-# sc = SpockStabilityCalculator()
-# par_e = np.linspace(0.0, 0.7, grid)
-# par_e1 = np.linspace(0.0, 0.7, grid)
-# for i in par_e:
-#     for j in par_e1:
-#         sc.run(0.53, [PlanetInput(1.17, 0.01749, 11.76943, i), PlanetInput(1.37, 0.03088, 2.97, j), PlanetInput(2.45, 0, 3.9, 0)])
