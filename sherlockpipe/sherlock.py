@@ -211,7 +211,7 @@ class Sherlock:
             lc, star_info, transits_min_count, cadence, sectors, detrend_source_period = self.__prepare(sherlock_target)
             time = lc.time.value
             flux = lc.flux.value
-            flux_err = lc.time.value
+            flux_err = lc.flux_err.value
             period_grid = self.__calculate_period_grid(time, sherlock_target, star_info, transits_min_count)
             id_run = 1
             best_signal_score = 1

@@ -673,7 +673,7 @@ if __name__ == '__main__':
         candidates = pd.read_csv(validator.object_dir + "/candidates.csv")
         if candidate_selection < 1 or candidate_selection > len(candidates.index):
             raise SystemExit("User selected a wrong candidate number.")
-        candidates = candidates.rename(columns={'Object Id': 'TICID'})
+        candidates = candidates.rename(columns={'Object Id': 'id'})
         candidate = candidates.iloc[[candidate_selection - 1]]
         candidate['number'] = [candidate_selection]
         validator.data_dir = validator.object_dir

@@ -327,19 +327,22 @@ class Vetter:
                                           (time < transit_time + folded_plot_range))
         folded_phase = time[folded_phase_zoom_mask]
         folded_y = flux[folded_phase_zoom_mask]
-        in_transit = (folded_phase > transit_time - duration / 2) & (folded_phase < transit_time + duration / 2)
-        in_transit_center = (np.abs(folded_phase - transit_time)).argmin()
-        model_flux = Vetter.get_transit_model(in_transit, in_transit_center, depth)
-        axs.plot(folded_phase, model_flux, color="red")
-        axs.scatter(folded_phase[~in_transit], folded_y[~in_transit], color="gray")
-        axs.scatter(folded_phase[in_transit], folded_y[in_transit], color="darkorange")
-        axs.set_xlim([transit_time - folded_plot_range, transit_time + folded_plot_range])
-        axs.set_title(str(id) + " Single Transit at T={:.2f}d".format(transit_time))
-        #axs.set_ylim([1 - 3 * depth, 1 + 3 * depth])
-        axs.set_xlim([transit_time - folded_plot_range, transit_time + folded_plot_range])
-        axs.set_xlabel("Time (d)")
-        axs.set_ylabel("Flux norm.")
-        logging.info("Processed single transit plot for T0=%.2f", transit_time)
+        if len(folded_phase) > 0:
+            in_transit = (folded_phase > transit_time - duration / 2) & (folded_phase < transit_time + duration / 2)
+            in_transit_center = (np.abs(folded_phase - transit_time)).argmin()
+            model_flux = Vetter.get_transit_model(in_transit, in_transit_center, depth)
+            axs.plot(folded_phase, model_flux, color="red")
+            axs.scatter(folded_phase[~in_transit], folded_y[~in_transit], color="gray")
+            axs.scatter(folded_phase[in_transit], folded_y[in_transit], color="darkorange")
+            axs.set_xlim([transit_time - folded_plot_range, transit_time + folded_plot_range])
+            axs.set_title(str(id) + " Single Transit at T={:.2f}d".format(transit_time))
+            #axs.set_ylim([1 - 3 * depth, 1 + 3 * depth])
+            axs.set_xlim([transit_time - folded_plot_range, transit_time + folded_plot_range])
+            axs.set_xlabel("Time (d)")
+            axs.set_ylabel("Flux norm.")
+            logging.info("Processed single transit plot for T0=%.2f", transit_time)
+        else:
+            logging.info("Not plotting single transit for T0=%.2f as the data is empty", transit_time)
 
     @staticmethod
     def plot_folded_curve(file_dir, id, lc, period, epoch, duration, depth):
@@ -459,8 +462,8 @@ class Vetter:
             duration = df.loc[df['TICID'] == tic]['duration'].iloc[0]
             depth = df.loc[df['TICID'] == tic]['depth'].iloc[0]
             ffi = df.loc[df['TICID'] == tic]['ffi'].iloc[0]
-            run = int(candidate.loc[candidate['id'] == tic]['number'].iloc[0])
-            curve = int(candidate.loc[candidate['id'] == tic]['curve'].iloc[0])
+            run = int(candidate.loc[candidate['TICID'] == tic]['number'].iloc[0])
+            curve = int(candidate.loc[candidate['TICID'] == tic]['curve'].iloc[0])
             logging.info("------------------")
             logging.info("Candidate info")
             logging.info("------------------")
