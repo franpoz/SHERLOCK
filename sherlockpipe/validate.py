@@ -92,9 +92,8 @@ class Validator:
             sectors = [0]
         self.data_dir = validation_dir
         object_id = object_id.iloc[0]
-        mission, mission_prefix, id_int = LcBuilder().parse_object_info(object_id)
         try:
-            self.execute_triceratops(cpus, validation_dir, mission, str(id_int), sectors, lc_file, transit_depth,
+            self.execute_triceratops(cpus, validation_dir, object_id, sectors, lc_file, transit_depth,
                                      period, t0, duration, contrast_curve_file)
         except Exception as e:
             traceback.print_exc()
@@ -103,7 +102,7 @@ class Validator:
         # except Exception as e:
         #     traceback.print_exc()
 
-    def execute_triceratops(self, cpus, indir, mission, id_int, sectors, lc_file, transit_depth, period, t0,
+    def execute_triceratops(self, cpus, indir, object_id, sectors, lc_file, transit_depth, period, t0,
                             transit_duration, contrast_curve_file):
         """ Calculates probabilities of the signal being caused by any of the following astrophysical sources:
         TP No unresolved companion. Transiting planet with Porb around target star. (i, Rp)
@@ -130,7 +129,7 @@ class Validator:
         when rounding to the nearest percent)
         @param cpus: number of cpus to be used
         @param indir: root directory to store the results
-        @param id_int: the tess object id for which the analysis will be run
+        @param id_int: the object id for which the analysis will be run
         @param sectors: the sectors of the tic
         @param lc_file: the light curve source file
         @param transit_depth: the depth of the transit signal (ppts)
@@ -149,18 +148,10 @@ class Validator:
         logging.info("Validation procedures")
         logging.info("----------------------")
         logging.info("Pre-processing sectors")
-        if mission != "TESS":
-            star_df = pd.read_csv(self.object_dir + "/params_star.csv")
-            star = eleanor.multi_sectors(coords=(star_df.at[0, "ra"], star_df.at[0, "dec"]), sectors='all',
-                                         tesscut_size=31, post_dir=const.USER_HOME_ELEANOR_CACHE)
-            if len(star) == 0 or star[0].tic is None:
-                raise ValueError("Can't validate target as there is no data from TESS FFIs")
-            tic = star[0].tic
-            sectors = np.array([target.sector for target in star])
-        else:
+        mission, mission_prefix, id_int = LcBuilder().parse_object_info(object_id)
+        if mission == "TESS":
             sectors = np.array(sectors)
-            tic = id_int
-            sectors_cut = TesscutClass().get_sectors("TIC " + str(tic))
+            sectors_cut = TesscutClass().get_sectors("TIC " + str(id_int))
             sectors_cut = np.array([sector_row["sector"] for sector_row in sectors_cut])
             if len(sectors) != len(sectors_cut):
                 logging.warning("WARN: Some sectors were not found in TESSCUT")
@@ -179,43 +170,46 @@ class Validator:
                 return save_dir, None, None
         logging.info("Will execute validation for sectors: " + str(sectors))
         logging.info("Acquiring triceratops target")
-        target = tr.target(ID=tic, sectors=sectors)
+        target = tr.target(ID=id_int, mission=mission, sectors=sectors)
         # TODO allow user input apertures
         logging.info("Acquiring TPFs to build apertures")
-        tpfs = lightkurve.search_targetpixelfile("TIC " + str(tic), mission="TESS", cadence="short", sector=sectors.tolist())\
-            .download_all()
-        star = eleanor.multi_sectors(tic=tic, sectors=sectors, tesscut_size=11, post_dir=const.USER_HOME_ELEANOR_CACHE)
+        sectors = sectors if isinstance(sectors, list) else sectors.tolist()
+        if mission == "Kepler":
+            tpfs = lightkurve.search_targetpixelfile(object_id, mission=mission, cadence="short", quarter=sectors)\
+                .download_all()
+        elif mission == "K2":
+            tpfs = lightkurve.search_targetpixelfile(object_id, mission=mission, cadence="short", campaign=sectors)\
+                .download_all()
         apertures = []
-        sector_num = 0
         logging.info("Building apertures")
-        for s in star:
-            if tpfs is None:
+        if tpfs is not None:
+            tpfs_unique = []
+            previous_sector = 0
+            ra, dec = tpfs[0].ra, tpfs[0].dec
+            for tpf in tpfs:
+                sector = tpf.sector if mission == "TESS" else tpf.quarter if mission == "Kepler" else tpf.campaign
+                if previous_sector != sector:
+                    tpfs_unique.append(tpf)
+                previous_sector = sector
+            for tpf in tpfs_unique:
+                aperture = Validator.compute_aperture(tpf.pipeline_mask, tpf.row, tpf.column)
+                apertures.append(aperture)
+                sector = tpf.sector if mission == "TESS" else tpf.quarter if mission == "Kepler" else tpf.campaign
+                logging.info("Saving aperture plot for sector %s", sector)
+                target.plot_field(save=True, fname=save_dir + "/field_S" + str(sector), sector=sector,
+                                ap_pixels=aperture)
+        else:
+            star = eleanor.multi_sectors(tic=id_int, sectors=sectors, tesscut_size=11,
+                                         post_dir=const.USER_HOME_ELEANOR_CACHE)
+            ra, dec = star[0].coords[0], star[0].coords[1]
+            for s in star:
                 target_data = eleanor.TargetData(s, height=11, width=11)
-                pipeline_mask = target_data.aperture.astype(bool)
-                column = s.position_on_chip[0]
-                row = s.position_on_chip[1]
-            else:
-                tpf_idx = [data.sector if data.sector == s.sector else -1 for data in tpfs.data]
-                tpf = tpfs[np.where(tpf_idx > np.zeros(len(tpf_idx)))[0][0]]
-                pipeline_mask = tpfs[np.where(tpf_idx > np.zeros(len(tpf_idx)))[0][0]].pipeline_mask
-                column = tpf.column
-                row = tpf.row
-            pipeline_mask = np.transpose(pipeline_mask)
-            pipeline_mask_triceratops = np.zeros((len(pipeline_mask[0]), len(pipeline_mask[:][0]), 2))
-            for i in range(0, len(pipeline_mask[0])):
-                for j in range(0, len(pipeline_mask[:][0])):
-                    pipeline_mask_triceratops[i, j] = [column + i, row + j]
-            pipeline_mask_triceratops[~pipeline_mask] = None
-            aperture = []
-            for i in range(0, len(pipeline_mask_triceratops[0])):
-                for j in range(0, len(pipeline_mask_triceratops[:][0])):
-                    if not np.isnan(pipeline_mask_triceratops[i, j]).any():
-                        aperture.append(pipeline_mask_triceratops[i, j])
-            apertures.append(aperture)
-            logging.info("Saving aperture plot for sector %s", s.sector)
-            target.plot_field(save=True, fname=save_dir + "/field_S" + str(s.sector), sector=s.sector,
-                            ap_pixels=aperture)
-            sector_num = sector_num + 1
+                aperture = Validator.compute_aperture(target_data.aperture.astype(bool), s.position_on_chip[0],
+                                                      s.position_on_chip[1])
+                apertures.append(aperture)
+                logging.info("Saving aperture plot for sector %s", s.sector)
+                target.plot_field(save=True, fname=save_dir + "/field_S" + str(s.sector), sector=s.sector,
+                                ap_pixels=aperture)
         apertures = np.array(apertures)
         depth = transit_depth / 1000
         if contrast_curve_file is not None:
@@ -244,7 +238,8 @@ class Validator:
         inner_folded_range_args = np.where((0 - folded_plot_range < lc.time.value) & (lc.time.value < 0 + folded_plot_range))
         lc = lc[inner_folded_range_args]
         lc.time = lc.time * period
-        bin_means, bin_edges, binnumber = stats.binned_statistic(lc.time.value, lc.flux.value, statistic='mean', bins=100)
+        bin_means, bin_edges, binnumber = stats.binned_statistic(lc.time.value, lc.flux.value, statistic='mean',
+                                                                 bins=500)
         bin_width = (bin_edges[1] - bin_edges[0])
         bin_centers = bin_edges[1:] - bin_width/2
         lc.plot()
@@ -255,7 +250,7 @@ class Validator:
         plt.xlabel("Time")
         plt.ylabel("Flux")
         plt.savefig(save_dir + "/folded_curve_binned.png")
-        sigma = np.nanmean(lc.flux_err)
+        sigma = np.nanmean(lc.flux_err.value)
         logging.info("Preparing validation processes inputs")
         input_n_times = [ValidatorInput(save_dir, copy.deepcopy(target), bin_centers, bin_means, sigma, period, depth,
                                         apertures, value, contrast_curve_file)
@@ -313,7 +308,23 @@ class Validator:
         target.probs = probs_total_df
         # target.plot_fits(save=True, fname=save_dir + "/scenario_fits", time=lc.time.value, flux_0=lc.flux.value,
         #                  flux_err_0=sigma)
-        return save_dir, star[0].coords[0], star[0].coords[1]
+        return save_dir, ra, dec
+
+    @staticmethod
+    def compute_aperture(pipeline_mask, row, column):
+        pipeline_mask = np.transpose(pipeline_mask)
+        #TODO resize pipeline_mask to match
+        pipeline_mask_triceratops = np.zeros((len(pipeline_mask), len(pipeline_mask[0]), 2))
+        for i in range(0, len(pipeline_mask)):
+            for j in range(0, len(pipeline_mask[0])):
+                pipeline_mask_triceratops[i, j] = [column + i, row + j]
+        pipeline_mask_triceratops[~pipeline_mask] = None
+        aperture = []
+        for i in range(0, len(pipeline_mask_triceratops)):
+            for j in range(0, len(pipeline_mask_triceratops[0])):
+                if not np.isnan(pipeline_mask_triceratops[i, j]).any():
+                    aperture.append(pipeline_mask_triceratops[i, j])
+        return aperture
 
     # def execute_vespa(self, cpus, indir, object_id, sectors, lc_file, transit_depth, period, epoch, duration, rprs):
     #     vespa_dir = indir + "/vespa/"
@@ -614,6 +625,7 @@ class TriceratopsThreadValidator:
                          time=input.time, flux_0=input.flux, flux_err_0=input.sigma)
         return input.target.FPP, input.target.NFPP, input.target.probs, input.target.star_num, input.target.u1, \
                input.target.u2, input.target.fluxratio_EB, input.target.fluxratio_comp
+
 
 class ValidatorInput:
     def __init__(self, save_dir, target, time, flux, sigma, period, depth, apertures, run, contrast_curve):
