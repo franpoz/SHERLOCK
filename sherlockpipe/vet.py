@@ -659,7 +659,7 @@ if __name__ == '__main__':
     handler.setFormatter(formatter)
     logger.addHandler(handler)
     logging.info("Starting vetting")
-    star_df = pd.read_csv(args.object_dir + "/params_star.csv")
+    star_df = pd.read_csv(vetter.object_dir + "/params_star.csv")
     if args.candidate is None:
         user_properties = yaml.load(open(args.properties), yaml.SafeLoader)
         candidate = pd.DataFrame(columns=['id', 'period', 'depth', 't0', 'sectors', 'ffi', 'number', 'lc'])
