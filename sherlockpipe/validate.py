@@ -12,7 +12,7 @@ import matplotlib.pyplot as plt
 import yaml
 from astroquery.mast import TesscutClass
 from lcbuilder.lcbuilder_class import LcBuilder
-from lightkurve import TessLightCurve
+from lightkurve import TessLightCurve, KeplerLightCurve
 from argparse import ArgumentParser
 from scipy import stats
 from sherlockpipe import constants as const
@@ -174,6 +174,7 @@ class Validator:
         # TODO allow user input apertures
         logging.info("Acquiring TPFs to build apertures")
         sectors = sectors if isinstance(sectors, list) else sectors.tolist()
+        tpfs = None
         if mission == "Kepler":
             tpfs = lightkurve.search_targetpixelfile(object_id, mission=mission, cadence="short", quarter=sectors)\
                 .download_all()
@@ -231,7 +232,10 @@ class Validator:
         lc_len = len(time)
         zeros_lc = np.zeros(lc_len)
         logging.info("Preparing validation light curve for target")
-        lc = TessLightCurve(time=time, flux=flux, flux_err=flux_err, quality=zeros_lc)
+        if mission == "TESS":
+            lc = TessLightCurve(time=time, flux=flux, flux_err=flux_err, quality=zeros_lc)
+        else:
+            lc = KeplerLightCurve(time=time, flux=flux, flux_err=flux_err, quality=zeros_lc)
         lc.extra_columns = []
         lc = lc.fold(period=period, epoch_time=t0, normalize_phase=True)
         folded_plot_range = duration / 2 / period * 5
@@ -239,16 +243,16 @@ class Validator:
         lc = lc[inner_folded_range_args]
         lc.time = lc.time * period
         bin_means, bin_edges, binnumber = stats.binned_statistic(lc.time.value, lc.flux.value, statistic='mean',
-                                                                 bins=500)
+                                                                 bins=100)
         bin_width = (bin_edges[1] - bin_edges[0])
         bin_centers = bin_edges[1:] - bin_width/2
         lc.plot()
-        plt.title("TIC " + str(id_int))
+        plt.title(object_id)
         plt.savefig(save_dir + "/folded_curve.png")
         plt.plot(bin_centers, bin_means)
-        plt.title("TIC " + str(id_int))
-        plt.xlabel("Time")
-        plt.ylabel("Flux")
+        plt.title(object_id)
+        plt.xlabel("Time (d)")
+        plt.ylabel("Flux norm.")
         plt.savefig(save_dir + "/folded_curve_binned.png")
         sigma = np.nanmean(lc.flux_err.value)
         logging.info("Preparing validation processes inputs")
@@ -311,7 +315,7 @@ class Validator:
         return save_dir, ra, dec
 
     @staticmethod
-    def compute_aperture(pipeline_mask, row, column):
+    def compute_aperture(pipeline_mask, column, row):
         pipeline_mask = np.transpose(pipeline_mask)
         #TODO resize pipeline_mask to match
         pipeline_mask_triceratops = np.zeros((len(pipeline_mask), len(pipeline_mask[0]), 2))
@@ -482,132 +486,6 @@ class Validator:
     #         bands=None
     #     )
 
-    @staticmethod
-    def plot_fits(target, save_file, time: np.ndarray, flux_0: np.ndarray, sigma_0: float):
-        """
-        Plots light curve for best fit instance of each scenario.
-        Args:
-            time (numpy array): Time of each data point
-                                [days from transit midpoint].
-            flux_0 (numpy array): Normalized flux of each data point.
-            sigma_0 (numpy array): Uncertainty of flux.
-        """
-        scenario_idx = target.probs[target.probs["ID"] != 0].index.values
-        df = target.probs[target.probs["ID"] != 0]
-        star_num = target.star_num[target.probs["ID"] != 0]
-        u1s = target.u1[target.probs["ID"] != 0]
-        u2s = target.u2[target.probs["ID"] != 0]
-        fluxratios_EB = target.fluxratio_EB[target.probs["ID"] != 0]
-        fluxratios_comp = target.fluxratio_comp[target.probs["ID"] != 0]
-
-        model_time = np.linspace(min(time), max(time), 100)
-
-        f, ax = plt.subplots(
-            len(df)//3, 3, figsize=(12, len(df)//3*4), sharex=True
-            )
-        G = constants.G.cgs.value
-        M_sun = constants.M_sun.cgs.value
-        for i in range(len(df)//3):
-            for j in range(3):
-                if i == 0:
-                    k = j
-                else:
-                    k = 3*i+j
-                # subtract flux from other stars in the aperture
-                idx = np.argwhere(
-                    target.stars["ID"].values == str(df["ID"].values[k])
-                    )[0, 0]
-                flux, sigma = renorm_flux(
-                    flux_0, sigma_0, target.stars["fluxratio"].values[idx]
-                    )
-                # all TPs
-                if j == 0:
-                    if star_num[k] == 1:
-                        comp = False
-                    else:
-                        comp = True
-                    a = (
-                        (G*df["M_s"].values[k]*M_sun)/(4*np.pi**2)
-                        * (df['P_orb'].values[k]*86400)**2
-                        )**(1/3)
-                    u1, u2 = u1s[k], u2s[k]
-                    best_model = simulate_TP_transit(
-                        model_time,
-                        df['R_p'].values[k], df['P_orb'].values[k],
-                        df['inc'].values[k], a, df["R_s"].values[k],
-                        u1, u2, fluxratios_comp[k], comp
-                        )
-                # all small EBs
-                elif j == 1:
-                    if star_num[k] == 1:
-                        comp = False
-                    else:
-                        comp = True
-                    mass = df["M_s"].values[k] + df["M_EB"].values[k]
-                    a = (
-                        (G*mass*M_sun)/(4*np.pi**2)
-                        * (df['P_orb'].values[k]*86400)**2
-                        )**(1/3)
-                    u1, u2 = u1s[k], u2s[k]
-                    best_model = simulate_EB_transit(
-                        model_time,
-                        df["R_EB"].values[k], fluxratios_EB[k],
-                        df['P_orb'].values[k], df['inc'].values[k],
-                        a, df["R_s"].values[k], u1, u2,
-                        fluxratios_comp[k], comp
-                        )[0]
-                # all twin EBs
-                elif j == 2:
-                    if star_num[k] == 1:
-                        comp = False
-                    else:
-                        comp = True
-                    mass = df["M_s"].values[k] + df["M_EB"].values[k]
-                    a = (
-                        (G*mass*M_sun)/(4*np.pi**2)
-                        * (df['P_orb'].values[k]*86400)**2
-                        )**(1/3)
-                    u1, u2 = u1s[k], u2s[k]
-                    best_model = simulate_EB_transit(
-                        model_time,
-                        df["R_EB"].values[k], fluxratios_EB[k],
-                        df['P_orb'].values[k], df['inc'].values[k],
-                        a, df["R_s"].values[k], u1, u2,
-                        fluxratios_comp[k], comp
-                        )[0]
-
-                y_formatter = ticker.ScalarFormatter(useOffset=False)
-                ax[i, j].yaxis.set_major_formatter(y_formatter)
-                ax[i, j].errorbar(
-                    time, flux, sigma, fmt=".",
-                    color="blue", alpha=0.1, zorder=0
-                    )
-                ax[i, j].plot(
-                    model_time, best_model, "k-", lw=5, zorder=2
-                    )
-                ax[i, j].set_ylabel("normalized flux", fontsize=12)
-                ax[i, j].annotate(
-                    str(df["ID"].values[k]), xy=(0.05, 0.92),
-                    xycoords="axes fraction", fontsize=12
-                    )
-                ax[i, j].annotate(
-                    str(df["scenario"].values[k]), xy=(0.05, 0.05),
-                    xycoords="axes fraction", fontsize=12
-                    )
-        ax[len(df)//3-1, 0].set_xlabel(
-            "days from transit center", fontsize=12
-            )
-        ax[len(df)//3-1, 1].set_xlabel(
-            "days from transit center", fontsize=12
-            )
-        ax[len(df)//3-1, 2].set_xlabel(
-            "days from transit center", fontsize=12
-            )
-        plt.tight_layout()
-        if save_file is not None:
-            plt.savefig(save_file)
-        plt.show()
-        return
 
 class TriceratopsThreadValidator:
     def __init__(self) -> None:
