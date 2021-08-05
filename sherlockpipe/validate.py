@@ -552,12 +552,13 @@ if __name__ == '__main__':
     handler.setFormatter(formatter)
     logger.addHandler(handler)
     logging.info("Starting validation")
+    star_df = pd.read_csv(validator.object_dir + "/params_star.csv")
     if args.candidate is None:
         logging.info("Reading validation input from properties file: %s", args.properties)
         user_properties = yaml.load(open(args.properties), yaml.SafeLoader)
         candidate = pd.DataFrame(columns=['id', 'period', 'depth', 't0', 'sectors', 'ffi', 'number', 'lc'])
         candidate = candidate.append(user_properties, ignore_index=True)
-        candidate['id'] = candidate["id"].apply(str)
+        candidate['id'] = star_df.iloc[0]["obj_id"]
     else:
         candidate_selection = int(args.candidate)
         candidates = pd.read_csv(validator.object_dir + "/candidates.csv")
