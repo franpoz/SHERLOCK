@@ -118,8 +118,8 @@ class Vetter:
         # SAVE the new output path
         if not os.path.exists("{}/_config.txt".format(indir)):
             self.update()
-        candidate_df['TICID'] = candidate_df['TICID'].str.replace("TIC ", "")
-        TIC_wanted = list(set(candidate_df['TICID']))
+        candidate_df['id'] = candidate_df['id'].str.replace("TIC ", "")
+        TIC_wanted = list(set(candidate_df['id']))
         nlc = len(TIC_wanted)
         logging.info("nlc length: {}".format(nlc))
         logging.info('{}/manifest.csv'.format(str(indir)))
@@ -127,7 +127,7 @@ class Vetter:
             logging.info("Existing manifest file found, will skip previously processed LCs and append to end of manifest file")
         else:
             logging.info("Creating new manifest file")
-            metadata_header = ['TICID', 'Marked Transits', 'Sectors', 'RA', 'DEC', 'Solar Rad', 'TMag', 'Teff',
+            metadata_header = ['id', 'Marked Transits', 'Sectors', 'RA', 'DEC', 'Solar Rad', 'TMag', 'Teff',
                                'thissector', 'TOI', 'TCE', 'TCE link', 'EB', 'Systematics', 'Background Flux',
                                'Centroids Positions', 'Momentum Dumps', 'Aperture Size', 'In/out Flux', 'Keep',
                                'Comment', 'starttime']
@@ -264,7 +264,7 @@ class Vetter:
         # return the tic so that it can be stored in the manifest to keep track of which files have already been produced
         # and to be able to skip the ones that have already been processed if the code has to be restarted.
         mnd = {}
-        mnd['TICID'] = tic
+        mnd['id'] = tic
         mnd['MarkedTransits'] = transit_list
         mnd['Sectors'] = sectors_all
         mnd['RA'] = ra
@@ -449,7 +449,7 @@ class Vetter:
     def vetting(self, candidate, cpus):
         """
         Performs the LATTE vetting procedures
-        @param candidate: the candidate dataframe containing TICID, period, t0, transits and sectors data.
+        @param candidate: the candidate dataframe containing id, period, t0, transits and sectors data.
         @param cpus: the number of cpus to be used. This parameter is of no use yet.
         """
         indir, df, TIC_wanted, ffi = self.__prepare(candidate)
@@ -457,13 +457,13 @@ class Vetter:
             # check the existing manifest to see if I've processed this file!
             manifest_table = pd.read_csv('{}/manifest.csv'.format(str(indir)))
             # get the transit time list
-            period = df.loc[df['TICID'] == tic]['period'].iloc[0]
-            t0 = df.loc[df['TICID'] == tic]['t0'].iloc[0]
-            duration = df.loc[df['TICID'] == tic]['duration'].iloc[0]
-            depth = df.loc[df['TICID'] == tic]['depth'].iloc[0]
-            ffi = df.loc[df['TICID'] == tic]['ffi'].iloc[0]
-            run = int(candidate.loc[candidate['TICID'] == tic]['number'].iloc[0])
-            curve = int(candidate.loc[candidate['TICID'] == tic]['curve'].iloc[0])
+            period = df.loc[df['id'] == tic]['period'].iloc[0]
+            t0 = df.loc[df['id'] == tic]['t0'].iloc[0]
+            duration = df.loc[df['id'] == tic]['duration'].iloc[0]
+            depth = df.loc[df['id'] == tic]['depth'].iloc[0]
+            ffi = df.loc[df['id'] == tic]['ffi'].iloc[0]
+            run = int(candidate.loc[candidate['id'] == tic]['number'].iloc[0])
+            curve = int(candidate.loc[candidate['id'] == tic]['curve'].iloc[0])
             logging.info("------------------")
             logging.info("Candidate info")
             logging.info("------------------")
@@ -475,7 +475,7 @@ class Vetter:
             logging.info("Run: %.0f", run)
             logging.info("Detrend curve: %.0f", curve)
             try:
-                sectors_in = ast.literal_eval(str(((df.loc[df['TICID'] == tic]['sectors']).values)[0]))
+                sectors_in = ast.literal_eval(str(((df.loc[df['id'] == tic]['sectors']).values)[0]))
                 if (type(sectors_in) == int) or (type(sectors_in) == float):
                     sectors = [sectors_in]
                 else:
@@ -495,7 +495,7 @@ class Vetter:
                 res = self.__process(indir, tic, sectors, t0, period, duration, depth, ffi, run, curve)
                 ra = res['RA']
                 dec = res['DEC']
-                if res['TICID'] == -99:
+                if res['id'] == -99:
                     logging.error('something went wrong with the LATTE results')
             except Exception as e:
                 traceback.print_exc()
@@ -659,18 +659,18 @@ if __name__ == '__main__':
     handler.setFormatter(formatter)
     logger.addHandler(handler)
     logging.info("Starting vetting")
+    star_df = pd.read_csv(args.object_dir + "/params_star.csv")
     if args.candidate is None:
         user_properties = yaml.load(open(args.properties), yaml.SafeLoader)
         candidate = pd.DataFrame(columns=['id', 'period', 'depth', 't0', 'sectors', 'ffi', 'number', 'lc'])
         candidate = candidate.append(user_properties, ignore_index=True)
-        candidate = candidate.rename(columns={'id': 'TICID'})
-        candidate['TICID'] = candidate["TICID"].apply(str)
+        candidate['id'] = star_df.iloc[0]["obj_id"]
     else:
         candidate_selection = int(args.candidate)
         candidates = pd.read_csv(vetter.object_dir + "/candidates.csv")
         if candidate_selection < 1 or candidate_selection > len(candidates.index):
             raise SystemExit("User selected a wrong candidate number.")
-        candidates = candidates.rename(columns={'Object Id': 'TICID'})
+        candidates = candidates.rename(columns={'Object Id': 'id'})
         candidate = candidates.iloc[[candidate_selection - 1]]
         candidate['number'] = [candidate_selection]
         vetter.data_dir = vetter.object_dir
