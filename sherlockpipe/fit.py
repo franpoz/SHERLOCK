@@ -288,7 +288,7 @@ if __name__ == '__main__':
     handler.setLevel(logging.INFO)
     handler.setFormatter(formatter)
     logger.addHandler(handler)
-    star_df = pd.read_csv(fitter.data_dir + "/params_star.csv")
+    star_df = pd.read_csv(fitter.object_dir + "/params_star.csv")
     candidate_selections = None
     if args.candidate is None:
         #TODO allow several candidates to be fit
