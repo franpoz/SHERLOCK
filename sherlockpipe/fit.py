@@ -266,15 +266,16 @@ if __name__ == '__main__':
     ap.add_argument('--properties', help="The YAML file to be used as input.", required=False)
     args = ap.parse_args()
     index = 0
-    fitting_dir = args.object_dir + "/fit_" + str(index)
+    object_dir = os.getcwd() if args.object_dir is None else args.object_dir
+    fitting_dir = object_dir + "/fit_" + str(index)
     while os.path.exists(fitting_dir) or os.path.isdir(fitting_dir):
-        fitting_dir = args.object_dir + "/fit_" + str(index)
+        fitting_dir = object_dir + "/fit_" + str(index)
         index = index + 1
     os.mkdir(fitting_dir)
     file_dir = fitting_dir + "/fit.log"
     if os.path.exists(file_dir):
         os.remove(file_dir)
-    fitter = Fitter(args.object_dir, fitting_dir, args.only_initial, args.mcmc, args.detrend)
+    fitter = Fitter(object_dir, fitting_dir, args.only_initial, args.mcmc, args.detrend)
     formatter = logging.Formatter('%(message)s')
     logger = logging.getLogger()
     while len(logger.handlers) > 0:
