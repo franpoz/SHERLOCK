@@ -1,6 +1,5 @@
-# Thise YAML file illustrates how to provide data for the validation process. Comma separated sectors and transit times
+# This YAML file illustrates how to provide data for the validation process. Comma separated sectors and transit times
 # are required among the mission id and a flag to specify whether to look into Full Frame Images.
-id: TIC 426017070
 sectors: 2,13,27,28,29
 period: 0.59925
 t0: 1354.5807
