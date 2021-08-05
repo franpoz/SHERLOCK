@@ -529,12 +529,13 @@ if __name__ == '__main__':
     ap.add_argument('--contrast_curve', type=str, default=None, help="The contrast curve in csv format.", required=False)
     args = ap.parse_args()
     index = 0
-    validation_dir = args.object_dir + "/validation_" + str(index)
+    object_dir = os.getcwd() if args.object_dir is None else args.object_dir
+    validation_dir = object_dir + "/validation_" + str(index)
     while os.path.exists(validation_dir) or os.path.isdir(validation_dir):
-        validation_dir = args.object_dir + "/validation_" + str(index)
+        validation_dir = object_dir + "/validation_" + str(index)
         index = index + 1
     os.mkdir(validation_dir)
-    validator = Validator(args.object_dir, validation_dir)
+    validator = Validator(object_dir, validation_dir)
     file_dir = validation_dir + "/validation.log"
     if os.path.exists(file_dir):
         os.remove(file_dir)
