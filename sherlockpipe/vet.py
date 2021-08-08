@@ -361,20 +361,20 @@ class Vetter:
         cols = 2
         fig, axs = plt.subplots(rows, cols, figsize=figsize, constrained_layout=True)
         logging.info("Preparing folded light curves for target")
-        Vetter.plot_phase_folded_axs(id, axs[0][0], lc, period, epoch + period / 2, depth, duration)
-        Vetter.plot_phase_folded_axs(id, axs[0][1], lc, period, epoch, depth, duration)
+        Vetter.compute_phased_values_and_fill_plot(id, axs[0][0], lc, period, epoch + period / 2, depth, duration)
+        Vetter.compute_phased_values_and_fill_plot(id, axs[0][1], lc, period, epoch, depth, duration)
         period = 2 * period
-        Vetter.plot_phase_folded_axs(id, axs[1][0], lc, period, epoch + period / 2, depth, duration)
-        Vetter.plot_phase_folded_axs(id, axs[1][1], lc, period, epoch, depth, duration)
+        Vetter.compute_phased_values_and_fill_plot(id, axs[1][0], lc, period, epoch + period / 2, depth, duration)
+        Vetter.compute_phased_values_and_fill_plot(id, axs[1][1], lc, period, epoch, depth, duration)
         period = period / 4
-        Vetter.plot_phase_folded_axs(id, axs[2][0], lc, period, epoch + period / 2, depth, duration)
-        Vetter.plot_phase_folded_axs(id, axs[2][1], lc, period, epoch, depth, duration)
+        Vetter.compute_phased_values_and_fill_plot(id, axs[2][0], lc, period, epoch + period / 2, depth, duration)
+        Vetter.compute_phased_values_and_fill_plot(id, axs[2][1], lc, period, epoch, depth, duration)
         plt.savefig(file_dir + "/odd_even_folded_curves.png", dpi=200)
         fig.clf()
         plt.close(fig)
 
     @staticmethod
-    def plot_phase_folded_axs(id, axs, lc, period, epoch, depth, duration):
+    def compute_phased_values_and_fill_plot(id, axs, lc, period, epoch, depth, duration, range=5, bins=None):
         """
         Phase-folds the input light curve and plots it centered in the given epoch
         @param id: the candidate name
@@ -384,30 +384,37 @@ class Vetter:
         @param epoch: the epoch to center the fold
         @param depth: the transit depth
         @param duration: the transit duration
-        @return: the drawn axis
+        @param range: the range to be used from the midtransit time in half-duration units.
+        @param bins: the number of bins
+        @return: the drawn axis and the computed bins
         """
         time = foldedleastsquares.core.fold(lc.time.value, period, epoch)
         axs.scatter(time, lc.flux.value, 2, color="blue", alpha=0.1)
         sort_args = np.argsort(time)
         time = time[sort_args]
         flux = lc.flux.value[sort_args]
+        flux_err = lc.flux_err.value[sort_args]
         half_duration_phase = duration / 2 / period
-        folded_plot_range = half_duration_phase * 5
+        folded_plot_range = half_duration_phase * range
         folded_phase_zoom_mask = np.where((time > 0.5 - folded_plot_range) &
                                           (time < 0.5 + folded_plot_range))
         folded_phase = time[folded_phase_zoom_mask]
         folded_y = flux[folded_phase_zoom_mask]
+        folded_y_err = flux_err[folded_phase_zoom_mask]
         axs.set_xlim([0.5 - folded_plot_range, 0.5 + folded_plot_range])
         # TODO if FFI no binning
-        binning_enabled = True
-        if binning_enabled:
+        if bins is not None:
             bin_means, bin_edges, binnumber = stats.binned_statistic(folded_phase, folded_y,
-                                                                     statistic='mean', bins=80)
+                                                                     statistic='mean', bins=bins)
             bin_width = (bin_edges[1] - bin_edges[0])
             bin_centers = bin_edges[1:] - bin_width / 2
-            bin_stds, _, _ = stats.binned_statistic(folded_phase, folded_y, statistic='std', bins=80)
+            bin_stds, _, _ = stats.binned_statistic(folded_phase, folded_y, statistic='std', bins=bins)
             axs.errorbar(bin_centers, bin_means, yerr=bin_stds / 2, xerr=bin_width / 2, marker='o', markersize=4,
                          color='darkorange', alpha=1, linestyle='none')
+        else:
+            bin_centers = folded_phase
+            bin_means = folded_y
+            bin_stds = folded_y_err * 2
         in_transit = (folded_phase > 0.5 - half_duration_phase) & (folded_phase < 0.5 + half_duration_phase)
         in_transit_center = (np.abs(folded_phase - 0.5)).argmin()
         model_flux = Vetter.get_transit_model(in_transit, in_transit_center, depth)
@@ -417,7 +424,7 @@ class Vetter:
         axs.set_ylabel("Flux norm.")
         #axs.set_ylim([1 - 3 * depth, 1 + 3 * depth])
         logging.info("Processed phase-folded plot for P=%.2f and T0=%.2f", period, epoch)
-        return axs
+        return axs, bin_centers, bin_means, bin_stds / 2
 
     @staticmethod
     #TODO build model from selected transit_template
