@@ -1,6 +1,10 @@
 import json
 import logging
 import multiprocessing
+import os
+
+import imageio
+import matplotlib.pyplot as plt
 from abc import ABC, abstractmethod
 from multiprocessing import Pool
 
@@ -77,7 +81,8 @@ class StabilityCalculator(ABC):
         sim.move_to_com()
         return sim
 
-    def run(self, results_dir, star_mass_low, star_mass_up, star_mass_bins, planet_params, cpus=multiprocessing.cpu_count() - 1):
+    def run(self, results_dir, star_mass_low, star_mass_up, star_mass_bins, planet_params,
+            cpus=multiprocessing.cpu_count() - 1, free_params=None):
         """
         Creates possible scenarios of stellar masses, planet masses and planet eccentricities. Afterwards a stability
         analysis is run for each of the scenarios and the results are stored in a file.
@@ -87,7 +92,10 @@ class StabilityCalculator(ABC):
         @param star_mass_bins: the number of star masses to sample
         @param planet_params: the planet inputs containing the planets parameters
         @param cpus: the number of cpus to be used
+        @param free_params: the parameters to be sampled entirely
         """
+        if free_params is None:
+            free_params = []
         planet_params = StabilityCalculator.prepare_planet_params(planet_params)
         star_masses = StabilityCalculator.prepare_star_masses(star_mass_low, star_mass_up, star_mass_bins)
         planet_masses = []
@@ -110,12 +118,16 @@ class StabilityCalculator(ABC):
                                         planet_param.mass + planet_param.mass_up_err,
                                         planet_param.mass_bins)
             planet_masses.append(mass_grid)
-            if planet_param.ecc_bins == 1 or planet_param.ecc_low_err == planet_param.ecc_up_err == 0:
+            if "eccentricity" in free_params:
+                ecc_grid = np.linspace(0, 0.5, planet_param.ecc_bins)
+            elif planet_param.ecc_bins == 1 or planet_param.ecc_low_err == planet_param.ecc_up_err == 0:
                 ecc_grid = np.full(1, planet_param.eccentricity)
             else:
-                ecc_grid = np.linspace(planet_param.eccentricity - planet_param.ecc_low_err,
-                                       planet_param.eccentricity + planet_param.ecc_up_err,
-                                       planet_param.ecc_bins)
+                low_ecc = planet_param.eccentricity - planet_param.ecc_low_err
+                low_ecc = low_ecc if low_ecc > 0 else 0
+                up_ecc = planet_param.eccentricity + planet_param.ecc_up_err
+                up_ecc = up_ecc if up_ecc < 1 else 1
+                ecc_grid = np.linspace(low_ecc, up_ecc, planet_param.ecc_bins)
             planet_ecc.append(ecc_grid)
             if planet_param.inc_bins == 1 or planet_param.inc_low_err == planet_param.inc_up_err == 0:
                 inc_grid = np.full(1, planet_param.inclination)
@@ -124,7 +136,10 @@ class StabilityCalculator(ABC):
                                        planet_param.inclination + planet_param.inc_up_err,
                                        planet_param.inc_bins)
             planet_inc.append(inc_grid)
-            if planet_param.omega_bins == 1 or planet_param.omega_low_err == planet_param.omega_up_err == 0:
+            if "omega" in free_params:
+                # using arange instead of linspace because 0 and 360 are the same, so we exclude 360
+                omega_grid = np.arange(0, 360, 360 // planet_param.omega_bins)
+            elif planet_param.omega_bins == 1 or planet_param.omega_low_err == planet_param.omega_up_err == 0:
                 omega_grid = np.full(1, planet_param.omega)
             else:
                 omega_grid = np.linspace(planet_param.omega - planet_param.omega_low_err,
@@ -190,6 +205,35 @@ class StabilityCalculator(ABC):
         @param results_dir: the output directory where results will be written into
         """
         pass
+
+    def plot_simulation(self, simulation_input_df, save_dir, scenario_name, xlim=None, ylim=None):
+        eccs = simulation_input_df["eccentricities"].split(",")
+        eccs = [float(i) for i in eccs]
+        incs = simulation_input_df["inclinations"].split(",")
+        incs = [float(i) - 90 for i in incs]
+        omegas = simulation_input_df["arg_periastron"].split(",")
+        omegas = [float(i) for i in omegas]
+        periods = simulation_input_df["periods"].split(",")
+        periods = [float(i) for i in periods]
+        masses = simulation_input_df["masses"].split(",")
+        masses = [float(i) for i in masses]
+        star_mass = simulation_input_df["star_mass"]
+        sim = self.init_rebound_simulation(SimulationInput(star_mass, masses, periods, eccs, incs, omegas, 1))
+        filenames = []
+        for i in range(1):
+            sim.integrate(sim.t + i / 100 * 2 * np.pi)
+            fig, ax = rebound.OrbitPlot(sim, color=True, unitlabel="[AU]", xlim=xlim, ylim=ylim)
+            filename = save_dir + "scenario_" + scenario_name + "_" + str(i) + ".png"
+            plt.savefig(filename)
+            filenames.append(filename)
+            plt.close(fig)
+        # with imageio.get_writer(save_dir + scenario_name + '.gif', mode='I') as writer:
+        #     for filename in filenames:
+        #         image = imageio.imread(filename)
+        #         writer.append_data(image)
+        # # Remove files
+        # for filename in set(filenames):
+        #     os.remove(filename)
 
 
 class SimulationInput:
