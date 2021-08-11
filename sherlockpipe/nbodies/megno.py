@@ -1,21 +1,24 @@
 import rebound
 import numpy as np
-
 from sherlockpipe.nbodies.stability_calculator import StabilityCalculator
 import pandas as pd
 
 
 class MegnoStabilityCalculator(StabilityCalculator):
+
     """
     Runs the stability computations by calculating the MEGNO score.
     """
+    def __init__(self, years):
+        super().__init__()
+        self.years = years
+
     def run_simulation(self, simulation_input):
         sim = self.init_rebound_simulation(simulation_input)
         sim.init_megno()
         sim.exit_max_distance = 20.
-        megno = 10
         try:
-            sim.integrate(5e2 * 2. * np.pi, exact_finish_time=0)  # integrate for 500 years, integrating to the nearest
+            sim.integrate(self.years * 2. * np.pi, exact_finish_time=0)  # integrate for 500 years, integrating to the nearest
             # for i in range(500):
             #     sim.integrate(sim.t + i * 2 * np.pi)
             #     fig, ax = rebound.OrbitPlot(sim, color=True, unitlabel="[AU]", xlim=[-0.1, 0.1], ylim=[-0.1, 0.1])
