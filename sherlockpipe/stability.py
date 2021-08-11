@@ -39,8 +39,12 @@ if __name__ == '__main__':
     ap.add_argument('--mass_bins', type=int, default=1, help="The number of mass bins to use.", required=False)
     ap.add_argument('--star_mass_bins', type=int, default=1, help="The number of star mass bins to use.",
                     required=False)
+    ap.add_argument('--years', type=int, default=500, help="The number of years to integrate (for MEGNO).",
+                    required=False)
     ap.add_argument('--spock', dest='use_spock', action='store_true',
                     help="Whether to force the usage of megno even for multiplanetary systems.")
+    ap.add_argument('--free_params', type=str, default=None, help="The parameters to be entirely sampled, separated by "
+                                                                "commas. E.g. 'eccentricity,omega'", required=False)
     args = ap.parse_args()
     object_dir = os.getcwd() if args.object_dir is None else args.object_dir
     index = 0
@@ -73,6 +77,7 @@ if __name__ == '__main__':
     star_mass_low = star_mass if star_mass_low_err is None else star_mass - star_mass_low_err
     star_mass_up = star_mass if star_mass_up_err is None else star_mass + star_mass_up_err
     star_mass_bins = args.star_mass_bins
+    free_params = args.free_params.split(",") if args.free_params is not None else []
     candidates = pd.read_csv(object_dir + "/../candidates.csv")
     planets_params = []
     if args.properties is None:
@@ -154,7 +159,7 @@ if __name__ == '__main__':
                                                     or args.star_mass_bins is not None \
                                                  else user_properties["STAR"]["M_BINS"]
     stability_calculator = SpockStabilityCalculator() if len(planets_params) >= 3 and args.use_spock \
-                           else MegnoStabilityCalculator() #TODO add check of periods ratio less than 2 for spock
+                           else MegnoStabilityCalculator(args.years) #TODO add check of periods ratio less than 2 for spock
     logger.info("%.0f planets to be simulated. %s will be used", len(planets_params),
                 type(stability_calculator).__name__)
     logger.info("Lowest star mass: %.2f", star_mass_low)
@@ -162,4 +167,5 @@ if __name__ == '__main__':
     logger.info("Star mass bins: %.0f", star_mass_bins)
     for key, body in enumerate(planets_params):
         logger.info("Body %.0f: %s", key, json.dumps(body.__dict__))
-    stability_calculator.run(stability_dir, star_mass_low, star_mass_up, star_mass_bins, planets_params, args.cpus)
+    stability_calculator.run(stability_dir, star_mass_low, star_mass_up, star_mass_bins, planets_params, args.cpus,
+                             free_params)
