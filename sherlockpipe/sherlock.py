@@ -12,8 +12,10 @@ import lightkurve as lk
 import numpy as np
 import os
 import sys
+import pkg_resources  # part of setuptools
 
 from lcbuilder.lcbuilder_class import LcBuilder
+from lcbuilder.objectinfo.preparer.LightcurveBuilder import LightcurveBuilder
 from scipy.ndimage import uniform_filter1d
 from lcbuilder.star.starinfo import StarInfo
 from astropy import units as u
@@ -35,6 +37,7 @@ from scipy import stats, signal
 from wotan import flatten
 
 from sherlockpipe.update import Updater
+from sherlockpipe.vet import Vetter
 
 
 class Sherlock:
@@ -57,7 +60,6 @@ class Sherlock:
     TOIS_CSV = RESULTS_DIR + 'tois.csv'
     CTOIS_CSV = RESULTS_DIR + 'ctois.csv'
     KOIS_CSV = RESULTS_DIR + 'kois.csv'
-    VERSION = 14
     OBJECT_ID_REGEX = "^(KIC|TIC|EPIC)[-_ ]([0-9]+)$"
     NUMBERS_REGEX = "[0-9]+$"
     MISSION_ID_KEPLER = "KIC"
@@ -91,6 +93,7 @@ class Sherlock:
         self.detrend_plot_axis.append([1, 1])
         self.detrend_plot_axis.append([2, 1])
         self.detrend_plot_axis.append([3, 1])
+        self.lcbuilder = LcBuilder()
 
     def setup_files(self, refresh_ois, refresh_force, refresh_clean, results_dir=RESULTS_DIR):
         """
@@ -191,7 +194,7 @@ class Sherlock:
         """
         self.__setup_logging()
         logging.info('SHERLOCK (Searching for Hints of Exoplanets fRom Lightcurves Of spaCe-base seeKers)')
-        logging.info('Version %s', self.VERSION)
+        logging.info('Version %s', sys.modules["sherlockpipe"].__version__)
         logging.info('MODE: %s', "ANALYSE" if not self.explore else "EXPLORE")
         if len(self.sherlock_targets) == 0 and self.use_ois:
             self.sherlock_targets = [MissionObjectInfo(object_id, 'all')
@@ -419,8 +422,9 @@ class Sherlock:
         if sherlock_target.best_signal_algorithm == self.VALID_SIGNAL_SELECTORS[2]:
             logging.info('Quorum algorithm vote strength: %.2f',
                          sherlock_target.signal_score_selectors[self.VALID_SIGNAL_SELECTORS[2]].strength)
-        lc, lc_data, star_info, transits_min_count, cadence, detrend_period, sectors = \
-            LcBuilder().build(object_info, object_dir)
+        mission, mission_prefix, object_num = self.lcbuilder.parse_object_info(object_info.mission_id())
+        lc, lc_data, star_info, transits_min_count, cadence, detrend_period, sectors, apertures = \
+            self.lcbuilder.build(object_info, object_dir)
         logging.info('Minimum number of transits: %s', transits_min_count)
         lightcurve_timespan = lc.time[len(lc.time) - 1] - lc.time[0]
         if sherlock_target.search_zone is not None and not (star_info.mass_assumed or star_info.radius_assumed):
@@ -481,6 +485,12 @@ class Sherlock:
         if not sherlock_target.period_min:
             sherlock_target.period_min = detrend_period * 4
             logging.info("Setting Min Period to %.3f due to auto_detrend period", sherlock_target.period_min)
+        logging.info("======================================")
+        logging.info("Field Of View Plots")
+        logging.info("======================================")
+        fov_dir = object_dir + "/fov"
+        Vetter.vetting_field_of_view(fov_dir, mission, object_num, cadence, star_info.ra, star_info.dec,
+                                     sectors if isinstance(sectors, list) else sectors.tolist(), apertures)
         return lc, star_info, transits_min_count, cadence, sectors, detrend_period
 
     def __analyse(self, sherlock_target, time, lcs, flux_err, star_info, id_run, transits_min_count, cadence, report,
