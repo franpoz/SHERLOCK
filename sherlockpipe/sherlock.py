@@ -211,11 +211,12 @@ class Sherlock:
         sherlock_id = sherlock_target.object_info.sherlock_id()
         mission_id = sherlock_target.object_info.mission_id()
         try:
-            lc, star_info, transits_min_count, cadence, sectors, detrend_source_period = self.__prepare(sherlock_target)
-            time = lc.time.value
-            flux = lc.flux.value
-            flux_err = lc.flux_err.value
-            period_grid = self.__calculate_period_grid(time, sherlock_target, star_info, transits_min_count)
+            lc_build = self.__prepare(sherlock_target)
+            time = lc_build.lc.time.value
+            flux = lc_build.lc.flux.value
+            flux_err = lc_build.lc.flux_err.value
+            period_grid = self.__calculate_period_grid(time, sherlock_target, lc_build.star_info,
+                                                       lc_build.transits_min_count)
             id_run = 1
             best_signal_score = 1
             self.report[sherlock_id] = []
@@ -223,7 +224,7 @@ class Sherlock:
             logging.info('SEARCH RUNS with period grid: [%.2f - %.2f] and length %.0f', np.min(period_grid),
                          np.max(period_grid), len(period_grid))
             logging.info('================================================')
-            lcs, wl = self.__detrend(sherlock_target, time, flux, star_info)
+            lcs, wl = self.__detrend(sherlock_target, time, flux, lc_build.star_info)
             lcs = np.concatenate(([flux], lcs), axis=0)
             wl = np.concatenate(([0], wl), axis=0)
             while not self.explore and best_signal_score == 1 and id_run <= sherlock_target.max_runs:
@@ -231,8 +232,9 @@ class Sherlock:
                 object_report = {}
                 logging.info("________________________________ run %s________________________________", id_run)
                 transit_results, signal_selection = \
-                    self.__analyse(sherlock_target, time, lcs, flux_err, star_info, id_run, transits_min_count, cadence,
-                                   self.report[sherlock_id], wl, period_grid, detrend_source_period)
+                    self.__analyse(sherlock_target, time, lcs, flux_err, lc_build.star_info, id_run,
+                                   lc_build.transits_min_count, lc_build.cadence, self.report[sherlock_id], wl,
+                                   period_grid, lc_build.detrend_period)
                 best_signal_score = signal_selection.score
                 object_report["Object Id"] = mission_id
                 object_report["run"] = id_run
@@ -254,7 +256,8 @@ class Sherlock:
                 object_report["transits"] = np.array(transit_results[signal_selection.curve_index]
                                                           .results.transit_times)[real_transit_args.flatten()]
                 object_report["transits"] = ','.join(map(str, object_report["transits"]))
-                object_report["sectors"] = ','.join(map(str, sectors)) if sectors is not None and len(sectors) > 0 else None
+                object_report["sectors"] = ','.join(map(str, lc_build.sectors)) \
+                    if lc_build.sectors is not None and len(lc_build.sectors) > 0 else None
                 object_report["ffi"] = isinstance(sherlock_target, MissionFfiIdObjectInfo) or \
                                        isinstance(sherlock_target, MissionFfiCoordsObjectInfo)
 
@@ -282,13 +285,14 @@ class Sherlock:
                     i = 1
                     for report in self.report[sherlock_id]:
                         a, habitability_zone = self.habitability_calculator\
-                            .calculate_hz_score(star_info.teff, star_info.mass, star_info.lum, report["period"])
+                            .calculate_hz_score(lc_build.star_info.teff, lc_build.star_info.mass,
+                                                lc_build.star_info.lum, report["period"])
                         report['a'] = a
                         report['hz'] = habitability_zone
-                        if star_info.radius_assumed:
+                        if lc_build.star_info.radius_assumed:
                             report['rad_p'] = np.nan
                         else:
-                            report['rad_p'] = self.__calculate_planet_radius(star_info, report["depth"])
+                            report['rad_p'] = self.__calculate_planet_radius(lc_build.star_info, report["depth"])
                         logging.info("%-12s%-10.4f%-10.5f%-10.2f%-8.2f%-8.3f%-8.2f%-8.2f%-10.6f%-14.2f%-14s%-12s%-25.5f%-10.5f%-18.5f%-20s",
                                      report["curve"], report["period"], report["per_err"],
                                      report["duration"], report["t0"], report["depth"], report["snr"], report["sde"],
@@ -423,15 +427,15 @@ class Sherlock:
             logging.info('Quorum algorithm vote strength: %.2f',
                          sherlock_target.signal_score_selectors[self.VALID_SIGNAL_SELECTORS[2]].strength)
         mission, mission_prefix, object_num = self.lcbuilder.parse_object_info(object_info.mission_id())
-        lc, lc_data, star_info, transits_min_count, cadence, detrend_period, sectors, apertures = \
-            self.lcbuilder.build(object_info, object_dir)
-        logging.info('Minimum number of transits: %s', transits_min_count)
-        lightcurve_timespan = lc.time[len(lc.time) - 1] - lc.time[0]
-        if sherlock_target.search_zone is not None and not (star_info.mass_assumed or star_info.radius_assumed):
+        lc_build = self.lcbuilder.build(object_info, object_dir)
+        logging.info('Minimum number of transits: %s', lc_build.transits_min_count)
+        lightcurve_timespan = lc_build.lc.time[len(lc_build.lc.time) - 1] - lc_build.lc.time[0]
+        if sherlock_target.search_zone is not None and not (lc_build.star_info.mass_assumed or
+                                                            lc_build.star_info.radius_assumed):
             logging.info("Selected search zone: %s. Minimum and maximum periods will be calculated.",
                          sherlock_target.search_zone)
             min_and_max_period = sherlock_target.search_zones_resolvers[
-                sherlock_target.search_zone].calculate_period_range(star_info)
+                sherlock_target.search_zone].calculate_period_range(lc_build.star_info)
             if min_and_max_period is None:
                 logging.info("Selected search zone was %s but cannot be calculated. Defaulting to minimum and " +
                              "maximum input periods", sherlock_target.search_zone)
@@ -447,12 +451,12 @@ class Sherlock:
         elif sherlock_target.search_zone is not None:
             logging.info("Selected search zone was %s but star catalog info was not found or wasn't complete. " +
                          "Defaulting to minimum and maximum input periods.", sherlock_target.search_zone)
-        if sectors is not None:
-            sectors_count = len(sectors)
+        if lc_build.sectors is not None:
+            sectors_count = len(lc_build.sectors)
             logging.info('================================================')
             logging.info('SECTORS/QUARTERS/CAMPAIGNS INFO')
             logging.info('================================================')
-            logging.info('Sectors/Quarters/Campaigns : %s', sectors)
+            logging.info('Sectors/Quarters/Campaigns : %s', lc_build.sectors)
             if sectors_count < sherlock_target.min_sectors or sectors_count > sherlock_target.max_sectors:
                 raise InvalidNumberOfSectorsError("The object " + sherlock_id + " contains " + str(sectors_count) +
                                                   " sectors/quarters/campaigns and the min and max selected are [" +
@@ -471,8 +475,8 @@ class Sherlock:
                 self.wl_max[sherlock_id] = sherlock_target.detrend_l_max
         else:
             logging.info("Using transit duration based WL or fixed KS")
-            transit_duration = wotan.t14(R_s=star_info.radius, M_s=star_info.mass, P=sherlock_target.period_protect,
-                                         small_planet=True)  # we define the typical duration of a small planet in this star
+            transit_duration = wotan.t14(R_s=lc_build.star_info.radius, M_s=lc_build.star_info.mass,
+                                         P=sherlock_target.period_protect, small_planet=True)
             if sherlock_target.detrend_method == 'gp':
                 self.wl_min[sherlock_id] = 1
                 self.wl_max[sherlock_id] = 12
@@ -483,15 +487,17 @@ class Sherlock:
         logging.info("wl/ks_max: %.2f", self.wl_max[sherlock_id])
         logging.info('================================================')
         if not sherlock_target.period_min:
-            sherlock_target.period_min = detrend_period * 4
+            sherlock_target.period_min = lc_build.detrend_period * 4
             logging.info("Setting Min Period to %.3f due to auto_detrend period", sherlock_target.period_min)
         logging.info("======================================")
         logging.info("Field Of View Plots")
         logging.info("======================================")
         fov_dir = object_dir + "/fov"
-        Vetter.vetting_field_of_view(fov_dir, mission, object_num, cadence, star_info.ra, star_info.dec,
-                                     sectors if isinstance(sectors, list) else sectors.tolist(), apertures)
-        return lc, star_info, transits_min_count, cadence, sectors, detrend_period
+        Vetter.vetting_field_of_view(fov_dir, mission, object_num, lc_build.cadence, lc_build.star_info.ra,
+                                     lc_build.star_info.dec, lc_build.sectors if isinstance(lc_build.sectors, list)
+                                     else lc_build.sectors.tolist(), lc_build.tpf_source, lc_build.tpf_rows,
+                                     lc_build.tpf_columns, lc_build.tpf_apertures)
+        return lc_build
 
     def __analyse(self, sherlock_target, time, lcs, flux_err, star_info, id_run, transits_min_count, cadence, report,
                   wl, period_grid, detrend_source_period):
@@ -732,7 +738,7 @@ class Sherlock:
         return rp
 
     def __compute_border_score(self, time, result, intransit, cadence):
-        shift_cadences = 60 / cadence
+        shift_cadences = 3600 / cadence
         edge_limit_days = 0.05
         transit_depths = np.nan_to_num(result.transit_depths)
         transit_depths = np.zeros(1) if type(transit_depths) is not np.ndarray else transit_depths
@@ -802,7 +808,7 @@ class Sherlock:
         else:
             bins = transit_result.period / transit_result.duration * bins_per_transit
             folded_plot_range = half_duration_phase * 10
-        binning_enabled = round(cadence) <= 5
+        binning_enabled = round(cadence) <= 300
         ax2.plot(tls_results.model_folded_phase, tls_results.model_folded_model, color='red')
         scatter_measurements_alpha = 0.05 if binning_enabled else 0.8
         ax2.scatter(tls_results.folded_phase, tls_results.folded_y, color='black', s=10,
