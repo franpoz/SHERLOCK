@@ -517,16 +517,19 @@ class Vetter:
                     traceback.print_exc()
 
     @staticmethod
-    def vetting_field_of_view(indir, mission, tic, cadence, ra, dec, sectors, apertures):
+    def vetting_field_of_view(indir, mission, tic, cadence, ra, dec, sectors, source, rows, columns, apertures):
         """
         Runs TPFPlotter to get field of view data.
         @param indir: the data source directory
         @param mission: the mission of the target
         @param tic: the target id
-        @param cadence: the exposure time between measurements in minutes
+        @param cadence: the exposure time between measurements in seconds
         @param ra: the right ascension of the target
         @param dec: the declination of the target
         @param sectors: the sectors where the target was observed
+        @param source: the source where the aperture was generated [tpf, tesscut, eleanor]
+        @param rows: a dict mapping sectors to the center row of the aperture mask
+        @param columns: a dict mapping sectors to the center column of the aperture mask
         @param apertures: a dict mapping sectors to boolean apertures
         @return: the directory where resulting data is stored
         """
@@ -540,6 +543,7 @@ class Vetter:
             if mission != "TESS":
                 return
             target_title = "TIC " + str(tic)
+            #TODO use retrieval method depending on source parameter
             if cadence > 120:
                 tpf_source = lightkurve.search_tesscut(target_title, sector=sectors_search)
                 if tpf_source is None or len(tpf_source) == 0:
@@ -547,10 +551,12 @@ class Vetter:
                     target_title = "RA={:.4f},DEC={:.4f}".format(ra, dec)
             else:
                 tpf_source = lightkurve.search_targetpixelfile(target_title, sector=sectors_search, author="SPOC",
-                                                               cadence=int(cadence) * 60)
+                                                               cadence=cadence)
             save_dir = indir
             for i in range(0, len(tpf_source)):
                 tpf = tpf_source[i].download(cutout_size=(11, 11))
+                row = rows[tpf.sector]
+                column = columns[tpf.sector]
                 plt.close()
                 fig = plt.figure(figsize=(6.93, 5.5))
                 gs = gridspec.GridSpec(1, 3, height_ratios=[1], width_ratios=[1, 0.05, 0.01])
@@ -562,7 +568,7 @@ class Vetter:
                 norm = ImageNormalize(stretch=stretching.LogStretch())
                 division = np.int(np.log10(np.nanmax(tpf.flux.value)))
                 splot = plt.imshow(np.nanmean(tpf.flux, axis=0) / 10 ** division, norm=norm, cmap="viridis",\
-                                   extent=[tpf.column, tpf.column + ny, tpf.row, tpf.row + nx], origin='lower', zorder=0)
+                                   extent=[column, column + ny, row, row + nx], origin='lower', zorder=0)
                 aperture = apertures[tpf.sector]
                 #aperture = tpf._parse_aperture_mask(aperture_mask)
                 maskcolor = 'salmon'
@@ -571,9 +577,9 @@ class Vetter:
                     for i in range(aperture.shape[0]):
                         for j in range(aperture.shape[1]):
                             if aperture[i, j]:
-                                ax1.add_patch(patches.Rectangle((j + tpf.column, i + tpf.row),
+                                ax1.add_patch(patches.Rectangle((j + column, i + row),
                                                                 1, 1, color=maskcolor, fill=True, alpha=0.4))
-                                ax1.add_patch(patches.Rectangle((j + tpf.column, i + tpf.row),
+                                ax1.add_patch(patches.Rectangle((j + column, i + row),
                                                                 1, 1, color=maskcolor, fill=False, alpha=1, lw=2))
                 # Gaia sources
                 gaia_id, mag = tpfplotter.get_gaia_data(ra, dec)
@@ -606,8 +612,8 @@ class Vetter:
                 # Orientation arrows
                 tpfplotter.plot_orientation(tpf)
                 # Labels and titles
-                plt.xlim(tpf.column, tpf.column + ny)
-                plt.ylim(tpf.row, tpf.row + nx)
+                plt.xlim(column, column + ny)
+                plt.ylim(row, row + nx)
                 plt.xlabel('Pixel Column Number', fontsize=16)
                 plt.ylabel('Pixel Row Number', fontsize=16)
                 plt.title('Coordinates ' + target_title + ' - Sector ' + str(tpf.sector),
@@ -635,7 +641,7 @@ class Vetter:
                 for i in range(aperture.shape[0]):
                     for j in range(aperture.shape[1]):
                         if aperture[i, j]:
-                            xtpf, ytpf = j + tpf.column, i + tpf.row
+                            xtpf, ytpf = j + column, i + row
                             _inside = np.where((x > xtpf) & (x < xtpf + 1) &
                                                (y > ytpf) & (y < ytpf + 1))[0]
                             inside[_inside] = 1
