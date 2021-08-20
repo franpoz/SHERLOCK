@@ -554,7 +554,7 @@ class Vetter:
                                                                cadence=cadence)
             save_dir = indir
             for i in range(0, len(tpf_source)):
-                tpf = tpf_source[i].download(cutout_size=(11, 11))
+                tpf = tpf_source[i].download(cutout_size=(13, 13))
                 row = rows[tpf.sector]
                 column = columns[tpf.sector]
                 plt.close()

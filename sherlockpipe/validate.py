@@ -160,10 +160,10 @@ class Validator:
         tpfs = None
         if mission == "Kepler":
             tpfs = lightkurve.search_targetpixelfile(object_id, mission=mission, cadence="short", quarter=sectors)\
-                .download_all()
+                .download_all(cutout_size=(13, 13))
         elif mission == "K2":
             tpfs = lightkurve.search_targetpixelfile(object_id, mission=mission, cadence="short", campaign=sectors)\
-                .download_all()
+                .download_all(cutout_size=(13, 13))
         apertures = []
         logging.info("Building apertures")
         if tpfs is not None:
@@ -183,11 +183,11 @@ class Validator:
                 target.plot_field(save=True, fname=save_dir + "/field_S" + str(sector), sector=sector,
                                   ap_pixels=aperture)
         else:
-            star = eleanor.multi_sectors(tic=id_int, sectors=sectors, tesscut_size=11,
+            star = eleanor.multi_sectors(tic=id_int, sectors=sectors, tesscut_size=13,
                                          post_dir=const.USER_HOME_ELEANOR_CACHE)
             ra, dec = star[0].coords[0], star[0].coords[1]
             for s in star:
-                target_data = eleanor.TargetData(s, height=11, width=11)
+                target_data = eleanor.TargetData(s, height=13, width=13)
                 aperture = Validator.compute_aperture(target_data.aperture.astype(bool), s.position_on_chip[0],
                                                       s.position_on_chip[1])
                 apertures.append(aperture)
