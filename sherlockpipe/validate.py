@@ -5,7 +5,6 @@ import multiprocessing
 import shutil
 from multiprocessing import Pool
 import traceback
-import lightkurve
 import numpy as np
 import matplotlib.pyplot as plt
 import yaml
@@ -13,8 +12,6 @@ from astroquery.mast import TesscutClass
 from lcbuilder.lcbuilder_class import LcBuilder
 from lightkurve import TessLightCurve, KeplerLightCurve
 from argparse import ArgumentParser
-from sherlockpipe import constants as const
-from lcbuilder import eleanor
 import sys
 import pandas as pd
 import os
@@ -40,7 +37,7 @@ class Validator:
         @param contrast_curve_file: the auxiliary contrast curve file to give more information to the validation engine.
         @param bins: the number of bins to resize the light curve
         @param scenarios: the number of scenarios to compute the validation and get the average
-        @param: sigma_mode: whether to compute the sigma for the validation from the 'flux_err' or the 'binning'.
+        @param sigma_mode: whether to compute the sigma for the validation from the 'flux_err' or the 'binning'.
         """
         object_id = candidate["id"]
         period = candidate.loc[candidate['id'] == object_id]['period'].iloc[0]
@@ -73,7 +70,7 @@ class Validator:
         object_id = object_id.iloc[0]
         try:
             Validator.execute_triceratops(cpus, validation_dir, object_id, sectors, lc_file, transit_depth,
-                                     period, t0, duration, bins, scenarios, sigma_mode, contrast_curve_file)
+                                          period, t0, duration, bins, scenarios, sigma_mode, contrast_curve_file)
         except Exception as e:
             traceback.print_exc()
         # try:
@@ -155,46 +152,11 @@ class Validator:
         logging.info("Acquiring triceratops target")
         target = tr.target(ID=id_int, mission=mission, sectors=sectors)
         # TODO allow user input apertures
-        logging.info("Acquiring TPFs to build apertures")
-        sectors = sectors if isinstance(sectors, list) else sectors.tolist()
-        tpfs = None
-        if mission == "Kepler":
-            tpfs = lightkurve.search_targetpixelfile(object_id, mission=mission, cadence="short", quarter=sectors)\
-                .download_all(cutout_size=(13, 13))
-        elif mission == "K2":
-            tpfs = lightkurve.search_targetpixelfile(object_id, mission=mission, cadence="short", campaign=sectors)\
-                .download_all(cutout_size=(13, 13))
-        apertures = []
-        logging.info("Building apertures")
-        if tpfs is not None:
-            tpfs_unique = []
-            previous_sector = 0
-            ra, dec = tpfs[0].ra, tpfs[0].dec
-            for tpf in tpfs:
-                sector = tpf.sector if mission == "TESS" else tpf.quarter if mission == "Kepler" else tpf.campaign
-                if previous_sector != sector:
-                    tpfs_unique.append(tpf)
-                previous_sector = sector
-            for tpf in tpfs_unique:
-                aperture = Validator.compute_aperture(tpf.pipeline_mask, tpf.column, tpf.row)
-                apertures.append(aperture)
-                sector = tpf.sector if mission == "TESS" else tpf.quarter if mission == "Kepler" else tpf.campaign
-                logging.info("Saving aperture plot for sector %s", sector)
-                target.plot_field(save=True, fname=save_dir + "/field_S" + str(sector), sector=sector,
-                                  ap_pixels=aperture)
-        else:
-            star = eleanor.multi_sectors(tic=id_int, sectors=sectors, tesscut_size=13,
-                                         post_dir=const.USER_HOME_ELEANOR_CACHE)
-            ra, dec = star[0].coords[0], star[0].coords[1]
-            for s in star:
-                target_data = eleanor.TargetData(s, height=13, width=13)
-                aperture = Validator.compute_aperture(target_data.aperture.astype(bool), s.position_on_chip[0],
-                                                      s.position_on_chip[1])
-                apertures.append(aperture)
-                logging.info("Saving aperture plot for sector %s", s.sector)
-                target.plot_field(save=True, fname=save_dir + "/field_S" + str(s.sector), sector=s.sector,
-                                ap_pixels=aperture)
-        apertures = np.array(apertures)
+        logging.info("Reading apertures from directory")
+        apertures = yaml.load(open(object_dir + "/apertures.yaml"), yaml.SafeLoader)
+        for sector, aperture in apertures.items():
+            target.plot_field(save=True, fname=save_dir + "/field_S" + str(sector), sector=sector, ap_pixels=aperture)
+        apertures = np.array([aperture for sector, aperture in apertures.items()])
         depth = transit_depth / 1000
         if contrast_curve_file is not None:
             logging.info("Reading contrast curve %s", contrast_curve_file)
@@ -306,30 +268,8 @@ class Validator:
         target.probs = probs_total_df
         # target.plot_fits(save=True, fname=save_dir + "/scenario_fits", time=lc.time.value, flux_0=lc.flux.value,
         #                  flux_err_0=sigma)
-        return save_dir, ra, dec
+        return save_dir
 
-    @staticmethod
-    def compute_aperture(pipeline_mask, column, row):
-        """
-        Returns the aperture pixels coordinates for the given boolean mask.
-        @param pipeline_mask: the boolean mask centered in the given column and row.
-        @param column: the center column of the mask.
-        @param row: the center row of the mask.
-        @return: the pixels columns and rows in an array.
-        """
-        pipeline_mask = np.transpose(pipeline_mask)
-        #TODO resize pipeline_mask to match
-        pipeline_mask_triceratops = np.zeros((len(pipeline_mask), len(pipeline_mask[0]), 2))
-        for i in range(0, len(pipeline_mask)):
-            for j in range(0, len(pipeline_mask[0])):
-                pipeline_mask_triceratops[i, j] = [column + i, row + j]
-        pipeline_mask_triceratops[~pipeline_mask] = None
-        aperture = []
-        for i in range(0, len(pipeline_mask_triceratops)):
-            for j in range(0, len(pipeline_mask_triceratops[0])):
-                if not np.isnan(pipeline_mask_triceratops[i, j]).any():
-                    aperture.append(pipeline_mask_triceratops[i, j])
-        return aperture
 
     # def execute_vespa(self, cpus, indir, object_id, sectors, lc_file, transit_depth, period, epoch, duration, rprs):
     #     vespa_dir = indir + "/vespa/"
