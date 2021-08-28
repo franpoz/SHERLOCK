@@ -495,8 +495,7 @@ class Sherlock:
         fov_dir = object_dir + "/fov"
         Vetter.vetting_field_of_view(fov_dir, mission, object_num, lc_build.cadence, lc_build.star_info.ra,
                                      lc_build.star_info.dec, lc_build.sectors if isinstance(lc_build.sectors, list)
-                                     else lc_build.sectors.tolist(), lc_build.tpf_source, lc_build.tpf_rows,
-                                     lc_build.tpf_columns, lc_build.tpf_apertures)
+                                     else lc_build.sectors.tolist(), lc_build.tpf_source, lc_build.tpf_apertures)
         return lc_build
 
     def __analyse(self, sherlock_target, time, lcs, flux_err, star_info, id_run, transits_min_count, cadence, report,
