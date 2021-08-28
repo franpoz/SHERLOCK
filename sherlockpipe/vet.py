@@ -14,8 +14,8 @@ import numpy as np
 import matplotlib
 import matplotlib.pyplot as plt
 import matplotlib.gridspec as gridspec
-import scipy
 import yaml
+from lcbuilder.constants import CUTOUT_SIZE
 from lightkurve import TessLightCurve
 from matplotlib.colorbar import Colorbar
 from matplotlib import patches
@@ -554,7 +554,7 @@ class Vetter:
                                                                cadence=cadence)
             save_dir = indir
             for i in range(0, len(tpf_source)):
-                tpf = tpf_source[i].download(cutout_size=(13, 13))
+                tpf = tpf_source[i].download(cutout_size=(CUTOUT_SIZE, CUTOUT_SIZE))
                 row = rows[tpf.sector]
                 column = columns[tpf.sector]
                 plt.close()
