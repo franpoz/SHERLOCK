@@ -116,8 +116,8 @@ class TestsSherlock(unittest.TestCase):
         run_dir = "TIC181804752_FFI_all"
         try:
             Sherlock([SherlockTarget(MissionFfiIdObjectInfo("TIC 181804752", 'all', smooth_enabled=False,
-                                                       high_rms_enabled=False),
-                                                       detrends_number=1, max_runs=1)]).run()
+                                                            high_rms_enabled=False),
+                                     detrends_number=1, max_runs=1)]).run()
             self.__assert_run_files(run_dir, assert_rms_mask=False)
         finally:
             self.__clean(run_dir)
@@ -126,7 +126,7 @@ class TestsSherlock(unittest.TestCase):
         run_dir = "TIC181804752_FFI_all"
         try:
             Sherlock([SherlockTarget(MissionFfiIdObjectInfo("TIC 181804752", 'all', high_rms_enabled=True),
-                                            max_runs=1)]).run()
+                                     max_runs=1)]).run()
             self.__assert_run_files(run_dir)
         finally:
             self.__clean(run_dir)
@@ -135,7 +135,7 @@ class TestsSherlock(unittest.TestCase):
         run_dir = None
         try:
             Sherlock([SherlockTarget(MissionFfiIdObjectInfo("TIC 181804752", 'all', high_rms_enabled=True),
-                                                       detrends_number=1)], True).run()
+                                     detrends_number=1)], True).run()
             run_dir = "TIC181804752_FFI_all"
             self.assertTrue(os.path.exists(run_dir))
             self.assertTrue(os.path.exists(run_dir + "/Periodogram_TIC181804752_FFI_all.png"))
@@ -158,8 +158,8 @@ class TestsSherlock(unittest.TestCase):
         run_dir = None
         try:
             Sherlock([SherlockTarget(MissionFfiIdObjectInfo("EPIC 249631677", 'all', high_rms_enabled=True,
-                                                       auto_detrend_enabled=False),
-                                                       detrends_number=1, max_runs=1)], False).run()
+                                                            auto_detrend_enabled=False),
+                                     detrends_number=1, max_runs=1)], False).run()
             run_dir = "EPIC249631677_FFI_all"
             self.assertTrue(os.path.exists(run_dir))
             self.assertTrue(os.path.exists(run_dir + "/Periodogram_EPIC249631677_FFI_all.png"))
@@ -171,12 +171,12 @@ class TestsSherlock(unittest.TestCase):
         run_dir = None
         try:
             Sherlock([SherlockTarget(MissionFfiIdObjectInfo("TIC 181804752", 'all', high_rms_enabled=True,
-                                                               star_info=StarInfo(ld_coefficients=(0.15,0.25),
-                                                                                  teff=4000,
-                                                                                  lum=1.50, logg=0.15, radius=0.4,
-                                                                                  radius_min=0.10, radius_max=0.15,
-                                                                                  mass=0.3, mass_min=0.05, mass_max=0.075,
-                                                                                  ra=13.132258, dec=64.334238)),
+                                                            star_info=StarInfo(ld_coefficients=(0.15,0.25),
+                                                                               teff=4000,
+                                                                               lum=1.50, logg=0.15, radius=0.4,
+                                                                               radius_min=0.10, radius_max=0.15,
+                                                                               mass=0.3, mass_min=0.05, mass_max=0.075,
+                                                                               ra=13.132258, dec=64.334238)),
                                      detrends_number=1, max_runs=1)], True).run()
             run_dir = "TIC181804752_FFI_all"
             self.assertTrue(os.path.exists(run_dir))
@@ -201,10 +201,9 @@ class TestsSherlock(unittest.TestCase):
         run_dir = None
         try:
             sherlock = Sherlock([SherlockTarget(MissionFfiIdObjectInfo("TIC 181804752", 'all', high_rms_enabled=True),
-                                                       detrends_number=1, max_runs=1,
-                                                       oversampling=5.5, t0_fit_margin=0.09,
-                                                       duration_grid_step=1.075, fit_method="bls",
-                                                       best_signal_algorithm="quorum", quorum_strength=0.31)], False)\
+                                                detrends_number=1, max_runs=1, oversampling=5.5, t0_fit_margin=0.09,
+                                                duration_grid_step=1.075, fit_method="bls",
+                                                best_signal_algorithm="quorum", quorum_strength=0.31)], False)\
                 .run()
             run_dir = "TIC181804752_FFI_all"
             with open(run_dir + '/TIC181804752_FFI_all_report.log') as f:

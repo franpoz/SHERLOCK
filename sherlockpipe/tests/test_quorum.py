@@ -1,17 +1,8 @@
-import os
-import shutil
 import unittest
-from lcbuilder.star.starinfo import StarInfo
-from lcbuilder.objectinfo.MissionFfiIdObjectInfo import MissionFfiIdObjectInfo
-from lcbuilder.objectinfo.MissionObjectInfo import MissionObjectInfo
-from sherlockpipe.scoring.BasicSignalSelector import BasicSignalSelector
 from sherlockpipe.scoring.QuorumSnrBorderCorrectedSignalSelector import QuorumSnrBorderCorrectedSignalSelector
-from sherlockpipe.scoring.SnrBorderCorrectedSignalSelector import SnrBorderCorrectedSignalSelector
-from sherlockpipe.sherlock import Sherlock
-from sherlockpipe.sherlock_target import SherlockTarget
 
 
-class TestsSherlock(unittest.TestCase):
+class TestsQuorum(unittest.TestCase):
     def test_t0s_matching(self):
         quorum_selector = QuorumSnrBorderCorrectedSignalSelector()
         assert quorum_selector.matches_t0(1, 1, 1, 1)
