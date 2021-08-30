@@ -517,7 +517,7 @@ class Vetter:
                     traceback.print_exc()
 
     @staticmethod
-    def vetting_field_of_view(indir, mission, tic, cadence, ra, dec, sectors, source, rows, columns, apertures):
+    def vetting_field_of_view(indir, mission, tic, cadence, ra, dec, sectors, source, apertures):
         """
         Runs TPFPlotter to get field of view data.
         @param indir: the data source directory
@@ -528,8 +528,6 @@ class Vetter:
         @param dec: the declination of the target
         @param sectors: the sectors where the target was observed
         @param source: the source where the aperture was generated [tpf, tesscut, eleanor]
-        @param rows: a dict mapping sectors to the center row of the aperture mask
-        @param columns: a dict mapping sectors to the center column of the aperture mask
         @param apertures: a dict mapping sectors to boolean apertures
         @return: the directory where resulting data is stored
         """
@@ -555,8 +553,8 @@ class Vetter:
             save_dir = indir
             for i in range(0, len(tpf_source)):
                 tpf = tpf_source[i].download(cutout_size=(CUTOUT_SIZE, CUTOUT_SIZE))
-                row = rows[tpf.sector]
-                column = columns[tpf.sector]
+                row = tpf.row
+                column = tpf.column
                 plt.close()
                 fig = plt.figure(figsize=(6.93, 5.5))
                 gs = gridspec.GridSpec(1, 3, height_ratios=[1], width_ratios=[1, 0.05, 0.01])
@@ -570,17 +568,15 @@ class Vetter:
                 splot = plt.imshow(np.nanmean(tpf.flux, axis=0) / 10 ** division, norm=norm, cmap="viridis",\
                                    extent=[column, column + ny, row, row + nx], origin='lower', zorder=0)
                 aperture = apertures[tpf.sector]
-                #aperture = tpf._parse_aperture_mask(aperture_mask)
+                aperture = aperture if isinstance(aperture, np.ndarray) else np.array(aperture)
                 maskcolor = 'salmon'
                 logging.info("    --> Using SHERLOCK aperture for sector %s...", tpf.sector)
                 if aperture is not None:
-                    for i in range(aperture.shape[0]):
-                        for j in range(aperture.shape[1]):
-                            if aperture[i, j]:
-                                ax1.add_patch(patches.Rectangle((j + column, i + row),
-                                                                1, 1, color=maskcolor, fill=True, alpha=0.4))
-                                ax1.add_patch(patches.Rectangle((j + column, i + row),
-                                                                1, 1, color=maskcolor, fill=False, alpha=1, lw=2))
+                    for pixels in aperture:
+                        ax1.add_patch(patches.Rectangle((pixels[0], pixels[1]),
+                                                        1, 1, color=maskcolor, fill=True, alpha=0.4))
+                        ax1.add_patch(patches.Rectangle((pixels[0], pixels[1]),
+                                                        1, 1, color=maskcolor, fill=False, alpha=1, lw=2))
                 # Gaia sources
                 gaia_id, mag = tpfplotter.get_gaia_data(ra, dec)
                 r, res = tpfplotter.add_gaia_figure_elements(tpf, magnitude_limit=mag + np.float(maglim), targ_mag=mag)
@@ -638,13 +634,11 @@ class Vetter:
                 x, y, gaiamags, dist, GaiaID = x[srt], y[srt], gaiamags[srt], dist[srt], GaiaID[srt]
                 IDs = np.arange(len(x)) + 1
                 inside = np.zeros(len(x))
-                for i in range(aperture.shape[0]):
-                    for j in range(aperture.shape[1]):
-                        if aperture[i, j]:
-                            xtpf, ytpf = j + column, i + row
-                            _inside = np.where((x > xtpf) & (x < xtpf + 1) &
-                                               (y > ytpf) & (y < ytpf + 1))[0]
-                            inside[_inside] = 1
+                for pixels in aperture:
+                    xtpf, ytpf = pixels[0], pixels[1]
+                    _inside = np.where((x > xtpf) & (x < xtpf + 1) &
+                                       (y > ytpf) & (y < ytpf + 1))[0]
+                    inside[_inside] = 1
                 data = Table([IDs, GaiaID, x, y, dist, dist * 21., gaiamags, inside.astype('int')],
                              names=['# ID', 'GaiaID', 'x', 'y', 'Dist_pix', 'Dist_arcsec', 'Gmag', 'InAper'])
                 ascii.write(data, save_dir + '/Gaia_' + target_title + '_S' + str(tpf.sector) + '.dat', overwrite=True)
