@@ -154,6 +154,7 @@ class Validator:
         # TODO allow user input apertures
         logging.info("Reading apertures from directory")
         apertures = yaml.load(open(object_dir + "/apertures.yaml"), yaml.SafeLoader)
+        apertures = apertures["sectors"]
         for sector, aperture in apertures.items():
             target.plot_field(save=True, fname=save_dir + "/field_S" + str(sector), sector=sector, ap_pixels=aperture)
         apertures = np.array([aperture for sector, aperture in apertures.items()])
@@ -446,8 +447,8 @@ class TriceratopsThreadValidator:
         input.target.calc_depths(tdepth=input.depth, all_ap_pixels=input.apertures)
         input.target.calc_probs(time=input.time, flux_0=input.flux, flux_err_0=input.sigma, P_orb=input.period,
                                 contrast_curve_file=input.contrast_curve, parallel=True)
-        fpp2 = 25 * (1 - input.target.FPP) / (25 * (1 - input.target.FPP) + input.target.FPP)
-        fpp3 = 50 * (1 - input.target.FPP) / (50 * (1 - input.target.FPP) + input.target.FPP)
+        fpp2 = 1 - 25 * (1 - input.target.FPP) / (25 * (1 - input.target.FPP) + input.target.FPP)
+        fpp3 = 1 - 50 * (1 - input.target.FPP) / (50 * (1 - input.target.FPP) + input.target.FPP)
         input.target.probs.to_csv(input.save_dir + "/validation_" + str(input.run) + "_scenarios.csv", index=False)
         input.target.plot_fits(save=True, fname=input.save_dir + "/scenario_" + str(input.run) + "_fits",
                          time=input.time, flux_0=input.flux, flux_err_0=input.sigma)
