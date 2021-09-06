@@ -88,6 +88,8 @@ if __name__ == '__main__':
         fit_derived_results = pd.read_csv(object_dir + "/results/ns_derived_table.csv")
         fit_results = pd.read_csv(object_dir + "/results/ns_table.csv")
         candidates_count = len(fit_results[fit_results["#name"].str.contains("_period")])
+        ecc_rows = fit_derived_results[fit_derived_results["#property"].str.contains("Eccentricity")]
+        arg_periastron_rows = fit_derived_results[fit_derived_results["#property"].str.contains("Argument of periastron")]
         for i in arange(0, candidates_count):
             period_row = fit_results[fit_results["#name"].str.contains("_period")].iloc[i]
             period = float(period_row["median"])
@@ -105,14 +107,24 @@ if __name__ == '__main__':
             radius = float(radius_row["value"])
             radius_low_err = float(radius_row["lower_error"])
             radius_up_err = float(radius_row["upper_error"])
-            ecc_row = fit_derived_results[fit_derived_results["#property"].str.contains("Eccentricity")].iloc[i]
-            eccentricity = float(ecc_row["value"])
-            ecc_low_err = float(ecc_row["lower_error"])
-            ecc_up_err = float(ecc_row["upper_error"])
-            arg_periastron_row = fit_derived_results[fit_derived_results["#property"].str.contains("Argument of periastron")].iloc[i]
-            arg_periastron = float(arg_periastron_row["value"])
-            arg_periastron_low_err = float(arg_periastron_row["lower_error"])
-            arg_periastron_up_err = float(arg_periastron_row["upper_error"])
+            if len(ecc_rows) > 0:
+                ecc_row = ecc_rows.iloc[i]
+                eccentricity = float(ecc_row["value"])
+                ecc_low_err = float(ecc_row["lower_error"])
+                ecc_up_err = float(ecc_row["upper_error"])
+            else:
+                eccentricity = 0.0
+                ecc_low_err = 0.1
+                ecc_up_err = 0.1
+            if len(arg_periastron_rows) > 0:
+                arg_periastron_row = arg_periastron_rows.iloc[i]
+                arg_periastron = float(arg_periastron_row["value"])
+                arg_periastron_low_err = float(arg_periastron_row["lower_error"])
+                arg_periastron_up_err = float(arg_periastron_row["upper_error"])
+            else:
+                arg_periastron = 0.0
+                arg_periastron_low_err = 20.0
+                arg_periastron_up_err = 20.0
             planets_params.append(
                 PlanetInput(period=period, period_low_err=period_low_err, period_up_err=period_up_err,
                             radius=radius, radius_low_err=radius_low_err, radius_up_err=radius_up_err,
