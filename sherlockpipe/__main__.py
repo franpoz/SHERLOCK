@@ -29,27 +29,27 @@ def load_module(module_path):
     return module
 
 
-def get_star_info(target):
+def get_star_info(object_id, target):
     input_star_info = None
     if isinstance(target, dict) and "STAR" in target and target["STAR"] is not None:
         star_properties = target["STAR"]
-        input_star_info = StarInfo(id, tuple(
+        input_star_info = StarInfo(object_id=object_id, ld_coefficients=tuple(
             star_properties["LD_COEFFICIENTS"]) if "LD_COEFFICIENTS" in star_properties else None,
-                                   star_properties["TEFF"] if "TEFF" in star_properties else None,
-                                   star_properties["LUM"] if "LUM" in star_properties else None,
-                                   star_properties["LOGG"] if "LOGG" in star_properties else None,
-                                   star_properties["RADIUS"] if "RADIUS" in star_properties else None,
-                                   star_properties[
+                                   teff=star_properties["TEFF"] if "TEFF" in star_properties else None,
+                                   lum=star_properties["LUM"] if "LUM" in star_properties else None,
+                                   logg=star_properties["LOGG"] if "LOGG" in star_properties else None,
+                                   radius=star_properties["RADIUS"] if "RADIUS" in star_properties else None,
+                                   radius_min=star_properties[
                                        "RADIUS_LOWER_ERROR"] if "RADIUS_LOWER_ERROR" in star_properties else None,
-                                   star_properties[
+                                   radius_max=star_properties[
                                        "RADIUS_UPPER_ERROR"] if "RADIUS_UPPER_ERROR" in star_properties else None,
-                                   star_properties["MASS"] if "MASS" in star_properties else None,
-                                   star_properties[
+                                   mass=star_properties["MASS"] if "MASS" in star_properties else None,
+                                   mass_min=star_properties[
                                        "MASS_LOWER_ERROR"] if "MASS_LOWER_ERROR" in star_properties else None,
-                                   star_properties[
+                                   mass_max=star_properties[
                                        "MASS_UPPER_ERROR"] if "MASS_UPPER_ERROR" in star_properties else None,
-                                   star_properties["RA"] if "RA" in star_properties else None,
-                                   star_properties["DEC"] if "DEC" in star_properties else None)
+                                   ra=star_properties["RA"] if "RA" in star_properties else None,
+                                   dec=star_properties["DEC"] if "DEC" in star_properties else None)
     return input_star_info
 
 
@@ -144,7 +144,7 @@ if __name__ == '__main__':
             sectors = get_from_user_or_default(target_configs, "SECTORS", "all")
             file = get_from_user(target_configs, "FILE")
             author = get_from_user(target_configs, "AUTHOR")
-            star_info = get_star_info(target_configs)
+            star_info = get_star_info(target, target_configs)
             min_sectors = get_from_user_or_config(target_configs, sherlock_user_properties, "MIN_SECTORS")
             max_sectors = get_from_user_or_config(target_configs, sherlock_user_properties, "MAX_SECTORS")
             bin_minutes = get_from_user_or_config(target_configs, sherlock_user_properties, "BIN_MINUTES")
