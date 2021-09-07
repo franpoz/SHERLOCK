@@ -643,6 +643,8 @@ class Vetter:
                              names=['# ID', 'GaiaID', 'x', 'y', 'Dist_pix', 'Dist_arcsec', 'Gmag', 'InAper'])
                 ascii.write(data, save_dir + '/Gaia_' + target_title + '_S' + str(tpf.sector) + '.dat', overwrite=True)
             return save_dir
+        except SystemExit:
+            logging.exception("Field Of View generation tried to exit.")
         except Exception as e:
             logging.exception("Exception found when generating Field Of View plots")
 
