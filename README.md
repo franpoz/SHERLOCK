@@ -165,7 +165,7 @@ SHERLOCK PIPEline also adds now a tool to plan your observations from ground-bas
 
 ```python3 -m sherlockpipe.plan --candidate ${theCandidateNumber} --observatory observatories.csv```
 
-on fhe resulting `sherlockpipe.fit` directory, where the precise candidate ephemeris are placed. 
+on the resulting `sherlockpipe.fit` directory, where the precise candidate ephemeris are placed. 
 The `observatories.csv` file should contain the list of available observatories for your candidate follow-up. 
 As an example, you can look at 
 [this file](https://github.com/franpoz/SHERLOCK/blob/master/examples/observatories.csv).
