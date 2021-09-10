@@ -132,11 +132,11 @@ INITIAL_TRANSIT_MASK:
 APERTURE:
 
 ######################################################################################################################
-### INITIAL DETREND PERIOD - If any value of this section overlaps any auto-detrend setup, auto-detrend will be
+### AUTO_DETREND_PERIOD - If any value of this section overlaps any auto-detrend setup, auto-detrend will be
 # disabled for the overlapping objects.
 ######################################################################################################################
 # The detrend period to be used as an initial detrend to the PDCSAP_FLUX light curves
-INITIAL_DETREND_PERIOD:
+AUTO_DETREND_PERIOD:
 
 # Flag to signal SHERLOCK for updating the TOIs, KOIs and EPICs
 UPDATE_OIS: False
