@@ -3,8 +3,8 @@ import shutil
 from argparse import ArgumentParser
 
 import astroplan
+import astropy
 import matplotlib
-import numpy
 from astroplan.plots import plot_airmass
 from astropy.coordinates import SkyCoord, get_moon
 import astropy.units as u
@@ -13,7 +13,6 @@ import pandas as pd
 import numpy as np
 from astroplan import (Observer, FixedTarget, AtNightConstraint, AltitudeConstraint)
 import datetime as dt
-import lightkurve
 import matplotlib.pyplot as plt
 
 from astropy.time import Time
@@ -147,7 +146,7 @@ def create_observation_observables(object_id, object_dir, name, epoch, epoch_low
                                  timezone=observer_timezone)
         midtransit_times = system.next_primary_eclipse_time(obs_time, n_eclipses=n_transits)
         ingress_egress_times = system.next_primary_ingress_egress_time(obs_time, n_eclipses=n_transits)
-        constraints = [AtNightConstraint.twilight_civil(), AltitudeConstraint(min=min_altitude * u.deg),
+        constraints = [AtNightConstraint.twilight_nautical(), AltitudeConstraint(min=min_altitude * u.deg),
                        MoonIlluminationSeparationConstraint(min_dist=moon_min_dist * u.deg,
                                                             max_dist=moon_max_dist * u.deg)]
         ingress_observables = astroplan.is_event_observable(constraints, observer_site, target, times=ingress_egress_times[:, 0])[0]
@@ -285,17 +284,17 @@ if __name__ == '__main__':
     for i in np.arange(0, candidates_count):
         period_row = fit_results[fit_results["#name"].str.contains("_period")].iloc[i]
         period = period_row["median"]
-        period_low_err = period_row["lower_error"]
-        period_up_err = period_row["upper_error"]
+        period_low_err = float(period_row["lower_error"])
+        period_up_err = float(period_row["upper_error"])
         name = object_id + "_" + period_row["#name"].replace("_period", "")
         epoch_row = fit_results[fit_results["#name"].str.contains("_epoch")].iloc[i]
         epoch = epoch_row["median"].item()
-        epoch_low_err = epoch_row["lower_error"]
-        epoch_up_err = epoch_row["upper_error"]
+        epoch_low_err = float(epoch_row["lower_error"])
+        epoch_up_err = float(epoch_row["upper_error"])
         duration_row = fit_derived_results[fit_derived_results["#property"].str.contains("Total transit duration")].iloc[i]
         duration = duration_row["value"].item()
-        duration_low_err = duration_row["lower_error"]
-        duration_up_err = duration_row["upper_error"]
+        duration_low_err = float(duration_row["lower_error"])
+        duration_up_err = float(duration_row["upper_error"])
         depth_row = fit_derived_results[fit_derived_results["#property"].str.contains("depth \(dil.\)")].iloc[i]
         depth = depth_row["value"] * 1000
         depth_low_err = depth_row["lower_error"] * 1000
@@ -305,10 +304,11 @@ if __name__ == '__main__':
                                                             period_up_err, duration, args.observatories, args.tz, args.lat,
                                                             args.lon, args.alt, args.max_days, args.min_altitude,
                                                             args.moon_min_dist, args.moon_max_dist, args.transit_fraction)
-        report = ObservationReport(observatories_df, observables_df, object_id, name, plan_dir,
+        report = ObservationReport(observatories_df, observables_df, object_id, name, plan_dir, ra, dec,
                                    epoch, epoch_low_err, epoch_up_err, period, period_low_err, period_up_err, duration,
                                    duration_low_err, duration_up_err, depth, depth_low_err, depth_up_err,
                                    args.transit_fraction, args.moon_min_dist, args.moon_max_dist, args.min_altitude,
-                                   args.max_days)
+                                   args.max_days, star_df.iloc[0]["v"], star_df.iloc[0]["j"], star_df.iloc[0]["h"],
+                                   star_df.iloc[0]["k"])
         report.create_report()
         shutil.rmtree(images_dir, ignore_errors=True)
