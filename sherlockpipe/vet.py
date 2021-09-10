@@ -330,8 +330,10 @@ class Vetter:
         if len(folded_phase) > 0:
             in_transit = (folded_phase > transit_time - duration / 2) & (folded_phase < transit_time + duration / 2)
             in_transit_center = (np.abs(folded_phase - transit_time)).argmin()
-            model_flux = Vetter.get_transit_model(in_transit, in_transit_center, depth)
-            axs.plot(folded_phase, model_flux, color="red")
+            model_time, model_flux = Vetter.get_transit_model(duration, transit_time,
+                                                  (transit_time - folded_plot_range, transit_time + folded_plot_range),
+                                                  depth)
+            axs.plot(model_time, model_flux, color="red")
             axs.scatter(folded_phase[~in_transit], folded_y[~in_transit], color="gray")
             axs.scatter(folded_phase[in_transit], folded_y[in_transit], color="darkorange")
             axs.set_xlim([transit_time - folded_plot_range, transit_time + folded_plot_range])
@@ -401,6 +403,7 @@ class Vetter:
         flux_err = lc.flux_err.value[sort_args]
         half_duration_phase = duration / 2 / period
         folded_plot_range = half_duration_phase * range
+        folded_plot_range = folded_plot_range if folded_plot_range < 0.5 else 0.5
         folded_phase_zoom_mask = np.where((time > 0.5 - folded_plot_range) &
                                           (time < 0.5 + folded_plot_range))
         folded_phase = time[folded_phase_zoom_mask]
@@ -422,8 +425,8 @@ class Vetter:
             bin_stds = folded_y_err * 2
         in_transit = (folded_phase > 0.5 - half_duration_phase) & (folded_phase < 0.5 + half_duration_phase)
         in_transit_center = (np.abs(folded_phase - 0.5)).argmin()
-        model_flux = Vetter.get_transit_model(in_transit, in_transit_center, depth)
-        axs.plot(folded_phase, model_flux, color="red")
+        model_time, model_flux = Vetter.get_transit_model(half_duration_phase * 2, 0.5, (0, 1.0), depth)
+        axs.plot(model_time, model_flux, color="red")
         axs.set_title(str(id) + " Folded Curve with P={:.2f}d and T0={:.2f}".format(period, epoch))
         axs.set_xlabel("Time (d)")
         axs.set_ylabel("Flux norm.")
@@ -433,8 +436,9 @@ class Vetter:
 
     @staticmethod
     #TODO build model from selected transit_template
-    def get_transit_model(in_transit, in_transit_center, depth):
-        t = np.linspace(-3, 3, 10000)
+    def get_transit_model(duration, t0, start_end, depth):
+        model_len = 10000
+        t = np.linspace(-6, 6, model_len)
         ma = batman.TransitParams()
         ma.t0 = 0  # time of inferior conjunction
         ma.per = 365  # orbital period, use Earth as a reference
@@ -447,16 +451,17 @@ class Vetter:
         ma.limb_dark = "quadratic"  # limb darkening model
         m = batman.TransitModel(ma, t)  # initializes model
         model = m.light_curve(ma)  # calculates light curve
-        model_depth_args = np.argwhere(model < 1)
-        model_intransit = model[model_depth_args].flatten()
-        model_time_intransit = t[model_depth_args].flatten()
-        in_transit_points = len(in_transit[in_transit])
-        scaled_intransit = np.interp(np.linspace(model_time_intransit[0], model_time_intransit[-1], in_transit_points),
-                  model_time_intransit, model_intransit)
-        model_flux = np.full((len(in_transit)), 1.0)
-        model_flux[in_transit_center - in_transit_points // 2:in_transit_center - in_transit_points // 2 + in_transit_points] = scaled_intransit
-        model_flux[model_flux < 1] = 1 - ((1 - model_flux[model_flux < 1]) * depth / (1 - np.min(model_flux)))
-        return model_flux
+        model_time = np.linspace(start_end[0], start_end[1], model_len)
+        model_intransit = np.argwhere(model < 1)[:, 0]
+        in_transit_indexes = np.where((model_time > t0 - duration / 2) & (model_time < t0 + duration / 2))[0]
+        model_time_in_transit = model_time[in_transit_indexes]
+        scaled_intransit = np.interp(
+            np.linspace(model_time_in_transit[0], model_time_in_transit[-1], len(in_transit_indexes)),
+            model_time[model_intransit], model[model_intransit])
+        model = np.full((model_len), 1.0)
+        model[in_transit_indexes] = scaled_intransit
+        model[model < 1] = 1 - ((1 - model[model < 1]) * depth / (1 - np.min(model)))
+        return model_time, model
 
     def vetting(self, candidate, cpus):
         """
