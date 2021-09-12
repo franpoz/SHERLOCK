@@ -23,7 +23,7 @@ class ObservationReport:
                  period_low_err, period_up_err, duration, duration_low_err, duration_up_err, depth, depth_low_err,
                  depth_up_err, observable, min_dist, max_dist, min_altitude, max_days, v, j, h, k):
         self.df = df
-        self.df_observatories = df_observatories
+        self.df_observatories = df_observatories.drop('tz', 1)
         self.object_id = object_id
         self.name = name
         self.working_path = working_path
@@ -54,7 +54,7 @@ class ObservationReport:
 
     def df_manipulations(self):
         self.df['Observatory'] = self.df['observatory'].str.replace("-", " ")
-
+        self.df['TZ'] = self.df['timezone'].astype(str)
         # Le quitamos los milisegundos a todos los campos de fecha:
         self.df['ingress'] = self.df['ingress'].str[:-4]
         self.df['twilight_evening'] = self.df['twilight_evening'].str[:-4]
@@ -113,7 +113,7 @@ class ObservationReport:
         self.df['Moon'] = self.df['moon_phase'].map(str) + '%<br/>' + self.df['moon_dist'].map(str) + 'º'
 
         # El dataframe final solo tendrá unas pocas columnas del excel inicial:
-        df_output = self.df[['Observatory', 'Event times', 'TT Error', 'Moon', 'Image']]
+        df_output = self.df[['Observatory', 'TZ (h from UTC)', 'Event times', 'TT Error', 'Moon', 'Image']]
 
         return df_output
 
@@ -215,7 +215,7 @@ class ObservationReport:
         # Generamos la tabla 1 con los parámetros:
         tabla1_data = [['RA (deg)', 'Dec (deg)', 'V (mag)', 'J (mag)', 'H (mag)', 'K (mag)'],
                        [Angle(self.ra, u.deg).to_string(unit=u.hourangle, sep=':', precision=2),
-                        Angle(self.dec, u.deg).to_string(unit=u.hourangle, sep=':', precision=2),
+                        Angle(self.dec, u.deg).to_string(unit=u.deg, sep=':', precision=2),
                         round(self.v, 2), round(self.j, 2), round(self.h, 2), round(self.k, 2)]]
         table1_colwidth = [3.5 * cm, 3.5 * cm, 2 * cm, 2 * cm, 2 * cm, 2 * cm]
         table1_number_rows = len(tabla1_data)
@@ -225,7 +225,7 @@ class ObservationReport:
         ObservationReport.row_colors(tabla1_data, tabla1)
         story.append(tabla1)
 
-        table1_descripcion = '<font name="HELVETICA" size="9"><strong>Table 2: </strong>\
+        table1_descripcion = '<font name="HELVETICA" size="9"><strong>Table 1: </strong>\
                         The proposed target parameters.</font>'
         story.append(Spacer(1, 5))
         story.append(Paragraph(table1_descripcion, styles["ParagraphAlignCenter"]))
@@ -280,9 +280,9 @@ class ObservationReport:
         story.append(Spacer(1, 30))
 
         # Generamos la tabla 4 con los observatorios:
-        table4_colwidth = [3.5 * cm, 3.5 * cm, 2.5 * cm, 2.5 * cm, 2.5 * cm]
+        table4_colwidth = [3.5 * cm, 2.5 * cm, 2.5 * cm, 2.5 * cm]
         table4_number_rows = len(self.df_observatories) + 1  # Sumamos 1 para tener en cuenta el header
-        table4_header_row = [['Name', 'Time Zone (from UTC)', 'Latitude (º)', 'Longitude (º)', 'Altitude (m)']]
+        table4_header_row = [['Name', 'Latitude (º)', 'Longitude (º)', 'Altitude (m)']]
         table4_data = self.df_observatories.values.tolist()
         tabla4 = Table(table4_header_row + table4_data, table4_colwidth, table4_number_rows * [0.75 * cm])
         tabla4.setStyle(table_style)
@@ -326,7 +326,7 @@ class ObservationReport:
                 table5_rowwidths.append(1.2 * inch)
 
         # Creates a table with 5 columns, variable width:
-        table5_colwidths = [1.1 * inch, 2.3 * inch, 0.7 * inch, 0.7 * inch, 2.2 * inch]
+        table5_colwidths = [1.1 * inch, 0.3 * inch, 2.3 * inch, 0.7 * inch, 0.7 * inch, 2.2 * inch]
         tabla5 = Table(final_data, table5_colwidths, table5_rowwidths, repeatRows=1)
         tabla5.setStyle(table_style)
         # Le damos el estilo alternando colores de filas:
@@ -335,8 +335,9 @@ class ObservationReport:
         story.append(tabla5)
 
         table5_descripcion = '<font name="HELVETICA" size="9"><strong>Table 5</strong>: Observables for the \
-                computed candidate. <strong>TT errors column</strong> represents the uncertainty of the ingress, \
-                midtime and egress times for each observable calculated from the T0 and Period uncertainties. \
+                computed candidate. <strong>TZ column</strong> represents the observatory time zone offset from \
+                UTC for each transit event. <strong>TT errors column</strong> represents the uncertainty of the \
+                ingress, midtime and egress times for each observable calculated from the T0 and Period uncertainties. \
                 <strong>Moon column</strong> represents the moon phase and distance to the target star at the \
                 time of the transit midtime. <strong>Image column</strong> represents a plot where the altitude \
                 and air mass are plotted with a blue line. The transit midtime is plotted in the center of the \

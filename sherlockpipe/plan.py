@@ -17,6 +17,8 @@ import matplotlib.pyplot as plt
 
 from astropy.time import Time
 from lcbuilder.lcbuilder_class import LcBuilder
+from pytz import timezone, utc
+from timezonefinder import TimezoneFinder
 
 from sherlockpipe.observation_report import ObservationReport
 
@@ -78,6 +80,20 @@ def get_twin(ax):
             return other_ax
     return None
 
+
+def get_offset(lat, lng, datetime):
+    """
+    returns a location's time zone offset from UTC in minutes.
+    """
+    tf = TimezoneFinder()
+    tz_target = timezone(tf.certain_timezone_at(lng=lng, lat=lat))
+    if tz_target is None:
+        return None
+    today_target = tz_target.localize(datetime)
+    today_utc = utc.localize(datetime)
+    return (today_utc - today_target).total_seconds() / 3600
+
+
 def create_observation_observables(object_id, object_dir, name, epoch, epoch_low_err, epoch_up_err, period,
                                    period_low_err, period_up_err, duration,
                                    observatories_file, timezone, latitude, longitude, altitude,
@@ -125,12 +141,10 @@ def create_observation_observables(object_id, object_dir, name, epoch, epoch_low
     obs_time = Time.now()
     system = EclipsingSystem(primary_eclipse_time=primary_eclipse_time, orbital_period=u.Quantity(period, unit="d"),
                              duration=u.Quantity(duration, unit="h"), name=name)
-    observables_df = pd.DataFrame(columns=['observatory', 'ingress', 'egress', 'midtime', 'ingress_local',
-                                           'egress_local', 'midtime_local',
+    observables_df = pd.DataFrame(columns=['observatory', 'timezone', 'ingress', 'egress', 'midtime',
                                            "midtime_up_err_h",
                                            "midtime_low_err_h", 'twilight_evening',
-                                           'twilight_morning', 'twilight_evening_local',
-                                           'twilight_morning_local', 'observable', 'moon_phase', 'moon_dist'])
+                                           'twilight_morning', 'observable', 'moon_phase', 'moon_dist'])
     plan_dir = object_dir + "/plan"
     images_dir = plan_dir + "/images"
     if os.path.exists(plan_dir):
@@ -140,10 +154,8 @@ def create_observation_observables(object_id, object_dir, name, epoch, epoch_low
         shutil.rmtree(images_dir, ignore_errors=True)
     os.mkdir(images_dir)
     for index, observatory_row in observatories_df.iterrows():
-        observer_timezone = dt.timezone(dt.timedelta(hours=observatory_row["tz"]))
         observer_site = Observer(latitude=observatory_row["lat"], longitude=observatory_row["lon"],
-                                 elevation=u.Quantity(observatory_row["alt"], unit="m"),
-                                 timezone=observer_timezone)
+                                 elevation=u.Quantity(observatory_row["alt"], unit="m"))
         midtransit_times = system.next_primary_eclipse_time(obs_time, n_eclipses=n_transits)
         ingress_egress_times = system.next_primary_ingress_egress_time(obs_time, n_eclipses=n_transits)
         constraints = [AtNightConstraint.twilight_nautical(), AltitudeConstraint(min=min_altitude * u.deg),
@@ -183,17 +195,18 @@ def create_observation_observables(object_id, object_dir, name, epoch, epoch_low
             transits_since_epoch = round((midtransit_time - primary_eclipse_time).jd / period)
             midtransit_time_low_err = np.round((((transits_since_epoch * period_low_err) ** 2 + epoch_low_err ** 2) ** (1 / 2)) * 24, 2)
             midtransit_time_up_err = np.round((((transits_since_epoch * period_up_err) ** 2 + epoch_up_err ** 2) ** (1 / 2)) * 24, 2)
-            observables_df = observables_df.append({"observatory": observatory_row["name"], "ingress": ingress.isot,
+            if observatory_row["tz"] is not None and not np.isnan(observatory_row["tz"]):
+                observer_timezone = observatory_row["tz"]
+            else:
+                observer_timezone = get_offset(observatory_row["lat"], observatory_row["lon"],
+                                               midtransit_time.datetime)
+            observables_df = observables_df.append({"observatory": observatory_row["name"],
+                                                    "timezone": observer_timezone, "ingress": ingress.isot,
                                    "egress": egress.isot, "midtime": midtransit_time.isot,
-                                   "ingress_local": ingress.to_datetime(timezone=observer_timezone),
-                                   "egress_local": egress.to_datetime(timezone=observer_timezone),
-                                   "midtime_local": midtransit_time.to_datetime(timezone=observer_timezone),
                                    "midtime_up_err_h": midtransit_time_up_err,
                                    "midtime_low_err_h": midtransit_time_low_err,
                                    "twilight_evening": twilight_evening.isot,
                                    "twilight_morning": twilight_morning.isot,
-                                   "twilight_evening_local": twilight_evening.to_datetime(timezone=observer_timezone),
-                                   "twilight_morning_local": twilight_morning.to_datetime(timezone=observer_timezone),
                                    "observable": observable, "moon_phase": moon_phase, "moon_dist": moon_dist},
                                                    ignore_index=True)
             delta_t = (egress - ingress) * 3
