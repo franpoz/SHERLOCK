@@ -3,7 +3,6 @@ import shutil
 from argparse import ArgumentParser
 
 import astroplan
-import astropy
 import matplotlib
 from astroplan.plots import plot_airmass
 from astropy.coordinates import SkyCoord, get_moon
@@ -12,7 +11,6 @@ from astroplan import EclipsingSystem, moon_illumination, Constraint
 import pandas as pd
 import numpy as np
 from astroplan import (Observer, FixedTarget, AtNightConstraint, AltitudeConstraint)
-import datetime as dt
 import matplotlib.pyplot as plt
 
 from astropy.time import Time

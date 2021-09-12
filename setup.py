@@ -42,6 +42,7 @@ setuptools.setup(
                         "mock==4.0.3",
                         'numba==0.53.1', # foldedleastsquares dependency
                         'pyparsing==2.4.7', # Matplotlib dependency
+                        'pytz', # Observation plan: Not using version because it gets the DB updated with each release
                         "pyyaml==5.4.1",
                         "requests==2.25.1",
                         "rebound==3.17.3",
@@ -52,6 +53,7 @@ setuptools.setup(
                         "sklearn==0.0",
                         "spock==1.3.1",
                         'statsmodels==0.12.2', # Allesfitter dependency
+                        'timezonefinder==5.2.0', # Observation plan
                         'torch==1.9.0',
                         'tqdm==4.56.0',
                         'triceratops==1.0.10',
