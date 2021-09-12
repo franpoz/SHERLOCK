@@ -311,7 +311,8 @@ class Vetter:
         cols = 1
         fig, axs = plt.subplots(rows, cols, figsize=figsize, constrained_layout=True)
         for index in np.arange(0, len(transit_times)):
-            Vetter.plot_single_transit(id, axs[index], lc, transit_times[index], depth, duration)
+            current_axs = axs[index] if isinstance(axs, np.ndarray) or isinstance(axs, list) else axs
+            Vetter.plot_single_transit(id, current_axs, lc, transit_times[index], depth, duration)
         plt.savefig(file_dir + "/single_transits.png", dpi=200)
         fig.clf()
         plt.close(fig)
