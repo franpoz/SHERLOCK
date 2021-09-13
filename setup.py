@@ -37,7 +37,7 @@ setuptools.setup(
                         "emcee==3.0.2", # Allesfitter dependency
                         "extension-helpers==0.1",
                         "imageio==2.9.0",
-                        "lcbuilder==0.5.7",
+                        "lcbuilder==0.5.8",
                         "matplotlib==3.3.4",
                         "mock==4.0.3",
                         'numba==0.53.1', # foldedleastsquares dependency
@@ -54,7 +54,6 @@ setuptools.setup(
                         "spock==1.3.1",
                         'statsmodels==0.12.2', # Allesfitter dependency
                         'timezonefinder==5.2.0', # Observation plan
-                        'torch==1.9.0',
                         'tqdm==4.56.0',
                         'triceratops==1.0.10',
                         'uncertainties==3.1.5'
