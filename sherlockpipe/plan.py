@@ -212,7 +212,7 @@ def create_observation_observables(object_id, object_dir, name, epoch, epoch_low
             end_plot_time = egress + duration * u.hour
             plot_time = init_plot_time + delta_t * np.linspace(0, 1, 50)
             plt.tick_params(labelsize=6)
-            airmass_ax = plot_airmass(target, observer_site, plot_time, brightness_shading=True, altitude_yaxis=True)
+            airmass_ax = plot_airmass(target, observer_site, plot_time, brightness_shading=False, altitude_yaxis=True)
             airmass_ax.axvspan(twilight_morning.plot_date, end_plot_time.plot_date, color='white')
             airmass_ax.axvspan(init_plot_time.plot_date, twilight_evening.plot_date, color='white')
             airmass_ax.axvspan(twilight_evening.plot_date, twilight_morning.plot_date, color='gray')

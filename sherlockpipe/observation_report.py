@@ -54,7 +54,9 @@ class ObservationReport:
 
     def df_manipulations(self):
         self.df['Observatory'] = self.df['observatory'].str.replace("-", " ")
-        self.df['TZ'] = self.df['timezone'].astype(str)
+        self.df['TZ'] = self.df['timezone'].fillna(0).astype('int')
+        self.df['TZ'] = self.df['TZ'].astype('str')
+        self.df['timezone'].astype(str)
         # Le quitamos los milisegundos a todos los campos de fecha:
         self.df['ingress'] = self.df['ingress'].str[:-4]
         self.df['twilight_evening'] = self.df['twilight_evening'].str[:-4]
@@ -113,7 +115,7 @@ class ObservationReport:
         self.df['Moon'] = self.df['moon_phase'].map(str) + '%<br/>' + self.df['moon_dist'].map(str) + 'º'
 
         # El dataframe final solo tendrá unas pocas columnas del excel inicial:
-        df_output = self.df[['Observatory', 'TZ (h from UTC)', 'Event times', 'TT Error', 'Moon', 'Image']]
+        df_output = self.df[['Observatory', 'TZ', 'Event times', 'TT Error', 'Moon', 'Image']]
 
         return df_output
 
