@@ -141,9 +141,9 @@ if __name__ == '__main__':
     for target, target_configs in sherlock_user_properties["TARGETS"].items():
         try:
             aperture = get_from_user(target_configs, "APERTURE")
-            sectors = get_from_user_or_default(target_configs, "SECTORS", "all")
-            file = get_from_user(target_configs, "FILE")
-            author = get_from_user(target_configs, "AUTHOR")
+            sectors = get_from_user_or_config_or_default(target_configs, sherlock_user_properties, "SECTORS", "all")
+            file = get_from_user_or_config(target_configs, sherlock_user_properties, "FILE")
+            author = get_from_user_or_config(target_configs, sherlock_user_properties, "AUTHOR")
             star_info = get_star_info(target, target_configs)
             min_sectors = get_from_user_or_config(target_configs, sherlock_user_properties, "MIN_SECTORS")
             max_sectors = get_from_user_or_config(target_configs, sherlock_user_properties, "MAX_SECTORS")
