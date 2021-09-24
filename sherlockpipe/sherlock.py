@@ -489,13 +489,14 @@ class Sherlock:
         if not sherlock_target.period_min:
             sherlock_target.period_min = lc_build.detrend_period * 4
             logging.info("Setting Min Period to %.3f due to auto_detrend period", sherlock_target.period_min)
-        logging.info("======================================")
-        logging.info("Field Of View Plots")
-        logging.info("======================================")
-        fov_dir = object_dir + "/fov"
-        Vetter.vetting_field_of_view(fov_dir, mission, object_num, lc_build.cadence, lc_build.star_info.ra,
-                                     lc_build.star_info.dec, lc_build.sectors if isinstance(lc_build.sectors, list)
-                                     else lc_build.sectors.tolist(), lc_build.tpf_source, lc_build.tpf_apertures)
+        if lc_build.sectors is not None:
+            logging.info("======================================")
+            logging.info("Field Of View Plots")
+            logging.info("======================================")
+            fov_dir = object_dir + "/fov"
+            Vetter.vetting_field_of_view(fov_dir, mission, object_num, lc_build.cadence, lc_build.star_info.ra,
+                                         lc_build.star_info.dec, lc_build.sectors if isinstance(lc_build.sectors, list)
+                                         else lc_build.sectors.tolist(), lc_build.tpf_source, lc_build.tpf_apertures)
         return lc_build
 
     def __analyse(self, sherlock_target, time, lcs, flux_err, star_info, id_run, transits_min_count, cadence, report,
