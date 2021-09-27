@@ -1,4 +1,5 @@
 import multiprocessing
+import os
 
 from lcbuilder.objectinfo.ObjectInfo import ObjectInfo
 
@@ -26,7 +27,8 @@ class SherlockTarget:
                  period_max=33, period_protect=10, best_signal_algorithm='border-correct', quorum_strength=1,
                  min_quorum=0, fit_method='tls', oversampling=10,
                  t0_fit_margin=0.05, duration_grid_step=1.1,
-                 source_properties_file=None):
+                 source_properties_file=None,
+                 cache_dir=os.path.expanduser('~') + "/"):
         self.min_sectors = min_sectors
         self.max_sectors = max_sectors
         self.bin_minutes = bin_minutes

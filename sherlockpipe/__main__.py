@@ -1,3 +1,4 @@
+import os
 import pickle
 import sys
 import traceback
@@ -60,20 +61,20 @@ def get_aperture(properties, id):
     return input_aperture_file
 
 
-def extract_sectors(object_info):
+def extract_sectors(object_info, cache_dir):
     mission, mission_prefix, id_int = LcBuilder().parse_object_info(object_info.mission_id())
     object_sectors = None
     if mission == "Kepler":
         lcf_search_results = lightkurve.search_targetpixelfile(object_info.mission_id(), mission=object_info.mission_id(),
                                                            cadence="long")
-        object_sectors = lcf_search_results.download_all().quarter
+        object_sectors = lcf_search_results.download_all(download_dir=cache_dir).quarter
     elif mission == "K2":
         lcf_search_results = lightkurve.search_targetpixelfile(object_info.mission_id(), mission=object_info.mission_id(),
                                                            cadence="long")
-        object_sectors = lcf_search_results.download_all().campaign
+        object_sectors = lcf_search_results.download_all(download_dir=cache_dir).campaign
     elif mission == "TESS":
         lcf_search_results = lightkurve.search_tesscut(object_info.mission_id())
-        object_sectors = lcf_search_results.download_all().sector
+        object_sectors = lcf_search_results.download_all(download_dir=cache_dir).sector
     return object_sectors
 
 
@@ -138,6 +139,7 @@ if __name__ == '__main__':
     sherlock_targets = []
     mission_lightcurve_builder = MissionLightcurveBuilder()
     lcbuilder = LcBuilder()
+    cache_dir = get_from_user_or_default(sherlock_user_properties, "CACHE_DIR", os.path.expanduser('~') + "/")
     for target, target_configs in sherlock_user_properties["TARGETS"].items():
         try:
             aperture = get_from_user(target_configs, "APERTURE")
@@ -200,6 +202,16 @@ if __name__ == '__main__':
             exptime = get_from_user_or_config(target_configs, sherlock_user_properties, "EXPTIME")
             eleanor_corr_flux = get_from_user_or_config(target_configs, sherlock_user_properties,
                                                         "ELEANOR_CORRECTED_FLUX")
+            reduce_simple_oscillations = get_from_user_or_config(target_configs, sherlock_user_properties,
+                                                        "SIMPLE_OSCILLATIONS_REDUCTION")
+            oscillation_snr_threshold = get_from_user_or_config(target_configs, sherlock_user_properties,
+                                                        "OSCILLATIONS_MIN_SNR")
+            oscillation_amplitude_threshold = get_from_user_or_config(target_configs, sherlock_user_properties,
+                                                        "OSCILLATIONS_AMPLITUDE_THRESHOLD")
+            oscillation_ws_scale = get_from_user_or_config(target_configs, sherlock_user_properties,
+                                                        "OSCILLATIONS_WS_PERCENT")
+            oscillation_min_period = get_from_user_or_config(target_configs, sherlock_user_properties,
+                                                        "OSCILLATIONS_MIN_PERIOD")
             mission = None
             mode = get_from_user_or_config_or_default(target_configs, sherlock_user_properties, "MODE", "GLOBAL")
             sectors = get_from_user_or_config_or_default(target_configs, sherlock_user_properties, "SECTORS", "all")
@@ -211,7 +223,10 @@ if __name__ == '__main__':
                                                                         star_info, aperture, eleanor_corr_flux, outliers_sigma,
                                                                         high_rms_enabled, high_rms_threshold, high_rms_bin_hours,
                                                                         smooth_enabled, auto_detrend_enabled, auto_detrend_method,
-                                                                        auto_detrend_ratio, auto_detrend_period, prepare_algorithm)
+                                                                        auto_detrend_ratio, auto_detrend_period, prepare_algorithm,
+                                                                        reduce_simple_oscillations, oscillation_snr_threshold,
+                                                                        oscillation_amplitude_threshold, oscillation_ws_scale,
+                                                                        oscillation_min_period)
                         sherlock_target = SherlockTarget(built_object_info,
                                        detrend_method, detrend_l_min, detrend_l_max, detrends_number, detrend_cores,
                                        custom_selection_algorithm,
@@ -229,7 +244,7 @@ if __name__ == '__main__':
                 if mode == "SECTOR" or mode == "BOTH" and isinstance(built_object_info, (
                         MissionObjectInfo, MissionFfiCoordsObjectInfo, MissionFfiIdObjectInfo)):
                     if sectors == 'all':
-                        sectors = extract_sectors(built_object_info)
+                        sectors = extract_sectors(built_object_info, cache_dir)
                     sectors_unique = np.unique(np.array(sectors).flatten())
                     for sector in sectors_unique:
                         object_info = lcbuilder.build_object_info(target, author, [sector], file, exptime,
@@ -237,7 +252,10 @@ if __name__ == '__main__':
                                                                 star_info, aperture, eleanor_corr_flux, outliers_sigma,
                                                                 high_rms_enabled, high_rms_threshold, high_rms_bin_hours,
                                                                 smooth_enabled, auto_detrend_enabled, auto_detrend_method,
-                                                                auto_detrend_ratio, auto_detrend_period, prepare_algorithm)
+                                                                auto_detrend_ratio, auto_detrend_period, prepare_algorithm,
+                                                                reduce_simple_oscillations, oscillation_snr_threshold,
+                                                                oscillation_amplitude_threshold, oscillation_ws_scale,
+                                                                oscillation_min_period)
                         sherlock_target = SherlockTarget(object_info,
                                        detrend_method, detrend_l_min, detrend_l_max, detrends_number, detrend_cores,
                                        custom_selection_algorithm,
@@ -261,7 +279,10 @@ if __name__ == '__main__':
                                                                 smooth_enabled, auto_detrend_enabled,
                                                                 auto_detrend_method,
                                                                 auto_detrend_ratio, auto_detrend_period,
-                                                                prepare_algorithm)
+                                                                prepare_algorithm,
+                                                                reduce_simple_oscillations, oscillation_snr_threshold,
+                                                                oscillation_amplitude_threshold, oscillation_ws_scale,
+                                                                oscillation_min_period)
                 sherlock_target = SherlockTarget(built_object_info,
                                                  detrend_method, detrend_l_min, detrend_l_max, detrends_number,
                                                  detrend_cores,
@@ -281,14 +302,17 @@ if __name__ == '__main__':
                 if mode == "SECTOR" or mode == "BOTH" and isinstance(built_object_info, (
                         MissionObjectInfo, MissionFfiCoordsObjectInfo, MissionFfiIdObjectInfo)):
                     if sectors == 'all':
-                        sectors = extract_sectors(built_object_info)
+                        sectors = extract_sectors(built_object_info, cache_dir)
                     for sector in sectors:
                         object_info = lcbuilder.build_object_info(target, author, [sector], file, exptime,
                                                                 initial_mask, initial_transit_mask,
                                                                 star_info, aperture, eleanor_corr_flux, outliers_sigma,
                                                                 high_rms_enabled, high_rms_threshold, high_rms_bin_hours,
                                                                 smooth_enabled, auto_detrend_enabled, auto_detrend_method,
-                                                                auto_detrend_ratio, auto_detrend_period, prepare_algorithm)
+                                                                auto_detrend_ratio, auto_detrend_period, prepare_algorithm,
+                                                                reduce_simple_oscillations, oscillation_snr_threshold,
+                                                                oscillation_amplitude_threshold, oscillation_ws_scale,
+                                                                oscillation_min_period)
                         sherlock_target = SherlockTarget(object_info,
                                        detrend_method, detrend_l_min, detrend_l_max, detrends_number, detrend_cores,
                                        custom_selection_algorithm,
@@ -310,4 +334,4 @@ if __name__ == '__main__':
             print("Error found for target " + target)
             traceback.print_exc()
             print("Continuing with the target list")
-    sherlock.Sherlock(sherlock_targets, args.explore).run()
+    sherlock.Sherlock(sherlock_targets, args.explore, cache_dir).run()

@@ -23,8 +23,9 @@ class OisManager:
     KIC_STAR_CSV = 'kic_star.csv'
     ois = None
 
-    def __init__(self):
-        home = str(Path.home()) + "/.sherlockpipe/"
+    def __init__(self, cache_dir):
+        self.cache_dir = cache_dir
+        home = self.cache_dir + "/.sherlockpipe/"
         if not os.path.exists(home):
             os.mkdir(home)
         self.tois_csv = home + self.TOIS_CSV

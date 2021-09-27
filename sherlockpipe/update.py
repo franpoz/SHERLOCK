@@ -18,8 +18,8 @@ class Updater:
     timestamps to remind when was the last time it updated and if called again, it could do nothing if it reads very
     recent operations.
     """
-    def __init__(self):
-        pass
+    def __init__(self, cache_dir):
+        self.cache_dir = cache_dir
 
     def update(self, clean, ois, force):
         """
@@ -29,10 +29,10 @@ class Updater:
         @param force: Specifies whether the last download timestamp should be ignored and proceed as if a refresh was
         needed.
         """
-        ois_manager = OisManager()
-        timestamp_ois_path = os.path.join(os.path.expanduser('~'), '.sherlockpipe/timestamp_ois.txt')
-        timestamp_eleanor_path = os.path.join(os.path.expanduser('~'), '.sherlockpipe/timestamp_eleanor.txt')
-        timestamp_latte_path = os.path.join(os.path.expanduser('~'), '.sherlockpipe/timestamp_latte.txt')
+        ois_manager = OisManager(self.cache_dir)
+        timestamp_ois_path = os.path.join(self.cache_dir, '.sherlockpipe/timestamp_ois.txt')
+        timestamp_eleanor_path = os.path.join(self.cache_dir, '.sherlockpipe/timestamp_eleanor.txt')
+        timestamp_latte_path = os.path.join(self.cache_dir, '.sherlockpipe/timestamp_latte.txt')
         ois_timestamp = 0
         eleanor_timestamp = 0
         latte_timestamp = 0
@@ -57,7 +57,7 @@ class Updater:
                 f.write(str(time.time()))
         if force or time.time() - float(eleanor_timestamp) > 3600 * 24 * 7:
             print("------------------ Reloading ELEANOR TESS FFI data ------------------")
-            eleanorpath = os.path.join(os.path.expanduser('~'), '.eleanor')
+            eleanorpath = os.path.join(self.cache_dir, '.eleanor')
             eleanormetadata = eleanorpath + "/metadata"
             if clean and os.path.exists(eleanorpath) and os.path.exists(eleanormetadata):
                 shutil.rmtree(eleanormetadata, ignore_errors=True)
