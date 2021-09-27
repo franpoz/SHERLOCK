@@ -4,11 +4,11 @@
 # eccentricity will be sampled in 2 bins from 0 to 0.1
 # 1: A planet with a period of 15 days and a lowest mass of 2R_earth and highest mass of 2.4R_earth. The
 # eccentricity lowest value is 0 and the highest is 0.1.
-STAR:
-  M: 1.1
-  M_LOW: 0.1
-  M_UP: 0.2
-  M_BINS: 2
+#STAR:
+#  M: 1.1
+#  M_LOW: 0.1
+#  M_UP: 0.2
+#  M_BINS: 2
 BODIES:
   - P: 15
     P_LOW: 0.05

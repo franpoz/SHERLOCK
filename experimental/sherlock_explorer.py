@@ -1,4 +1,6 @@
 import logging
+
+import foldedleastsquares
 import lightkurve as lk
 import numpy as np
 import pandas as pd
@@ -30,9 +32,11 @@ class SherlockExplorer:
     def explore_object(self, object_id, input_lc_file=None, time_units=1, auto_detrend_periodic_signals=False,
                        auto_detrend_ratio=1/4, detrend_method="cosine", smooth=False, sectors=None, cadence=300):
         lc_builder = LcBuilder()
-        object_info = lc_builder.build_object_info(object_id, None, sectors, input_lc_file, cadence, None, None, None, None, None)
-        lc, lc_data, star_info, transits_min_count, sectors, quarters = \
-            lc_builder.build(object_info, None)
+        object_info = lc_builder.build_object_info(object_id, None, sectors, input_lc_file, cadence, None,
+                                                   [{"P": 0.59925, "D": 200, "T0": 1354.57}], None, None, None)
+        lc, lc_data, star_info, transits_min_count, cadence, detrend_period, quarters = \
+            lc_builder.build(object_info, ".")
+        lc = lc.remove_outliers(sigma_lower=float('inf'), sigma_upper=3)  # remove outliers over 3sigma
         flux = lc.flux.value
         flux_err = lc.flux_err.value
         if time_units == 0:
@@ -42,8 +46,6 @@ class SherlockExplorer:
         if smooth:
             flux = savgol_filter(flux, 11, 2)
             flux = uniform_filter1d(flux, 11)
-        lc = lk.LightCurve(time=time, flux=flux, flux_err=flux_err)
-        lc = lc.remove_outliers(sigma_lower=float('inf'), sigma_upper=3)  # remove outliers over 3sigma
         lc_df = pd.DataFrame(columns=['#time', 'flux', 'flux_err'])
         lc_df['#time'] = lc.time.value.astype('<f4')
         lc_df['flux'] = lc.flux.value.astype('<f4')
@@ -52,7 +54,7 @@ class SherlockExplorer:
         lc_df['flux'] = acf(lc.flux.value.astype('<f4'), nlags=7200)
         test_df = pd.DataFrame(lc_df)
         ax = test_df.plot()
-        ax.set_ylim(-0.1, 0.1)
+        ax.set_ylim(lc_df["flux"].min(), lc_df["flux"].max())
         #ax.set_xticks(list(range(0, len(ax.get_xticks()))), ax.get_xticks() / 30 / 24)
         plt.show()
         #periodogram = lc.to_periodogram(oversample_factor=10)
@@ -106,25 +108,25 @@ class SherlockExplorer:
             # args_flux_outer = np.argwhere(flux < 1 + depth * 0.001)
             # flux[args_flux_outer] = np.nan
             # time[args_flux_outer] = np.nan
-            folded_lc = lk.LightCurve(time=lc.time, flux=lc.flux, flux_err=lc.flux_err)
-            folded_lc.remove_nans()
-            folded_lc = lc.fold(t0=t0, period=period)
-            #folded_lc.flux_err = np.nan
-            #folded_lc = folded_lc.bin(bins=500)
+
             j = 0
-            fig_transit, axs = plt.subplots(3, 1, figsize=(8, 8))
+            fig_transit, axs = plt.subplots(4, 4, figsize=(16, 16))
             #fig_transit.suptitle("Transit centered plots for TIC " + str(object_id))
-            for i in np.arange(t0, t0 + period * 3, period)[0:3]:
+            for i in np.arange(t0, t0 + period * 16, period)[0:16]:
                 args_plot = np.argwhere((i - 0.1 < time) & (time < i + 0.1)).flatten()
                 plot_time = time[args_plot]
                 plot_flux = flux[args_plot]
-                axs[j].scatter(plot_time, plot_flux, color='gray', alpha=1, rasterized=True, label="Flux Transit " + str(j))
-                axs[j].set_title("Transit " + str(j))
-                axs[j].set_xlabel('Time')
-                axs[j].set_ylabel('Flux')
+                axs[j // 4][j % 4].scatter(plot_time, plot_flux, color='gray', alpha=1, rasterized=True, label="Flux Transit " + str(j))
                 j = j + 1
+            folded_lc = lk.LightCurve(time=lc.time, flux=lc.flux, flux_err=lc.flux_err)
+            folded_lc.remove_nans()
+            # folded_lc.flux_err = np.nan
+            # folded_lc = folded_lc.bin(bins=500)
+            folded_lc.fold(period=period).scatter()
+            plt.title("Phase-folded period: " + format(period, ".2f") + " days")
+            plt.show()
             fig_transit.show()
-            fig = px.scatter(x=folded_lc.phase.value.astype('<f4'), y=folded_lc.flux.value.astype('<f4'))
+            fig = px.line(x=folded_lc.time.value.astype('<f4'), y=folded_lc.flux.value.astype('<f4'))
             fig.show()
 
     def __parse_object_id(self, object_id):

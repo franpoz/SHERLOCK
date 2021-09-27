@@ -1,12 +1,17 @@
 # This example YAML file illustrates the provisioning of planet parameters, ignoring star ones. This can be done only
 # when the semimajor axis is being provided. If not, at least the star mass is required.
-settings:
-  cpus: 7
-planet:
-  id: 8527476
-  period: 4.3225
-  t0: 2014.50
-  rp_rs: 0.08012
-  a: 0.02745
-  name: myCandidate
-  lc: 1/lc_0.csv
+planets:
+  - period: 4.3225
+    t0: 2014.50
+    rp_rs: 0.08012
+    a: 0.02745
+    name: myCandidate
+  - period: 4.3225
+    t0: 2014.50
+    rp_rs: 0.08012
+    a: 0.02745
+    name: myCandidate
+# The run where the lightcurve is loaded
+number: 1
+# The light curve number to load
+curve: 0

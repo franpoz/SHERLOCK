@@ -3,7 +3,7 @@ from __future__ import print_function, division, absolute_import
 import sys
 
 import lightkurve
-import transitleastsquares as tls
+import foldedleastsquares as tls
 import multiprocessing
 import numpy as np
 import wotan
@@ -19,7 +19,7 @@ from scipy.signal import argrelextrema, savgol_filter
 # results = model.power(period_min=0.45, period_max=40, use_threads=multiprocessing.cpu_count(),
 #                       oversampling_factor=1.1119355997446583, T0_fit_margin=0.05, duration_grid_step=1.1)
 # print(results)
-from scipy import stats
+from scipy import stats, signal
 from scipy.interpolate import interp1d
 import time
 t0 = time.time()
@@ -99,10 +99,12 @@ def calculate_residuals(time, flux, model_sample, flux_index):
     # axs.set_xlabel('Time')
     # axs.set_ylabel('Flux')
     # fig_transit.show()
-        return np.sum((flux_subset - model_sample_scaled) ** 2) ** 0.5
+        depth = 1 - flux_at_middle
+        return np.sum((flux_subset - model_sample_scaled) ** 2) ** 0.5 * depth
     return np.nan
 
 
+cumulative_residuals = np.full(len(lc_time), np.nan)
 residual_calculation = np.full((len(model_samples), len(lc_time)), np.nan)
 for model_index, model_sample in enumerate(model_samples):
     model_duration_days = duration_grid[model_index] * cadence / 60 / 24
@@ -134,6 +136,29 @@ for model_index, model_sample in enumerate(model_samples):
     axs[1].set_ylabel('Residuals')
     fig_transit.show()
 
+cumulative_residuals = np.sum(residual_calculation, axis=0)
+residual_plot = cumulative_residuals
+fig_transit, axs = plt.subplots(2, 1, figsize=(8, 8))
+axs[0].plot(lc_time, flux, color='gray', alpha=1, rasterized=True, label="Flux")
+axs[0].set_title("Light curve")
+axs[0].set_xlabel('Time')
+axs[0].set_ylabel('Flux')
+axs[1].plot(lc_time, cumulative_residuals, color='gray', alpha=1, rasterized=True, label="Residuals")
+axs[1].set_title("Cumulative Residuals")
+axs[1].set_xlabel('Time')
+axs[1].set_ylabel('Residuals')
+fig_transit.show()
+pgram = signal.lombscargle(lc_time, cumulative_residuals, np.linspace(0.04347, 2, 100000), normalize=True)
+fig_transit, axs = plt.subplots(2, 1, figsize=(8, 8))
+axs[0].plot(lc_time, flux, color='gray', alpha=1, rasterized=True, label="Flux")
+axs[0].set_title("Light curve")
+axs[0].set_xlabel('Time')
+axs[0].set_ylabel('Flux')
+axs[1].plot(np.linspace(0.5, 23, 100000), pgram, color='gray', alpha=1, rasterized=True, label="Periodogram")
+axs[1].set_title("Periodogram")
+axs[1].set_xlabel('Freq')
+axs[1].set_ylabel('Power')
+fig_transit.show()
 print("END: Took " + str(time.time() - t0) + "s")
 #tm.evaluate(k=[0.01, 0.12], ldc=[[0.2, 0.1, 0.5, 0.1]], t0=0.0, p=1.0, a=3.0, i=0.5*pi)
 
