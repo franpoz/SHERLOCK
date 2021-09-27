@@ -1,4 +1,7 @@
+import logging
 import os
+import sys
+
 import pandas as pd
 import lightkurve as lk
 import foldedleastsquares as tls
@@ -13,7 +16,7 @@ from lcbuilder.objectinfo.MissionFfiIdObjectInfo import MissionFfiIdObjectInfo
 from lcbuilder.objectinfo.preparer.MissionFfiLightcurveBuilder import MissionFfiLightcurveBuilder
 from lcbuilder.objectinfo.MissionObjectInfo import MissionObjectInfo
 from lcbuilder.objectinfo.preparer.MissionLightcurveBuilder import MissionLightcurveBuilder
-from sherlockpipe.eleanor import TargetData
+from lcbuilder.eleanor import TargetData
 from lcbuilder import eleanor
 from lcbuilder.star.TicStarCatalog import TicStarCatalog
 import numpy as np
@@ -39,7 +42,7 @@ def download_neighbours(ID: int, sectors: np.ndarray, search_radius: int = 10):
     # query TIC for nearby stars
     pixel_size = 20.25 * u.arcsec
     df = Catalogs.query_object(
-        "TIC" + str(ID),
+        str(ID),
         radius=search_radius * pixel_size,
         catalog="TIC"
     )
@@ -119,6 +122,24 @@ def download_neighbours(ID: int, sectors: np.ndarray, search_radius: int = 10):
 
 
 dir = "training_data/"
+if not os.path.exists(dir):
+    os.mkdir(dir)
+file_dir = dir + "/ml.log"
+if os.path.exists(file_dir):
+    os.remove(file_dir)
+formatter = logging.Formatter('%(message)s')
+logger = logging.getLogger()
+while len(logger.handlers) > 0:
+    logger.handlers.pop()
+logger.setLevel(logging.INFO)
+handler = logging.StreamHandler(sys.stdout)
+handler.setLevel(logging.INFO)
+handler.setFormatter(formatter)
+logger.addHandler(handler)
+handler = logging.FileHandler(file_dir)
+handler.setLevel(logging.INFO)
+handler.setFormatter(formatter)
+logger.addHandler(handler)
 positive_dir = dir + "/tp/"
 negative_dir = dir + "/ntp/"
 if not os.path.isdir(dir):
@@ -137,41 +158,55 @@ excluded_ois = {}
 # TODO fill additional_ois from given csv file with their ephemeris
 additional_ois_df = pd.DataFrame(columns=['Object Id', 'name', 'period', 'period_err', 't0', 'to_err', 'depth',
                                           'depth_err', 'duration', 'duration_err'])
-for tic in tp_tic_list:
-    tic_id = "TIC " + str(tic)
+for tic in ois["Object Id"].unique():
+    tic_id = str(tic)
     target_dir = positive_dir + tic_id + "/"
     if not os.path.isdir(target_dir):
         os.mkdir(target_dir)
-    lc_short, lc_data, star_info, transits_count, sectors, quarters = \
-        mission_lightcurve_builder.build(MissionObjectInfo(tic_id, 'all'), None)
-    lc_data["centroids_x"] = lc_data["centroids_x"] - np.nanmedian(lc_data["centroids_x"])
-    lc_data["centroids_y"] = lc_data["centroids_y"] - np.nanmedian(lc_data["centroids_y"])
-    lc_data["motion_x"] = lc_data["motion_x"] - np.nanmedian(lc_data["motion_x"])
-    lc_data["motion_y"] = lc_data["motion_y"] - np.nanmedian(lc_data["motion_y"])
-    lc_data.to_csv(target_dir + "time_series_short.csv")
-    lc_long, lc_data, star_info, transits_count, sectors, quarters = \
+    lc_short = None
+    try:
+        logging.info("Trying to get short cadence info for " + tic)
+        lcbuild_short = \
+            mission_lightcurve_builder.build(MissionObjectInfo(tic_id, 'all'), None)
+        lc_short = lcbuild_short.lc
+        lc_data = lcbuild_short.lc_data
+        lc_data["centroids_x"] = lc_data["centroids_x"] - np.nanmedian(lc_data["centroids_x"])
+        lc_data["centroids_y"] = lc_data["centroids_y"] - np.nanmedian(lc_data["centroids_y"])
+        lc_data["motion_x"] = lc_data["motion_x"] - np.nanmedian(lc_data["motion_x"])
+        lc_data["motion_y"] = lc_data["motion_y"] - np.nanmedian(lc_data["motion_y"])
+        lc_data.to_csv(target_dir + "time_series_short.csv")
+        tpf_short = lk.search_targetpixelfile(tic_id, cadence="short", author="spoc").download_all()
+        short_periodogram = lc_short.to_periodogram(oversample_factor=5)
+        periodogram_df = pd.DataFrame(columns=['period', 'power'])
+        periodogram_df["period"] = short_periodogram.period.value
+        periodogram_df["power"] = short_periodogram.power.value
+        periodogram_df.to_csv(target_dir + "periodogram_short.csv")
+    except Exception as e:
+        logging.warning("No Short Cadence data for target " + tic)
+        logging.exception(e)
+    logging.info("Trying to get long cadence info for " + tic)
+    lcbuild_long = \
         mission_ffi_lightcurve_builder.build(MissionFfiIdObjectInfo(tic_id, 'all'), None)
+    sectors = lcbuild_long.sectors
+    lc_long = lcbuild_long.lc
+    lc_data = lcbuild_long.lc_data
     lc_data["centroids_x"] = lc_data["centroids_x"] - np.nanmedian(lc_data["centroids_x"])
     lc_data["centroids_y"] = lc_data["centroids_y"] - np.nanmedian(lc_data["centroids_y"])
     lc_data["motion_x"] = lc_data["motion_x"] - np.nanmedian(lc_data["motion_x"])
     lc_data["motion_y"] = lc_data["motion_y"] - np.nanmedian(lc_data["motion_y"])
     lc_data.to_csv(target_dir + "time_series_long.csv")
     lcf_long = lc_long.remove_nans()
-    tpf_short = lk.search_targetpixelfile(tic_id, cadence="short", author="spoc").download_all()
     tpf_long = lk.search_targetpixelfile(tic_id, cadence="long", author="spoc").download_all()
     # TODO somehow store tpfs images
-    short_periodogram = lc_short.to_periodogram(oversample_factor=5)
-    periodogram_df = pd.DataFrame(columns=['period', 'power'])
-    periodogram_df["period"] = short_periodogram.period
-    periodogram_df["power"] = short_periodogram.power
-    periodogram_df.to_csv(target_dir + "periodogram_short.csv")
     long_periodogram = lc_long.to_periodogram(oversample_factor=5)
     periodogram_df = pd.DataFrame(columns=['period', 'power'])
-    periodogram_df["period"] = long_periodogram.period
-    periodogram_df["power"] = long_periodogram.power
+    periodogram_df["period"] = long_periodogram.period.value
+    periodogram_df["power"] = long_periodogram.power.value
     periodogram_df.to_csv(target_dir + "periodogram_long.csv")
+    logging.info("Downloading neighbour stars for " + tic)
     stars = download_neighbours(tic, sectors)
     # TODO get neighbours light curves
+    logging.info("Classifying candidate points for " + tic)
     target_ois = ois[ois["Object Id"] == tic_id]
     target_ois = target_ois[(target_ois["Disposition"] == "CP") | (target_ois["Disposition"] == "KP")]
     target_ois_df = pd.DataFrame(columns=['id', 'name', 'period', 'period_err', 't0', 'to_err', 'depth', 'depth_err', 'duration', 'duration_err'])
@@ -179,14 +214,17 @@ for tic in tp_tic_list:
     tags_series_long = np.full(len(lc_long.time), "BL")
     for index, row in target_ois.iterrows():
         if row["OI"] not in excluded_ois:
+            logging.info("Classifying candidate points with OI %s, period %s, t0 %s and duration %s for " + tic,
+                         row["OI"], row["Period (days)"], row["Epoch (BJD)"], row["Duration (hours)"])
             target_ois_df = target_ois_df.append({"id": row["Object Id"], "name": row["OI"], "period": row["Period (days)"],
                                   "period_err": row["Period (days) err"], "t0": row["Epoch (BJD)"] - 2457000.0,
                                   "to_err": row["Epoch (BJD) err"], "depth": row["Depth (ppm)"],
                                   "depth_err": row["Depth (ppm) err"], "duration": row["Duration (hours)"],
                                   "duration_err": row["Duration (hours) err"]}, ignore_index=True)
-            mask_short = tls.transit_mask(lc_short.time.value, row["Period (days)"], row["Duration (hours)"] / 24, row["Epoch (BJD)"] - 2457000.0)
+            if lc_short is not None:
+                mask_short = tls.transit_mask(lc_short.time.value, row["Period (days)"], row["Duration (hours)"] / 24, row["Epoch (BJD)"] - 2457000.0)
+                tags_series_short[mask_short] = "TP"
             mask_long = tls.transit_mask(lc_long.time.value, row["Period (days)"], row["Duration (hours)"] / 24, row["Epoch (BJD)"] - 2457000.0)
-            tags_series_short[mask_short] = "TP"
             tags_series_long[mask_long] = "TP"
     target_additional_ois_df = additional_ois_df[additional_ois_df["Object Id"] == tic_id]
     for index, row in target_additional_ois_df.iterrows():
@@ -196,12 +234,14 @@ for tic in tp_tic_list:
                                   "to_err": row["Epoch (BJD) err"], "depth": row["Depth (ppm)"],
                                   "depth_err": row["Depth (ppm) err"], "duration": row["Duration (hours)"],
                                   "duration_err": row["Duration (hours) err"]}, ignore_index=True)
-            mask_short = tls.transit_mask(lc_short.time.value, row["Period (days)"], row["Duration (hours)"] / 24, row["Epoch (BJD)"] - 2457000.0)
+            if lc_short is not None:
+                mask_short = tls.transit_mask(lc_short.time.value, row["Period (days)"], row["Duration (hours)"] / 24, row["Epoch (BJD)"] - 2457000.0)
+                tags_series_short[mask_short] = "TP"
             mask_long = tls.transit_mask(lc_long.time.value, row["Period (days)"], row["Duration (hours)"] / 24, row["Epoch (BJD)"] - 2457000.0)
-            tags_series_short[mask_short] = "TP"
             tags_series_long[mask_long] = "TP"
-    lc_classified_short = pd.DataFrame.from_dict({"time": lc_short.time.value, "flux": lc_short.flux.value, "tag": tags_series_short})
-    lc_classified_short.to_csv(target_dir + "lc_classified_short.csv")
+    if lc_short is not None:
+        lc_classified_short = pd.DataFrame.from_dict({"time": lc_short.time.value, "flux": lc_short.flux.value, "tag": tags_series_short})
+        lc_classified_short.to_csv(target_dir + "lc_classified_short.csv")
     lc_classified_long = pd.DataFrame.from_dict({"time": lc_long.time.value, "flux": lc_long.flux.value, "tag": tags_series_long})
     lc_classified_long.to_csv(target_dir + "lc_classified_long.csv")
     # TODO store folded light curves -with local and global views-(masking previous candidates?)
@@ -209,29 +249,37 @@ tsfresh_short_df = pd.DataFrame(columns=['id', 'time', 'flux', 'flux_err', 'back
                                    'centroids_y', 'motion_x', 'motion_y'])
 tsfresh_long_df = pd.DataFrame(columns=['id', 'time', 'flux', 'flux_err', 'background_flux', 'quality', 'centroids_x',
                                    'centroids_y', 'motion_x', 'motion_y'])
-tsfresh_tags = []
+tsfresh_tags_short = []
+tsfresh_tags_long = []
 for tic_dir in os.listdir(positive_dir):
-    lc_short_df = pd.read_csv(positive_dir + "/" + tic_dir + "/time_series_short.csv")
-    lc_short_long = pd.read_csv(positive_dir + "/" + tic_dir + "/time_series_long.csv")
-    lc_short_df['id'] = tic_dir
-    lc_short_long['id'] = tic_dir
-    tsfresh_short_df.append(lc_short_df)
-    tsfresh_long_df.append(lc_short_long)
-    tsfresh_tags.append([tic_dir, 1])
+    short_lc_dir = positive_dir + "/" + tic_dir + "/time_series_short.csv"
+    if os.path.exists(short_lc_dir):
+        lc_short_df = pd.read_csv(positive_dir + "/" + tic_dir + "/time_series_short.csv")
+        lc_short_df['id'] = tic_dir
+        tsfresh_short_df.append(lc_short_df)
+        tsfresh_tags_short.append([tic_dir, 1])
+    lc_long_df = pd.read_csv(positive_dir + "/" + tic_dir + "/time_series_long.csv")
+    lc_long_df['id'] = tic_dir
+    tsfresh_long_df.append(lc_long_df)
+    tsfresh_tags_long.append([tic_dir, 1])
 for tic_dir in os.listdir(negative_dir):
-    lc_short_df = pd.read_csv(negative_dir + "/" + tic_dir + "/time_series_short.csv")
-    lc_short_long = pd.read_csv(negative_dir + "/" + tic_dir + "/time_series_long.csv")
-    lc_short_df['id'] = tic_dir
-    lc_short_long['id'] = tic_dir
-    tsfresh_short_df.append(lc_short_df)
-    tsfresh_long_df.append(lc_short_long)
-    tsfresh_tags.append([tic_dir, 0])
-tsfresh_tags = pd.Series(tsfresh_tags)
+    short_lc_dir = negative_dir + "/" + tic_dir + "/time_series_short.csv"
+    if os.path.exists(short_lc_dir):
+        lc_short_df = pd.read_csv(negative_dir + "/" + tic_dir + "/time_series_short.csv")
+        lc_short_df['id'] = tic_dir
+        tsfresh_short_df.append(lc_short_df)
+        tsfresh_tags_short.append([tic_dir, 1])
+    lc_long_df = pd.read_csv(negative_dir + "/" + tic_dir + "/time_series_long.csv")
+    lc_long_df['id'] = tic_dir
+    tsfresh_long_df.append(lc_long_df)
+    tsfresh_tags_long.append([tic_dir, 0])
+tsfresh_tags_short = pd.Series(tsfresh_tags_short)
+tsfresh_tags_long = pd.Series(tsfresh_tags_long)
 # TODO tsfresh needs a dataframe with all the "time series" data (centroids, motion, flux, bck_flux...)
 # TODO with an id column specifying the target id and a "y" as a df containing the target ids and the classification
 # TODO tag. We need to check how to make this compatible with transit times tagging instead of entire curve
 # TODO classification. Maybe https://tsfresh.readthedocs.io/en/latest/text/forecasting.html is helpful.
-extracted_features_short = tsfresh.extract_relevant_features(tsfresh_short_df, tsfresh_tags, column_id='id',
+extracted_features_short = tsfresh.extract_relevant_features(tsfresh_short_df, tsfresh_tags_short, column_id='id',
                                                              column_sort='time')
-extracted_features_long = tsfresh.extract_relevant_features(tsfresh_long_df, tsfresh_tags, column_id='id',
+extracted_features_long = tsfresh.extract_relevant_features(tsfresh_long_df, tsfresh_tags_long, column_id='id',
                                                             column_sort='time')
