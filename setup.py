@@ -1,5 +1,4 @@
 import setuptools
-import os
 
 with open("README.md", "r") as fh:
     long_description = fh.read()
@@ -37,7 +36,7 @@ setuptools.setup(
                         "emcee==3.0.2", # Allesfitter dependency
                         "extension-helpers==0.1",
                         "imageio==2.9.0",
-                        "lcbuilder==0.5.9",
+                        "lcbuilder==0.6.2",
                         "matplotlib==3.3.4",
                         "mock==4.0.3",
                         'numba==0.53.1', # foldedleastsquares dependency
