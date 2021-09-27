@@ -138,9 +138,25 @@ APERTURE:
 # The detrend period to be used as an initial detrend to the PDCSAP_FLUX light curves
 AUTO_DETREND_PERIOD:
 
+######################################################################################################################
+### STELLAR SIMPLE OSCILLATIONS REDUCTION
+######################################################################################################################
+# Flag to enable the algorithm
+SIMPLE_OSCILLATIONS_REDUCTION: False
+# SNR limit to stop the algorithm
+OSCILLATIONS_MIN_SNR: 4
+# Amplitude relationship vs flux standard deviation to stop the algorithm
+OSCILLATIONS_AMPLITUDE_THRESHOLD: 0.001
+# Window size width in terms of percent
+OSCILLATIONS_WS_PERCENT: 0.01
+# Minimum period to be used to compute the oscillations periodogram
+OSCILLATIONS_MIN_PERIOD: 0.001
+
 # Flag to signal SHERLOCK for updating the TOIs, KOIs and EPICs
 UPDATE_OIS: False
 # Flag to signal SHERLOCK for force-updating the metadatas
 UPDATE_FORCE: False
 # Flag to signal SHERLOCK for cleaning the metadatas
 UPDATE_CLEAN: False
+# Root directory to store sherlock, LATTE, lightkurve and eleanor metadatas. Defaults to home of running user.
+CACHE_DIR:
