@@ -71,10 +71,10 @@ class Sherlock:
     report = {}
     ois = None
     config_step = 0
-    ois_manager = OisManager()
     use_ois = False
 
-    def __init__(self, sherlock_targets: list, explore=False, update_ois=False, update_force=False, update_clean=False):
+    def __init__(self, sherlock_targets: list, explore=False, update_ois=False, update_force=False, update_clean=False,
+                 cache_dir=os.path.expanduser('~') + "/"):
         """
         Initializes a Sherlock object, loading the OIs from the csvs, setting up the detrend and transit configurations,
         storing the provided object_infos list and initializing the builders to be used to prepare the light curves for
@@ -82,8 +82,11 @@ class Sherlock:
         @param update_ois: Flag to signal SHERLOCK for updating the TOIs, KOIs and EPICs
         @param sherlock_targets: a list of objects information to be analysed
         @param explore: whether to only run the prepare stage for all objects
+        @param cache_dir: directory to store caches for sherlock.
         """
         self.explore = explore
+        self.cache_dir = cache_dir
+        self.ois_manager = OisManager(self.cache_dir)
         self.setup_files(update_ois, update_force, update_clean)
         self.sherlock_targets = sherlock_targets
         self.habitability_calculator = HabitabilityCalculator()
@@ -123,7 +126,7 @@ class Sherlock:
         @return: the Sherlock object itself
         @rtype: Sherlock
         """
-        Updater().update(refresh_clean, refresh_ois, refresh_force)
+        Updater(self.cache_dir).update(refresh_clean, refresh_ois, refresh_force)
         self.ois = self.ois_manager.load_ois()
         return self
 
