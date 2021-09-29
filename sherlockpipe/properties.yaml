@@ -147,10 +147,10 @@ SIMPLE_OSCILLATIONS_REDUCTION: False
 OSCILLATIONS_MIN_SNR: 4
 # Amplitude relationship vs flux standard deviation to stop the algorithm
 OSCILLATIONS_AMPLITUDE_THRESHOLD: 0.001
-# Window size width in terms of percent
-OSCILLATIONS_WS_PERCENT: 0.01
+# Window size width in frequency micro-Hertzs
+OSCILLATIONS_WS_PERCENT: 60
 # Minimum period to be used to compute the oscillations periodogram
-OSCILLATIONS_MIN_PERIOD: 0.001
+OSCILLATIONS_MIN_PERIOD: 0.002
 
 # Flag to signal SHERLOCK for updating the TOIs, KOIs and EPICs
 UPDATE_OIS: False
