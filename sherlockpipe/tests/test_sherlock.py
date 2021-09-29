@@ -138,7 +138,7 @@ class TestsSherlock(unittest.TestCase):
                                      detrends_number=1)], True).run()
             run_dir = "TIC181804752_FFI_all"
             self.assertTrue(os.path.exists(run_dir))
-            self.assertTrue(os.path.exists(run_dir + "/Periodogram_TIC181804752_FFI_all.png"))
+            self.assertTrue(os.path.exists(run_dir + "/Initial_Periodogram_TIC181804752_FFI_all.png"))
             self.assertFalse(os.path.exists(run_dir + "/1"))
         finally:
             self.__clean(run_dir)
@@ -162,7 +162,7 @@ class TestsSherlock(unittest.TestCase):
                                      detrends_number=1, max_runs=1)], False).run()
             run_dir = "EPIC249631677_FFI_all"
             self.assertTrue(os.path.exists(run_dir))
-            self.assertTrue(os.path.exists(run_dir + "/Periodogram_EPIC249631677_FFI_all.png"))
+            self.assertTrue(os.path.exists(run_dir + "/Initial_Periodogram_EPIC249631677_FFI_all.png"))
             self.assertTrue(os.path.exists(run_dir + "/1"))
         finally:
             self.__clean(run_dir)
@@ -180,7 +180,7 @@ class TestsSherlock(unittest.TestCase):
                                      detrends_number=1, max_runs=1)], True).run()
             run_dir = "TIC181804752_FFI_all"
             self.assertTrue(os.path.exists(run_dir))
-            self.assertTrue(os.path.exists(run_dir + "/Periodogram_TIC181804752_FFI_all.png"))
+            self.assertTrue(os.path.exists(run_dir + "/Initial_Periodogram_TIC181804752_FFI_all.png"))
             self.assertFalse(os.path.exists(run_dir + "/1"))
             with open(run_dir + '/TIC181804752_FFI_all_report.log') as f:
                 content = f.read()
@@ -220,7 +220,7 @@ class TestsSherlock(unittest.TestCase):
 
     def __assert_run_files(self, object_dir, assert_rms_mask=True):
         run_dir = object_dir + "/1"
-        periodogram_file = object_dir + "/Periodogram_TIC181804752_FFI_all.png"
+        periodogram_file = object_dir + "/Initial_Periodogram_TIC181804752_FFI_all.png"
         rms_mask_file = object_dir + "/rms_mask/High_RMS_Mask_TIC181804752_FFI_all.png"
         lc_file = object_dir + "/lc.csv"
         report_file = object_dir + "/TIC181804752_FFI_all_report.log"
