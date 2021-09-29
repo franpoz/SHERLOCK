@@ -36,7 +36,7 @@ setuptools.setup(
                         "emcee==3.0.2", # Allesfitter dependency
                         "extension-helpers==0.1",
                         "imageio==2.9.0",
-                        "lcbuilder==0.6.6",
+                        "lcbuilder==0.6.7",
                         "matplotlib==3.3.4",
                         "mock==4.0.3",
                         'numba==0.53.1', # foldedleastsquares dependency
