@@ -430,6 +430,9 @@ class Sherlock:
             logging.info('Quorum algorithm vote strength: %.2f',
                          sherlock_target.signal_score_selectors[self.VALID_SIGNAL_SELECTORS[2]].strength)
         mission, mission_prefix, object_num = self.lcbuilder.parse_object_info(object_info.mission_id())
+        if object_info.reduce_simple_oscillations and object_info.oscillation_max_period is None:
+            logging.info("Stellar oscillation period has been set to empty. Defaulting to 1/3 the minimum search period")
+            object_info.oscillation_max_period = sherlock_target.period_min / 3
         lc_build = self.lcbuilder.build(object_info, object_dir)
         logging.info('Minimum number of transits: %s', lc_build.transits_min_count)
         lightcurve_timespan = lc_build.lc.time[len(lc_build.lc.time) - 1] - lc_build.lc.time[0]
