@@ -152,7 +152,7 @@ OSCILLATIONS_WS_PERCENT: 60
 # Minimum period to be used to compute the oscillations periodogram
 OSCILLATIONS_MIN_PERIOD: 0.002
 # Maximum period to be used to compute the oscillations periodogram. If set to less than OSCILLATIONS_MIN_PERIOD, 1/3 of the min period will be used.
-OSCILLATIONS_MAX_PERIOD:
+OSCILLATIONS_MAX_PERIOD: 0
 
 # Flag to signal SHERLOCK for updating the TOIs, KOIs and EPICs
 UPDATE_OIS: False
