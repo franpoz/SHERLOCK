@@ -2,23 +2,17 @@ import logging
 import math
 import multiprocessing
 import shutil
-import sys
 import pandas
 import wotan
 import matplotlib.pyplot as plt
 import foldedleastsquares as tls
 from foldedleastsquares.template_generator.default_transit_template_generator import DefaultTransitTemplateGenerator
-import lightkurve as lk
 import numpy as np
 import os
 import sys
-import pkg_resources  # part of setuptools
 
+from lcbuilder.helper import LcbuilderHelper
 from lcbuilder.lcbuilder_class import LcBuilder
-from lcbuilder.objectinfo.preparer.LightcurveBuilder import LightcurveBuilder
-from scipy.ndimage import uniform_filter1d
-from lcbuilder.star.starinfo import StarInfo
-from astropy import units as u
 from lcbuilder.curve_preparer.Flattener import Flattener
 from lcbuilder.curve_preparer.Flattener import FlattenInput
 from lcbuilder.objectinfo.MissionObjectInfo import MissionObjectInfo
@@ -26,15 +20,11 @@ from lcbuilder.objectinfo.MissionFfiIdObjectInfo import MissionFfiIdObjectInfo
 from lcbuilder.objectinfo.MissionFfiCoordsObjectInfo import MissionFfiCoordsObjectInfo
 from lcbuilder.objectinfo.InvalidNumberOfSectorsError import InvalidNumberOfSectorsError
 from sherlockpipe.ois.OisManager import OisManager
-from sherlockpipe.search_zones.HabitableSearchZone import HabitableSearchZone
-from sherlockpipe.search_zones.OptimisticHabitableSearchZone import OptimisticHabitableSearchZone
 from lcbuilder.star.HabitabilityCalculator import HabitabilityCalculator
 from sherlockpipe.transitresult import TransitResult
 from multiprocessing import Pool
-from scipy.signal import argrelextrema, savgol_filter
 from scipy.ndimage.interpolation import shift
-from scipy import stats, signal
-from wotan import flatten
+from scipy import stats
 
 from sherlockpipe.update import Updater
 from sherlockpipe.vet import Vetter
@@ -218,8 +208,10 @@ class Sherlock:
             time = lc_build.lc.time.value
             flux = lc_build.lc.flux.value
             flux_err = lc_build.lc.flux_err.value
-            period_grid = self.__calculate_period_grid(time, sherlock_target, lc_build.star_info,
-                                                       lc_build.transits_min_count)
+            period_grid = LcbuilderHelper.calculate_period_grid(time, sherlock_target.period_min,
+                                                                sherlock_target.period_max,
+                                                                sherlock_target.oversampling,
+                                                                lc_build.star_info, lc_build.transits_min_count)
             id_run = 1
             best_signal_score = 1
             self.report[sherlock_id] = []
@@ -311,21 +303,6 @@ class Sherlock:
         except Exception as e:
             logging.exception(str(e))
             print(e)
-
-    def __calculate_period_grid(self, time, sherlock_target, star_info, transits_min_count):
-        dif = time[1:] - time[:-1]
-        jumps = np.where(dif > 1)[0]
-        jumps = np.append(jumps, len(time))
-        previous_jump_index = 0
-        time_span_all_sectors = 0
-        for jumpIndex in jumps:
-            time_chunk = time[previous_jump_index + 1:jumpIndex]  # ignoring first measurement as could be the last from the previous chunk
-            time_span_all_sectors = time_span_all_sectors + (time_chunk[-1] - time_chunk[0])
-            previous_jump_index = jumpIndex
-        return DefaultTransitTemplateGenerator() \
-            .period_grid(star_info.radius, star_info.mass, time[-1] - time[0], sherlock_target.period_min,
-                         sherlock_target.period_max, sherlock_target.oversampling, transits_min_count,
-                         time_span_all_sectors)
 
     def __init_object_dir(self, object_id, clean_dir=False):
         dir = self.results_dir + str(object_id)
