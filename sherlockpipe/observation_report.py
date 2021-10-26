@@ -63,6 +63,8 @@ class ObservationReport:
         self.df['midtime'] = self.df['midtime'].str[:-4]
         self.df['egress'] = self.df['egress'].str[:-4]
         self.df['twilight_morning'] = self.df['twilight_morning'].str[:-4]
+        self.df['start_obs'] = self.df['start_obs'].str[:-4]
+        self.df['end_obs'] = self.df['end_obs'].str[:-4]
 
         # Generamos la columna que contendrá el nombre de las imágenes:
         self.df['image_path'] = self.images_path + self.df['observatory'] + "_" + self.df['midtime'] + ".png"
@@ -71,9 +73,9 @@ class ObservationReport:
 
 
         # No vale con tener las fechas, las queremos ordenadas por filas. Nos quedamos con las columnas que necesitamos.
-        df_fechas = self.df[['ingress', 'twilight_evening', 'midtime', 'egress', 'twilight_morning']]
+        df_fechas = self.df[['twilight_evening', 'ingress', 'midtime', 'egress', 'start_obs', 'end_obs', 'twilight_morning']]
         # Les ponemos el nombre definitivo:
-        df_fechas.columns = ['I', 'TWE', 'M', 'E', 'TWM']
+        df_fechas.columns = ['TWE', 'I', 'M', 'E', 'SO', 'EO', 'TWM']
         # Convertimos el df en un diccionario manteniendo el index como key para ordenarlo.
         dict_fechas = df_fechas.to_dict('index')
         new_dict_fechas = {}
@@ -87,12 +89,12 @@ class ObservationReport:
             # Con esto vamos a generar una nueva lista de tuplas que tendrá las fechas apropiadas en negrita:
             list_of_tuples_with_night = []
             for tup in list_of_tuples:
-                if tup[0] == 'TWM':
-                    night = 0
-                if night == 1:
+                if night == 1 and tup[0] != 'TWM':
                     y = list(tup)
                     y[1] = '<strong>' + str(tup[1]) + '</strong>'
                     tup = tuple(y)
+                if tup[0] == 'TWM':
+                    night = 0
                 if tup[0] == 'TWE':
                     night = 1
                 list_of_tuples_with_night.append(tup)
@@ -342,8 +344,9 @@ class ObservationReport:
                 ingress, midtime and egress times for each observable calculated from the T0 and Period uncertainties. \
                 <strong>Moon column</strong> represents the moon phase and distance to the target star at the \
                 time of the transit midtime. <strong>Image column</strong> represents a plot where the altitude \
-                and air mass are plotted with a blue line. The transit midtime is plotted in the center of the \
-                graph together with the ingress and egress in orange lines. The green floor of the graph represent \
+                and air mass are plotted with a blue line. The transit midtime is plotted as a vertical black bar \
+                together with the ingress and egress in orange lines. The red vertical bars represent the uncertainty \
+                of the ingress (left) and the egress (right). The green floor of the graph represents \
                 the limit of altitude / air mass for the event to be observable. The white background and the \
                 gray background represent the daylight and night based on the nautical twilights.</font>'
         story.append(Spacer(1, 5))
