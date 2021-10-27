@@ -96,7 +96,7 @@ def get_offset(lat, lng, datetime):
 def create_observation_observables(object_id, object_dir, name, epoch, epoch_low_err, epoch_up_err, period,
                                    period_low_err, period_up_err, duration,
                                    observatories_file, timezone, latitude, longitude, altitude,
-                                   max_days, min_altitude, moon_min_dist, moon_max_dist, transit_fraction):
+                                   max_days, min_altitude, moon_min_dist, moon_max_dist, transit_fraction, baseline):
     """
 
     @param object_id: the candidate id
@@ -120,6 +120,7 @@ def create_observation_observables(object_id, object_dir, name, epoch, epoch_low
     @param moon_max_dist: the minimum moon distance for moon illumination = 1
     @param transit_fraction: the minimum transit observability (0.25 for at least ingress/egress, 0.5 for ingress/egress
     + midtime, 1 for ingress, egress and midtime).
+    @param baseline: the required baseline in hours.
     @return: the generated data and target folders
     """
     if observatories_file is not None:
@@ -175,6 +176,9 @@ def create_observation_observables(object_id, object_dir, name, epoch, epoch_low
             (((transits_since_epoch * period_up_err) ** 2 + epoch_up_err ** 2) ** (1 / 2)) * 24, 2)
         low_err_delta = TimeDelta(midtransit_time_low_err * 3600, format='sec')
         up_err_delta = TimeDelta(midtransit_time_up_err * 3600, format='sec')
+
+
+
         ingress_egress_times_observables = copy.deepcopy(ingress_egress_times)
         ingress_egress_times_observables[:, 0] = ingress_egress_times[:, 0] - low_err_delta
         ingress_egress_times_observables[:, 1] = ingress_egress_times[:, 0] + up_err_delta
@@ -199,18 +203,16 @@ def create_observation_observables(object_id, object_dir, name, epoch, epoch_low
         for midtransit_time in midtransit_times:
             ingress = ingress_egress_times[i][0]
             egress = ingress_egress_times[i][1]
-            ingress_observable = ingress_observables[i]
-            egress_observable = egress_observables[i]
-            midtime_observable = midtime_observables[i]
-            entire_observable = entire_observables[i]
+            lowest_ingress = ingress - low_err_delta[i]
+            highest_egress = egress + up_err_delta[i]
+            baseline_low = lowest_ingress - baseline * u.hour
+            baseline_up = highest_egress + baseline * u.hour
+            transit_times = baseline_low + (baseline_up - baseline_low) * np.linspace(0, 1, 100)
+            observable_transit_times = astroplan.is_event_observable(constraints, observer_site, target,
+                                                               times=transit_times)[0]
+            observable_transit_times_true = np.argwhere(observable_transit_times)
             moon_dist = round(moon_dist_midtransit_times[i].degree)
-            observable = 0
-            if ingress_observable and egress_observable:
-                observable = 1
-            elif (ingress_observable and midtime_observable) or (midtime_observable and egress_observable):
-                observable = 0.5
-            elif ingress_observable or egress_observable:
-                observable = 0.25
+            observable = len(observable_transit_times_true) / 100
             if observable < transit_fraction:
                 i = i + 1
                 continue
@@ -226,22 +228,10 @@ def create_observation_observables(object_id, object_dir, name, epoch, epoch_low
             else:
                 observer_timezone = get_offset(observatory_row["lat"], observatory_row["lon"],
                                                midtransit_time.datetime)
-            if low_err_delta[i].sec < 0.5 * 3600:
-                low_correction = 1.5 * u.hour
-            elif low_err_delta[i].sec >= 0.5 * 3600 and low_err_delta[i].sec < 1 * 3600:
-                low_correction = 2 * u.hour
-            else:
-                low_correction = low_err_delta[i]
-            if up_err_delta[i].sec < 0.5 * 3600:
-                up_correction = 1.5 * u.hour
-            elif up_err_delta[i].sec >= 0.5 * 3600 and up_err_delta[i].sec < 1 * 3600:
-                up_correction = 2 * u.hour
-            else:
-                up_correction = up_err_delta[i]
-            start_obs = ingress - low_correction
-            end_obs = egress + up_correction
-            start_plot = ingress - low_correction
-            end_plot = egress + up_correction
+            start_obs = transit_times[observable_transit_times_true[0]][0]
+            end_obs = transit_times[observable_transit_times_true[len(observable_transit_times_true) - 1]][0]
+            start_plot = baseline_low
+            end_plot = baseline_up
             if twilight_evening > start_obs:
                 start_obs = twilight_evening
             if twilight_morning < end_obs:
@@ -270,8 +260,6 @@ def create_observation_observables(object_id, object_dir, name, epoch, epoch_low
             airmass_ax.set_ylabel("")
             xticks = []
             xticks_labels = []
-            lowest_ingress = ingress - low_err_delta[i]
-            highest_egress = egress + up_err_delta[i]
             xticks.append(start_obs.plot_date)
             hour_min_sec_arr = start_obs.isot.split("T")[1].split(":")
             xticks_labels.append("T1_" + hour_min_sec_arr[0] + ":" + hour_min_sec_arr[1])
@@ -342,6 +330,8 @@ if __name__ == '__main__':
     ap.add_argument('--max_days', help="Maximum number of days for the plan to take.", default=365, required=False)
     ap.add_argument('--transit_fraction', help="Minimum transit fraction to be observable.", type=float, default=0.5,
                     required=False)
+    ap.add_argument('--baseline', help="Required baseline (in hours) for the observation.", type=float, default=0.5,
+                    required=False)
     args = ap.parse_args()
     if args.observatories is None and (args.lat is None or args.lon is None or args.alt is None):
         raise ValueError("You either need to set the 'observatories' property or the lat, lon and alt.")
@@ -380,7 +370,8 @@ if __name__ == '__main__':
                                                             epoch_low_err, epoch_up_err, period, period_low_err,
                                                             period_up_err, duration, args.observatories, args.tz, args.lat,
                                                             args.lon, args.alt, args.max_days, args.min_altitude,
-                                                            args.moon_min_dist, args.moon_max_dist, args.transit_fraction)
+                                                            args.moon_min_dist, args.moon_max_dist, args.transit_fraction,
+                                                            args.baseline)
         report = ObservationReport(observatories_df, observables_df, object_id, name, plan_dir, ra, dec,
                                    epoch, epoch_low_err, epoch_up_err, period, period_low_err, period_up_err, duration,
                                    duration_low_err, duration_up_err, depth, depth_low_err, depth_up_err,
