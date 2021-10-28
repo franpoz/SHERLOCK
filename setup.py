@@ -23,7 +23,7 @@ setuptools.setup(
     python_requires='>=3.6.8',
     install_requires=['astroplan==0.7',
                         "astroquery==0.4.1",
-                        "allesfitter==1.2.2",
+                        "allesfitter==1.2.7",
                         'argparse==1.4.0',
                         'beautifulsoup4==4.9.3',
                         "bokeh==2.2.3", # TPFPlotter dependency
@@ -36,7 +36,7 @@ setuptools.setup(
                         "emcee==3.0.2", # Allesfitter dependency
                         "extension-helpers==0.1",
                         "imageio==2.9.0",
-                        "lcbuilder==0.6.8",
+                        "lcbuilder==0.6.10",
                         "matplotlib==3.3.4",
                         "mock==4.0.3",
                         'numba==0.53.1', # foldedleastsquares dependency
