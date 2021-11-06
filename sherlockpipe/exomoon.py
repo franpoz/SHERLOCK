@@ -36,7 +36,7 @@ class ExoMoonLeastSquares:
             return np.linspace(min, max, samples)
 
     def tokenize_transits_moon_orbit_ranges(self, time, flux, flux_err, star_mass, star_radius, planet_mass, planet_radius,
-                                            planet_period, planet_t0,
+                                            planet_period, planet_t0, moon_semimajor_axis, planet_semimajor_axis,
                                             moon_period, moon_eccentrictiy=0,
                                             moon_arg_periastron=0, moon_inclination=90,
                                             planet_eccentricity=0, planet_arg_periastron=0, planet_inclination=90):
@@ -85,6 +85,25 @@ class ExoMoonLeastSquares:
             exact_grav=False, verbose=1)
         return flux - model + 1
 
+    def compute_moon_transit_scenarios(self, time, flux, planet_t0, moon_period, moon_orbit_ranges, moon_transit_length):
+        #TODO need to take into account "prograde" or "retrograde" orbit
+        orbit_scenarios = []
+        tau = moon_transit_length / 2
+        for moon_orbit_range in moon_orbit_ranges:
+            time_args = np.argwhere(time[(time > moon_orbit_range[1]) & (time < moon_orbit_range[2])])
+            #TODO we'd need to fill measurement gaps (detected from the time array)
+            time_orbit_range = time[time_args]
+            flux_orbit_range = flux[time_args]
+            tau1 = time_orbit_range - planet_t0
+            flux_alpha = np.arccos(tau1 / tau)
+            flux_alpha_comp = 2 * np.pi - flux_alpha
+            phase_delta = (moon_orbit_range[0] - planet_t0) / moon_period
+            flux_alpha_0 = flux_alpha + phase_delta
+            flux_alpha_comp_0 = flux_alpha_comp + phase_delta
+            orbit_scenarios = orbit_scenarios.append([time_orbit_range, tau1, flux_orbit_range, flux_alpha_0, flux_alpha_comp_0])
+        return orbit_scenarios
+
+
     def run(self):
         min_period = 0.5 # TODO compute this value somehow
         max_period = self.compute_hill_radius(self.star_mass, self.planet_mass, self.planet_semimajor_axis)
@@ -93,10 +112,27 @@ class ExoMoonLeastSquares:
         moon_inc_grid = self.moon_inc_grid
         moon_ecc_grid = self.moon_ecc_grid
         moon_arg_periastron_grid = self.moon_arg_periastron_grid
+        flux = self.subtract_planet_transit(self.ab, self.star_radius, self.star_mass, self.time, self.flux,
+                                            self.planet_radius, self.planet_t0, self.planet_period, self.planet_inc)
         for planet_mass in planet_mass_grid:
             for moon_inc in moon_inc_grid:
                 for moon_ecc in moon_ecc_grid:
                     for moon_arg_periastron in moon_arg_periastron_grid:
-                        self.tokenize_transits_moon_orbit_ranges(self.time, self.flux, self.flux_err, self.star_mass,
-                                                                 self.star_radius, self.planet_mass,
-                                                                 self.planet_radius, )
+                        for moon_period in period_grid:
+                            #TODO moon_orbit_ranges should use moon_radius ?
+                            moon_semimajor_axis = self.moon_semimajor_axis = self.compute_semimajor_axis(planet_mass, moon_period)
+                            planet_semimajor_axis = self.planet_semimajor_axis = self.compute_semimajor_axis(self.star_mass, self.planet_period)
+                            moon_transit_length = self.compute_moon_orbit_transit_length(self.star_radius, self.planet_radius,
+                                                                   planet_semimajor_axis, self.planet_period,
+                                                                   moon_semimajor_axis, moon_ecc, moon_arg_periastron, moon_inc,
+                                                                   self.planet_ecc, self.planet_arg_periastron, self.planet_inc)
+                            moon_orbit_ranges = self.tokenize_transits_moon_orbit_ranges(self.time, flux, self.flux_err,
+                                                                     self.star_mass, self.star_radius, planet_mass,
+                                                                     self.planet_radius, self.planet_period,
+                                                                     self.planet_t0, moon_semimajor_axis, planet_semimajor_axis,
+                                                                     moon_period, moon_ecc,
+                                                                     moon_arg_periastron, moon_inc, self.planet_ecc,
+                                                                     self.planet_arg_periastron, self.planet_inc)
+                            moon_transit_scenarios = self.compute_moon_transit_scenarios(self.time, flux, self.planet_t0, moon_period, moon_orbit_ranges, moon_transit_length)
+
+
