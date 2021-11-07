@@ -7,6 +7,7 @@ import astropy.units as u
 import wotan
 from scipy.interpolate import interp1d
 from scipy.signal import argrelextrema
+import matplotlib.pyplot as plt
 
 
 class ExoMoonLeastSquares:
@@ -149,7 +150,7 @@ class ExoMoonLeastSquares:
         duration = wotan.t14(self.star_radius, self.star_mass, self.planet_period, True)
         duration_grid = [duration]
         curve_rms = np.std(self.flux)
-        min_depth = 2 * curve_rms
+        min_depth = curve_rms
         initial_rp = (min_depth * (R_s ** 2)) ** (1 / 2)
         rp_rs = initial_rp / R_s
         from pytransit import QuadraticModel
@@ -166,24 +167,21 @@ class ExoMoonLeastSquares:
         baseline_model = np.full(len(model), 1)
         model = np.append(baseline_model, model)
         model = np.append(model, baseline_model)
-        model_samples = [self.downsample(model, int(duration) * 3) for duration in duration_grid]
         i = 0
         for stick_scenarios_time in stick_scenarios_time_grid:
             stick_scenarios_flux = stick_scenarios_flux_grid[i]
-            residual_calculation = np.full((len(model_samples), len(stick_scenarios_time)), np.nan)
-            for model_index, model_sample in enumerate(model_samples):
-                model_duration_days = duration_grid[model_index] * cadence / 60 / 24
-                first_valid_time = stick_scenarios_time[stick_scenarios_time > stick_scenarios_time[0] + model_duration_days * 3][0]
-                time_without_tail = stick_scenarios_time[stick_scenarios_time < stick_scenarios_time[len(stick_scenarios_time) - 1] - model_duration_days * 3]
+            residual_calculation = np.full((len(duration_grid), len(stick_scenarios_time)), np.nan)
+            for model_index, duration in enumerate(duration_grid):
+                first_valid_time = stick_scenarios_time[stick_scenarios_time > stick_scenarios_time[0] + duration * 3][0]
+                time_without_tail = stick_scenarios_time[stick_scenarios_time < stick_scenarios_time[len(stick_scenarios_time) - 1] - duration * 3]
                 last_valid_time = time_without_tail[len(time_without_tail) - 1]
                 first_valid_time = stick_scenarios_time[0]
-                last_valid_time = stick_scenarios_time[len(stick_scenarios_time) - 1 - len(model_sample)]
-                dt_flux = wotan.flatten(stick_scenarios_time, stick_scenarios_flux, model_duration_days * 4, method="biweight")
+                #last_valid_time = stick_scenarios_time[len(stick_scenarios_time) - 1 - len(model_sample)]
+                dt_flux = wotan.flatten(stick_scenarios_time, stick_scenarios_flux, duration * 4, method="biweight")
                 dt_flux = stick_scenarios_flux
                 for flux_index, flux_value in enumerate(
                         stick_scenarios_time[(stick_scenarios_time >= first_valid_time) & (stick_scenarios_time <= last_valid_time)]):
-                    residual_calculation[model_index][flux_index] = self.calculate_residuals(stick_scenarios_time, dt_flux, model_sample,
-                                                                                        flux_index)
+                    residual_calculation[model_index][flux_index] = self.calculate_residuals(stick_scenarios_time, dt_flux, model, flux_index)
                 local_residual_minima = argrelextrema(residual_calculation[model_index], np.less)[0]
                 minima_mask = np.full(len(residual_calculation[model_index]), False)
                 minima_mask[local_residual_minima] = True
@@ -210,9 +208,11 @@ class ExoMoonLeastSquares:
         downsampled = interpolated(np.linspace(0, len(array), npts))
         return downsampled
 
-    def calculate_residuals(self, time, flux, model_sample, flux_index):
-        flux_subset = flux[flux_index:flux_index + len(model_sample)]
-        time_subset = time[flux_index:flux_index + len(model_sample)]
+    def calculate_residuals(self, time, flux, model_sample, flux_index, duration):
+        last_time_index = np.argwhere(time[time < time[flux_index] + duration * 3])[-1]
+        flux_subset = flux[flux_index:flux_index + last_time_index]
+        time_subset = time[flux_index:flux_index + last_time_index]
+        model_sample = self.downsample(model_sample, len(time_subset))
         # TODO adjusting model to minimum flux value this might get improved by several scalations of min_flux
         model_sample_scaled = np.copy(model_sample)
         flux_subset_len = len(flux_subset)
