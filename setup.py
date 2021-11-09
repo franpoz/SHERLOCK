@@ -3,7 +3,7 @@ import setuptools
 with open("README.md", "r") as fh:
     long_description = fh.read()
 version = "0.25.4"
-version = "0.26.0"
+version = "0.26.1"
 setuptools.setup(
     name="sherlockpipe", # Replace with your own username
     version=version,
@@ -36,7 +36,7 @@ setuptools.setup(
                         "emcee==3.0.2", # Allesfitter dependency
                         "extension-helpers==0.1",
                         "imageio==2.9.0",
-                        "lcbuilder==0.6.14",
+                        "lcbuilder==0.6.15",
                         "matplotlib==3.3.4",
                         "mock==4.0.3",
                         'numba==0.53.1', # foldedleastsquares dependency
