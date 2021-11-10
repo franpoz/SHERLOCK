@@ -23,7 +23,7 @@ setuptools.setup(
     python_requires='>=3.6.8',
     install_requires=['astroplan==0.7',
                         "astroquery==0.4.1",
-                        "allesfitter==1.2.7",
+                        "allesfitter==1.2.8",
                         'argparse==1.4.0',
                         'beautifulsoup4==4.9.3',
                         "bokeh==2.2.3", # TPFPlotter dependency
