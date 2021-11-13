@@ -426,7 +426,7 @@ class Vetter:
             bin_stds = folded_y_err * 2
         in_transit = (folded_phase > 0.5 - half_duration_phase) & (folded_phase < 0.5 + half_duration_phase)
         in_transit_center = (np.abs(folded_phase - 0.5)).argmin()
-        model_time, model_flux = Vetter.get_transit_model(half_duration_phase * 2, 0.5, (0, 1.0), depth)
+        model_time, model_flux = Vetter.get_transit_model(half_duration_phase * 2, 0.5, (0.5 - half_duration_phase * range, 0.5 + half_duration_phase * range), depth, 2 * len(time))
         axs.plot(model_time, model_flux, color="red")
         axs.set_title(str(id) + " Folded Curve with P={:.2f}d and T0={:.2f}".format(period, epoch))
         axs.set_xlabel("Time (d)")
@@ -437,8 +437,7 @@ class Vetter:
 
     @staticmethod
     #TODO build model from selected transit_template
-    def get_transit_model(duration, t0, start_end, depth):
-        model_len = 10000
+    def get_transit_model(duration, t0, start_end, depth, model_len=10000):
         t = np.linspace(-6, 6, model_len)
         ma = batman.TransitParams()
         ma.t0 = 0  # time of inferior conjunction
@@ -452,8 +451,10 @@ class Vetter:
         ma.limb_dark = "quadratic"  # limb darkening model
         m = batman.TransitModel(ma, t)  # initializes model
         model = m.light_curve(ma)  # calculates light curve
-        model_time = np.linspace(start_end[0], start_end[1], model_len)
         model_intransit = np.argwhere(model < 1)[:, 0]
+        model_time = np.linspace(start_end[0], start_end[1], len(model))
+
+
         in_transit_indexes = np.where((model_time > t0 - duration / 2) & (model_time < t0 + duration / 2))[0]
         model_time_in_transit = model_time[in_transit_indexes]
         scaled_intransit = np.interp(
