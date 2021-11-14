@@ -1,5 +1,6 @@
 import time
 
+import batman
 import ellc
 import numpy as np
 import astropy.constants as ac
@@ -14,6 +15,20 @@ class ExoMoonLeastSquares:
     G = 6.674e-11  # m3 kg-1 s-2
     au_to_Rsun = 215.032
     Msolar_to_kg = 2.e30
+    R_earth_to_R_sun = 0.009175
+
+    def __init__(self, star_mass, star_radius, planet_radius, planet_period, planet_t0, planet_inc, planet_ecc,
+                 planet_arg_periastron, time, flux):
+        self.star_mass = star_mass
+        self.star_radius = star_radius
+        self.planet_radius = planet_radius
+        self.planet_period = planet_period
+        self.planet_t0 = planet_t0
+        self.planet_inc = planet_inc
+        self.planet_ecc = planet_ecc
+        self.planet_arg_periastron = planet_arg_periastron
+        self.time = time
+        self.flux = flux
 
     def compute_semimajor_axis(self, major_mass, minor_period):
         period_seconds = minor_period * 24. * 3600.
@@ -22,19 +37,31 @@ class ExoMoonLeastSquares:
         return a1 / 1.496e11
 
     def compute_hill_radius(self, major_mass, minor_mass, semimajor_axis, eccentricity=0):
-        return semimajor_axis * (1 - eccentricity) * (major_mass / (3 * minor_mass) ** (1 / 3))
+        """
+        @param major_mass: The planet mass
+        @param minor_mass: The moon mass
+        @param semimajor_axis: The planet semimajor axis in AU.
+        @param eccentricity: the planet eccentricity
+        @return: the hill radius of the planet
+        """
+        return semimajor_axis * (1 - eccentricity) * (minor_mass / (3 * major_mass) ** (1 / 3))
 
-    def compute_moon_min_max_orbit_periods(self, star_mass, planet_mass, planet_ecc, planet_semimajor_axis):
-        planet_hill_r = self.compute_hill_radius(star_mass, planet_mass, planet_semimajor_axis, planet_ecc)
-        return 0.5, planet_hill_r
+    def au_to_period(self, mass, au):
+        """
+        Calculates the orbital period for the semi-major axis assuming a circular orbit.
+        @param mass: the stellar mass
+        @param au: the semi-major axis in astronomical units.
+        @return: the period in days
+        """
+        mass_kg = mass * 2.e30
+        a = au * 1.496e11
+        return ((a ** 3) * 4 * (np.pi ** 2) / self.G / mass_kg) ** (1. / 2.) / 3600 / 24
 
-    def compute_moon_orbit_transit_length(self, star_radius, planet_radius,
-                                          planet_semimajor_axis, planet_period, moon_semimajor_axis,
-                                          moon_eccentrictiy=0, moon_arg_periastron=0, moon_inclination=90,
-                                          planet_eccentricity=0, planet_arg_periastron=0, planet_inclination=90):
-        #planet_period / np.pi * np.asin(np.sqrt((star_radius + planet_radius) * 2 - (b * star_radius) * 2) / 2)
-        return 2 * moon_semimajor_axis / (planet_semimajor_axis * 2 * np.pi) * planet_period
-
+    def compute_transit_duration(self, star_radius,
+                                 transiting_body_semimajor_axis, transit_period, transiting_body_radius,
+                                 impact_parameter=0):
+        return transit_period / np.pi * np.asin(np.sqrt(((star_radius + transiting_body_radius) ** 2 - (impact_parameter * star_radius) ** 2) / transiting_body_semimajor_axis))
+        #return 2 * moon_semimajor_axis / (planet_semimajor_axis * 2 * np.pi) * planet_period
 
     def compute_moon_period_grid(self, min, max, mode="log", samples=20):
         if "log" == mode:
@@ -49,9 +76,9 @@ class ExoMoonLeastSquares:
                                             planet_eccentricity=0, planet_arg_periastron=0, planet_inclination=90):
         moon_semimajor_axis = self.compute_semimajor_axis(planet_mass, moon_period)
         planet_semimajor_axis = self.compute_semimajor_axis(star_mass, planet_period)
-        moon_orbit_transit_length = self.compute_moon_orbit_transit_length(star_radius, planet_radius,
-                                                                           planet_semimajor_axis, planet_period,
-                                                                           moon_semimajor_axis)
+        moon_orbit_transit_length = self.compute_transit_duration(star_radius, planet_radius,
+                                                                  planet_semimajor_axis, planet_period,
+                                                                  moon_semimajor_axis)
         # TODO we probably need to define left_transit_length and right_transit_length depending on moon orbit parameters
         all_t0s = np.linspace(planet_t0, time[len(time) - 1], planet_period)
         moon_orbit_tokens = [[t0, t0 - moon_orbit_transit_length / 2, t0 + moon_orbit_transit_length / 2] for t0 in all_t0s]
@@ -168,6 +195,7 @@ class ExoMoonLeastSquares:
         model = np.append(baseline_model, model)
         model = np.append(model, baseline_model)
         i = 0
+        best_residual = [0, np.inf]
         for stick_scenarios_time in stick_scenarios_time_grid:
             stick_scenarios_flux = stick_scenarios_flux_grid[i]
             residual_calculation = np.full((len(duration_grid), len(stick_scenarios_time)), np.nan)
@@ -181,26 +209,30 @@ class ExoMoonLeastSquares:
                 dt_flux = stick_scenarios_flux
                 for flux_index, flux_value in enumerate(
                         stick_scenarios_time[(stick_scenarios_time >= first_valid_time) & (stick_scenarios_time <= last_valid_time)]):
-                    residual_calculation[model_index][flux_index] = self.calculate_residuals(stick_scenarios_time, dt_flux, model, flux_index)
-                local_residual_minima = argrelextrema(residual_calculation[model_index], np.less)[0]
-                minima_mask = np.full(len(residual_calculation[model_index]), False)
-                minima_mask[local_residual_minima] = True
-                max_allowed_residual = np.nanmax(residual_calculation[model_index])
-                residual_calculation[model_index][
-                    np.where(np.isnan(residual_calculation[model_index]))] = max_allowed_residual
+                    residual_calculation[model_index][flux_index] = self.calculate_residuals(stick_scenarios_time, dt_flux, model, flux_index, duration)
+                # local_residual_minima = argrelextrema(residual_calculation[model_index], np.less)[0]
+                # minima_mask = np.full(len(residual_calculation[model_index]), False)
+                # minima_mask[local_residual_minima] = True
+                # max_allowed_residual = np.nanmax(residual_calculation[model_index])
+                # residual_calculation[model_index][
+                #     np.where(np.isnan(residual_calculation[model_index]))] = max_allowed_residual
+
                 # residual_calculation[model_index][~minima_mask] = max_allowed_residual
                 # time_plot = time[minima_mask]
                 residual_plot = residual_calculation[model_index]
                 fig_transit, axs = plt.subplots(2, 1, figsize=(8, 8))
-                axs[0].plot(lc_time, dt_flux, color='gray', alpha=1, rasterized=True, label="Flux")
-                axs[0].set_title("Light curve" + str(model_duration_days * 24 * 60) + "m")
+                axs[0].plot(stick_scenarios_time, dt_flux, color='gray', alpha=1, rasterized=True, label="Flux")
+                axs[0].set_title("Light curve" + str(duration * 24 * 60) + "m")
                 axs[0].set_xlabel('Time')
                 axs[0].set_ylabel('Flux')
-                axs[1].plot(lc_time, residual_plot, color='gray', alpha=1, rasterized=True, label="Residuals")
-                axs[1].set_title("Residuals for transit duration " + str(model_duration_days * 24 * 60) + "m")
+                axs[1].plot(stick_scenarios_time, residual_plot, color='gray', alpha=1, rasterized=True, label="Residuals")
+                axs[1].set_title("Residuals for transit duration " + str(duration * 24 * 60) + "m")
                 axs[1].set_xlabel('Time')
                 axs[1].set_ylabel('Residuals')
                 fig_transit.show()
+            scenario_best_residual = [np.argmax(residual_calculation[model_index]), np.max(residual_calculation[model_index])]
+            if best_residual[1] > scenario_best_residual[1]:
+                best_residual = scenario_best_residual
             i = i + 1
 
     def downsample(self, array, npts: int):
@@ -234,11 +266,35 @@ class ExoMoonLeastSquares:
             return np.sum((flux_subset - model_sample_scaled) ** 2) ** 0.5 * depth
         return np.nan
 
+    def inject_moon(self, time, flux, t0s, planet_mass, planet_semimajor_axis, planet_ecc, moon_radius, moon_period):
+        initial_alpha = 0
+        hill_radius = self.compute_hill_radius(self.star_mass, planet_mass, planet_semimajor_axis)
+        moon_orbit_length = self.compute_transit_duration(self.star_radius, self.planet_semimajor_axis, self.planet_period, hill_radius)
+        first_t0 = t0s[0]
+        for t0 in t0s:
+            time_transit = time[t0 - moon_orbit_length / 2 < time < t0 + moon_orbit_length / 2]
+            if len(time_transit) == 0:
+                continue
+            moon_phase = initial_alpha + (t0 - first_t0) / moon_period
+            moon_tau = np.cos(moon_phase)
+            moon_t0 = t0 + moon_tau * moon_orbit_length / 2
+            t = np.linspace(t0 - moon_orbit_length / 2, t0 + moon_orbit_length / 2, len(time_transit))
+            ma = batman.TransitParams()
+            ma.t0 = moon_t0  # time of inferior conjunction
+            ma.per = self.planet_period  # orbital period, use Earth as a reference
+            ma.rp = moon_radius * self.R_earth_to_R_sun / self.star_radius  # planet radius (in units of stellar radii)
+            ma.a = self.planet_semimajor_axis * self.au_to_Rsun / self.star_radius  # semi-major axis (in units of stellar radii)
+            ma.inc = self.planet_inc  # orbital inclination (in degrees)
+            ma.ecc = self.planet_ecc  # eccentricity
+            ma.w = 0  # longitude of periastron (in degrees)
+            ma.u = self.ab  # limb darkening coefficients
+            ma.limb_dark = "quadratic"  # limb darkening model
+            m = batman.TransitModel(ma, t)  # initializes model
+            model = m.light_curve(ma)  # calculates light curve
+            flux[t0 - moon_orbit_length / 2 < time < t0 + moon_orbit_length / 2] = flux[t0 - moon_orbit_length / 2 < time < t0 + moon_orbit_length / 2] + model - 1
+        return flux
 
     def run(self):
-        min_period = 0.5 # TODO compute this value somehow
-        max_period = self.compute_hill_radius(self.star_mass, self.planet_mass, self.planet_semimajor_axis)
-        period_grid = self.compute_moon_period_grid(min_period, max_period)
         planet_mass_grid = self.planet_mass_grid
         moon_inc_grid = self.moon_inc_grid
         moon_ecc_grid = self.moon_ecc_grid
@@ -246,6 +302,9 @@ class ExoMoonLeastSquares:
         flux = self.subtract_planet_transit(self.ab, self.star_radius, self.star_mass, self.time, self.flux,
                                             self.planet_radius, self.planet_t0, self.planet_period, self.planet_inc)
         for planet_mass in planet_mass_grid:
+            min_period = 0.5 # TODO compute this value somehow
+            max_period = self.au_to_period(planet_mass, self.compute_hill_radius(self.star_mass, planet_mass, self.planet_semimajor_axis))
+            period_grid = self.compute_moon_period_grid(min_period, max_period)
             for moon_inc in moon_inc_grid:
                 for moon_ecc in moon_ecc_grid:
                     for moon_arg_periastron in moon_arg_periastron_grid:
@@ -253,10 +312,10 @@ class ExoMoonLeastSquares:
                             #TODO moon_orbit_ranges should use moon_radius ?
                             moon_semimajor_axis = self.moon_semimajor_axis = self.compute_semimajor_axis(planet_mass, moon_period)
                             planet_semimajor_axis = self.planet_semimajor_axis = self.compute_semimajor_axis(self.star_mass, self.planet_period)
-                            moon_transit_length = self.compute_moon_orbit_transit_length(self.star_radius, self.planet_radius,
-                                                                   planet_semimajor_axis, self.planet_period,
-                                                                   moon_semimajor_axis, moon_ecc, moon_arg_periastron, moon_inc,
-                                                                   self.planet_ecc, self.planet_arg_periastron, self.planet_inc)
+                            moon_transit_length = self.compute_transit_duration(self.star_radius, self.planet_radius,
+                                                                                planet_semimajor_axis, self.planet_period,
+                                                                                moon_semimajor_axis, moon_ecc, moon_arg_periastron, moon_inc,
+                                                                                self.planet_ecc, self.planet_arg_periastron, self.planet_inc)
                             moon_orbit_ranges = self.tokenize_transits_moon_orbit_ranges(self.time, flux, self.flux_err,
                                                                      self.star_mass, self.star_radius, planet_mass,
                                                                      self.planet_radius, self.planet_period,
@@ -268,4 +327,20 @@ class ExoMoonLeastSquares:
                             normalized_moon_transit_scenarios = self.normalize_scenarios(moon_transit_scenarios)
                             self.search(normalized_moon_transit_scenarios)
 
-
+star_mass = 1
+star_radius = 1
+planet_radius = 1
+planet_period = 20
+planet_t0 = 1000
+planet_inc = 90
+planet_ecc = 0.01
+planet_arg_periastron = 0
+t0s = []
+planet_mass = 1
+time = []
+flux = []
+emls = ExoMoonLeastSquares(star_mass, star_radius, planet_radius, planet_period, planet_t0, planet_inc, planet_ecc, planet_arg_periastron, time, flux)
+planet_semimajor_axis = emls.compute_semimajor_axis(star_mass, planet_period)
+moon_radius = 0.33
+moon_period = 2
+emls.flux = emls.inject_moon(emls.time, emls.flux, t0s, planet_mass, planet_semimajor_axis, planet_ecc, moon_radius, moon_period)
