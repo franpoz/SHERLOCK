@@ -17,8 +17,8 @@ class QuorumSnrBorderCorrectedSignalSelector(BasicSignalSelector):
         self.strength = strength
         self.min_quorum = min_quorum
 
-    def select(self, transit_results, snr_min, detrend_method, wl):
-        basic_signal_selection = super().select(transit_results, snr_min, detrend_method, wl)
+    def select(self, transit_results, snr_min, sde_min, detrend_method, wl):
+        basic_signal_selection = super().select(transit_results, snr_min, sde_min, detrend_method, wl)
         index_snr_period_t0_array = [[key, transit_result.snr * transit_result.border_score,
                                         transit_result.period, transit_result.t0]
                                         for key, transit_result in transit_results.items()]
@@ -46,22 +46,23 @@ class QuorumSnrBorderCorrectedSignalSelector(BasicSignalSelector):
         number_corrected_snrs_length = len(np.where(~np.isnan(corrected_snrs)))
         if number_corrected_snrs_length == 0:
             best_signal_score = 0
-            best_signal = 0
+            selected_signal = 0
             best_signal_snr_index = 0
             best_signal_snr = 0
         else:
             best_signal_snr = np.nanmax(corrected_snrs)
             best_signal_snr_index = np.nanargmax(corrected_snrs)
-            best_signal = transit_results[best_signal_snr_index]
+            selected_signal = transit_results[best_signal_snr_index]
+            selected_signal_sde = selected_signal.sde
             max_votes_rate = max(votes_counts) / len(votes)
-            if best_signal_snr > snr_min and max_votes_rate >= self.min_quorum:  # and SDE[a] > SDE_min and FAP[a] < FAP_max):
+            if best_signal_snr > snr_min and selected_signal_sde > sde_min and max_votes_rate >= self.min_quorum:
                 best_signal_score = 1
             else:
                 best_signal_score = 0
         return CorrectedQuorumBorderSignalSelection(best_signal_score, best_signal_snr,
                                                     basic_signal_selection.curve_index,
                                                     transit_results[basic_signal_selection.curve_index],
-                                                    best_signal_snr_index, best_signal,
+                                                    best_signal_snr_index, selected_signal,
                                                     votes_counts[best_signal_snr_index])
 
     def is_harmonic(self, a_t0, b_t0, a_period, b_period):

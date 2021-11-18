@@ -9,10 +9,11 @@ class SignalSelector(ABC):
         pass
 
     @abstractmethod
-    def select(self, transit_result_detrends, snr_min, detrend_method, wl):
+    def select(self, transit_result_detrends, snr_min, sde_min, detrend_method, wl):
         """
         @param transit_result_detrends: a list of transit results to be explored.
         @param snr_min: the minimum snr to allow a signal to be considered good enough.
+        @param sde_min: the minimum sde to allow a signal to be considered good enough.
         @param detrend_method: the detrend method used to obtain the candidate transit results
         @param wl: the window length used by the detrend method used.
         @return a SignalSelection with the parameters that characterize the best selection.

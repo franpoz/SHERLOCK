@@ -12,20 +12,21 @@ class SnrBorderCorrectedSignalSelector(BasicSignalSelector):
     def __init__(self):
         super().__init__()
 
-    def select(self, transit_results, snr_min, detrend_method, wl):
-        basic_signal_selection = super().select(transit_results, snr_min, detrend_method, wl)
+    def select(self, transit_results, snr_min, sde_min, detrend_method, wl):
+        basic_signal_selection = super().select(transit_results, snr_min, sde_min, detrend_method, wl)
         signals_snr = np.nan_to_num([transit_result.snr * transit_result.border_score
                                      for key, transit_result in transit_results.items()])
         best_signal_snr = np.nanmax(signals_snr)
         best_signal_snr_index = np.nanargmax(signals_snr)
-        best_signal = transit_results[best_signal_snr_index]
-        if best_signal_snr > snr_min:  # and SDE[a] > SDE_min and FAP[a] < FAP_max):
+        selected_signal_sde = transit_results[best_signal_snr_index].sde
+        selected_signal = transit_results[best_signal_snr_index]
+        if best_signal_snr > snr_min and selected_signal_sde > sde_min:  # and SDE[a] > SDE_min and FAP[a] < FAP_max):
             best_signal_score = 1
         else:
             best_signal_score = 0
         return CorrectedBorderSignalSelection(best_signal_score, best_signal_snr, basic_signal_selection.curve_index,
                                               transit_results[basic_signal_selection.curve_index],
-                                              best_signal_snr_index, best_signal)
+                                              best_signal_snr_index, selected_signal)
 
 
 class CorrectedBorderSignalSelection(SignalSelection):
