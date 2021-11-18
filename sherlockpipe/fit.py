@@ -327,7 +327,7 @@ if __name__ == '__main__':
     candidate_selections = None
     if args.candidate is None:
         user_properties = yaml.load(open(args.properties), yaml.SafeLoader)
-        candidates_df = pd.DataFrame(columns=['id', 'period', 't0', 'cpus', 'rp_rs', 'a', 'number', 'name', 'lc'])
+        candidates_df = pd.DataFrame(columns=['id', 'period', 't0', 'duration', 'cpus', 'rp_rs', 'a', 'number', 'name', 'lc'])
         candidates_df = candidates_df.append(user_properties["planets"], ignore_index=True)
         user_star_df = pd.DataFrame(columns=['R_star', 'M_star'])
         if "star" in user_properties and user_properties["star"] is not None:
@@ -348,6 +348,8 @@ if __name__ == '__main__':
             elif ("a" not in user_properties["planet"] or user_properties["planet"]["a"] is None)\
                     and (star_df.iloc[0]["M_star"] is None or np.isnan(star_df.iloc[0]["M_star"])):
                 raise ValueError("Cannot guess semi-major axis without star mass.")
+        candidates_df['number'] = user_properties["number"]
+        candidates_df['curve'] = user_properties["curve"]
         if candidates_df.iloc[0]["a"] is None or np.isnan(candidates_df.iloc[0]["a"]):
             raise ValueError("Semi-major axis is neither provided nor inferred.")
         if candidates_df.iloc[0]["name"] is None:
@@ -366,10 +368,10 @@ if __name__ == '__main__':
             candidates_df['number'][candidate_selection - 1] = candidate_selection
             candidates_df['name'][candidate_selection - 1] = 'SOI_' + \
                                                             str(candidates_df['number'][candidate_selection - 1])
+        candidates_df = candidates_df.iloc[[candidate_selection - 1 for candidate_selection in candidate_selections]]
         logging.info("Selected signal numbers " + str(candidate_selections))
     if args.cpus is None:
         cpus = multiprocessing.cpu_count() - 1
     else:
         cpus = args.cpus
-    fitter.fit(candidates_df.iloc[[candidate_selection - 1 for candidate_selection in candidate_selections]],
-               star_df, cpus, fitting_dir, args.tolerance, args.fit_orbit)
+    fitter.fit(candidates_df, star_df, cpus, fitting_dir, args.tolerance, args.fit_orbit)
