@@ -143,15 +143,16 @@ class ExoMoonLeastSquares:
             #TODO we'd need to fill measurement gaps (detected from the time array)
             time_orbit_range = time[time_args]
             flux_orbit_range = flux[time_args]
-            tau1 = time_orbit_range - planet_t0
+            tau1 = time_orbit_range - t0
             alpha = np.arccos(tau1 / tau)
             alpha_comp = 2 * np.pi - alpha
-            phase_delta = (moon_orbit_range[0] - planet_t0) / moon_period
+            phase_delta = (t0 - planet_t0) % moon_period / moon_period * 2 * np.pi
+            #TODO should we sum phase_delta or subtract?
             alpha_0 = alpha + phase_delta
             alpha_comp_0 = alpha_comp + phase_delta
             time_alpha_0 = t0 + np.cos(alpha_0) * tau
-            time_alpha_comp_0 = t0 + np.cos(alpha_0) * tau
-            orbit_scenarios = orbit_scenarios.append([time_orbit_range, tau1, flux_orbit_range, alpha_0, alpha_comp_0, time_alpha_0, time_alpha_comp_0])
+            time_alpha_comp_0 = t0 + np.cos(alpha_comp_0) * tau
+            orbit_scenarios.append([time_orbit_range, tau1, flux_orbit_range, alpha_0, alpha_comp_0, time_alpha_0, time_alpha_comp_0])
         return orbit_scenarios
 
     def normalize_scenarios(self, moon_transit_scenarios):
@@ -160,12 +161,12 @@ class ExoMoonLeastSquares:
         time_alpha_0 = scenario[5]
         time_alpha_comp_0 = scenario[6]
         normalized_scenarios = []
-        normalized_scenarios = normalized_scenarios.append([[time_alpha_0, flux], [time_alpha_comp_0, flux]])
+        normalized_scenarios.append([[time_alpha_0, flux], [time_alpha_comp_0, flux]])
         for scenario in moon_transit_scenarios[1:]:
             flux = scenario[2]
             time_alpha_0 = scenario[5]
             time_alpha_comp_0 = scenario[6]
-            normalized_scenarios = normalized_scenarios.append([[time_alpha_0, flux], [time_alpha_comp_0, flux]])
+            normalized_scenarios.append([[time_alpha_0, flux], [time_alpha_comp_0, flux]])
         return normalized_scenarios
 
     def search(self, normalized_moon_transit_scenarios):
