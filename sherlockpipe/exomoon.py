@@ -148,10 +148,10 @@ class ExoMoonLeastSquares:
             alpha_comp = 2 * np.pi - alpha
             phase_delta = (t0 - planet_t0) % moon_period / moon_period * 2 * np.pi
             #TODO should we sum phase_delta or subtract?
-            alpha_0 = alpha + phase_delta
-            alpha_comp_0 = alpha_comp + phase_delta
-            time_alpha_0 = t0 + np.cos(alpha_0) * tau
-            time_alpha_comp_0 = t0 + np.cos(alpha_comp_0) * tau
+            alpha_0 = alpha - phase_delta
+            alpha_comp_0 = alpha_comp - phase_delta
+            time_alpha_0 = np.cos(alpha_0) * tau
+            time_alpha_comp_0 = np.cos(alpha_comp_0) * tau
             orbit_scenarios.append([time_orbit_range, tau1, flux_orbit_range, alpha_0, alpha_comp_0, time_alpha_0, time_alpha_comp_0])
         return orbit_scenarios
 
@@ -164,16 +164,30 @@ class ExoMoonLeastSquares:
         normalized_scenarios.append([[time_alpha_0, flux], [time_alpha_comp_0, flux]])
         for scenario in moon_transit_scenarios[1:]:
             flux = scenario[2]
+            if len(flux) == 0:
+                continue
             time_alpha_0 = scenario[5]
             time_alpha_comp_0 = scenario[6]
             normalized_scenarios.append([[time_alpha_0, flux], [time_alpha_comp_0, flux]])
         return normalized_scenarios
 
     def search(self, normalized_moon_transit_scenarios):
-        scenarios_grid = np.array(np.meshgrid(*np.array(normalized_moon_transit_scenarios))).T.reshape(-1, len(normalized_moon_transit_scenarios))
         stick_scenarios_time_grid = []
         stick_scenarios_flux_grid = []
-        for scenario in scenarios_grid:
+        scenarios_grid = {}
+
+        #TODO FIX LOGIC
+        for i in np.arange(0, len(normalized_moon_transit_scenarios)):
+            for j in np.arange(0, 2):
+                key = str(i) + "_" + str(j)
+                if key in scenarios_grid:
+                    scenarios_grid[key].append(normalized_moon_transit_scenarios[i][j])
+                else:
+                    scenarios_grid[key] = normalized_moon_transit_scenarios[i][j]
+
+
+
+        for key, scenario in scenarios_grid:
             scenario_time = []
             scenario_flux = []
             for datum in scenario:
@@ -352,7 +366,7 @@ object_dir = target_name + "_EMLS"
 lc_builder = LcBuilder()
 object_info = lc_builder.build_object_info(target_name=target_name, author=None, sectors="all", file=None, cadence=120,
                               initial_mask=None, initial_transit_mask=None, star_info=None, aperture=None,
-                              eleanor_corr_flux="pdcsap_flux", outliers_sigma=3, high_rms_enabled=True,
+                              eleanor_corr_flux="pdcsap_flux", outliers_sigma=3, high_rms_enabled=False,
                               high_rms_threshold=1.5, high_rms_bin_hours=4, smooth_enabled=False,
                               auto_detrend_enabled=False, auto_detrend_method="cosine", auto_detrend_ratio=0.25,
                               auto_detrend_period=None, prepare_algorithm=None, reduce_simple_oscillations=False,
