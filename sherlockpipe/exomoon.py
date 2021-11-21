@@ -1,3 +1,4 @@
+import itertools
 import os
 import time
 
@@ -172,30 +173,6 @@ class ExoMoonLeastSquares:
         return normalized_scenarios
 
     def search(self, normalized_moon_transit_scenarios):
-        stick_scenarios_time_grid = []
-        stick_scenarios_flux_grid = []
-        scenarios_grid = {}
-
-        #TODO FIX LOGIC
-        for i in np.arange(0, len(normalized_moon_transit_scenarios)):
-            for j in np.arange(0, 2):
-                key = str(i) + "_" + str(j)
-                if key in scenarios_grid:
-                    scenarios_grid[key].append(normalized_moon_transit_scenarios[i][j])
-                else:
-                    scenarios_grid[key] = normalized_moon_transit_scenarios[i][j]
-
-
-
-        for key, scenario in scenarios_grid:
-            scenario_time = []
-            scenario_flux = []
-            for datum in scenario:
-                scenario_time.append(datum[0])
-                scenario_flux.append(datum[1])
-            sorted_scenario_times_args = np.argsort(scenario_time)
-            stick_scenarios_time_grid.append(scenario_time[sorted_scenario_times_args])
-            stick_scenarios_flux_grid.append(scenario_flux[sorted_scenario_times_args])
         t0 = time.time()
         cadence = 2
         R_s = 1.1
@@ -225,20 +202,32 @@ class ExoMoonLeastSquares:
         model = np.append(model, baseline_model)
         i = 0
         all_residuals = []
-        for stick_scenarios_time in stick_scenarios_time_grid:
-            stick_scenarios_flux = stick_scenarios_flux_grid[i]
-            residual_calculation = np.full((len(duration_grid), len(stick_scenarios_time)), np.nan)
+        stick_scenarios_time_grid = []
+        stick_scenarios_flux_grid = []
+        scenarios_combinations = list(itertools.product([0, 1], repeat=len(normalized_moon_transit_scenarios)))
+        #TODO FIX LOGIC
+        normalized_moon_transit_scenarios = np.array(normalized_moon_transit_scenarios)
+        for scenario_combination in scenarios_combinations:
+            scenario = np.array([normalized_moon_transit_scenarios[enum, item] for enum, item in enumerate(scenario_combination)])
+            scenario_time = np.concatenate(scenario[:, 0])
+            scenario_flux = np.concatenate(scenario[:, 1])
+            sorted_scenario_times_args = np.argsort(scenario_time)
+            scenario_time = scenario_time[sorted_scenario_times_args].flatten()
+            scenario_flux = scenario_flux[sorted_scenario_times_args].flatten()
+            stick_scenarios_time_grid.append(scenario_time)
+            stick_scenarios_flux_grid.append(scenario_flux)
+            residual_calculation = np.full((len(duration_grid), len(scenario_time)), np.nan)
             for model_index, duration in enumerate(duration_grid):
-                first_valid_time = stick_scenarios_time[stick_scenarios_time > stick_scenarios_time[0] + duration * 3][0]
-                time_without_tail = stick_scenarios_time[stick_scenarios_time < stick_scenarios_time[len(stick_scenarios_time) - 1] - duration * 3]
+                first_valid_time = scenario_time[scenario_time > scenario_time[0] + duration * 3][0]
+                time_without_tail = scenario_time[scenario_time < scenario_time[len(scenario_time) - 1] - duration * 3]
                 last_valid_time = time_without_tail[len(time_without_tail) - 1]
-                first_valid_time = stick_scenarios_time[0]
+                first_valid_time = scenario_time[0]
                 #last_valid_time = stick_scenarios_time[len(stick_scenarios_time) - 1 - len(model_sample)]
-                dt_flux = wotan.flatten(stick_scenarios_time, stick_scenarios_flux, duration * 4, method="biweight")
-                dt_flux = stick_scenarios_flux
+                #dt_flux = wotan.flatten(scenario_time, scenario_flux, duration * 4, method="biweight")
+                dt_flux = scenario_flux
                 for flux_index, flux_value in enumerate(
-                        stick_scenarios_time[(stick_scenarios_time >= first_valid_time) & (stick_scenarios_time <= last_valid_time)]):
-                    residual_calculation[model_index][flux_index] = self.calculate_residuals(stick_scenarios_time, dt_flux, model, flux_index, duration)
+                        scenario_time[(scenario_time >= first_valid_time) & (scenario_time <= last_valid_time)]):
+                    residual_calculation[model_index][flux_index] = self.calculate_residuals(scenario_time, dt_flux, model, flux_index, duration)
                 # local_residual_minima = argrelextrema(residual_calculation[model_index], np.less)[0]
                 # minima_mask = np.full(len(residual_calculation[model_index]), False)
                 # minima_mask[local_residual_minima] = True
@@ -250,11 +239,11 @@ class ExoMoonLeastSquares:
                 # time_plot = time[minima_mask]
                 residual_plot = residual_calculation[model_index]
                 fig_transit, axs = plt.subplots(2, 1, figsize=(8, 8))
-                axs[0].plot(stick_scenarios_time, dt_flux, color='gray', alpha=1, rasterized=True, label="Flux")
+                axs[0].plot(scenario_time, dt_flux, color='gray', alpha=1, rasterized=True, label="Flux")
                 axs[0].set_title("Light curve" + str(duration * 24 * 60) + "m")
                 axs[0].set_xlabel('Time')
                 axs[0].set_ylabel('Flux')
-                axs[1].plot(stick_scenarios_time, residual_plot, color='gray', alpha=1, rasterized=True, label="Residuals")
+                axs[1].plot(scenario_time, residual_plot, color='gray', alpha=1, rasterized=True, label="Residuals")
                 axs[1].set_title("Residuals for transit duration " + str(duration * 24 * 60) + "m")
                 axs[1].set_xlabel('Time')
                 axs[1].set_ylabel('Residuals')
