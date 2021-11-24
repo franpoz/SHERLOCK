@@ -76,13 +76,13 @@ BIN_MINUTES: 10
 MASK_MODE: 'mask'
 # Three modes are available: basic (best SNR), border-correct (best SNR*border_score) and quorum (border-corrected
 # agreement-based on every valid signal best fit).
-BEST_SIGNAL_ALGORITHM: 'border-correct'
+BEST_SIGNAL_ALGORITHM: 'quorum'
 # If BEST_SIGNAL_ALGORITHM is set to 'quorum', this value is used as a scale factor for the quorum votes.
-QUORUM_STRENGTH: 1
+QUORUM_STRENGTH: 1.2
 # If QUORUM is used as BEST_SIGNAL_ALGORITHM, this variable is used to decide when SHERLOCK should be stopped because of
 # lack of persistence in the found signals of the last executed run (maximum of agreed votes over the entire number of
 # signals)
-MIN_QUORUM: 0
+MIN_QUORUM: 0.25
 # User defined python class extending SHERLOCK SignalSelector abstract class. An absolute path to the file must be
 # provided.
 CUSTOM_SELECTION_ALGORITHM:

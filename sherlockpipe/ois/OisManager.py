@@ -149,19 +149,22 @@ class OisManager:
         epic_data = pd.read_csv(self.epic_csv)
         epic_data['pl_trandep'] = epic_data['pl_trandep'].astype(float) * 1000000
         epic_data['pl_tranmid'] = epic_data['pl_tranmid'].astype(float) - epic_data['pl_trandur'].astype(float) / 2
-        epic_data['ra_str'] = epic_data['ra_str'].astype(str).replace("h", ":").replace("m", ":").replace("s", "")
-        epic_data['dec_str'] = epic_data['dec_str'].astype(str).replace("d", ":").replace("m", ":").replace("s", "")
-        epic_data = epic_data.rename(columns={'epic_candname': 'OI', 'epic_name': 'Object Id',
-                                            'k2c_disp': 'Disposition', 'pl_trandur': 'Duration (hours)',
+        epic_data['ra'] = epic_data['ra'].astype(str).replace("h", ":").replace("m", ":").replace("s", "")
+        epic_data['dec'] = epic_data['dec'].astype(str).replace("d", ":").replace("m", ":").replace("s", "")
+        epic_data[epic_data['disposition'] == "CANDIDATE"]['disposition'] = "PC"
+        epic_data[epic_data['disposition'] == "CONFIRMED"]['disposition'] = "CP"
+        epic_data[epic_data['disposition'] == "FALSE POSITIVE"]['disposition'] = "FP"
+        epic_data = epic_data.rename(columns={'pl_name': 'OI', 'epic_hosname': 'Object Id',
+                                            'disposition': 'Disposition', 'pl_trandur': 'Duration (hours)',
                                             'pl_orbper': 'Period (days)',
                                             'pl_tranmid': 'Epoch (BJD)',
                                             'pl_trandep': 'Depth (ppm)',
                                             'pl_eqt': 'Planet Equil Temp (K)',
-                                            'ra_str': 'RA', 'dec_str': 'Dec',
+                                            'ra': 'RA', 'dec': 'Dec',
                                             'st_logg': 'Stellar log(g) (cm/s^2)',
                                             'st_teff': 'Stellar Eff Temp (K)',
                                             'pl_rade': 'Planet Radius (R_Earth)',
-                                            'st_dist': 'Stellar Distance (pc)',
-                                            'st_metfe': 'Stellar Metallicity'})
+                                            'sy_dist': 'Stellar Distance (pc)',
+                                            'st_metratio': 'Stellar Metallicity'})
         epic_data.to_csv(self.epic_csv, index=False)
         return self
