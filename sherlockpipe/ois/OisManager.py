@@ -13,9 +13,9 @@ class OisManager:
     KOIS_LIST_URL = 'https://exofop.ipac.caltech.edu/kepler/targets.php?sort=num-pc&page1=1&ipp1=100000&koi1=&koi2='
     KIC_STAR_URL = 'https://exoplanetarchive.ipac.caltech.edu/cgi-bin/nstedAPI/nph-nstedAPI?table=keplerstellar&select=kepid,dist'
     KOI_CSV_URL = 'https://exoplanetarchive.ipac.caltech.edu/cgi-bin/nstedAPI/nph-nstedAPI?table=cumulative'
-    EPIC_CSV_URL = 'https://exoplanetarchive.ipac.caltech.edu/cgi-bin/nstedAPI/nph-nstedAPI?table=k2candidates&' \
-                   'select=epic_name,epic_candname,k2c_disp,pl_orbper,st_dist,st_teff,st_logg,st_metfe,st_metratio,' \
-                   'st_vsini,st_kep,pl_trandep,pl_trandur,pl_rade,pl_eqt,pl_orbincl,ra_str,dec_str,pl_tranmid'
+    EPIC_CSV_URL = 'https://exoplanetarchive.ipac.caltech.edu/TAP/sync?query=select+epic_hostname,pl_name,' \
+                   'disposition,pl_orbper,sy_dist,st_teff,st_logg,st_metratio,st_metratio,st_vsin,sy_kepmag,' \
+                   'pl_trandep,pl_trandur,pl_rade,pl_eqt,pl_orbincl,ra,dec,pl_tranmid+from+k2pandc&format=csv'
     TOIS_CSV = 'tois.csv'
     CTOIS_CSV = 'ctois.csv'
     KOIS_CSV = 'kois.csv'
