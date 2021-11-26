@@ -93,7 +93,7 @@ def get_offset(lat, lng, datetime):
     return (today_utc - today_target).total_seconds() / 3600
 
 
-def create_observation_observables(object_id, object_dir, name, epoch, epoch_low_err, epoch_up_err, period,
+def create_observation_observables(object_id, object_dir, since, name, epoch, epoch_low_err, epoch_up_err, period,
                                    period_low_err, period_up_err, duration,
                                    observatories_file, timezone, latitude, longitude, altitude,
                                    max_days, min_altitude, moon_min_dist, moon_max_dist, transit_fraction, baseline):
@@ -101,6 +101,7 @@ def create_observation_observables(object_id, object_dir, name, epoch, epoch_low
 
     @param object_id: the candidate id
     @param object_dir: the candidate directory
+    @param since: starting plan date
     @param name: the name given to the candidate
     @param epoch: the candidate epoch
     @param epoch_low_err: the candidate epoch's lower error
@@ -138,7 +139,6 @@ def create_observation_observables(object_id, object_dir, name, epoch, epoch_low
         primary_eclipse_time = Time(epoch, format='jd')
     target = FixedTarget(SkyCoord(coords, unit=(u.deg, u.deg)))
     n_transits = max_days // period
-    current_time = Time.now()
     system = EclipsingSystem(primary_eclipse_time=primary_eclipse_time, orbital_period=u.Quantity(period, unit="d"),
                              duration=u.Quantity(duration, unit="h"), name=name)
     observables_df = pd.DataFrame(columns=['observatory', 'timezone', 'start_obs', 'end_obs', 'ingress', 'egress',
@@ -155,8 +155,8 @@ def create_observation_observables(object_id, object_dir, name, epoch, epoch_low
     for index, observatory_row in observatories_df.iterrows():
         observer_site = Observer(latitude=observatory_row["lat"], longitude=observatory_row["lon"],
                                  elevation=u.Quantity(observatory_row["alt"], unit="m"))
-        midtransit_times = system.next_primary_eclipse_time(current_time, n_eclipses=n_transits)
-        ingress_egress_times = system.next_primary_ingress_egress_time(current_time, n_eclipses=n_transits)
+        midtransit_times = system.next_primary_eclipse_time(since, n_eclipses=n_transits)
+        ingress_egress_times = system.next_primary_ingress_egress_time(since, n_eclipses=n_transits)
         constraints = [AtNightConstraint.twilight_nautical(), AltitudeConstraint(min=min_altitude * u.deg),
                        MoonIlluminationSeparationConstraint(min_dist=moon_min_dist * u.deg,
                                                             max_dist=moon_max_dist * u.deg)]
@@ -332,6 +332,9 @@ if __name__ == '__main__':
                     required=False)
     ap.add_argument('--baseline', help="Required baseline (in hours) for the observation.", type=float, default=0.5,
                     required=False)
+    ap.add_argument('--since', help="yyyy-mm-dd date since when you want to start the plan (defaults to today).",
+                    type=str, default=None,
+                    required=False)
     args = ap.parse_args()
     if args.observatories is None and (args.lat is None or args.lon is None or args.alt is None):
         raise ValueError("You either need to set the 'observatories' property or the lat, lon and alt.")
@@ -348,6 +351,7 @@ if __name__ == '__main__':
     fit_derived_results = pd.read_csv(object_dir + "/results/ns_derived_table.csv")
     fit_results = pd.read_csv(object_dir + "/results/ns_table.csv")
     candidates_count = len(fit_results[fit_results["#name"].str.contains("_period")])
+    since = Time.now() if args.since is None else Time(args.since, scale='utc')
     for i in np.arange(0, candidates_count):
         period_row = fit_results[fit_results["#name"].str.contains("_period")].iloc[i]
         period = period_row["median"]
@@ -366,7 +370,8 @@ if __name__ == '__main__':
         depth = depth_row["value"] * 1000
         depth_low_err = depth_row["lower_error"] * 1000
         depth_up_err = depth_row["upper_error"] * 1000
-        observatories_df, observables_df, plan_dir, images_dir = create_observation_observables(object_id, object_dir, name, epoch,
+        observatories_df, observables_df, plan_dir, images_dir = create_observation_observables(object_id, object_dir,
+                                                                                                since, name, epoch,
                                                             epoch_low_err, epoch_up_err, period, period_low_err,
                                                             period_up_err, duration, args.observatories, args.tz, args.lat,
                                                             args.lon, args.alt, args.max_days, args.min_altitude,
