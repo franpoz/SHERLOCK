@@ -31,11 +31,12 @@ class MlTrainingSetPreparer:
 
     def __init__(self, dir, cache_dir):
         self.cache_dir = cache_dir
+        self.cache_dir_eleanor = cache_dir + "/.eleanor/"
         if not os.path.exists(cache_dir):
             os.mkdir(cache_dir)
-        if not os.path.exists(cache_dir + ".eleanor"):
+        if not os.path.exists(self.cache_dir_eleanor):
             os.mkdir(cache_dir + ".eleanor")
-        if not os.path.exists(cache_dir + ".eleanor/metadata"):
+        if not os.path.exists(self.cache_dir_eleanor + "/metadata"):
             os.mkdir(cache_dir + ".eleanor/metadata")
         self.dir = dir
         if not os.path.exists(dir):
@@ -67,6 +68,13 @@ class MlTrainingSetPreparer:
             os.mkdir(self.negative_dir)
         if not os.path.isdir(self.false_positive_dir):
             os.mkdir(self.false_positive_dir)
+        for sector in range(1, 53):
+            try:
+                logging.info("Updating ELEANOR sector " + str(sector))
+                eleanor.Update(sector, self.cache_dir_eleanor)
+            except Exception as e:
+                logging.warning("Could not update sector due to exception. Continuing...")
+                logging.debug(e, exc_info=True)
 
     def download_neighbours(self, ID: int, sectors: np.ndarray, search_radius: int = 10):
         """
@@ -180,7 +188,7 @@ class MlTrainingSetPreparer:
         try:
             logging.info("Trying to get short cadence info for " + str(prepare_tic_input.tic))
             lcbuild_short = \
-                mission_lightcurve_builder.build(MissionObjectInfo(tic_id, 'all'), None, prepare_tic_input.cache_dir)
+                mission_lightcurve_builder.build(MissionObjectInfo(tic_id, 'all'), None, self.cache_dir)
             lc_short = lcbuild_short.lc
             lc_data = lcbuild_short.lc_data
             lc_data["centroids_x"] = lc_data["centroids_x"] - np.nanmedian(lc_data["centroids_x"])
@@ -189,7 +197,7 @@ class MlTrainingSetPreparer:
             lc_data["motion_y"] = lc_data["motion_y"] - np.nanmedian(lc_data["motion_y"])
             lc_data.to_csv(target_dir + "time_series_short.csv")
             tpf_short = lk.search_targetpixelfile(tic_id, cadence="short", author="spoc").download_all(
-                download_dir=prepare_tic_input.cache_dir + ".lightkurve-cache")
+                download_dir=self.cache_dir + ".lightkurve-cache")
             short_periodogram = lc_short.to_periodogram(oversample_factor=5)
             periodogram_df = pd.DataFrame(columns=['period', 'power'])
             periodogram_df["period"] = short_periodogram.period.value
@@ -202,7 +210,7 @@ class MlTrainingSetPreparer:
         try:
             lcbuild_long = \
                 mission_ffi_lightcurve_builder.build(MissionFfiIdObjectInfo(tic_id, 'all'), None,
-                                                     prepare_tic_input.cache_dir)
+                                                     self.cache_dir)
             star_df = pd.DataFrame(columns=['obj_id', 'ra', 'dec', 'R_star', 'R_star_lerr', 'R_star_uerr', 'M_star',
                                                 'M_star_lerr', 'M_star_uerr', 'Teff_star', 'Teff_star_lerr',
                                                 'Teff_star_uerr', 'ld_a', 'ld_b'])
@@ -236,7 +244,7 @@ class MlTrainingSetPreparer:
             lc_data.to_csv(target_dir + "time_series_long.csv")
             lcf_long = lc_long.remove_nans()
             tpf_long = lk.search_targetpixelfile(tic_id, cadence="long", author="tess-spoc")\
-                .download_all(download_dir=prepare_tic_input.cache_dir + ".lightkurve-cache")
+                .download_all(download_dir=self.cache_dir + ".lightkurve-cache")
             tpfs_dir = target_dir + "tpfs/"
             if not os.path.exists(tpfs_dir):
                 os.mkdir(tpfs_dir)
@@ -329,7 +337,7 @@ class MlTrainingSetPreparer:
             logging.info("Preparing positive input data for " + str(tic))
             target_ois = ois[ois["Object Id"] == str(tic)]
             target_additional_ois_df = additional_ois_df[additional_ois_df["Object Id"] == str(tic)]
-            inputs.append(PrepareTicInput(self.positive_dir, self.cache_dir, tic, target_ois,
+            inputs.append(PrepareTicInput(self.positive_dir, tic, target_ois,
                                           target_additional_ois_df, excluded_ois, "TP"))
         with Pool(processes=cpus) as pool:
             failed_targets = pool.map(self.prepare_tic, inputs)
@@ -353,7 +361,7 @@ class MlTrainingSetPreparer:
             logging.info("Preparing false positive input data for " + str(tic))
             target_ois = ois[ois["Object Id"] == str(tic)]
             target_additional_ois_df = additional_ois_df[additional_ois_df["Object Id"] == str(tic)]
-            inputs.append(PrepareTicInput(self.false_positive_dir, self.cache_dir, tic, target_ois,
+            inputs.append(PrepareTicInput(self.false_positive_dir, tic, target_ois,
                                           target_additional_ois_df, excluded_ois, "FP"))
         with Pool(processes=cpus) as pool:
             failed_targets = pool.map(self.prepare_false_positive_tic, inputs)
@@ -394,7 +402,7 @@ class MlTrainingSetPreparer:
                     logging.warning(str(tic) + " has official candidates!")
                     continue
                 target_additional_ois_df = additional_ois_df[additional_ois_df["Object Id"] == str(tic)]
-                inputs.append(PrepareTicInput(self.negative_dir, self.cache_dir, tic, ois,
+                inputs.append(PrepareTicInput(self.negative_dir, tic, ois,
                                               target_additional_ois_df, excluded_ois, None))
             with Pool(processes=cpus) as pool:
                 failed_targets_sector = pool.map(self.prepare_negative_tic, inputs)
@@ -444,18 +452,18 @@ class MlTrainingSetPreparer:
                                                                     column_sort='time')
 
 class PrepareTicInput:
-    def __init__(self, dir, cache_dir, tic, target_ois, target_additional_ois_df, excluded_ois, label):
+    def __init__(self, dir, tic, target_ois, target_additional_ois_df, excluded_ois, label):
         self.dir = dir
-        self.cache_dir = cache_dir
         self.tic = tic
         self.target_ois = target_ois
         self.target_additional_ois_df = target_additional_ois_df
         self.excluded_ois = excluded_ois
         self.label = label
 
-cpus = 7
+cpus = 1
+first_negative_sector = 1
 ml_training_set_preparer = MlTrainingSetPreparer("training_data/", "/home/martin/")
-ml_training_set_preparer.prepare_positive_training_dataset(cpus)
-ml_training_set_preparer.prepare_false_positive_training_dataset(cpus)
-ml_training_set_preparer.prepare_negative_training_dataset(cpus)
+#ml_training_set_preparer.prepare_positive_training_dataset(cpus)
+#ml_training_set_preparer.prepare_false_positive_training_dataset(cpus)
+ml_training_set_preparer.prepare_negative_training_dataset(first_negative_sector, cpus)
 #TODO prepare_negative_training_dataset(negative_dir)
