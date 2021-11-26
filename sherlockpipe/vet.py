@@ -348,7 +348,7 @@ class Vetter:
             logging.info("Not plotting single transit for T0=%.2f as the data is empty", transit_time)
 
     @staticmethod
-    def plot_folded_curve(file_dir, id, lc, period, epoch, duration, depth, rp, rstar, a):
+    def plot_folded_curve(file_dir, id, lc, period, epoch, duration, depth, rp_rstar, a_rstar):
         """
         Plots the phase-folded curve of the candidate for period, 2 * period and period / 2.
         @param file_dir: the directory to store the plot
@@ -367,16 +367,16 @@ class Vetter:
         #TODO bins = None for FFI
         bins = 100
         Vetter.compute_phased_values_and_fill_plot(id, axs[0][0], lc, period, epoch + period / 2, depth, duration,
-                                                   rp, rstar, a, bins=bins)
-        Vetter.compute_phased_values_and_fill_plot(id, axs[0][1], lc, period, epoch, depth, duration, rp, rstar, a, bins=bins)
+                                                   rp_rstar, a_rstar, bins=bins)
+        Vetter.compute_phased_values_and_fill_plot(id, axs[0][1], lc, period, epoch, depth, duration, rp_rstar, a_rstar, bins=bins)
         period = 2 * period
         Vetter.compute_phased_values_and_fill_plot(id, axs[1][0], lc, period, epoch + period / 2, depth, duration,
-                                                   rp, rstar, a, bins=bins)
-        Vetter.compute_phased_values_and_fill_plot(id, axs[1][1], lc, period, epoch, depth, duration, rp, rstar, a, bins=bins)
+                                                   rp_rstar, a_rstar, bins=bins)
+        Vetter.compute_phased_values_and_fill_plot(id, axs[1][1], lc, period, epoch, depth, duration, rp_rstar, a_rstar, bins=bins)
         period = period / 4
         Vetter.compute_phased_values_and_fill_plot(id, axs[2][0], lc, period, epoch + period / 2, depth, duration,
-                                                   rp, rstar, a, bins=bins)
-        Vetter.compute_phased_values_and_fill_plot(id, axs[2][1], lc, period, epoch, depth, duration, rp, rstar, a, bins=bins)
+                                                   rp_rstar, a_rstar, bins=bins)
+        Vetter.compute_phased_values_and_fill_plot(id, axs[2][1], lc, period, epoch, depth, duration, rp_rstar, a_rstar, bins=bins)
         plt.savefig(file_dir + "/odd_even_folded_curves.png", dpi=200)
         fig.clf()
         plt.close(fig)
@@ -476,7 +476,7 @@ class Vetter:
             # get the transit time list
             period = df.loc[df['id'] == tic]['period'].iloc[0]
             t0 = df.loc[df['id'] == tic]['t0'].iloc[0]
-            rp_rstar = df.loc[df['id'] == tic]['rp_rstar'].iloc[0]
+            rp_rstar = df.loc[df['id'] == tic]['rp_rs'].iloc[0]
             a_rstar = df.loc[df['id'] == tic]['a'].iloc[0] / star["R_star"]
             duration = df.loc[df['id'] == tic]['duration'].iloc[0]
             depth = df.loc[df['id'] == tic]['depth'].iloc[0]
