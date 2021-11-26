@@ -209,8 +209,8 @@ class ExoMoonLeastSquares:
         normalized_moon_transit_scenarios = np.array(normalized_moon_transit_scenarios)
         for scenario_combination in scenarios_combinations:
             scenario = np.array([normalized_moon_transit_scenarios[enum, item] for enum, item in enumerate(scenario_combination)])
-            scenario_time = np.concatenate(scenario[:, 0])
-            scenario_flux = np.concatenate(scenario[:, 1])
+            scenario_time = np.concatenate(scenario[:, 0]).flatten()
+            scenario_flux = np.concatenate(scenario[:, 1]).flatten()
             sorted_scenario_times_args = np.argsort(scenario_time)
             scenario_time = scenario_time[sorted_scenario_times_args].flatten()
             scenario_flux = scenario_flux[sorted_scenario_times_args].flatten()
