@@ -175,7 +175,7 @@ class ExoMoonLeastSquares:
     def search(self, normalized_moon_transit_scenarios):
         t0 = time.time()
         cadence = 2
-        R_s = 1.1
+        R_s = self.star_radius
         M_s = 1.3
         P_min = 0.5
         P_max = 22
@@ -183,7 +183,7 @@ class ExoMoonLeastSquares:
         duration = wotan.t14(self.star_radius, self.star_mass, self.planet_period, True)
         duration_grid = [duration]
         curve_rms = np.std(self.flux)
-        min_depth = curve_rms
+        min_depth = curve_rms / 2
         initial_rp = (min_depth * (R_s ** 2)) ** (1 / 2)
         rp_rs = initial_rp / R_s
         from pytransit import QuadraticModel
@@ -197,9 +197,9 @@ class ExoMoonLeastSquares:
         a_Rs = a_au / (self.star_radius * 0.00465047)
         model = tm.evaluate(k=rp_rs, ldc=ld_coefficients, t0=0.5, p=1.0, a=a_Rs, i=0.5 * np.pi)
         model = model[model < 1]
-        baseline_model = np.full(len(model), 1)
-        model = np.append(baseline_model, model)
-        model = np.append(model, baseline_model)
+        # baseline_model = np.full(len(model), 1)
+        # model = np.append(baseline_model, model)
+        # model = np.append(model, baseline_model)
         i = 0
         all_residuals = []
         stick_scenarios_time_grid = []
@@ -218,9 +218,7 @@ class ExoMoonLeastSquares:
             stick_scenarios_flux_grid.append(scenario_flux)
             residual_calculation = np.full((len(duration_grid), len(scenario_time)), np.nan)
             for model_index, duration in enumerate(duration_grid):
-                first_valid_time = scenario_time[scenario_time > scenario_time[0] + duration * 3][0]
-                time_without_tail = scenario_time[scenario_time < scenario_time[len(scenario_time) - 1] - duration * 3]
-                last_valid_time = time_without_tail[len(time_without_tail) - 1]
+                last_valid_time = scenario_time[-1]
                 first_valid_time = scenario_time[0]
                 #last_valid_time = stick_scenarios_time[len(stick_scenarios_time) - 1 - len(model_sample)]
                 #dt_flux = wotan.flatten(scenario_time, scenario_flux, duration * 4, method="biweight")
@@ -258,7 +256,7 @@ class ExoMoonLeastSquares:
         return downsampled
 
     def calculate_residuals(self, time, flux, model_sample, flux_index, duration):
-        last_time_index = np.argwhere(time[time < time[flux_index] + duration * 3])[-1]
+        last_time_index = np.argwhere(time[time < time[flux_index] + duration])[-1]
         flux_subset = flux[flux_index:flux_index + last_time_index]
         time_subset = time[flux_index:flux_index + last_time_index]
         model_sample = self.downsample(model_sample, len(time_subset))
@@ -266,7 +264,7 @@ class ExoMoonLeastSquares:
         model_sample_scaled = np.copy(model_sample)
         flux_subset_len = len(flux_subset)
         max_flux = 1 - np.std(flux_subset) / 2
-        flux_at_middle = np.mean(flux_subset[flux_subset_len // 3:flux_subset_len * 2 // 3])
+        flux_at_middle = np.mean(flux_subset)
         if flux_at_middle < max_flux:
             model_sample_scaled[model_sample_scaled < 1] = model_sample_scaled[model_sample_scaled < 1] * (
                         flux_at_middle / np.min(model_sample))
