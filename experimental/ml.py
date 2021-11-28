@@ -4,6 +4,7 @@ import shutil
 import sys
 from multiprocessing import Pool
 
+import keras
 import pandas as pd
 import lightkurve as lk
 import foldedleastsquares as tls
@@ -13,6 +14,9 @@ import requests
 from astropy.coordinates import SkyCoord
 from astropy.wcs import WCS
 from astroquery.mast import Catalogs, Tesscut
+from keras import Sequential
+from keras.layers import Conv1D, Dropout, MaxPooling1D, Flatten, Dense, Embedding, LSTM
+
 from sherlockpipe.ois.OisManager import OisManager
 
 from lcbuilder.objectinfo.MissionFfiIdObjectInfo import MissionFfiIdObjectInfo
@@ -450,6 +454,70 @@ class MlTrainingSetPreparer:
                                                                      column_sort='time')
         extracted_features_long = tsfresh.extract_relevant_features(tsfresh_long_df, tsfresh_tags_long, column_id='id',
                                                                     column_sort='time')
+
+def get_flux_model_branch():
+    flux_input = keras.Input(shape=(2500, 6),
+                             name="flux")  # (flux, detrended_flux1... detrended_flux5, flux_model) flux model by transit params and stellar params
+    centroids_motion_bck_input = keras.Input(shape=(2500, 5), name="centroids_motion_bck")
+    flux_branch = keras.layers.SpatialDropout1D(rate=0.3)(flux_input)
+    flux_branch = keras.layers.Conv1D(filters=16, kernel_size=3, activation="relu")(flux_branch)
+    flux_branch = keras.layers.MaxPooling1D(pool_size=3)(flux_branch)
+    flux_branch = keras.layers.Dropout(rate=0.2)(flux_branch)
+    flux_branch = keras.layers.Conv1D(filters=32, kernel_size=3, activation="relu")(flux_branch)
+    flux_branch = keras.layers.MaxPooling1D(pool_size=3)(flux_branch)
+    flux_branch = keras.layers.Dropout(rate=0.1)(flux_branch)
+
+    centroids_motion_bck_branch = keras.layers.SpatialDropout1D(rate=0.3)(centroids_motion_bck_input)
+    centroids_motion_bck_branch = keras.layers.Conv1D(filters=16, kernel_size=3, activation="relu")(
+        centroids_motion_bck_branch)
+    centroids_motion_bck_branch = keras.layers.MaxPooling1D(pool_size=3)(centroids_motion_bck_branch)
+    centroids_motion_bck_branch = keras.layers.Dropout(rate=0.2)(centroids_motion_bck_branch)
+    centroids_motion_bck_branch = keras.layers.Conv1D(filters=32, kernel_size=3, activation="relu")(
+        centroids_motion_bck_branch)
+    centroids_motion_bck_branch = keras.layers.MaxPooling1D(pool_size=3)(centroids_motion_bck_branch)
+
+    flux_centroids_branch = keras.layers.concatenate([flux_branch, centroids_motion_bck_branch])
+    flux_centroids_branch = keras.layers.Dense(64)(flux_centroids_branch)
+    return flux_centroids_branch
+
+def get_focus_flux_model_branch():
+    focus_flux_input = keras.Input(shape=(500, 5),
+                                   name="focus_flux")  # (flux, detrended_flux1... detrended_flux5, flux_model) flux model by transit params and stellar params
+    focus_centroids_motion_bck_input = keras.Input(shape=(500, 5), name="focus_centroids_motion_bck")
+    focus_odd_flux_input = keras.Input(shape=(500, 5),
+                                       name="flux")  # (flux, detrended_flux1... detrended_flux5, flux_model) flux model by transit params and stellar params
+    focus_odd_centroids_motion_bck_input = keras.Input(shape=(500, 5), name="focus_odd_centroids_motion_bck")
+
+    focus_flux_branch = keras.layers.SpatialDropout1D(rate=0.2)(focus_flux_input)
+    focus_flux_branch = keras.layers.Conv1D(filters=16, kernel_size=3, activation="relu")(focus_flux_branch)
+    focus_flux_branch = keras.layers.MaxPooling1D(pool_size=3)(focus_flux_branch)
+    focus_flux_branch = keras.layers.Dropout(rate=0.2)(focus_flux_branch)
+    focus_flux_branch = keras.layers.Conv1D(filters=32, kernel_size=3, activation="relu")(focus_flux_branch)
+    focus_flux_branch = keras.layers.MaxPooling1D(pool_size=3)(focus_flux_branch)
+    focus_flux_branch = keras.layers.Dense(32)(focus_flux_branch)
+
+def get_model():
+    # model = Sequential()
+    # model.add(Conv1D(filters=64, kernel_size=3, activation='relu', use_bias=True, input_shape=(n_timesteps, n_features)))
+    # model.add(Conv1D(filters=64, kernel_size=3, activation='relu', use_bias=True))
+    # model.add(Dropout(0.2))
+    # model.add(MaxPooling1D(pool_size=2))
+    # model.add(Flatten())
+    # model.add(Dense(100, activation='relu'))
+    # model.add(Dense(3, activation='softmax'))
+    # model.compile(loss='categorical_crossentropy', optimizer='adam', metrics=['accuracy'])
+
+    stellar_model_input = keras.Input(shape=(6, 1), name="star_model") #TODO
+    flux_model_branch = get_flux_model_branch()
+    focus_flux_model_branch = get_flux_model_branch()
+
+
+
+
+    x = keras.layers.Dense(3, activation='softmax')(x)
+
+    x = keras.layers.concatenate([title_features, body_features, tags_input])
+
 
 class PrepareTicInput:
     def __init__(self, dir, tic, target_ois, target_additional_ois_df, excluded_ois, label):
