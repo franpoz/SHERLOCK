@@ -221,40 +221,8 @@ class ExoMoonLeastSquares:
         sorted_time_args = np.argsort(scenario_time)
         scenario_time = scenario_time[sorted_time_args]
         scenario_flux = scenario_flux[sorted_time_args]
-        residual_calculation = np.full((len(duration_grid), len(scenario_time)), np.nan)
-        for model_index, duration in enumerate(duration_grid):
-            last_valid_time = scenario_time[0]
-            first_valid_time = scenario_time[0]
-            #last_valid_time = stick_scenarios_time[len(stick_scenarios_time) - 1 - len(model_sample)]
-            #dt_flux = wotan.flatten(scenario_time, scenario_flux, duration * 4, method="biweight")
-            dt_flux = scenario_flux
-            for flux_index, flux_value in enumerate(
-                    scenario_time[(scenario_time >= first_valid_time) & (scenario_time <= last_valid_time)]):
-                residual_calculation[model_index][flux_index] = self.calculate_residuals(scenario_time, dt_flux, model, flux_index, duration)
-            # local_residual_minima = argrelextrema(residual_calculation[model_index], np.less)[0]
-            # minima_mask = np.full(len(residual_calculation[model_index]), False)
-            # minima_mask[local_residual_minima] = True
-            # max_allowed_residual = np.nanmax(residual_calculation[model_index])
-            # residual_calculation[model_index][
-            #     np.where(np.isnan(residual_calculation[model_index]))] = max_allowed_residual
-
-            # residual_calculation[model_index][~minima_mask] = max_allowed_residual
-            # time_plot = time[minima_mask]
-
-            # residual_plot = residual_calculation[model_index]
-            # fig_transit, axs = plt.subplots(2, 1, figsize=(8, 8))
-            # axs[0].plot(scenario_time, dt_flux, color='gray', alpha=1, rasterized=True, label="Flux")
-            # axs[0].set_title("Light curve" + str(duration * 24 * 60) + "m")
-            # axs[0].set_xlabel('Time')
-            # axs[0].set_ylabel('Flux')
-            # axs[1].plot(scenario_time, residual_plot, color='gray', alpha=1, rasterized=True, label="Residuals")
-            # axs[1].set_title("Residuals for transit duration " + str(duration * 24 * 60) + "m")
-            # axs[1].set_xlabel('Time')
-            # axs[1].set_ylabel('Residuals')
-            # fig_transit.show()
-        all_residuals.append([residual_calculation])
-        i = i + 1
-        return all_residuals
+        residual_calculation = self.calculate_residuals(scenario_time, scenario_flux, model, 0, duration)
+        return residual_calculation, scenario_time, scenario_flux
 
     def downsample(self, array, npts: int):
         interpolated = interp1d(np.arange(len(array)), array, axis=0, fill_value='extrapolate')
@@ -366,15 +334,26 @@ class ExoMoonLeastSquares:
         best_residuals_per_scenarios = []
         for i in np.arange(0, len(search_inputs)):
             all_residual = all_residuals[i]
+            residuals = all_residual[0]
+            scenario_time = all_residual[1]
+            scenario_flux = all_residual[2]
             moon_period = search_inputs[i].moon_period
             moon_initial_alpha = search_inputs[i].moon_alpha
-            best_residuals_per_scenario = [np.nanmin(residuals[0]) for residuals in all_residual]  # Use residuals[0] because there is only one duration
-            best_residuals_per_scenarios.append([moon_period, moon_initial_alpha, best_residuals_per_scenario])
+            best_residuals_per_scenarios.append([moon_period, moon_initial_alpha, residuals, scenario_time, scenario_flux])
         best_residuals_per_scenarios = np.array(best_residuals_per_scenarios)
         best_residuals_per_scenarios = best_residuals_per_scenarios[np.argsort(np.array([best_residual_per_scenarios[2] for best_residual_per_scenarios in best_residuals_per_scenarios]).flatten())]
-        for i in np.arange(0, 100):
+        for i in np.arange(0, 15):
             logging.info("Best residual for period %s, alpha %s: %s", best_residuals_per_scenarios[i][0],
                          best_residuals_per_scenarios[i][1], best_residuals_per_scenarios[i][2])
+            fig_transit, axs = plt.subplots(1, 1, figsize=(12, 12))
+            axs.plot(best_residuals_per_scenarios[i][3], best_residuals_per_scenarios[i][4],
+                        color='gray', alpha=1, rasterized=True, label="Flux")
+            axs.set_title(
+                "Moon period " + str(best_residuals_per_scenarios[i][0]) + " with alpha="
+                + str(best_residuals_per_scenarios[i][1]) + " and residual " + str(best_residuals_per_scenarios[i][2]))
+            axs.set_xlabel('Time')
+            axs.set_ylabel('Flux')
+            fig_transit.show()
 class SearchInput:
     def __init__(self, moon_period, moon_alpha, moon_ecc, moon_inc, moon_arg_periastron,
                 all_t0s) -> None:
