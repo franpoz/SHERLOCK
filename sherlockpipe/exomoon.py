@@ -238,6 +238,7 @@ class ExoMoonLeastSquares:
         flux_mean = np.mean(flux)
         flux = flux - flux_mean + 1 if flux_mean > 1 else flux + flux_mean - 1
         flux_subset = flux[flux_index:int(flux_index + last_time_index)]
+        ##########TODO OOO
         max_flux = 1 + np.std(flux_subset) / 2
         flux_at_middle = np.mean(flux_subset)
         if flux_at_middle < max_flux:
