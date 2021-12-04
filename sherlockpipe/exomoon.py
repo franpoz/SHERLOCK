@@ -28,7 +28,8 @@ class ExoMoonLeastSquares:
     R_earth_to_R_sun = 0.009175
 
     def __init__(self, cpus, star_mass, star_radius, ab, planet_radius, planet_period, planet_t0, planet_duration, planet_semimajor_axis, planet_inc, planet_ecc,
-                 planet_arg_periastron, planet_impact_param, min_radius, max_radius, time, flux):
+                 planet_arg_periastron, planet_impact_param, min_radius, max_radius, time, flux,
+                 period_grid_size=2000):
         self.cpus = cpus
         self.star_mass = star_mass
         self.star_radius = star_radius
@@ -46,6 +47,7 @@ class ExoMoonLeastSquares:
         self.flux = flux
         self.min_radius = min_radius
         self.max_radius = max_radius
+        self.period_grid_size = period_grid_size
 
     @staticmethod
     def compute_semimajor_axis(major_mass, minor_period):
@@ -172,7 +174,7 @@ class ExoMoonLeastSquares:
                 orbit_scenarios.append([alpha, time_moon_transit, flux_moon_transit])
         return orbit_scenarios
 
-    def search(self, search_input):
+    def search(self, search_input, return_lc=False):
         logging.info("Searching for period=%.2fd and alpha=%.2frad", search_input.moon_period, search_input.moon_alpha)
         moon_semimajor_axis = self.compute_semimajor_axis(planet_mass * self.M_earth_to_M_sun, search_input.moon_period)
         moon_orbit_transit_length = self.compute_transit_duration(self.star_radius,
@@ -220,7 +222,10 @@ class ExoMoonLeastSquares:
         scenario_time = scenario_time[sorted_time_args]
         scenario_flux = scenario_flux[sorted_time_args]
         residual_calculation, residual_radius = self.calculate_residuals(scenario_time, scenario_flux, model)
-        return residual_calculation, residual_radius, scenario_time, scenario_flux
+        if return_lc:
+            return residual_calculation, residual_radius, scenario_time, scenario_flux
+        else:
+            return residual_calculation, residual_radius
 
     def downsample(self, array, npts: int):
         interpolated = interp1d(np.arange(len(array)), array, axis=0, fill_value='extrapolate')
@@ -236,11 +241,12 @@ class ExoMoonLeastSquares:
         best_residual = np.inf
         best_radius = self.min_radius
         for radius in np.linspace(self.min_radius, self.max_radius, 10):
-            flux_at_middle = 1 - ((radius * self.R_earth_to_R_sun) ** 2) / (self.star_radius ** 2)
+            depth = ((radius * self.R_earth_to_R_sun) ** 2) / self.star_radius ** 2
+            flux_at_middle = 1 - depth
             model_sample_scaled = np.copy(model_sample)
             model_sample_scaled[model_sample_scaled < 1] = model_sample_scaled[model_sample_scaled < 1] * (
                         flux_at_middle / np.min(model_sample))
-            radius_residuals = np.sum((flux - model_sample_scaled) ** 2) ** 0.5
+            radius_residuals = np.sum((flux - model_sample_scaled) ** 2) ** 0.5 / depth
             if radius_residuals < best_residual:
                 best_residual = radius_residuals
                 best_radius = radius
@@ -330,7 +336,7 @@ class ExoMoonLeastSquares:
         for planet_mass in planet_mass_grid:
             min_period = 0.5 # TODO compute this value somehow
             max_period = self.au_to_period(planet_mass * self.M_earth_to_M_sun, self.compute_hill_radius(self.star_mass, planet_mass * self.M_earth_to_M_sun, self.planet_semimajor_axis))
-            period_grid = self.compute_moon_period_grid(min_period, max_period, mode="log")
+            period_grid = self.compute_moon_period_grid(min_period, max_period, samples=self.period_grid_size, mode="log")
             for moon_inc in moon_inc_grid:
                 for moon_ecc in moon_ecc_grid:
                     for moon_arg_periastron in moon_arg_periastron_grid:
@@ -345,11 +351,9 @@ class ExoMoonLeastSquares:
             all_residual = all_residuals[i]
             residuals = all_residual[0]
             radius = all_residual[1]
-            scenario_time = all_residual[2]
-            scenario_flux = all_residual[3]
             moon_period = search_inputs[i].moon_period
             moon_initial_alpha = search_inputs[i].moon_alpha
-            best_residuals_per_scenarios.append([moon_period, moon_initial_alpha, residuals, radius, scenario_time, scenario_flux])
+            best_residuals_per_scenarios.append([moon_period, moon_initial_alpha, residuals, radius])
         best_residuals_per_scenarios = np.array(best_residuals_per_scenarios)
         best_residuals_per_scenarios = best_residuals_per_scenarios[np.argsort(np.array([best_residual_per_scenarios[2] for best_residual_per_scenarios in best_residuals_per_scenarios]).flatten())]
         for i in np.arange(0, 15):
@@ -357,14 +361,18 @@ class ExoMoonLeastSquares:
                          best_residuals_per_scenarios[i][0],
                          best_residuals_per_scenarios[i][1], best_residuals_per_scenarios[i][2],
                          best_residuals_per_scenarios[i][3])
+            residuals, radius, scenario_time, scenario_flux = self.search(SearchInput(best_residuals_per_scenarios[i][0],
+                                                                                      best_residuals_per_scenarios[i][1],
+                                                                                      0, 90, 0, all_t0s),
+                                                                          return_lc=True)
             fig_transit, axs = plt.subplots(1, 1, figsize=(12, 12))
-            axs.plot(best_residuals_per_scenarios[i][4], best_residuals_per_scenarios[i][5],
+            axs.plot(scenario_time, scenario_flux,
                      color='gray', alpha=0.4, rasterized=True, label="Flux")
-            bin_means, bin_edges, binnumber = stats.binned_statistic(best_residuals_per_scenarios[i][4],
-                                                                     best_residuals_per_scenarios[i][5],
+            bin_means, bin_edges, binnumber = stats.binned_statistic(scenario_time,
+                                                                     scenario_flux,
                                                                      statistic='mean', bins=25)
-            bin_stds, _, _ = stats.binned_statistic(best_residuals_per_scenarios[i][4],
-                                                    best_residuals_per_scenarios[i][5], statistic='std', bins=25)
+            bin_stds, _, _ = stats.binned_statistic(scenario_time,
+                                                    scenario_flux, statistic='std', bins=25)
             bin_width = (bin_edges[1] - bin_edges[0])
             bin_centers = bin_edges[1:] - bin_width / 2
             axs.errorbar(bin_centers, bin_means, yerr=bin_stds / 2, xerr=bin_width / 2, marker='o', markersize=4,
@@ -430,7 +438,7 @@ planet_mass = 133.4886
 planet_impact_param = 0.42
 planet_semimajor_axis = ExoMoonLeastSquares.compute_semimajor_axis(star_mass, planet_period)
 min_radius = 1
-max_radius = 4
+max_radius = 8
 
 P1 = planet_period * u.day
 a = np.cbrt((ac.G * star_mass * u.M_sun * P1 ** 2) / (4 * np.pi ** 2)).to(u.au)
@@ -479,7 +487,7 @@ for t0 in t0s:
 
 emls = ExoMoonLeastSquares(7, star_mass, star_radius, ab, planet_radius, planet_period, planet_t0, planet_duration,
                            planet_semimajor_axis, planet_inc, planet_ecc, planet_arg_periastron, planet_impact_param,
-                           min_radius, max_radius, times, flux)
+                           min_radius, max_radius, times, flux, period_grid_size=2000)
 moon_radius = 8
 moon_period = 2
 emls.flux = emls.inject_moon(emls.time, emls.flux, t0s, planet_mass, planet_semimajor_axis, planet_ecc, moon_radius, moon_period)
