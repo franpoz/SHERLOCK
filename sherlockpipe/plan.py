@@ -126,7 +126,7 @@ def create_observation_observables(object_id, object_dir, since, name, epoch, ep
     @return: the generated data and target folders
     """
     if observatories_file is not None:
-        observatories_df = pd.read_csv(observatories_file)
+        observatories_df = pd.read_csv(observatories_file, comment='#')
     else:
         observatories_df = pd.DataFrame(columns=['name', 'tz', 'lat', 'long', 'alt'])
         observatories_df = observatories_df.append("Obs-1", timezone, latitude, longitude, altitude)
