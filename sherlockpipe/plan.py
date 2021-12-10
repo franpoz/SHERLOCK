@@ -3,6 +3,7 @@ import os
 import shutil
 from argparse import ArgumentParser
 
+import allesfitter
 import astroplan
 import matplotlib
 from astroplan.plots import plot_airmass
@@ -152,6 +153,7 @@ def create_observation_observables(object_id, object_dir, since, name, epoch, ep
     if os.path.exists(images_dir):
         shutil.rmtree(images_dir, ignore_errors=True)
     os.mkdir(images_dir)
+    alert_date = None
     for index, observatory_row in observatories_df.iterrows():
         observer_site = Observer(latitude=observatory_row["lat"], longitude=observatory_row["lon"],
                                  elevation=u.Quantity(observatory_row["alt"], unit="m"))
@@ -160,15 +162,10 @@ def create_observation_observables(object_id, object_dir, since, name, epoch, ep
         constraints = [AtNightConstraint.twilight_nautical(), AltitudeConstraint(min=min_altitude * u.deg),
                        MoonIlluminationSeparationConstraint(min_dist=moon_min_dist * u.deg,
                                                             max_dist=moon_max_dist * u.deg)]
-        # ingress_observables = astroplan.is_event_observable(constraints, observer_site, target, times=ingress_egress_times[:, 0])[0]
-        # midtime_observables = astroplan.is_event_observable(constraints, observer_site, target, times=midtransit_times)[0]
-        # egress_observables = astroplan.is_event_observable(constraints, observer_site, target, times=ingress_egress_times[:, 1])[0]
-        # entire_observables = astroplan.is_event_observable(constraints, observer_site, target, times_ingress_egress=ingress_egress_times)[0]
         moon_for_midtransit_times = get_moon(midtransit_times)
         moon_dist_midtransit_times = moon_for_midtransit_times.separation(
             SkyCoord(star_df.iloc[0]["ra"], star_df.iloc[0]["dec"], unit="deg"))
         moon_phase_midtransit_times = np.round(astroplan.moon_illumination(midtransit_times), 2)
-
         transits_since_epoch = np.round((midtransit_times - primary_eclipse_time).jd / period)
         midtransit_time_low_err = np.round(
             (((transits_since_epoch * period_low_err) ** 2 + epoch_low_err ** 2) ** (1 / 2)) * 24, 2)
@@ -176,72 +173,50 @@ def create_observation_observables(object_id, object_dir, since, name, epoch, ep
             (((transits_since_epoch * period_up_err) ** 2 + epoch_up_err ** 2) ** (1 / 2)) * 24, 2)
         low_err_delta = TimeDelta(midtransit_time_low_err * 3600, format='sec')
         up_err_delta = TimeDelta(midtransit_time_up_err * 3600, format='sec')
-
-
-
-        ingress_egress_times_observables = copy.deepcopy(ingress_egress_times)
-        ingress_egress_times_observables[:, 0] = ingress_egress_times[:, 0] - low_err_delta
-        ingress_egress_times_observables[:, 1] = ingress_egress_times[:, 0] + up_err_delta
-        ingress_observables = astroplan.is_event_observable(constraints, observer_site, target,
-                              times_ingress_egress=ingress_egress_times_observables)[0]
-        ingress_egress_times_observables = copy.deepcopy(ingress_egress_times)
-        ingress_egress_times_observables[:, 0] = midtransit_times - low_err_delta
-        ingress_egress_times_observables[:, 1] = midtransit_times + up_err_delta
-        midtime_observables = astroplan.is_event_observable(constraints, observer_site, target,
-                                                            times_ingress_egress=ingress_egress_times_observables)[0]
-        ingress_egress_times_observables = copy.deepcopy(ingress_egress_times)
-        ingress_egress_times_observables[:, 0] = ingress_egress_times[:, 1] - low_err_delta
-        ingress_egress_times_observables[:, 1] = ingress_egress_times[:, 1] + up_err_delta
-        egress_observables = astroplan.is_event_observable(constraints, observer_site, target,
-                                                           times_ingress_egress=ingress_egress_times_observables)[0]
-        ingress_egress_times_observables = copy.deepcopy(ingress_egress_times)
-        ingress_egress_times_observables[:, 0] = ingress_egress_times[:, 0] - low_err_delta
-        ingress_egress_times_observables[:, 1] = ingress_egress_times[:, 1] + up_err_delta
-        entire_observables = astroplan.is_event_observable(constraints, observer_site, target,
-                                                           times_ingress_egress=ingress_egress_times_observables)[0]
         i = 0
         for midtransit_time in midtransit_times:
+            twilight_evening = observer_site.twilight_evening_nautical(midtransit_time)
+            twilight_morning = observer_site.twilight_morning_nautical(midtransit_time)
             ingress = ingress_egress_times[i][0]
             egress = ingress_egress_times[i][1]
             lowest_ingress = ingress - low_err_delta[i]
             highest_egress = egress + up_err_delta[i]
-            baseline_low = lowest_ingress - baseline * u.hour
-            baseline_up = highest_egress + baseline * u.hour
-            transit_times = baseline_low + (baseline_up - baseline_low) * np.linspace(0, 1, 100)
-            observable_transit_times = astroplan.is_event_observable(constraints, observer_site, target,
-                                                               times=transit_times)[0]
-            observable_transit_times_true = np.argwhere(observable_transit_times)
+            if (highest_egress - lowest_ingress).jd > 0.33:
+                alert_date = midtransit_time if (alert_date is None) or (alert_date is not None and alert_date >= midtransit_time) else alert_date
+                break
+            else:
+                baseline_low = lowest_ingress - baseline * u.hour
+                baseline_up = highest_egress + baseline * u.hour
+                transit_times = baseline_low + (baseline_up - baseline_low) * np.linspace(0, 1, 100)
+                observable_transit_times = astroplan.is_event_observable(constraints, observer_site, target,
+                                                                   times=transit_times)[0]
+                observable_transit_times_true = np.argwhere(observable_transit_times)
+                observable = len(observable_transit_times_true) / 100
+                if observable < transit_fraction:
+                    i = i + 1
+                    continue
+                start_obs = transit_times[observable_transit_times_true[0]][0]
+                end_obs = transit_times[observable_transit_times_true[len(observable_transit_times_true) - 1]][0]
+                start_plot = baseline_low
+                end_plot = baseline_up
+                if twilight_evening > start_obs:
+                    start_obs = twilight_evening
+                if twilight_morning < end_obs:
+                    end_obs = twilight_morning
             moon_dist = round(moon_dist_midtransit_times[i].degree)
-            observable = len(observable_transit_times_true) / 100
-            if observable < transit_fraction:
-                i = i + 1
-                continue
-            twilight_evening = observer_site.twilight_evening_nautical(midtransit_time)
-            twilight_morning = observer_site.twilight_morning_nautical(midtransit_time)
             moon_phase = moon_phase_midtransit_times[i]
             # TODO get is_event_observable for several parts of the transit (ideally each 5 mins) to get the proper observable percent. Also with baseline
-            transits_since_epoch = round((midtransit_time - primary_eclipse_time).jd / period)
-            midtransit_time_low_err = np.round((((transits_since_epoch * period_low_err) ** 2 + epoch_low_err ** 2) ** (1 / 2)) * 24, 2)
-            midtransit_time_up_err = np.round((((transits_since_epoch * period_up_err) ** 2 + epoch_up_err ** 2) ** (1 / 2)) * 24, 2)
             if observatory_row["tz"] is not None and not np.isnan(observatory_row["tz"]):
                 observer_timezone = observatory_row["tz"]
             else:
                 observer_timezone = get_offset(observatory_row["lat"], observatory_row["lon"],
                                                midtransit_time.datetime)
-            start_obs = transit_times[observable_transit_times_true[0]][0]
-            end_obs = transit_times[observable_transit_times_true[len(observable_transit_times_true) - 1]][0]
-            start_plot = baseline_low
-            end_plot = baseline_up
-            if twilight_evening > start_obs:
-                start_obs = twilight_evening
-            if twilight_morning < end_obs:
-                end_obs = twilight_morning
             observables_df = observables_df.append({"observatory": observatory_row["name"],
                                                     "timezone": observer_timezone, "ingress": ingress.isot,
                                                     "start_obs": start_obs.isot, "end_obs": end_obs.isot,
                                    "egress": egress.isot, "midtime": midtransit_time.isot,
-                                   "midtime_up_err_h": str(int(midtransit_time_up_err // 1)) + ":" + str(int(midtransit_time_up_err % 1 * 60)),
-                                   "midtime_low_err_h": str(int(midtransit_time_low_err // 1)) + ":" + str(int(midtransit_time_low_err % 1 * 60)),
+                                   "midtime_up_err_h": str(int(midtransit_time_up_err[i] // 1)) + ":" + str(int(midtransit_time_up_err[i] % 1 * 60)),
+                                   "midtime_low_err_h": str(int(midtransit_time_low_err[i] // 1)) + ":" + str(int(midtransit_time_low_err[i] % 1 * 60)),
                                    "twilight_evening": twilight_evening.isot,
                                    "twilight_morning": twilight_morning.isot,
                                    "observable": observable, "moon_phase": moon_phase, "moon_dist": moon_dist},
@@ -309,7 +284,7 @@ def create_observation_observables(object_id, object_dir, since, name, epoch, ep
     observables_df = observables_df.sort_values(["midtime", "observatory"], ascending=True)
     observables_df.to_csv(plan_dir + "/observation_plan.csv", index=False)
     print("Observation plan created in directory: " + object_dir)
-    return observatories_df, observables_df, plan_dir, images_dir
+    return observatories_df, observables_df, alert_date, plan_dir, images_dir
 
 if __name__ == '__main__':
     ap = ArgumentParser(description='Planning of observations from Sherlock objects of interest')
@@ -335,6 +310,8 @@ if __name__ == '__main__':
     ap.add_argument('--since', help="yyyy-mm-dd date since when you want to start the plan (defaults to today).",
                     type=str, default=None,
                     required=False)
+    ap.add_argument('--error_sigma', help="Sigma to be used for epoch and period errors.", type=int, default=2,
+                    required=False)
     args = ap.parse_args()
     if args.observatories is None and (args.lat is None or args.lon is None or args.alt is None):
         raise ValueError("You either need to set the 'observatories' property or the lat, lon and alt.")
@@ -351,17 +328,21 @@ if __name__ == '__main__':
     fit_derived_results = pd.read_csv(object_dir + "/results/ns_derived_table.csv")
     fit_results = pd.read_csv(object_dir + "/results/ns_table.csv")
     candidates_count = len(fit_results[fit_results["#name"].str.contains("_period")])
+    alles = allesfitter.allesclass(object_dir)
     since = Time.now() if args.since is None else Time(args.since, scale='utc')
+    percentile = 99.7 if args.error_sigma == 3 else 95 if args.error_sigma == 2 else 68
     for i in np.arange(0, candidates_count):
         period_row = fit_results[fit_results["#name"].str.contains("_period")].iloc[i]
         period = period_row["median"]
-        period_low_err = float(period_row["lower_error"])
-        period_up_err = float(period_row["upper_error"])
+        period_distribution = alles.posterior_params[period_row["#name"]]
+        period_low_err = period - np.percentile(period_distribution, 50 - percentile / 2)
+        period_up_err = np.percentile(period_distribution, 50 + percentile / 2) - period
         name = object_id + "_" + period_row["#name"].replace("_period", "")
         epoch_row = fit_results[fit_results["#name"].str.contains("_epoch")].iloc[i]
         epoch = epoch_row["median"].item()
-        epoch_low_err = float(epoch_row["lower_error"])
-        epoch_up_err = float(epoch_row["upper_error"])
+        epoch_distribution = alles.posterior_params[epoch_row["#name"]]
+        epoch_low_err = epoch - np.percentile(epoch_distribution, 50 - percentile / 2)
+        epoch_up_err = np.percentile(epoch_distribution, 50 + percentile / 2) - epoch
         duration_row = fit_derived_results[fit_derived_results["#property"].str.contains("Total transit duration")].iloc[i]
         duration = duration_row["value"].item()
         duration_low_err = float(duration_row["lower_error"])
@@ -370,14 +351,14 @@ if __name__ == '__main__':
         depth = depth_row["value"] * 1000
         depth_low_err = depth_row["lower_error"] * 1000
         depth_up_err = depth_row["upper_error"] * 1000
-        observatories_df, observables_df, plan_dir, images_dir = create_observation_observables(object_id, object_dir,
+        observatories_df, observables_df, alert_date, plan_dir, images_dir = create_observation_observables(object_id, object_dir,
                                                                                                 since, name, epoch,
                                                             epoch_low_err, epoch_up_err, period, period_low_err,
                                                             period_up_err, duration, args.observatories, args.tz, args.lat,
                                                             args.lon, args.alt, args.max_days, args.min_altitude,
                                                             args.moon_min_dist, args.moon_max_dist, args.transit_fraction,
                                                             args.baseline)
-        report = ObservationReport(observatories_df, observables_df, object_id, name, plan_dir, ra, dec,
+        report = ObservationReport(observatories_df, observables_df, alert_date, object_id, name, plan_dir, ra, dec,
                                    epoch, epoch_low_err, epoch_up_err, period, period_low_err, period_up_err, duration,
                                    duration_low_err, duration_up_err, depth, depth_low_err, depth_up_err,
                                    args.transit_fraction, args.moon_min_dist, args.moon_max_dist, args.min_altitude,
