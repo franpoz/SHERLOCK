@@ -18,12 +18,14 @@ resources_dir = path.join(path.dirname(__file__))
 
 class ObservationReport:
     LOGO_IMAGE = resources_dir + "/resources/images/sherlock3.png"
+    ALERT_IMAGE = resources_dir + "/resources/images/alert.png"
 
-    def __init__(self, df_observatories, df, object_id, name, working_path, ra, dec, t0, t0_low_err, t0_up_err, period,
+    def __init__(self, df_observatories, df, alert_date, object_id, name, working_path, ra, dec, t0, t0_low_err, t0_up_err, period,
                  period_low_err, period_up_err, duration, duration_low_err, duration_up_err, depth, depth_low_err,
                  depth_up_err, observable, min_dist, max_dist, min_altitude, max_days, v, j, h, k):
         self.df = df
         self.df_observatories = df_observatories.drop('tz', 1)
+        self.alert_date = alert_date
         self.object_id = object_id
         self.name = name
         self.working_path = working_path
@@ -298,6 +300,14 @@ class ObservationReport:
                 List of observatories.</font>'
         story.append(Spacer(1, 5))
         story.append(Paragraph(table4_descripcion, styles["ParagraphAlignCenter"]))
+
+        if self.alert_date is not None:
+            story.append(Spacer(1, 30))
+            story.append(Image(self.ALERT_IMAGE, width=15, height=15))
+            alert = '<font name="HELVETICA" size="9" color="red">The table 5 with the observations will only contain \
+                    scheduled observation nights up to the %s. Since then, the error propagation gets too wide to be \
+                    acceptable for the plan to be precise enough.</font>' % self.alert_date
+            story.append(Paragraph(alert, styles["ParagraphAlignJustify"]))
 
         # Pasamos a la siguiente página:
         story.append(Spacer(1, 30))
