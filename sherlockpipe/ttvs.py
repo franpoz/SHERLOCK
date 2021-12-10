@@ -20,10 +20,11 @@ def get_from_user(target, key):
 
 
 class TtvFitter:
-    def __init__(self, only_initial, fit_dir, ttvs_dir):
+    def __init__(self, only_initial, ttvs_error, fit_dir, ttvs_dir):
         self.only_initial = only_initial
         self.fit_dir = fit_dir
         self.ttvs_dir = ttvs_dir
+        self.ttvs_error = ttvs_error
 
     def fit(self):
         shutil.copy(self.fit_dir + "/lc.csv", self.ttvs_dir + "/lc.csv")
@@ -71,6 +72,11 @@ class TtvFitter:
         allesfitter.prepare_ttv_fit(self.ttvs_dir)
         with open(self.ttvs_dir + '/ttv_preparation/ttv_initial_guess_params.csv') as f:
             ttvs_params = f.readlines()
+        ttvs_error_str = str(self.ttvs_error)
+        ttvs_error_str = ",uniform -" + ttvs_error_str + " " + ttvs_error_str + ","
+        ttvs_initial_str = ",0.0,1,uniform"
+        ttvs_params = [re.sub(r",uniform -?\d+(\.\d+)? -?\d+(\.\d+)?,", ttvs_error_str, ttvs_param) for ttvs_param in ttvs_params]
+        ttvs_params = [re.sub(r",-?\d+(\.\d+)?,1,uniform", ttvs_initial_str, ttvs_param) for ttvs_param in ttvs_params]
         with open(self.ttvs_dir + "/params.csv", "a") as params_file:
             params_file.write("\n" + "".join(ttvs_params))
 
@@ -82,6 +88,8 @@ if __name__ == '__main__':
     ap.add_argument('--cpus', type=int, default=4, help="The number of CPU cores to be used.", required=False)
     ap.add_argument('--only_initial', dest='only_initial', action='store_true',
                     help="Whether to only run an initial guess of the ttvs")
+    ap.add_argument('--ttvs_error', type=float, default=0.07, required=False,
+                    help="Error window for each single transit fit")
     args = ap.parse_args()
     object_dir = os.getcwd() if args.object_dir is None else args.object_dir
     index = 0
@@ -107,4 +115,4 @@ if __name__ == '__main__':
     handler.setFormatter(formatter)
     logger.addHandler(handler)
     logging.info("Starting TTVs computation")
-    TtvFitter(args.only_initial, object_dir, ttvs_dir).fit()
+    TtvFitter(args.only_initial, args.ttvs_error, object_dir, ttvs_dir).fit()
