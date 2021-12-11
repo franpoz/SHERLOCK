@@ -262,7 +262,7 @@ class ExoMoonLeastSquares:
 
     def inject_moon(self, time, flux, t0s, planet_mass, planet_semimajor_axis, planet_ecc, moon_radius, moon_period, initial_alpha=0):
         logging.info("Injecting moon with radius of  %.2fR_e, %.2fdays and %.2frad", moon_radius, moon_period, initial_alpha)
-        moon_semimajor_axis = self.compute_semimajor_axis(planet_mass * M_earth_to_M_sun, moon_radius)
+        moon_semimajor_axis = self.compute_semimajor_axis(planet_mass * M_earth_to_M_sun, moon_period)
         moon_transit_duration = self.compute_transit_duration(self.star_radius,
                                                               planet_semimajor_axis * AU_TO_RSUN,
                                                               self.planet_period,
@@ -328,11 +328,38 @@ class ExoMoonLeastSquares:
             fig_transit.show()
         return flux
 
+    def remove_non_transit_flux(self, time, flux, t0s, max_planet_mass):
+        max_period = self.au_to_period(max_planet_mass * M_earth_to_M_sun, self.compute_hill_radius(self.star_mass, max_planet_mass * M_earth_to_M_sun, self.planet_semimajor_axis))
+        moon_semimajor_axis = self.compute_semimajor_axis(planet_mass * M_earth_to_M_sun, max_period)
+        moon_orbit_transit_duration = self.compute_transit_duration(self.star_radius,
+                                                              planet_semimajor_axis * AU_TO_RSUN,
+                                                              self.planet_period,
+                                                              moon_semimajor_axis * R_earth_to_R_sun)
+        flux_mask = []
+        for t0 in t0s:
+            flux_mask = np.concatenate((flux_mask, np.argwhere(
+                (time > t0 - moon_orbit_transit_duration) & (time < t0 + moon_orbit_transit_duration)).flatten()))
+        time = time[flux_mask]
+        flux = flux[flux_mask]
+        flux_measurements = []
+        for t0 in t0s:
+            flux_measurements.append(len(flux[(time > t0 - moon_orbit_transit_duration) & (time < t0 + moon_orbit_transit_duration)]))
+        typical_flux_measurement_length = np.median(flux_measurements)
+        i = 0
+        for flux_measurement in flux_measurements:
+            if flux_measurement < typical_flux_measurement_length:
+                flux_mask = np.argwhere((time > t0s[i] - moon_orbit_transit_duration) & (time < t0s[i] + moon_orbit_transit_duration))
+                time = time[~flux_mask]
+                flux = flux[~flux_mask]
+            i = i + 1
+        return time, flux
+
     def run(self):
         planet_mass_grid = self.planet_mass_grid
         moon_inc_grid = self.moon_inc_grid
         moon_ecc_grid = self.moon_ecc_grid
         moon_arg_periastron_grid = self.moon_arg_periastron_grid
+        self.time, self.flux = self.remove_non_transit_flux(self.time, self.flux, self.t0s, np.max(planet_mass_grid))
         self.flux = self.subtract_planet_transit(self.ab, self.star_radius, self.star_mass, self.time, self.flux,
                                             self.planet_radius, self.planet_t0, self.planet_period, self.planet_inc)
         time_model = np.arange(0, 1, 0.0001)
