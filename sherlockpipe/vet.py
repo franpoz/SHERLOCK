@@ -524,6 +524,15 @@ class Vetter:
                     traceback.print_exc()
 
     @staticmethod
+    def plot_tpf(tpf, sector, aperture, dir):
+        logging.info("Plotting FOV curves for sector %.0f", sector)
+        if not os.path.exists(dir):
+            os.mkdir(dir)
+        tpf.plot_pixels(aperture_mask=aperture)
+        plt.savefig(dir + "/Flux_pixels[" + str(sector) + "].png")
+        plt.close()
+
+    @staticmethod
     def vetting_field_of_view(indir, mission, tic, cadence, ra, dec, sectors, source, apertures):
         """
         Runs TPFPlotter to get field of view data.
@@ -576,6 +585,8 @@ class Vetter:
                                    extent=[column, column + ny, row, row + nx], origin='lower', zorder=0)
                 aperture = apertures[tpf.sector]
                 aperture = aperture if isinstance(aperture, np.ndarray) else np.array(aperture)
+                if cadence > 120:
+                    Vetter.plot_tpf(tpf, tpf.sector, aperture, indir)
                 maskcolor = 'salmon'
                 logging.info("    --> Using SHERLOCK aperture for sector %s...", tpf.sector)
                 if aperture is not None:
