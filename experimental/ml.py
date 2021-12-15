@@ -560,18 +560,17 @@ def get_model():
     # model.add(Dense(100, activation='relu'))
     # model.add(Dense(3, activation='softmax'))
     # model.compile(loss='categorical_crossentropy', optimizer='adam', metrics=['accuracy'])
-
     stellar_model_input = keras.Input(shape=(6, 1), name="stellar_model") #TODO
-    stellar_model_branch = keras.layers.Dense(16, activation="relu")(stellar_model_input)
-    stellar_model_branch = keras.layers.Dropout(rate=0.1)(stellar_model_branch)
-    stellar_model_branch = keras.layers.Dense(16, activation="relu")(stellar_model_branch)
+    stellar_model_branch = keras.layers.Dense(16, activation="relu", name="stellar-first")(stellar_model_input)
+    stellar_model_branch = keras.layers.Dropout(rate=0.1, name="stellar-first-dropout-0.1")(stellar_model_branch)
+    stellar_model_branch = keras.layers.Dense(16, activation="relu", name="stellar-refinement")(stellar_model_branch)
     flux_model_branch = get_flux_model_branch()
     focus_flux_model_branch = get_focus_flux_model_branch()
-    final_branch = keras.layers.concatenate([stellar_model_branch, flux_model_branch.outputs, focus_flux_model_branch.outputs], axis=-2)
-    final_branch = keras.layers.Dense(64, activation="relu")(final_branch)
-    final_branch = keras.layers.Dense(16, activation="relu")(final_branch)
-    final_branch = keras.layers.Dense(3, activation="softmax")(final_branch)
-    inputs = [stellar_model_input] + flux_model_branch.inputs + focus_flux_model_branch
+    final_branch = keras.layers.concatenate([stellar_model_branch, flux_model_branch.output, focus_flux_model_branch.output], axis=1)
+    final_branch = keras.layers.Dense(64, activation="relu", name="final-dense1")(final_branch)
+    final_branch = keras.layers.Dense(16, activation="relu", name="final-dense2")(final_branch)
+    final_branch = keras.layers.Dense(3, activation="softmax", name="final-dense-softmax")(final_branch)
+    inputs = [stellar_model_input] + flux_model_branch.inputs + focus_flux_model_branch.inputs
     model = keras.Model(inputs=inputs, outputs=final_branch, name="mnist_model")
     keras.utils.vis_utils.plot_model(model, "multi_input_and_output_model.png", show_shapes=True)
 
