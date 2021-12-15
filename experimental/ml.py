@@ -455,10 +455,9 @@ class MlTrainingSetPreparer:
         extracted_features_long = tsfresh.extract_relevant_features(tsfresh_long_df, tsfresh_tags_long, column_id='id',
                                                                     column_sort='time')
 
-def get_flux_model_branch():
-    flux_input = keras.Input(shape=(2500, 6),
-                             name="flux")  # (flux, detrended_flux1... detrended_flux5, flux_model) flux model by transit params and stellar params
-    centroids_motion_bck_input = keras.Input(shape=(2500, 5), name="centroids_motion_bck")
+def get_flux_branch(name):
+    flux_input = keras.Input(shape=(2500, 7),
+                             name=name)  # (flux, detrended_flux1... detrended_flux5, flux_model) flux model by transit params and stellar params
     flux_branch = keras.layers.SpatialDropout1D(rate=0.3)(flux_input)
     flux_branch = keras.layers.Conv1D(filters=16, kernel_size=3, activation="relu")(flux_branch)
     flux_branch = keras.layers.MaxPooling1D(pool_size=3)(flux_branch)
@@ -466,7 +465,10 @@ def get_flux_model_branch():
     flux_branch = keras.layers.Conv1D(filters=32, kernel_size=3, activation="relu")(flux_branch)
     flux_branch = keras.layers.MaxPooling1D(pool_size=3)(flux_branch)
     flux_branch = keras.layers.Dropout(rate=0.1)(flux_branch)
+    return flux_input, flux_branch
 
+def get_centroids_bck_branch(name):
+    centroids_motion_bck_input = keras.Input(shape=(2500, 5), name=name)
     centroids_motion_bck_branch = keras.layers.SpatialDropout1D(rate=0.3)(centroids_motion_bck_input)
     centroids_motion_bck_branch = keras.layers.Conv1D(filters=16, kernel_size=3, activation="relu")(
         centroids_motion_bck_branch)
@@ -475,26 +477,78 @@ def get_flux_model_branch():
     centroids_motion_bck_branch = keras.layers.Conv1D(filters=32, kernel_size=3, activation="relu")(
         centroids_motion_bck_branch)
     centroids_motion_bck_branch = keras.layers.MaxPooling1D(pool_size=3)(centroids_motion_bck_branch)
+    return centroids_motion_bck_input, centroids_motion_bck_branch
 
-    flux_centroids_branch = keras.layers.concatenate([flux_branch, centroids_motion_bck_branch])
-    flux_centroids_branch = keras.layers.Dense(64)(flux_centroids_branch)
+def get_flux_model_branch():
+    flux_input, flux_branch = get_flux_branch("global_flux_branch")
+    centroids_input, centroids_branch = get_centroids_bck_branch("global_centroids_bck_branch")
+    flux_centroids_branch = keras.layers.concatenate([flux_branch, centroids_branch])
+    flux_centroids_branch = keras.layers.Dense(16, activation="relu")(flux_centroids_branch)
+    flux_centroids_branch = keras.Model(inputs=[flux_input, centroids_input], outputs=flux_centroids_branch)
     return flux_centroids_branch
 
-def get_focus_flux_model_branch():
-    focus_flux_input = keras.Input(shape=(500, 5),
-                                   name="focus_flux")  # (flux, detrended_flux1... detrended_flux5, flux_model) flux model by transit params and stellar params
-    focus_centroids_motion_bck_input = keras.Input(shape=(500, 5), name="focus_centroids_motion_bck")
-    focus_odd_flux_input = keras.Input(shape=(500, 5),
-                                       name="flux")  # (flux, detrended_flux1... detrended_flux5, flux_model) flux model by transit params and stellar params
-    focus_odd_centroids_motion_bck_input = keras.Input(shape=(500, 5), name="focus_odd_centroids_motion_bck")
-
+def get_focus_flux_branch(name):
+    focus_flux_input = keras.Input(shape=(500, 7),
+                                   name=name)  # (flux, detrended_flux1... detrended_flux5, flux_model) flux model by transit params and stellar params
     focus_flux_branch = keras.layers.SpatialDropout1D(rate=0.2)(focus_flux_input)
     focus_flux_branch = keras.layers.Conv1D(filters=16, kernel_size=3, activation="relu")(focus_flux_branch)
     focus_flux_branch = keras.layers.MaxPooling1D(pool_size=3)(focus_flux_branch)
     focus_flux_branch = keras.layers.Dropout(rate=0.2)(focus_flux_branch)
     focus_flux_branch = keras.layers.Conv1D(filters=32, kernel_size=3, activation="relu")(focus_flux_branch)
     focus_flux_branch = keras.layers.MaxPooling1D(pool_size=3)(focus_flux_branch)
-    focus_flux_branch = keras.layers.Dense(32)(focus_flux_branch)
+    focus_flux_branch = keras.layers.Dense(16, activation="relu")(focus_flux_branch)
+    return focus_flux_input, focus_flux_branch
+
+def get_centroids_bck_focus_branch(name):
+    focus_centroids_motion_bck_input = keras.Input(shape=(500, 5), name=name)
+    focus_centroids_motion_bck_branch = keras.layers.SpatialDropout1D(rate=0.3)(focus_centroids_motion_bck_input)
+    focus_centroids_motion_bck_branch = keras.layers.Conv1D(filters=16, kernel_size=3, activation="relu")(
+        focus_centroids_motion_bck_branch)
+    focus_centroids_motion_bck_branch = keras.layers.MaxPooling1D(pool_size=3)(focus_centroids_motion_bck_branch)
+    focus_centroids_motion_bck_branch = keras.layers.Dropout(rate=0.2)(focus_centroids_motion_bck_branch)
+    focus_centroids_motion_bck_branch = keras.layers.Conv1D(filters=32, kernel_size=3, activation="relu")(
+        focus_centroids_motion_bck_branch)
+    focus_centroids_motion_bck_branch = keras.layers.MaxPooling1D(pool_size=3)(focus_centroids_motion_bck_branch)
+    return focus_centroids_motion_bck_input, focus_centroids_motion_bck_branch
+
+def get_focus_flux_model_branch():
+    odd_flux_input, odd_flux_branch = get_focus_flux_branch("focus_odd_flux_branch")
+    even_flux_input, even_flux_branch = get_focus_flux_branch("focus_even_flux_branch")
+    harmonic_odd_flux_input, harmonic_odd_flux_branch = get_focus_flux_branch("focus_harmnic_odd_flux_branch")
+    harmonic_even_flux_input, harmonic_even_flux_branch = get_focus_flux_branch("focus_harmonic_even_flux_branch")
+    subharmonic_odd_flux_input, subharmonic_odd_flux_branch = get_focus_flux_branch("focus_subharmonic_odd_flux_branch")
+    subharmonic_even_flux_input, subharmonic_even_flux_branch = get_focus_flux_branch("focus_subharmonic_even_flux_branch")
+    odd_centroids_input, odd_centroids_bck_branch = get_centroids_bck_focus_branch("focus_odd_centroids_bck_branch")
+    even_centroids_input, even_centroids_bck_branch = get_centroids_bck_focus_branch("focus_even_centroids_bck_branch")
+    odd_harmonic_centroids_input, odd_harmonic_centroids_bck_branch = get_centroids_bck_focus_branch("focus_odd_harmonic_centroids_bck_branch")
+    even_harmonic_centroids_input, even_harmonic_centroids_bck_branch = get_centroids_bck_focus_branch("focus_even_harmonic_centroids_bck_branch")
+    odd_subharmonic_centroids_input, odd_subharmonic_centroids_bck_branch = get_centroids_bck_focus_branch("focus_odd_subharmonic_centroids_bck_branch")
+    even_subharmonic_centroids_input, even_subharmonic_centroids_bck_branch = get_centroids_bck_focus_branch("focus_even_subharmonic_centroids_bck_branch")
+    odd_flux_branch = keras.layers.concatenate([odd_flux_branch, harmonic_odd_flux_branch, subharmonic_odd_flux_branch])
+    even_flux_branch = keras.layers.concatenate([even_flux_branch, harmonic_even_flux_branch, subharmonic_even_flux_branch])
+    odd_centroids_bck_branch = keras.layers.concatenate([odd_centroids_bck_branch, odd_harmonic_centroids_bck_branch, odd_subharmonic_centroids_bck_branch])
+    even_centroids_bck_branch = keras.layers.concatenate([even_centroids_bck_branch, even_harmonic_centroids_bck_branch, even_subharmonic_centroids_bck_branch])
+    odd_flux_branch = keras.layers.Dense(16, activation="relu")(odd_flux_branch)
+    odd_flux_branch = keras.layers.Dropout(rate=0.1)(odd_flux_branch)
+    even_flux_branch = keras.layers.Dense(16, activation="relu")(even_flux_branch)
+    even_flux_branch = keras.layers.Dropout(rate=0.1)(even_flux_branch)
+    odd_centroids_bck_branch = keras.layers.Dense(16, activation="relu")(odd_centroids_bck_branch)
+    odd_centroids_bck_branch = keras.layers.Dropout(rate=0.1)(odd_centroids_bck_branch)
+    even_centroids_bck_branch = keras.layers.Dense(16, activation="relu")(even_centroids_bck_branch)
+    even_centroids_bck_branch = keras.layers.Dropout(rate=0.1)(even_centroids_bck_branch)
+    odd_flux_branch = keras.layers.concatenate([odd_flux_branch, odd_centroids_bck_branch])
+    even_flux_branch = keras.layers.concatenate([even_flux_branch, even_centroids_bck_branch])
+    odd_flux_branch = keras.layers.Dense(32, activation="relu")(odd_flux_branch)
+    even_flux_branch = keras.layers.Dense(32, activation="relu")(even_flux_branch)
+    flux_branch = keras.layers.concatenate([odd_flux_branch, even_flux_branch])
+    flux_branch = keras.layers.Dense(16, activation="relu")(flux_branch)
+    input = [odd_flux_input, even_flux_input, harmonic_odd_flux_input, harmonic_even_flux_input,
+             subharmonic_odd_flux_input, subharmonic_even_flux_input, odd_centroids_input, even_centroids_input,
+             odd_harmonic_centroids_input, even_harmonic_centroids_input, odd_subharmonic_centroids_input,
+             even_subharmonic_centroids_input]
+    flux_branch = keras.Model(inputs=input, outputs=flux_branch)
+    return flux_branch
+
 
 def get_model():
     # model = Sequential()
@@ -507,16 +561,19 @@ def get_model():
     # model.add(Dense(3, activation='softmax'))
     # model.compile(loss='categorical_crossentropy', optimizer='adam', metrics=['accuracy'])
 
-    stellar_model_input = keras.Input(shape=(6, 1), name="star_model") #TODO
+    stellar_model_input = keras.Input(shape=(6, 1), name="stellar_model") #TODO
+    stellar_model_branch = keras.layers.Dense(16, activation="relu")(stellar_model_input)
+    stellar_model_branch = keras.layers.Dropout(rate=0.1)(stellar_model_branch)
+    stellar_model_branch = keras.layers.Dense(16, activation="relu")(stellar_model_branch)
     flux_model_branch = get_flux_model_branch()
-    focus_flux_model_branch = get_flux_model_branch()
-
-
-
-
-    x = keras.layers.Dense(3, activation='softmax')(x)
-
-    x = keras.layers.concatenate([title_features, body_features, tags_input])
+    focus_flux_model_branch = get_focus_flux_model_branch()
+    final_branch = keras.layers.concatenate([stellar_model_branch, flux_model_branch.outputs, focus_flux_model_branch.outputs], axis=-2)
+    final_branch = keras.layers.Dense(64, activation="relu")(final_branch)
+    final_branch = keras.layers.Dense(16, activation="relu")(final_branch)
+    final_branch = keras.layers.Dense(3, activation="softmax")(final_branch)
+    inputs = [stellar_model_input] + flux_model_branch.inputs + focus_flux_model_branch
+    model = keras.Model(inputs=inputs, outputs=final_branch, name="mnist_model")
+    keras.utils.vis_utils.plot_model(model, "multi_input_and_output_model.png", show_shapes=True)
 
 
 class PrepareTicInput:
@@ -528,10 +585,11 @@ class PrepareTicInput:
         self.excluded_ois = excluded_ois
         self.label = label
 
-cpus = 1
-first_negative_sector = 1
-ml_training_set_preparer = MlTrainingSetPreparer("training_data/", "/home/martin/")
-#ml_training_set_preparer.prepare_positive_training_dataset(cpus)
-#ml_training_set_preparer.prepare_false_positive_training_dataset(cpus)
-ml_training_set_preparer.prepare_negative_training_dataset(first_negative_sector, cpus)
+# cpus = 1
+# first_negative_sector = 1
+# ml_training_set_preparer = MlTrainingSetPreparer("training_data/", "/home/martin/")
+# #ml_training_set_preparer.prepare_positive_training_dataset(cpus)
+# #ml_training_set_preparer.prepare_false_positive_training_dataset(cpus)
+# ml_training_set_preparer.prepare_negative_training_dataset(first_negative_sector, cpus)
+get_model()
 #TODO prepare_negative_training_dataset(negative_dir)
