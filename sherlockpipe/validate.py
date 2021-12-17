@@ -29,10 +29,11 @@ class Validator:
         self.object_dir = os.getcwd() if object_dir is None else object_dir
         self.data_dir = validation_dir
 
-    def validate(self, candidate, cpus, contrast_curve_file, bins=100, scenarios=5, sigma_mode="flux_err"):
+    def validate(self, candidate, star, cpus, contrast_curve_file, bins=100, scenarios=5, sigma_mode="flux_err"):
         """
         @param candidate: a candidate dataframe containing TICID, period, duration, t0, transits, depth, rp_rs, number,
         curve and sectors data.
+        @param star: the star dataframe.
         @param cpus: the number of cpus to be used.
         @param contrast_curve_file: the auxiliary contrast curve file to give more information to the validation engine.
         @param bins: the number of bins to resize the light curve
@@ -46,6 +47,8 @@ class Validator:
         transit_depth = candidate.loc[candidate['id'] == object_id]['depth'].iloc[0]
         run = int(candidate.loc[candidate['id'] == object_id]['number'].iloc[0])
         curve = int(candidate.loc[candidate['id'] == object_id]['curve'].iloc[0])
+        rp_rstar = candidate.loc[candidate['id'] == object_id]['rp_rs'].iloc[0]
+        a_rstar = candidate.loc[candidate['id'] == object_id]['a'].iloc[0] / star["R_star"]
         logging.info("------------------")
         logging.info("Candidate info")
         logging.info("------------------")
@@ -70,7 +73,7 @@ class Validator:
         object_id = object_id.iloc[0]
         try:
             Validator.execute_triceratops(cpus, validation_dir, object_id, sectors, lc_file, transit_depth,
-                                          period, t0, duration, bins, scenarios, sigma_mode, contrast_curve_file)
+                                          period, t0, duration, rp_rstar, a_rstar, bins, scenarios, sigma_mode, contrast_curve_file)
         except Exception as e:
             traceback.print_exc()
         # try:
@@ -80,7 +83,7 @@ class Validator:
 
     @staticmethod
     def execute_triceratops(cpus, indir, object_id, sectors, lc_file, transit_depth, period, t0,
-                            transit_duration, bins, scenarios, sigma_mode, contrast_curve_file):
+                            transit_duration, rp_rstar, a_rstar, bins, scenarios, sigma_mode, contrast_curve_file):
         """ Calculates probabilities of the signal being caused by any of the following astrophysical sources:
         TP No unresolved companion. Transiting planet with Porb around target star. (i, Rp)
         EB No unresolved companion. Eclipsing binary with Porb around target star. (i, qshort)
@@ -113,6 +116,8 @@ class Validator:
         @param period: the period of the transit signal /days)
         @param t0: the t0 of the transit signal (days)
         @param transit_duration: the duration of the transit signal (minutes)
+        @param rp_rstar: radius of planet divided by radius of star
+        @param a_rstar: semimajor axis divided by radius of star
         @param bins: the number of bins to average the folded curve
         @param scenarios: the number of scenarios to validate
         @param sigma_mode: the way to calculate the sigma for the validation ['flux_err' | 'binning']
@@ -186,7 +191,8 @@ class Validator:
         fig, axs = plt.subplots(1, 1, figsize=(8, 4), constrained_layout=True)
         axs, bin_centers, bin_means, bin_errs = Vetter.compute_phased_values_and_fill_plot(object_id, axs, lc, period,
                                                                                            t0 + period / 2, depth,
-                                                                                           duration, bins=bins)
+                                                                                           duration, rp_rstar, a_rstar,
+                                                                                           bins=bins)
         plt.savefig(save_dir + "/folded_curve.png")
         plt.clf()
         bin_centers = (bin_centers - 0.5) * period
@@ -535,4 +541,4 @@ if __name__ == '__main__':
         cpus = multiprocessing.cpu_count() - 1
     else:
         cpus = args.cpus
-    validator.validate(candidate, cpus, args.contrast_curve, args.bins, args.scenarios, args.sigma_mode)
+    validator.validate(candidate, star_df.iloc[0], cpus, args.contrast_curve, args.bins, args.scenarios, args.sigma_mode)
