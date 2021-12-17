@@ -458,25 +458,34 @@ class MlTrainingSetPreparer:
 def get_flux_branch(name):
     flux_input = keras.Input(shape=(2500, 7),
                              name=name)  # (flux, detrended_flux1... detrended_flux5, flux_model) flux model by transit params and stellar params
-    flux_branch = keras.layers.SpatialDropout1D(rate=0.3)(flux_input)
-    flux_branch = keras.layers.Conv1D(filters=16, kernel_size=3, activation="relu")(flux_branch)
-    flux_branch = keras.layers.MaxPooling1D(pool_size=3)(flux_branch)
-    flux_branch = keras.layers.Dropout(rate=0.2)(flux_branch)
-    flux_branch = keras.layers.Conv1D(filters=32, kernel_size=3, activation="relu")(flux_branch)
-    flux_branch = keras.layers.MaxPooling1D(pool_size=3)(flux_branch)
+    flux_branch = keras.layers.SpatialDropout1D(rate=0.2)(flux_input)
+    flux_branch = keras.layers.Conv1D(filters=128, kernel_size=9, activation="relu")(flux_branch)
+    flux_branch = keras.layers.MaxPooling1D(pool_size=10, strides=6)(flux_branch)
     flux_branch = keras.layers.Dropout(rate=0.1)(flux_branch)
+    flux_branch = keras.layers.Conv1D(filters=64, kernel_size=7, activation="relu")(flux_branch)
+    flux_branch = keras.layers.MaxPooling1D(pool_size=4, strides=3)(flux_branch)
+    flux_branch = keras.layers.Conv1D(filters=32, kernel_size=5, activation="relu")(flux_branch)
+    flux_branch = keras.layers.MaxPooling1D(pool_size=3, strides=3)(flux_branch)
+    flux_branch = keras.layers.Conv1D(filters=16, kernel_size=3, activation="relu")(flux_branch)
+    flux_branch = keras.layers.MaxPooling1D(pool_size=2, strides=2)(flux_branch)
     return flux_input, flux_branch
 
 def get_centroids_bck_branch(name):
     centroids_motion_bck_input = keras.Input(shape=(2500, 5), name=name)
-    centroids_motion_bck_branch = keras.layers.SpatialDropout1D(rate=0.3)(centroids_motion_bck_input)
+    centroids_motion_bck_branch = keras.layers.SpatialDropout1D(rate=0.2)(centroids_motion_bck_input)
+    centroids_motion_bck_branch = keras.layers.Conv1D(filters=128, kernel_size=9, activation="relu")(
+        centroids_motion_bck_branch)
+    centroids_motion_bck_branch = keras.layers.MaxPooling1D(pool_size=10, strides=6)(centroids_motion_bck_branch)
+    centroids_motion_bck_branch = keras.layers.Dropout(rate=0.1)(centroids_motion_bck_branch)
+    centroids_motion_bck_branch = keras.layers.Conv1D(filters=64, kernel_size=7, activation="relu")(
+        centroids_motion_bck_branch)
+    centroids_motion_bck_branch = keras.layers.MaxPooling1D(pool_size=4, strides=3)(centroids_motion_bck_branch)
+    centroids_motion_bck_branch = keras.layers.Conv1D(filters=32, kernel_size=5, activation="relu")(
+        centroids_motion_bck_branch)
+    centroids_motion_bck_branch = keras.layers.MaxPooling1D(pool_size=3, strides=3)(centroids_motion_bck_branch)
     centroids_motion_bck_branch = keras.layers.Conv1D(filters=16, kernel_size=3, activation="relu")(
         centroids_motion_bck_branch)
-    centroids_motion_bck_branch = keras.layers.MaxPooling1D(pool_size=3)(centroids_motion_bck_branch)
-    centroids_motion_bck_branch = keras.layers.Dropout(rate=0.2)(centroids_motion_bck_branch)
-    centroids_motion_bck_branch = keras.layers.Conv1D(filters=32, kernel_size=3, activation="relu")(
-        centroids_motion_bck_branch)
-    centroids_motion_bck_branch = keras.layers.MaxPooling1D(pool_size=3)(centroids_motion_bck_branch)
+    centroids_motion_bck_branch = keras.layers.MaxPooling1D(pool_size=2, strides=2)(centroids_motion_bck_branch)
     return centroids_motion_bck_input, centroids_motion_bck_branch
 
 def get_flux_model_branch():
@@ -491,24 +500,24 @@ def get_focus_flux_branch(name):
     focus_flux_input = keras.Input(shape=(500, 7),
                                    name=name)  # (flux, detrended_flux1... detrended_flux5, flux_model) flux model by transit params and stellar params
     focus_flux_branch = keras.layers.SpatialDropout1D(rate=0.2)(focus_flux_input)
-    focus_flux_branch = keras.layers.Conv1D(filters=16, kernel_size=3, activation="relu")(focus_flux_branch)
-    focus_flux_branch = keras.layers.MaxPooling1D(pool_size=3)(focus_flux_branch)
-    focus_flux_branch = keras.layers.Dropout(rate=0.2)(focus_flux_branch)
-    focus_flux_branch = keras.layers.Conv1D(filters=32, kernel_size=3, activation="relu")(focus_flux_branch)
-    focus_flux_branch = keras.layers.MaxPooling1D(pool_size=3)(focus_flux_branch)
+    focus_flux_branch = keras.layers.Conv1D(filters=64, kernel_size=5, activation="relu", use_bias=True)(focus_flux_branch)
+    focus_flux_branch = keras.layers.MaxPooling1D(pool_size=5, strides=3)(focus_flux_branch)
+    focus_flux_branch = keras.layers.Dropout(rate=0.1)(focus_flux_branch)
+    focus_flux_branch = keras.layers.Conv1D(filters=32, kernel_size=3, activation="relu", use_bias=True)(focus_flux_branch)
+    focus_flux_branch = keras.layers.MaxPooling1D(pool_size=3, strides=3)(focus_flux_branch)
     focus_flux_branch = keras.layers.Dense(16, activation="relu")(focus_flux_branch)
     return focus_flux_input, focus_flux_branch
 
 def get_centroids_bck_focus_branch(name):
     focus_centroids_motion_bck_input = keras.Input(shape=(500, 5), name=name)
-    focus_centroids_motion_bck_branch = keras.layers.SpatialDropout1D(rate=0.3)(focus_centroids_motion_bck_input)
-    focus_centroids_motion_bck_branch = keras.layers.Conv1D(filters=16, kernel_size=3, activation="relu")(
+    focus_centroids_motion_bck_branch = keras.layers.SpatialDropout1D(rate=0.2)(focus_centroids_motion_bck_input)
+    focus_centroids_motion_bck_branch = keras.layers.Conv1D(filters=64, kernel_size=3, activation="relu")(
         focus_centroids_motion_bck_branch)
-    focus_centroids_motion_bck_branch = keras.layers.MaxPooling1D(pool_size=3)(focus_centroids_motion_bck_branch)
-    focus_centroids_motion_bck_branch = keras.layers.Dropout(rate=0.2)(focus_centroids_motion_bck_branch)
+    focus_centroids_motion_bck_branch = keras.layers.MaxPooling1D(pool_size=5, strides=3)(focus_centroids_motion_bck_branch)
+    focus_centroids_motion_bck_branch = keras.layers.Dropout(rate=0.1)(focus_centroids_motion_bck_branch)
     focus_centroids_motion_bck_branch = keras.layers.Conv1D(filters=32, kernel_size=3, activation="relu")(
         focus_centroids_motion_bck_branch)
-    focus_centroids_motion_bck_branch = keras.layers.MaxPooling1D(pool_size=3)(focus_centroids_motion_bck_branch)
+    focus_centroids_motion_bck_branch = keras.layers.MaxPooling1D(pool_size=3, strides=3)(focus_centroids_motion_bck_branch)
     return focus_centroids_motion_bck_input, focus_centroids_motion_bck_branch
 
 def get_focus_flux_model_branch():
