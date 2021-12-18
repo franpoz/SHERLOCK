@@ -43,6 +43,9 @@ PREPARE_ALGORITHM:
 OUTLIERS_SIGMA: 3
 # Cadence of data to be retrieved
 EXPTIME:
+# Number of cadences to be binned together (e.g. EXPTIME_BINNING: 4 for EXPTIME: 120 will mean a binned curve with 500
+#cadence)
+EXPTIME_BINNING: 1
 ######################################################################################################################
 ### TRANSIT ADJUST SETUP
 ######################################################################################################################

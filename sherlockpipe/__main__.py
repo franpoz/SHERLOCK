@@ -214,7 +214,7 @@ if __name__ == '__main__':
                                                         "OSCILLATIONS_MIN_PERIOD")
             oscillation_max_period = get_from_user_or_config(target_configs, sherlock_user_properties,
                                                              "OSCILLATIONS_MAX_PERIOD")
-            binning = get_from_user_or_config(target_configs, sherlock_user_properties, "BINNING")
+            exptime_binning = get_from_user_or_config(target_configs, sherlock_user_properties, "EXPTIME_BINNING")
             mission = None
             mode = get_from_user_or_config_or_default(target_configs, sherlock_user_properties, "MODE", "GLOBAL")
             sectors = get_from_user_or_config_or_default(target_configs, sherlock_user_properties, "SECTORS", "all")
@@ -229,7 +229,7 @@ if __name__ == '__main__':
                                                                         auto_detrend_ratio, auto_detrend_period, prepare_algorithm,
                                                                         reduce_simple_oscillations, oscillation_snr_threshold,
                                                                         oscillation_amplitude_threshold, oscillation_ws_scale,
-                                                                        oscillation_min_period, oscillation_max_period, binning)
+                                                                        oscillation_min_period, oscillation_max_period, exptime_binning)
                         sherlock_target = SherlockTarget(built_object_info,
                                        detrend_method, detrend_l_min, detrend_l_max, detrends_number, detrend_cores,
                                        custom_selection_algorithm,
@@ -251,14 +251,14 @@ if __name__ == '__main__':
                     sectors_unique = np.unique(np.array(sectors).flatten())
                     for sector in sectors_unique:
                         object_info = lcbuilder.build_object_info(target, author, [sector], file, exptime,
-                                                                initial_mask, initial_transit_mask,
-                                                                star_info, aperture, eleanor_corr_flux, outliers_sigma,
-                                                                high_rms_enabled, high_rms_threshold, high_rms_bin_hours,
-                                                                smooth_enabled, auto_detrend_enabled, auto_detrend_method,
-                                                                auto_detrend_ratio, auto_detrend_period, prepare_algorithm,
-                                                                reduce_simple_oscillations, oscillation_snr_threshold,
-                                                                oscillation_amplitude_threshold, oscillation_ws_scale,
-                                                                oscillation_min_period, oscillation_max_period, binning)
+                                                                  initial_mask, initial_transit_mask,
+                                                                  star_info, aperture, eleanor_corr_flux, outliers_sigma,
+                                                                  high_rms_enabled, high_rms_threshold, high_rms_bin_hours,
+                                                                  smooth_enabled, auto_detrend_enabled, auto_detrend_method,
+                                                                  auto_detrend_ratio, auto_detrend_period, prepare_algorithm,
+                                                                  reduce_simple_oscillations, oscillation_snr_threshold,
+                                                                  oscillation_amplitude_threshold, oscillation_ws_scale,
+                                                                  oscillation_min_period, oscillation_max_period, exptime_binning)
                         sherlock_target = SherlockTarget(object_info,
                                        detrend_method, detrend_l_min, detrend_l_max, detrends_number, detrend_cores,
                                        custom_selection_algorithm,
@@ -285,7 +285,7 @@ if __name__ == '__main__':
                                                                 prepare_algorithm,
                                                                 reduce_simple_oscillations, oscillation_snr_threshold,
                                                                 oscillation_amplitude_threshold, oscillation_ws_scale,
-                                                                oscillation_min_period, oscillation_max_period, binning)
+                                                                oscillation_min_period, oscillation_max_period, exptime_binning)
                 sherlock_target = SherlockTarget(built_object_info,
                                                  detrend_method, detrend_l_min, detrend_l_max, detrends_number,
                                                  detrend_cores,
@@ -308,14 +308,14 @@ if __name__ == '__main__':
                         sectors = extract_sectors(built_object_info, cache_dir)
                     for sector in sectors:
                         object_info = lcbuilder.build_object_info(target, author, [sector], file, exptime,
-                                                                initial_mask, initial_transit_mask,
-                                                                star_info, aperture, eleanor_corr_flux, outliers_sigma,
-                                                                high_rms_enabled, high_rms_threshold, high_rms_bin_hours,
-                                                                smooth_enabled, auto_detrend_enabled, auto_detrend_method,
-                                                                auto_detrend_ratio, auto_detrend_period, prepare_algorithm,
-                                                                reduce_simple_oscillations, oscillation_snr_threshold,
-                                                                oscillation_amplitude_threshold, oscillation_ws_scale,
-                                                                oscillation_min_period, oscillation_max_period, binning)
+                                                                  initial_mask, initial_transit_mask,
+                                                                  star_info, aperture, eleanor_corr_flux, outliers_sigma,
+                                                                  high_rms_enabled, high_rms_threshold, high_rms_bin_hours,
+                                                                  smooth_enabled, auto_detrend_enabled, auto_detrend_method,
+                                                                  auto_detrend_ratio, auto_detrend_period, prepare_algorithm,
+                                                                  reduce_simple_oscillations, oscillation_snr_threshold,
+                                                                  oscillation_amplitude_threshold, oscillation_ws_scale,
+                                                                  oscillation_min_period, oscillation_max_period, exptime_binning)
                         sherlock_target = SherlockTarget(object_info,
                                        detrend_method, detrend_l_min, detrend_l_max, detrends_number, detrend_cores,
                                        custom_selection_algorithm,
