@@ -16,6 +16,7 @@ import matplotlib.pyplot as plt
 import matplotlib.gridspec as gridspec
 import yaml
 from lcbuilder.constants import CUTOUT_SIZE
+from lcbuilder.photometry.aperture_extractor import ApertureExtractor
 from lightkurve import TessLightCurve
 from matplotlib.colorbar import Colorbar
 from matplotlib import patches
@@ -585,8 +586,9 @@ class Vetter:
                                    extent=[column, column + ny, row, row + nx], origin='lower', zorder=0)
                 aperture = apertures[tpf.sector]
                 aperture = aperture if isinstance(aperture, np.ndarray) else np.array(aperture)
-                if cadence > 120:
-                    Vetter.plot_tpf(tpf, tpf.sector, aperture, indir)
+                aperture_boolean = ApertureExtractor.from_pixels_to_boolean_mask(aperture, column, row, CUTOUT_SIZE,
+                                                                                 CUTOUT_SIZE)
+                Vetter.plot_tpf(tpf, tpf.sector, aperture_boolean, indir)
                 maskcolor = 'salmon'
                 logging.info("    --> Using SHERLOCK aperture for sector %s...", tpf.sector)
                 if aperture is not None:
