@@ -534,6 +534,23 @@ class Vetter:
         plt.close()
 
     @staticmethod
+    def compute_pixels_curves(tpf):
+        masks = np.zeros(
+            (tpf.shape[1] * tpf.shape[2], tpf.shape[1], tpf.shape[2]),
+            dtype="bool",
+        )
+        for i in range(tpf.shape[1] * tpf.shape[2]):
+            masks[i][np.unravel_index(i, (tpf.shape[1], tpf.shape[2]))] = True
+        pixel_list = []
+        for j in range(tpf.shape[1] * tpf.shape[2]):
+            lc = tpf.to_lightcurve(aperture_mask=masks[j])
+            lc = lc.remove_outliers(sigma_upper=3, sigma_lower=float('inf'))
+            if len(lc.remove_nans().flux) == 0:
+                pixel_list.append(None)
+            else:
+                pixel_list.append(lc)
+
+    @staticmethod
     def vetting_field_of_view(indir, mission, tic, cadence, ra, dec, sectors, source, apertures):
         """
         Runs TPFPlotter to get field of view data.
