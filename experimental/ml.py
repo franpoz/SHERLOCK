@@ -558,6 +558,11 @@ def get_focus_flux_model_branch():
     flux_branch = keras.Model(inputs=input, outputs=flux_branch)
     return flux_branch
 
+def get_single_transit_model():
+    #FFI framed around transit
+    #MOTION vs CENTROIDs images around transit
+    #Background flux curve
+    return
 
 def get_model():
     # model = Sequential()
