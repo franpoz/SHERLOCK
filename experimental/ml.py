@@ -1,5 +1,6 @@
 import logging
 import os
+import re
 import shutil
 import sys
 from multiprocessing import Pool
@@ -661,6 +662,24 @@ def get_model():
     inputs = [stellar_model_input] + flux_model_branch.inputs + focus_flux_model_branch.inputs
     model = keras.Model(inputs=inputs, outputs=final_branch, name="mnist_model")
     keras.utils.vis_utils.plot_model(model, "multi_input_and_output_model.png", show_shapes=True)
+
+def load_candidate_single_transits(inner_dir):
+    files = os.listdir("training_data/single_transits/" + inner_dir)
+    files.sort()
+    last_file = files[-1]
+    file_name_matches = re.search("(TIC[0-9]+)+_ST([0-9]+).csv", last_file)
+    target = float(file_name_matches[1])
+    single_transit_number = float(file_name_matches[2])
+    files_to_process = os.listdir("training_data/" + inner_dir)
+    files_to_process.sort()
+    target_index = files_to_process.index(target)
+    files_to_process = files_to_process[target_index:]
+    transit = single_transit_number
+    for file in files_to_process:
+        ts_short = pd.read_csv("training_data/" + inner_dir + "/" + file + "/time_series_short.csv")
+        lc_classified_short = pd.read_csv("training_data/" + inner_dir + "/" + file + "/lc_classified_short.csv")
+        lc_classified_tp = lc_classified_short[lc_classified_short["tag"] == "TP"]
+
 
 
 class PrepareTicInput:
