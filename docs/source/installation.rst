@@ -7,7 +7,7 @@
 Installation
 =============================================
 
-Firstly, we encourage all the users to use a *Python* `virtual environment <https://docs.python.org/3/library/venv.html>`_ to install *SHERLOCK*.
+Firstly, you must know that *SHERLOCK* is a package that lies on many different depencies whose versions are fixed. Hence, we strongly encourage all the users to use a *Python* `virtual environment <https://docs.python.org/3/library/venv.html>`_ to install *SHERLOCK* to avoid versions collisions with your typical host installation.
 
 Some of the *SHERLOCK* dependencies need ``numpy`` and ``Cython``  before being installed and therefore you should install them before trying the SHERLOCK installation. Take also into account that the dependencies brought by SHERLOCK also need additional operating system tools that need to be installed separately (C++ compiler, Fortran compiler, etc). So, be aware of counting with the next OS packages installed in your environment (e.g. for Python3.8 in a Linux distribution):
 
