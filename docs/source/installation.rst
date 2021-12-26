@@ -7,7 +7,9 @@
 Installation
 =============================================
 
-Some of the *SHERLOCK* dependencies need ``numpy`` and ``Cython``  before being installed and therefore you should install them before trying the SHERLOCK installation. Take also into account that the dependencies brough by SHERLOCK also need additional operating system tools that need to be installed separately (C++ compiler, Fortran compiler, etc). So, be aware of counting with the next OS packages installed in your environment (e.g. for Python3.8 in a Linux distribution):
+Firstly, we encourage all the users to use a *Python* `virtual environment <https://docs.python.org/3/library/venv.html>`_ to install *SHERLOCK*.
+
+Some of the *SHERLOCK* dependencies need ``numpy`` and ``Cython``  before being installed and therefore you should install them before trying the SHERLOCK installation. Take also into account that the dependencies brought by SHERLOCK also need additional operating system tools that need to be installed separately (C++ compiler, Fortran compiler, etc). So, be aware of counting with the next OS packages installed in your environment (e.g. for Python3.8 in a Linux distribution):
 
 .. code-block::
 
@@ -33,7 +35,7 @@ Some of the *SHERLOCK* dependencies need ``numpy`` and ``Cython``  before being 
 
 In case you are running a non-Linux distribution you will need to guess your OS packages matching the ones we mention for Linux.
 
-Therefore, once you have got the OS tools, the SHERLOCK package can be installed from the PyPi repositories (after installing `numpy` and `Cython`):
+Therefore, once you have got the OS tools, the *SHERLOCK* package can be installed from the PyPi repositories (after installing `numpy` and `Cython`):
 
 ``python3 -m pip install numpy``
 
