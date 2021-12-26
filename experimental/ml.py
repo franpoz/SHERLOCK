@@ -11,12 +11,15 @@ import lightkurve as lk
 import foldedleastsquares as tls
 import matplotlib.pyplot as plt
 import astropy.units as u
+import pygame as pygame
 import requests
 from astropy.coordinates import SkyCoord
 from astropy.wcs import WCS
 from astroquery.mast import Catalogs, Tesscut
 from keras import Sequential
 from keras.layers import Conv1D, Dropout, MaxPooling1D, Flatten, Dense, Embedding, LSTM, ConvLSTM2D
+from lightkurve import TessTargetPixelFile
+from matplotlib.gridspec import GridSpec
 
 from sherlockpipe.ois.OisManager import OisManager
 
@@ -182,7 +185,14 @@ class MlTrainingSetPreparer:
         target_dir = prepare_tic_input.dir + tic_id + "/"
         if not os.path.isdir(target_dir):
             os.mkdir(target_dir)
+        tpfs_short_dir = target_dir + "tpfs_short/"
+        tpfs_long_dir = target_dir + "tpfs_long/"
+        if not os.path.isdir(tpfs_short_dir):
+            os.mkdir(tpfs_short_dir)
+        if not os.path.isdir(tpfs_long_dir):
+            os.mkdir(tpfs_long_dir)
         lc_short = None
+        lc_data_short = None
         failed_target = None
         try:
             mission_lightcurve_builder = MissionLightcurveBuilder()
@@ -195,14 +205,16 @@ class MlTrainingSetPreparer:
             lcbuild_short = \
                 mission_lightcurve_builder.build(MissionObjectInfo(tic_id, 'all'), None, self.cache_dir)
             lc_short = lcbuild_short.lc
-            lc_data = lcbuild_short.lc_data
-            lc_data["centroids_x"] = lc_data["centroids_x"] - np.nanmedian(lc_data["centroids_x"])
-            lc_data["centroids_y"] = lc_data["centroids_y"] - np.nanmedian(lc_data["centroids_y"])
-            lc_data["motion_x"] = lc_data["motion_x"] - np.nanmedian(lc_data["motion_x"])
-            lc_data["motion_y"] = lc_data["motion_y"] - np.nanmedian(lc_data["motion_y"])
-            lc_data.to_csv(target_dir + "time_series_short.csv")
+            lc_data_short = lcbuild_short.lc_data
+            lc_data_short["centroids_x"] = lc_data_short["centroids_x"] - np.nanmedian(lc_data_short["centroids_x"])
+            lc_data_short["centroids_y"] = lc_data_short["centroids_y"] - np.nanmedian(lc_data_short["centroids_y"])
+            lc_data_short["motion_x"] = lc_data_short["motion_x"] - np.nanmedian(lc_data_short["motion_x"])
+            lc_data_short["motion_y"] = lc_data_short["motion_y"] - np.nanmedian(lc_data_short["motion_y"])
+            lc_data_short.to_csv(target_dir + "time_series_short.csv")
             tpf_short = lk.search_targetpixelfile(tic_id, cadence="short", author="spoc").download_all(
                 download_dir=self.cache_dir + ".lightkurve-cache")
+            for tpf in tpf_short.data:
+                shutil.copy(tpf.path, tpfs_short_dir + os.path.basename(tpf.path))
             short_periodogram = lc_short.to_periodogram(oversample_factor=5)
             periodogram_df = pd.DataFrame(columns=['period', 'power'])
             periodogram_df["period"] = short_periodogram.period.value
@@ -241,20 +253,17 @@ class MlTrainingSetPreparer:
             star_df.to_csv(target_dir + "params_star.csv", index=False)
             sectors = lcbuild_long.sectors
             lc_long = lcbuild_long.lc
-            lc_data = lcbuild_long.lc_data
-            lc_data["centroids_x"] = lc_data["centroids_x"] - np.nanmedian(lc_data["centroids_x"])
-            lc_data["centroids_y"] = lc_data["centroids_y"] - np.nanmedian(lc_data["centroids_y"])
-            lc_data["motion_x"] = lc_data["motion_x"] - np.nanmedian(lc_data["motion_x"])
-            lc_data["motion_y"] = lc_data["motion_y"] - np.nanmedian(lc_data["motion_y"])
-            lc_data.to_csv(target_dir + "time_series_long.csv")
+            lc_data_long = lcbuild_long.lc_data
+            lc_data_long["centroids_x"] = lc_data_long["centroids_x"] - np.nanmedian(lc_data_long["centroids_x"])
+            lc_data_long["centroids_y"] = lc_data_long["centroids_y"] - np.nanmedian(lc_data_long["centroids_y"])
+            lc_data_long["motion_x"] = lc_data_long["motion_x"] - np.nanmedian(lc_data_long["motion_x"])
+            lc_data_long["motion_y"] = lc_data_long["motion_y"] - np.nanmedian(lc_data_long["motion_y"])
+            lc_data_long.to_csv(target_dir + "time_series_long.csv")
             lcf_long = lc_long.remove_nans()
             tpf_long = lk.search_targetpixelfile(tic_id, cadence="long", author="tess-spoc")\
                 .download_all(download_dir=self.cache_dir + ".lightkurve-cache")
-            tpfs_dir = target_dir + "tpfs/"
-            if not os.path.exists(tpfs_dir):
-                os.mkdir(tpfs_dir)
             for tpf in tpf_long.data:
-                shutil.copy(tpf.path, tpfs_dir + os.path.basename(tpf.path))
+                shutil.copy(tpf.path, tpfs_long_dir + os.path.basename(tpf.path))
             long_periodogram = lc_long.to_periodogram(oversample_factor=5)
             periodogram_df = pd.DataFrame(columns=['period', 'power'])
             periodogram_df["period"] = long_periodogram.period.value
@@ -304,13 +313,12 @@ class MlTrainingSetPreparer:
                         mask_long = tls.transit_mask(lc_long.time.value, row["Period (days)"], row["Duration (hours)"] / 24,
                                                      row["Epoch (BJD)"] - 2457000.0)
                         tags_series_long[mask_long] = prepare_tic_input.label
-            if lc_short is not None:
-                lc_classified_short = pd.DataFrame.from_dict(
-                    {"time": lc_short.time.value, "flux": lc_short.flux.value, "tag": tags_series_short})
-                lc_classified_short.to_csv(target_dir + "lc_classified_short.csv")
-            lc_classified_long = pd.DataFrame.from_dict(
-                {"time": lc_long.time.value, "flux": lc_long.flux.value, "tag": tags_series_long})
-            lc_classified_long.to_csv(target_dir + "lc_classified_long.csv")
+            target_ois_df.to_csv(target_dir + "/ois.csv")
+            if lc_data_short is not None:
+                lc_data_short["tag"] = tags_series_short
+                lc_data_short.to_csv(target_dir + "time_series_short.csv")
+            lc_data_long["tag"] = tags_series_long
+            lc_data_long.to_csv(target_dir + "time_series_long.csv")
             # TODO store folded light curves -with local and global views-(masking previous candidates?)
         except Exception as e:
             failed_target = tic_id
@@ -667,18 +675,68 @@ def load_candidate_single_transits(inner_dir):
     files = os.listdir("training_data/single_transits/" + inner_dir)
     files.sort()
     last_file = files[-1]
-    file_name_matches = re.search("(TIC[0-9]+)+_ST([0-9]+).csv", last_file)
+    file_name_matches = re.search("(TIC [0-9]+)", last_file)
     target = float(file_name_matches[1])
-    single_transit_number = float(file_name_matches[2])
     files_to_process = os.listdir("training_data/" + inner_dir)
     files_to_process.sort()
     target_index = files_to_process.index(target)
     files_to_process = files_to_process[target_index:]
-    transit = single_transit_number
+    transit = 0
     for file in files_to_process:
-        ts_short = pd.read_csv("training_data/" + inner_dir + "/" + file + "/time_series_short.csv")
-        lc_classified_short = pd.read_csv("training_data/" + inner_dir + "/" + file + "/lc_classified_short.csv")
-        lc_classified_tp = lc_classified_short[lc_classified_short["tag"] == "TP"]
+        target_dir = "training_data/" + inner_dir + "/" + file
+        tpfs_short_dir = target_dir + "/tpfs_short/"
+        ts_short = pd.read_csv(target_dir + "/time_series_short.csv")
+        ois = pd.read_csv(target_dir + "/ois.csv")
+        tpfs_short = []
+        for tpf_file in os.listdir(tpfs_short_dir):
+            tpfs_short.append(TessTargetPixelFile(tpfs_short_dir + "/" + tpf_file))
+        for oi in ois.iterrows():
+            t0 = oi["t0"].iloc[0]
+            duration = oi["Duration (hours)"].iloc[0] / 24
+            period = oi["period"].iloc[0]
+            for t0 in range(t0, ts_short["time"].max(), period):
+                fig = plt.figure(constrained_layout=True)
+                gs = GridSpec(5, 4, figure=fig)
+                ax1 = fig.add_subplot(gs[0:3, :])
+                # identical to ax1 = plt.subplot(gs.new_subplotspec((0, 0), colspan=3))
+                ax2 = fig.add_subplot(gs[4, 0])
+                ax3 = fig.add_subplot(gs[4, 1])
+                ax4 = fig.add_subplot(gs[4, 2])
+                ax5 = fig.add_subplot(gs[4, 3])
+                for tpf in tpfs_short:
+                    if tpf["time"][0] < t0 and tpf["time"][-1] > t0:
+                        tpf_short_framed = tpf[(tpf["time"] > t0 - duration) & (tpf["time"] < t0 + duration)]
+                        tpf_short_framed.plot_pixels(ax1)
+                        break
+                ts_short_framed = ts_short[(ts_short["time"] > t0 - duration) & ts_short["time"] < t0 + duration]
+                ax2.scatter(ts_short_framed["time"], ts_short_framed["centroids_x"], color="black")
+                ax2.scatter(ts_short_framed["time"], ts_short_framed["motion_x"], color="red")
+                ax3.scatter(ts_short_framed["time"], ts_short_framed["centroids_y"], color="black")
+                ax3.scatter(ts_short_framed["time"], ts_short_framed["motion_y"], color="red")
+                ax4.scatter(ts_short_framed["time"], ts_short_framed["background_flux"], color="blue")
+                ax5.scatter(ts_short_framed["time"], ts_short_framed["flux"], color="blue")
+                fig.suptitle("Single Transit Analysis")
+                plt.show()
+                selection = None
+                while True:
+                    keys = pygame.key.get_pressed()
+                    if (keys[pygame.K_0]):
+                        selection = 0.0
+                    elif (keys[pygame.K_1]):
+                        selection = 0.25
+                    elif (keys[pygame.K_2]):
+                        selection = 0.5
+                    elif (keys[pygame.K_3]):
+                        selection = 0.75
+                    elif (keys[pygame.K_4]):
+                        selection = 1.0
+                    if selection is not None:
+                        break
+                single_transit_path = file + "/S" + str(transit)
+                ts_short_framed.to_csv(single_transit_path + "/ts_short_framed.csv")
+                tpf_short_framed.to_fits(single_transit_path + "/tpf_short_framed.fits", True)
+                transit = transit + 1
+
 
 
 
