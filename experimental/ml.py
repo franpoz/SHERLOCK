@@ -1,17 +1,17 @@
 import logging
 import os
+import pathlib
 import re
 import shutil
 import sys
 from multiprocessing import Pool
-
+from sshkeyboard import listen_keyboard, stop_listening
 import keras
 import pandas as pd
 import lightkurve as lk
 import foldedleastsquares as tls
 import matplotlib.pyplot as plt
 import astropy.units as u
-import pygame as pygame
 import requests
 from astropy.coordinates import SkyCoord
 from astropy.wcs import WCS
@@ -278,8 +278,8 @@ class MlTrainingSetPreparer:
             target_ois_df = pd.DataFrame(
                 columns=['id', 'name', 'period', 'period_err', 't0', 'to_err', 'depth', 'depth_err', 'duration',
                          'duration_err'])
-            tags_series_short = np.full(len(lc_short.time), "BL")
-            tags_series_long = np.full(len(lc_long.time), "BL")
+            tags_series_short = np.full(len(lc_data_short.time), "BL")
+            tags_series_long = np.full(len(lc_data_long.time), "BL")
             if prepare_tic_input.label is not None:
                 for index, row in target_ois.iterrows():
                     if row["OI"] not in prepare_tic_input.excluded_ois:
@@ -292,10 +292,10 @@ class MlTrainingSetPreparer:
                              "depth_err": row["Depth (ppm) err"], "duration": row["Duration (hours)"],
                              "duration_err": row["Duration (hours) err"]}, ignore_index=True)
                         if lc_short is not None:
-                            mask_short = tls.transit_mask(lc_short.time.value, row["Period (days)"],
+                            mask_short = tls.transit_mask(lc_data_short["time"].to_numpy(), row["Period (days)"],
                                                           row["Duration (hours)"] / 24, row["Epoch (BJD)"] - 2457000.0)
                             tags_series_short[mask_short] = prepare_tic_input.label
-                        mask_long = tls.transit_mask(lc_long.time.value, row["Period (days)"], row["Duration (hours)"] / 24,
+                        mask_long = tls.transit_mask(lc_data_long["time"].to_numpy(), row["Period (days)"], row["Duration (hours)"] / 24,
                                                      row["Epoch (BJD)"] - 2457000.0)
                         tags_series_long[mask_long] = prepare_tic_input.label
                 for index, row in prepare_tic_input.target_additional_ois_df.iterrows():
@@ -307,10 +307,10 @@ class MlTrainingSetPreparer:
                              "depth_err": row["Depth (ppm) err"], "duration": row["Duration (hours)"],
                              "duration_err": row["Duration (hours) err"]}, ignore_index=True)
                         if lc_short is not None:
-                            mask_short = tls.transit_mask(lc_short.time.value, row["Period (days)"],
+                            mask_short = tls.transit_mask(lc_data_short["time"].to_numpy(), row["Period (days)"],
                                                           row["Duration (hours)"] / 24, row["Epoch (BJD)"] - 2457000.0)
                             tags_series_short[mask_short] = prepare_tic_input.label
-                        mask_long = tls.transit_mask(lc_long.time.value, row["Period (days)"], row["Duration (hours)"] / 24,
+                        mask_long = tls.transit_mask(lc_data_long["time"].to_numpy(), row["Period (days)"], row["Duration (hours)"] / 24,
                                                      row["Epoch (BJD)"] - 2457000.0)
                         tags_series_long[mask_long] = prepare_tic_input.label
             target_ois_df.to_csv(target_dir + "/ois.csv")
@@ -672,14 +672,23 @@ def get_model():
     keras.utils.vis_utils.plot_model(model, "multi_input_and_output_model.png", show_shapes=True)
 
 def load_candidate_single_transits(inner_dir):
-    files = os.listdir("training_data/single_transits/" + inner_dir)
-    files.sort()
-    last_file = files[-1]
-    file_name_matches = re.search("(TIC [0-9]+)", last_file)
-    target = float(file_name_matches[1])
+    single_transits_dir = "training_data/single_transits/"
+    single_transits_inner_dir = single_transits_dir + inner_dir
+    if not os.path.exists(single_transits_dir):
+        os.mkdir(single_transits_dir)
+    if not os.path.exists(single_transits_inner_dir):
+        os.mkdir(single_transits_inner_dir)
+    files = os.listdir(single_transits_inner_dir)
     files_to_process = os.listdir("training_data/" + inner_dir)
     files_to_process.sort()
-    target_index = files_to_process.index(target)
+    if len(files) > 0:
+        files.sort()
+        last_file = files[-1]
+        file_name_matches = re.search("(TIC [0-9]+)", last_file)
+        target = file_name_matches[1]
+        target_index = files_to_process.index(target)
+    else:
+        target_index = 0
     files_to_process = files_to_process[target_index:]
     transit = 0
     for file in files_to_process:
@@ -691,48 +700,46 @@ def load_candidate_single_transits(inner_dir):
         for tpf_file in os.listdir(tpfs_short_dir):
             tpfs_short.append(TessTargetPixelFile(tpfs_short_dir + "/" + tpf_file))
         for oi in ois.iterrows():
-            t0 = oi["t0"].iloc[0]
-            duration = oi["Duration (hours)"].iloc[0] / 24
-            period = oi["period"].iloc[0]
-            for t0 in range(t0, ts_short["time"].max(), period):
-                fig = plt.figure(constrained_layout=True)
-                gs = GridSpec(5, 4, figure=fig)
-                ax1 = fig.add_subplot(gs[0:3, :])
-                # identical to ax1 = plt.subplot(gs.new_subplotspec((0, 0), colspan=3))
-                ax2 = fig.add_subplot(gs[4, 0])
-                ax3 = fig.add_subplot(gs[4, 1])
-                ax4 = fig.add_subplot(gs[4, 2])
-                ax5 = fig.add_subplot(gs[4, 3])
+            initial_t0 = oi[1]["t0"]
+            duration = oi[1]["duration"] / 24 * 2
+            period = oi[1]["period"]
+            for t0 in np.arange(initial_t0, ts_short["time"].max(), period):
+                fig, axs = plt.subplots(1, 1, figsize=(16, 16), constrained_layout=True)
                 for tpf in tpfs_short:
-                    if tpf["time"][0] < t0 and tpf["time"][-1] > t0:
-                        tpf_short_framed = tpf[(tpf["time"] > t0 - duration) & (tpf["time"] < t0 + duration)]
-                        tpf_short_framed.plot_pixels(ax1)
+                    if tpf.time[0].value < t0 and tpf.time[-1].value > t0:
+                        tpf_short_framed = tpf[(tpf.time.value > t0 - duration) & (tpf.time.value < t0 + duration)]
+                        tpf_short_framed.plot_pixels(axs, aperture_mask=tpf_short_framed.pipeline_mask)
                         break
-                ts_short_framed = ts_short[(ts_short["time"] > t0 - duration) & ts_short["time"] < t0 + duration]
-                ax2.scatter(ts_short_framed["time"], ts_short_framed["centroids_x"], color="black")
-                ax2.scatter(ts_short_framed["time"], ts_short_framed["motion_x"], color="red")
-                ax3.scatter(ts_short_framed["time"], ts_short_framed["centroids_y"], color="black")
-                ax3.scatter(ts_short_framed["time"], ts_short_framed["motion_y"], color="red")
-                ax4.scatter(ts_short_framed["time"], ts_short_framed["background_flux"], color="blue")
-                ax5.scatter(ts_short_framed["time"], ts_short_framed["flux"], color="blue")
+                fig.suptitle("Single Transit Analysis")
+                plt.show()
+                fig, axs = plt.subplots(4, 1, figsize=(16, 16), constrained_layout=True)
+                ts_short_framed = ts_short[(ts_short["time"] > t0 - duration) & (ts_short["time"] < t0 + duration)]
+                axs[0].scatter(ts_short_framed["time"], ts_short_framed["centroids_x"].to_numpy(), color="black")
+                axs[0].scatter(ts_short_framed["time"], ts_short_framed["motion_x"].to_numpy(), color="red")
+                axs[1].scatter(ts_short_framed["time"], ts_short_framed["centroids_y"].to_numpy(), color="black")
+                axs[1].scatter(ts_short_framed["time"], ts_short_framed["motion_y"].to_numpy(), color="red")
+                axs[2].scatter(ts_short_framed["time"], ts_short_framed["background_flux"].to_numpy(), color="blue")
+                axs[3].scatter(ts_short_framed["time"], ts_short_framed["flux"].to_numpy(), color="blue")
                 fig.suptitle("Single Transit Analysis")
                 plt.show()
                 selection = None
-                while True:
-                    keys = pygame.key.get_pressed()
-                    if (keys[pygame.K_0]):
+                def press(key):
+                    print(f"'{key}' pressed")
+                    if key == "0":
                         selection = 0.0
-                    elif (keys[pygame.K_1]):
+                    elif key == "1":
                         selection = 0.25
-                    elif (keys[pygame.K_2]):
+                    elif key == "2":
                         selection = 0.5
-                    elif (keys[pygame.K_3]):
+                    elif key == "3":
                         selection = 0.75
-                    elif (keys[pygame.K_4]):
+                    elif key == "4":
                         selection = 1.0
                     if selection is not None:
-                        break
-                single_transit_path = file + "/S" + str(transit)
+                        stop_listening()
+                listen_keyboard(on_press=press)
+                single_transit_path = single_transits_inner_dir + "/" + file + "/S" + str(transit) + "_" + str(selection)
+                pathlib.Path(single_transit_path).mkdir(parents=True, exist_ok=True)
                 ts_short_framed.to_csv(single_transit_path + "/ts_short_framed.csv")
                 tpf_short_framed.to_fits(single_transit_path + "/tpf_short_framed.fits", True)
                 transit = transit + 1
@@ -749,13 +756,13 @@ class PrepareTicInput:
         self.excluded_ois = excluded_ois
         self.label = label
 
-# cpus = 1
-# first_negative_sector = 1
-# ml_training_set_preparer = MlTrainingSetPreparer("training_data/", "/home/martin/")
-# #ml_training_set_preparer.prepare_positive_training_dataset(cpus)
+cpus = 1
+first_negative_sector = 1
+#ml_training_set_preparer = MlTrainingSetPreparer("training_data/", "/home/martin/")
+#ml_training_set_preparer.prepare_positive_training_dataset(cpus)
 # #ml_training_set_preparer.prepare_false_positive_training_dataset(cpus)
 # ml_training_set_preparer.prepare_negative_training_dataset(first_negative_sector, cpus)
-
+load_candidate_single_transits("tp")
 #get_model()
-get_single_transit_model()
+#get_single_transit_model()
 #TODO prepare_negative_training_dataset(negative_dir)
