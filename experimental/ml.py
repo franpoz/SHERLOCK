@@ -724,6 +724,8 @@ def load_candidate_single_transits(inner_dir):
     for file in files_to_process:
         target_dir = "training_data/" + inner_dir + "/" + file
         tpfs_short_dir = target_dir + "/tpfs_short/"
+        if not os.path.exists(tpfs_short_dir):
+            continue
         ts_short = pd.read_csv(target_dir + "/time_series_short.csv")
         ois = pd.read_csv(target_dir + "/ois.csv")
         tpfs_short = []
