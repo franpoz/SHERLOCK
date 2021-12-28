@@ -180,6 +180,46 @@ class MlTrainingSetPreparer:
         pix_coords = pix_coords
         return stars
 
+    def store_lc_data(self, lc_data, file):
+        centroids_x = lc_data["centroids_x"][~np.isnan(lc_data["centroids_x"])].to_numpy()
+        centroids_y = lc_data["centroids_y"][~np.isnan(lc_data["centroids_y"])].to_numpy()
+        motion_x = lc_data["motion_x"][~np.isnan(lc_data["motion_x"])].to_numpy()
+        motion_y = lc_data["motion_y"][~np.isnan(lc_data["motion_y"])].to_numpy()
+        dif = centroids_x[1:] - centroids_x[:-1]
+        jumps = np.where(np.abs(dif) > 1)[0]
+        jumps = np.append(jumps, len(lc_data))
+        previous_jump_index = 0
+        for jumpIndex in jumps:
+            centroids_x_token = lc_data["centroids_x"][previous_jump_index:jumpIndex]
+            lc_data["centroids_x"][previous_jump_index:jumpIndex] = centroids_x_token - np.nanmedian(centroids_x_token)
+            previous_jump_index = jumpIndex
+        previous_jump_index = 0
+        dif = centroids_y[1:] - centroids_y[:-1]
+        jumps = np.where(np.abs(dif) > 1)[0]
+        jumps = np.append(jumps, len(lc_data))
+        for jumpIndex in jumps:
+            centroids_y_token = lc_data["centroids_y"][previous_jump_index:jumpIndex]
+            lc_data["centroids_y"][previous_jump_index:jumpIndex] = centroids_y_token - np.nanmedian(centroids_y_token)
+            previous_jump_index = jumpIndex
+        previous_jump_index = 0
+        dif = motion_x[1:] - motion_x[:-1]
+        jumps = np.where(np.abs(dif) > 1)[0]
+        jumps = np.append(jumps, len(lc_data))
+        for jumpIndex in jumps:
+            motion_x_token = lc_data["motion_x"][previous_jump_index:jumpIndex]
+            lc_data["motion_x"][previous_jump_index:jumpIndex] = motion_x_token - np.nanmedian(motion_x_token)
+            previous_jump_index = jumpIndex
+        previous_jump_index = 0
+        dif = motion_y[1:] - motion_y[:-1]
+        jumps = np.where(np.abs(dif) > 1)[0]
+        jumps = np.append(jumps, len(lc_data))
+        for jumpIndex in jumps:
+            motion_y_token = lc_data["motion_y"][previous_jump_index:jumpIndex]
+            lc_data["motion_y"][previous_jump_index:jumpIndex] = motion_y_token - np.nanmedian(motion_y_token)
+            previous_jump_index = jumpIndex
+        lc_data.to_csv(file)
+        return lc_data
+
     def prepare_tic(self, prepare_tic_input):
         tic_id = str(prepare_tic_input.tic)
         target_dir = prepare_tic_input.dir + tic_id + "/"
@@ -205,12 +245,7 @@ class MlTrainingSetPreparer:
             lcbuild_short = \
                 mission_lightcurve_builder.build(MissionObjectInfo(tic_id, 'all'), None, self.cache_dir)
             lc_short = lcbuild_short.lc
-            lc_data_short = lcbuild_short.lc_data
-            lc_data_short["centroids_x"] = lc_data_short["centroids_x"] - np.nanmedian(lc_data_short["centroids_x"])
-            lc_data_short["centroids_y"] = lc_data_short["centroids_y"] - np.nanmedian(lc_data_short["centroids_y"])
-            lc_data_short["motion_x"] = lc_data_short["motion_x"] - np.nanmedian(lc_data_short["motion_x"])
-            lc_data_short["motion_y"] = lc_data_short["motion_y"] - np.nanmedian(lc_data_short["motion_y"])
-            lc_data_short.to_csv(target_dir + "time_series_short.csv")
+            lc_data_short = self.store_lc_data(lcbuild_short.lc_data, target_dir + "time_series_short.csv")
             tpf_short = lk.search_targetpixelfile(tic_id, cadence="short", author="spoc").download_all(
                 download_dir=self.cache_dir + ".lightkurve-cache")
             for tpf in tpf_short.data:
@@ -253,12 +288,7 @@ class MlTrainingSetPreparer:
             star_df.to_csv(target_dir + "params_star.csv", index=False)
             sectors = lcbuild_long.sectors
             lc_long = lcbuild_long.lc
-            lc_data_long = lcbuild_long.lc_data
-            lc_data_long["centroids_x"] = lc_data_long["centroids_x"] - np.nanmedian(lc_data_long["centroids_x"])
-            lc_data_long["centroids_y"] = lc_data_long["centroids_y"] - np.nanmedian(lc_data_long["centroids_y"])
-            lc_data_long["motion_x"] = lc_data_long["motion_x"] - np.nanmedian(lc_data_long["motion_x"])
-            lc_data_long["motion_y"] = lc_data_long["motion_y"] - np.nanmedian(lc_data_long["motion_y"])
-            lc_data_long.to_csv(target_dir + "time_series_long.csv")
+            lc_data_long = self.store_lc_data(lcbuild_long.lc_data, target_dir + "time_series_long.csv")
             lcf_long = lc_long.remove_nans()
             tpf_long = lk.search_targetpixelfile(tic_id, cadence="long", author="tess-spoc")\
                 .download_all(download_dir=self.cache_dir + ".lightkurve-cache")
@@ -278,7 +308,8 @@ class MlTrainingSetPreparer:
             target_ois_df = pd.DataFrame(
                 columns=['id', 'name', 'period', 'period_err', 't0', 'to_err', 'depth', 'depth_err', 'duration',
                          'duration_err'])
-            tags_series_short = np.full(len(lc_data_short.time), "BL")
+            if lc_data_short is not None:
+                tags_series_short = np.full(len(lc_data_short.time), "BL")
             tags_series_long = np.full(len(lc_data_long.time), "BL")
             if prepare_tic_input.label is not None:
                 for index, row in target_ois.iterrows():
@@ -686,11 +717,10 @@ def load_candidate_single_transits(inner_dir):
         last_file = files[-1]
         file_name_matches = re.search("(TIC [0-9]+)", last_file)
         target = file_name_matches[1]
-        target_index = files_to_process.index(target)
+        target_index = files_to_process.index(target) + 1
     else:
         target_index = 0
     files_to_process = files_to_process[target_index:]
-    transit = 0
     for file in files_to_process:
         target_dir = "training_data/" + inner_dir + "/" + file
         tpfs_short_dir = target_dir + "/tpfs_short/"
@@ -703,13 +733,19 @@ def load_candidate_single_transits(inner_dir):
             initial_t0 = oi[1]["t0"]
             duration = oi[1]["duration"] / 24 * 2
             period = oi[1]["period"]
+            transit = 0
             for t0 in np.arange(initial_t0, ts_short["time"].max(), period):
                 fig, axs = plt.subplots(1, 1, figsize=(16, 16), constrained_layout=True)
+                tpf_short_framed = None
                 for tpf in tpfs_short:
                     if tpf.time[0].value < t0 and tpf.time[-1].value > t0:
                         tpf_short_framed = tpf[(tpf.time.value > t0 - duration) & (tpf.time.value < t0 + duration)]
+                        if len(tpf_short_framed) == 0:
+                            break
                         tpf_short_framed.plot_pixels(axs, aperture_mask=tpf_short_framed.pipeline_mask)
                         break
+                if tpf_short_framed is None or len(tpf_short_framed) == 0:
+                    continue
                 fig.suptitle("Single Transit Analysis")
                 plt.show()
                 fig, axs = plt.subplots(4, 1, figsize=(16, 16), constrained_layout=True)
@@ -725,6 +761,7 @@ def load_candidate_single_transits(inner_dir):
                 selection = None
                 def press(key):
                     print(f"'{key}' pressed")
+                    global selection
                     if key == "0":
                         selection = 0.0
                     elif key == "1":
@@ -736,12 +773,13 @@ def load_candidate_single_transits(inner_dir):
                     elif key == "4":
                         selection = 1.0
                     if selection is not None:
+                        single_transit_path = single_transits_inner_dir + "/" + file + "/S" + str(transit) + "_" + str(
+                            selection)
+                        pathlib.Path(single_transit_path).mkdir(parents=True, exist_ok=True)
+                        ts_short_framed.to_csv(single_transit_path + "/ts_short_framed.csv")
+                        tpf_short_framed.to_fits(single_transit_path + "/tpf_short_framed.fits", True)
                         stop_listening()
                 listen_keyboard(on_press=press)
-                single_transit_path = single_transits_inner_dir + "/" + file + "/S" + str(transit) + "_" + str(selection)
-                pathlib.Path(single_transit_path).mkdir(parents=True, exist_ok=True)
-                ts_short_framed.to_csv(single_transit_path + "/ts_short_framed.csv")
-                tpf_short_framed.to_fits(single_transit_path + "/tpf_short_framed.fits", True)
                 transit = transit + 1
 
 
