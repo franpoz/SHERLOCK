@@ -143,13 +143,6 @@ class Validator:
                 logging.warning("WARN: Sherlock sectors were: " + str(sectors))
                 logging.warning("WARN: TESSCUT sectors were: " + str(sectors_cut))
             sectors = np.intersect1d(sectors, sectors_cut)
-            eleanor_sectors = sectors[sectors <= maxsector.maxsector]
-            if len(sectors) != len(eleanor_sectors):
-                logging.warning("WARN: Some sectors were not found in ELEANOR")
-                logging.warning("WARN: Sectors were: " + str(sectors))
-                logging.warning("WARN: ELEANOR (where maxsector is %s) sectors were: " + str(eleanor_sectors),
-                                maxsector.maxsector)
-            sectors = eleanor_sectors
             if len(sectors) == 0:
                 logging.warning("There are no available sectors to be validated, skipping TRICERATOPS.")
                 return save_dir, None, None
@@ -160,9 +153,13 @@ class Validator:
         logging.info("Reading apertures from directory")
         apertures = yaml.load(open(object_dir + "/apertures.yaml"), yaml.SafeLoader)
         apertures = apertures["sectors"]
+        valid_apertures = {}
         for sector, aperture in apertures.items():
-            target.plot_field(save=True, fname=save_dir + "/field_S" + str(sector), sector=sector, ap_pixels=aperture)
+            if sector in sectors:
+                valid_apertures[sector] = aperture
+                target.plot_field(save=True, fname=save_dir + "/field_S" + str(sector), sector=sector, ap_pixels=aperture)
         apertures = np.array([aperture for sector, aperture in apertures.items()])
+        valid_apertures = np.array([aperture for sector, aperture in valid_apertures.items()])
         depth = transit_depth / 1000
         if contrast_curve_file is not None:
             logging.info("Reading contrast curve %s", contrast_curve_file)
@@ -176,7 +173,7 @@ class Validator:
             plt.savefig(save_dir + "/contrast_curve.png")
             plt.clf()
         logging.info("Calculating validation closest stars depths")
-        target.calc_depths(depth, apertures)
+        target.calc_depths(depth, valid_apertures)
         target.stars.to_csv(save_dir + "/stars.csv", index=False)
         lc = pd.read_csv(lc_file, header=0)
         time, flux, flux_err = lc["#time"].values, lc["flux"].values, lc["flux_err"].values
@@ -201,7 +198,7 @@ class Validator:
         logging.info("Computed folded curve sigma = %s", sigma)
         logging.info("Preparing validation processes inputs")
         input_n_times = [ValidatorInput(save_dir, copy.deepcopy(target), bin_centers, bin_means, sigma, period, depth,
-                                        apertures, value, contrast_curve_file)
+                                        valid_apertures, value, contrast_curve_file)
                          for value in range(0, scenarios)]
         thread_validator = TriceratopsThreadValidator()
         logging.info("Start validation processes")
