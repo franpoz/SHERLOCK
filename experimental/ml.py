@@ -426,7 +426,7 @@ class MlTrainingSetPreparer:
         inputs = []
         failed_targets = []
         for sector in np.arange(first_sector, 27, 1):
-            self.negative_dir = self.dir + "/ntp/" + str(sector)
+            self.negative_dir = self.dir + "/ntp/" + str(sector) + "/"
             if not os.path.exists(self.negative_dir):
                 os.mkdir(self.negative_dir)
             sector_url = self.SECTOR_URL.format(sector)
