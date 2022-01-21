@@ -100,12 +100,13 @@ def calculate_residuals(time, flux, model_sample, flux_index):
     # axs.set_ylabel('Flux')
     # fig_transit.show()
         depth = 1 - flux_at_middle
-        return np.sum((flux_subset - model_sample_scaled) ** 2) ** 0.5 * depth
-    return np.nan
+        return np.sum((flux_subset - model_sample_scaled) ** 2) ** 0.5 * depth, depth
+    return np.nan, np.nan
 
 
 cumulative_residuals = np.full(len(lc_time), np.nan)
 residual_calculation = np.full((len(model_samples), len(lc_time)), np.nan)
+depth_calculation = np.full((len(model_samples), len(lc_time)), np.nan)
 for model_index, model_sample in enumerate(model_samples):
     model_duration_days = duration_grid[model_index] * cadence / 60 / 24
     first_valid_time = lc_time[lc_time > lc_time[0] + model_duration_days * 3][0]
@@ -116,7 +117,9 @@ for model_index, model_sample in enumerate(model_samples):
     dt_flux = wotan.flatten(lc_time, flux, model_duration_days * 4, method="biweight")
     dt_flux = flux
     for flux_index, flux_value in enumerate(lc_time[(lc_time >= first_valid_time) & (lc_time <= last_valid_time)]):
-        residual_calculation[model_index][flux_index] = calculate_residuals(lc_time, dt_flux, model_sample, flux_index)
+        residual, depth = calculate_residuals(lc_time, dt_flux, model_sample, flux_index)
+        residual_calculation[model_index][flux_index] = residual
+        depth_calculation[model_index][flux_index] = depth
     local_residual_minima = argrelextrema(residual_calculation[model_index], np.less)[0]
     minima_mask = np.full(len(residual_calculation[model_index]), False)
     minima_mask[local_residual_minima] = True
@@ -124,18 +127,19 @@ for model_index, model_sample in enumerate(model_samples):
     residual_calculation[model_index][np.where(np.isnan(residual_calculation[model_index]))] = max_allowed_residual
     #residual_calculation[model_index][~minima_mask] = max_allowed_residual
     #time_plot = time[minima_mask]
-    residual_plot = residual_calculation[model_index]
-    fig_transit, axs = plt.subplots(2, 1, figsize=(8, 8))
-    axs[0].plot(lc_time, dt_flux, color='gray', alpha=1, rasterized=True, label="Flux")
-    axs[0].set_title("Light curve" + str(model_duration_days * 24 * 60) + "m")
-    axs[0].set_xlabel('Time')
-    axs[0].set_ylabel('Flux')
-    axs[1].plot(lc_time, residual_plot, color='gray', alpha=1, rasterized=True, label="Residuals")
-    axs[1].set_title("Residuals for transit duration " + str(model_duration_days * 24 * 60) + "m")
-    axs[1].set_xlabel('Time')
-    axs[1].set_ylabel('Residuals')
-    fig_transit.show()
+    # residual_plot = residual_calculation[model_index]
+    # fig_transit, axs = plt.subplots(2, 1, figsize=(8, 8))
+    # axs[0].plot(lc_time, dt_flux, color='gray', alpha=1, rasterized=True, label="Flux")
+    # axs[0].set_title("Light curve" + str(model_duration_days * 24 * 60) + "m")
+    # axs[0].set_xlabel('Time')
+    # axs[0].set_ylabel('Flux')
+    # axs[1].plot(lc_time, residual_plot, color='gray', alpha=1, rasterized=True, label="Residuals")
+    # axs[1].set_title("Residuals for transit duration " + str(model_duration_days * 24 * 60) + "m")
+    # axs[1].set_xlabel('Time')
+    # axs[1].set_ylabel('Residuals')
+    # fig_transit.show()
 
+model_index_minima_args = np.argmin(residual_calculation, axis=0)
 cumulative_residuals = np.sum(residual_calculation, axis=0)
 residual_plot = cumulative_residuals
 fig_transit, axs = plt.subplots(2, 1, figsize=(8, 8))
@@ -143,6 +147,16 @@ axs[0].plot(lc_time, flux, color='gray', alpha=1, rasterized=True, label="Flux")
 axs[0].set_title("Light curve")
 axs[0].set_xlabel('Time')
 axs[0].set_ylabel('Flux')
+axs[1].plot(lc_time, cumulative_residuals, color='gray', alpha=1, rasterized=True, label="Residuals")
+axs[1].set_title("Cumulative Residuals")
+axs[1].set_xlabel('Time')
+axs[1].set_ylabel('Residuals')
+fig_transit.show()
+fig_transit, axs = plt.subplots(2, 1, figsize=(8, 8))
+axs[0].plot(lc_time, flux, color='gray', alpha=1, rasterized=True, label="Flux")
+axs[0].set_title("Light curve")
+axs[0].set_xlabel('Time')
+axs[0].set_ylabel('Depth')
 axs[1].plot(lc_time, cumulative_residuals, color='gray', alpha=1, rasterized=True, label="Residuals")
 axs[1].set_title("Cumulative Residuals")
 axs[1].set_xlabel('Time')
