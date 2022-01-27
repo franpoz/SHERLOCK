@@ -80,7 +80,7 @@ class SherlockTarget:
             self.fit_method = "tailed"
         self.oversampling = oversampling
         if self.oversampling is not None:
-            self.oversampling = int(self.oversampling)
+            self.oversampling = self.oversampling
         if custom_transit_template is not None:
             self.fit_method = "custom"
             self.user_transit_template = custom_transit_template

@@ -208,7 +208,7 @@ class Sherlock:
             time = lc_build.lc.time.value
             flux = lc_build.lc.flux.value
             flux_err = lc_build.lc.flux_err.value
-            period_grid = LcbuilderHelper.calculate_period_grid(time, sherlock_target.period_min,
+            period_grid, oversampling = LcbuilderHelper.calculate_period_grid(time, sherlock_target.period_min,
                                                                 sherlock_target.period_max,
                                                                 sherlock_target.oversampling,
                                                                 lc_build.star_info, lc_build.transits_min_count)
