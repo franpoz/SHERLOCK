@@ -14,4 +14,19 @@ Once you have these files, you can execute the planning module of SHERLOCK using
 If you encounter any issue, please refer to the "Troubleshooting" file, still at the draft state, we need your errors to add more :)
 If your error is not solved in the "Troubleshooting" file, please let us know about it, so we can work on a patch !
 
-During the execution, SHERLOCK will create a "plan" folder in which you will find two files, one csv and one pdf
+During the execution, SHERLOCK will create a "plan" folder in which you will find two files, one csv and one pdf.
+The csv file contains the following informations:
+  observatory : observatory's name as you defined it.
+  timezone : time zone of the observatory.
+  start_obs : date and time where the observation would start, written as "2022-01-23T18:55:34.477". Format is yyyy-mm-dd for the date, then "T" for the time with the format hh:mm:ss.sss Hours are always in 24h format.
+  end_obs : date and time where the observation would end, same format as for "start_obs".
+  ingress : time where the transit should begin (best estimation), same format as for "start_obs".
+  egress : time where the transit should end (best estimation), same format as for "start_obs".
+  midtime : middle time of the transit (best estimation), same format as for "start_obs".
+  midtime_up_err_h :
+  midtime_low_err_h :
+  twilight_evening :
+  twilight_morning :
+  observable :
+  moon_phase :
+  moon_dist :
