@@ -185,13 +185,14 @@ class MlTrainingSetPreparer:
         centroids_y = lc_data["centroids_y"][~np.isnan(lc_data["centroids_y"])].to_numpy()
         motion_x = lc_data["motion_x"][~np.isnan(lc_data["motion_x"])].to_numpy()
         motion_y = lc_data["motion_y"][~np.isnan(lc_data["motion_y"])].to_numpy()
+        background_flux = lc_data["background_flux"][~np.isnan(lc_data["background_flux"])].to_numpy()
         dif = centroids_x[1:] - centroids_x[:-1]
         jumps = np.where(np.abs(dif) > 1)[0]
         jumps = np.append(jumps, len(lc_data))
         previous_jump_index = 0
         for jumpIndex in jumps:
             centroids_x_token = lc_data["centroids_x"][previous_jump_index:jumpIndex]
-            lc_data["centroids_x"][previous_jump_index:jumpIndex] = centroids_x_token - np.nanmedian(centroids_x_token)
+            lc_data["centroids_x"][previous_jump_index:jumpIndex] = np.tanh(centroids_x_token - np.nanmedian(centroids_x_token))
             previous_jump_index = jumpIndex
         previous_jump_index = 0
         dif = centroids_y[1:] - centroids_y[:-1]
@@ -199,7 +200,7 @@ class MlTrainingSetPreparer:
         jumps = np.append(jumps, len(lc_data))
         for jumpIndex in jumps:
             centroids_y_token = lc_data["centroids_y"][previous_jump_index:jumpIndex]
-            lc_data["centroids_y"][previous_jump_index:jumpIndex] = centroids_y_token - np.nanmedian(centroids_y_token)
+            lc_data["centroids_y"][previous_jump_index:jumpIndex] = np.tanh(centroids_y_token - np.nanmedian(centroids_y_token))
             previous_jump_index = jumpIndex
         previous_jump_index = 0
         dif = motion_x[1:] - motion_x[:-1]
@@ -207,7 +208,7 @@ class MlTrainingSetPreparer:
         jumps = np.append(jumps, len(lc_data))
         for jumpIndex in jumps:
             motion_x_token = lc_data["motion_x"][previous_jump_index:jumpIndex]
-            lc_data["motion_x"][previous_jump_index:jumpIndex] = motion_x_token - np.nanmedian(motion_x_token)
+            lc_data["motion_x"][previous_jump_index:jumpIndex] = np.tanh(motion_x_token - np.nanmedian(motion_x_token))
             previous_jump_index = jumpIndex
         previous_jump_index = 0
         dif = motion_y[1:] - motion_y[:-1]
@@ -215,7 +216,15 @@ class MlTrainingSetPreparer:
         jumps = np.append(jumps, len(lc_data))
         for jumpIndex in jumps:
             motion_y_token = lc_data["motion_y"][previous_jump_index:jumpIndex]
-            lc_data["motion_y"][previous_jump_index:jumpIndex] = motion_y_token - np.nanmedian(motion_y_token)
+            lc_data["motion_y"][previous_jump_index:jumpIndex] = np.tanh(motion_y_token - np.nanmedian(motion_y_token))
+            previous_jump_index = jumpIndex
+        previous_jump_index = 0
+        dif = background_flux[1:] - background_flux[:-1]
+        jumps = np.where(np.abs(dif) > 1)[0]
+        jumps = np.append(jumps, len(lc_data))
+        for jumpIndex in jumps:
+            background_flux_token = lc_data["background_flux"][previous_jump_index:jumpIndex]
+            lc_data["background_flux"][previous_jump_index:jumpIndex] = np.tanh(background_flux_token - np.nanmedian(background_flux_token))
             previous_jump_index = jumpIndex
         lc_data.to_csv(file)
         return lc_data
