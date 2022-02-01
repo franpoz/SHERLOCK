@@ -34,24 +34,24 @@ class SherlockExplorer:
         lc_builder = LcBuilder()
         object_info = lc_builder.build_object_info(object_id, None, sectors, input_lc_file, cadence, None,
                                                    [{"P": 0.59925, "D": 200, "T0": 1354.57}], None, None, None)
-        lc, lc_data, star_info, transits_min_count, cadence, detrend_period, quarters = \
-            lc_builder.build(object_info, ".")
+        lc_build = lc_builder.build(object_info, ".")
+        lc = lc_build.lc
         lc = lc.remove_outliers(sigma_lower=float('inf'), sigma_upper=3)  # remove outliers over 3sigma
         flux = lc.flux.value
         flux_err = lc.flux_err.value
         if time_units == 0:
             time = lc.astropy_time.jd
         else:
-            time = lc.time.value.astype('<f4')
+            time = lc.time.value
         if smooth:
             flux = savgol_filter(flux, 11, 2)
             flux = uniform_filter1d(flux, 11)
         lc_df = pd.DataFrame(columns=['#time', 'flux', 'flux_err'])
-        lc_df['#time'] = lc.time.value.astype('<f4')
-        lc_df['flux'] = lc.flux.value.astype('<f4')
-        lc_df['flux_err'] = lc.flux_err.value.astype('<f4')
+        lc_df['#time'] = lc.time.value
+        lc_df['flux'] = lc.flux.value
+        lc_df['flux_err'] = lc.flux_err.value
         lc_df = pd.DataFrame(columns=['flux'])
-        lc_df['flux'] = acf(lc.flux.value.astype('<f4'), nlags=7200)
+        lc_df['flux'] = acf(lc.flux.value, nlags=7200)
         test_df = pd.DataFrame(lc_df)
         ax = test_df.plot()
         ax.set_ylim(lc_df["flux"].min(), lc_df["flux"].max())
@@ -60,29 +60,29 @@ class SherlockExplorer:
         #periodogram = lc.to_periodogram(oversample_factor=10)
         #fig = px.line(x=periodogram.period.astype('<f4'), y=periodogram.power.astype('<f4'), log_x=True)
         #fig.show()
-        fig = px.scatter(x=lc.time.value.astype('<f4'), y=lc.flux.value.astype('<f4'))
+        fig = px.scatter(x=lc.time.value, y=lc.flux.value)
         fig.show()
         if auto_detrend_periodic_signals:
             detrend_period = self.__calculate_max_significant_period(lc, periodogram)
             if detrend_period is not None:
                 flatten_lc, trend_lc = self.__detrend_by_period(lc, detrend_period * auto_detrend_ratio, detrend_method)
                 fig = go.Figure()
-                fig.add_trace(go.Scatter(x=lc.time.value.astype('<f4'), y=flux.astype('<f4'), mode='markers', name='Flux'))
-                fig.add_trace(go.Scatter(x=lc.time.value.astype('<f4'), y=trend_lc.astype('<f4'), mode='lines+markers',
+                fig.add_trace(go.Scatter(x=lc.time.value, y=flux, mode='markers', name='Flux'))
+                fig.add_trace(go.Scatter(x=lc.time.value, y=trend_lc, mode='lines+markers',
                                          name='Main Trend'))
                 fig.show()
                 if auto_detrend_periodic_signals:
-                    fig = px.line(x=lc.time.value.astype('<f4'), y=flatten_lc.astype('<f4'))
+                    fig = px.line(x=lc.time.value, y=flatten_lc)
                     fig.show()
                     lc.flux = flatten_lc
         bin_means, bin_edges, binnumber = stats.binned_statistic(lc.time.value, lc.flux.value, statistic='mean',bins=len(time) / 5)
         bin_stds, _, _ = stats.binned_statistic(time, flux, statistic='std', bins=len(time) / 3)
         bin_width = (bin_edges[1] - bin_edges[0])
         bin_centers = bin_edges[1:] - bin_width / 2
-        time_binned = bin_centers.astype('<f4')
-        flux_binned = bin_means.astype('<f4')
+        time_binned = bin_centers
+        flux_binned = bin_means
         lc_binned = lk.LightCurve(time=time_binned, flux=flux_binned)
-        fig = px.scatter(x=lc.time.value.astype('<f4'), y=lc.flux.value.astype('<f4'))
+        fig = px.scatter(x=lc.time.value, y=lc.flux.value)
         fig.show()
         while True:
             try:
@@ -98,6 +98,14 @@ class SherlockExplorer:
                 if user_input.startswith("q"):
                     break
                 t0 = float(user_input)
+            except ValueError:
+                print("Wrong number.")
+                continue
+            try:
+                user_input = input("Select the duration (minutes): ")
+                if user_input.startswith("q"):
+                    break
+                duration = float(user_input)
             except ValueError:
                 print("Wrong number.")
                 continue
@@ -126,7 +134,10 @@ class SherlockExplorer:
             plt.title("Phase-folded period: " + format(period, ".2f") + " days")
             plt.show()
             fig_transit.show()
-            fig = px.line(x=folded_lc.time.value.astype('<f4'), y=folded_lc.flux.value.astype('<f4'))
+            fig = px.line(x=folded_lc.time.value, y=folded_lc.flux.value)
+            fig.show()
+            mask = wotan.transit_mask(time, period, duration * 2 / 24 / 60, t0)
+            fig = px.scatter(x=time[~mask], y=flux[~mask])
             fig.show()
 
     def __parse_object_id(self, object_id):
