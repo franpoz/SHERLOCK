@@ -1,6 +1,6 @@
 To generate an observation plan for your target, you must already have done a fit of your signal using SHERLOCK and go in the resulting folder (usually named
-"fit_0"). You must also have a file containing basic informations about the (ground) observatories you want to consider, such as the "Observatories.csv" you can
-find in this example. Note that Github previews this file and removes the commas between the values, be sure you have them in your own file.
+"fit_0"). You must also have a file containing basic informations about the (ground) observatories you want to consider, such as the "Observatories.csv" you
+can find in this example. Note that Github previews this file and removes the commas between the values, be sure you have them in your own file.
 Your "Observatories.csv" file must have these parameters:
   name : name of the observatory (call it whatever makes it for you, it's not regulated).
   tz : the time zone of the observatory, you can leave it empty, SHERLOCK gets it by itself.
@@ -31,8 +31,32 @@ The csv file contains the following informations:
   moon_phase : Phase of the Moon, from 0 (new Moon) to 1 (full Moon).
   moon_dist : Angular distance between the Moon and the target, in degrees.
   
-In the pdf file, you will find a quick recap of the targeted star, signal, few key parameters for the observation and the observatories. After that, begin a large
-table containing all the elements required to schedule an observation, along with small visual interpretation of the conditions of the observations.
+In the pdf file, you will find a quick recap of the targeted star, signal, few key parameters for the observation and the observatories. After that, begin a
+large table containing all the elements required to schedule an observation, along with small visual interpretation of the conditions of the observations.
+The first column "Observatory" is the name of the observatory as you defined it with the second column "TZ" its time zone. The third one, "Event times", gives
+the key times for the observation such as :
+  TWE : "Twilight Evening", time in the evening from when an observation is possible.
+  SO : Start of the observation.
+  I : Expected time of ingress (begining of the transit).
+  M : Expected time of the middle time of the transit.
+  E : Expected time of the egress (end of the transit).
+  EO : End of the observation.
+  TWM : "Twilight Morning", time in the morning until whent an observation is possible.
+  
+The next column, "TT Error" gives the error margins for the time where the transit should happen, in hours. "Moon" gives a recap of the state of the moon
+durring the observation night, with first its phase (in %) and then its angular distance to the target (in °). Then comes the "Image" column, where there is
+a lot to say. The abscice is the time which is not visually quantified as the values are in the column "Event times"). The background shows when it is the
+night (grey) or day (white). The blue line is a visualisation of the elevation of the target, with the values on the right axis in degrees. The bottom green
+patch is the part of the sky where the target would be too low to observe. Vertical lines are :
+  Black : Expected time of the middle time of the transit.
+  Orange : Expected times of the ingress and egress.
+  Pink/violet : Start and end of the observation.
+  Red : Temporal incertainity for the ingres (left line) and egress (right line).
+
+
+(mmmmmmm todo : explin left axis : unit and details).
+
+
 
 
 
