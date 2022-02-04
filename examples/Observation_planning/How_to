@@ -11,7 +11,7 @@ Your "Observatories.csv" file must have these parameters:
 Once you have these files, you can execute the planning module of SHERLOCK using this line:
   python3 -m sherlockpipe.plan --observatories Observatories.csv
 
-If you encounter any issue, please refer to the "Troubleshooting" file, still at the draft state, we need your errors to add more :)
+If you encounter any issue, please refer to the "Troubleshooting" file, still at the draft state, we need your bugs to add more :)
 If your error is not solved in the "Troubleshooting" file, please let us know about it, so we can work on a patch !
 
 During the execution, SHERLOCK will create a "plan" folder in which you will find two files, one csv and one pdf.
