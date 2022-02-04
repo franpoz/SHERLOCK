@@ -1,4 +1,6 @@
-To generate an observation plan for your target, you must already have done a fit of your signal using SHERLOCK and go in the resulting folder (usually named "fit_0"). You must also have a file containing basic informations about the (ground) observatories you want to consider, such as the "Observatories.csv" you can find in this example. Note that Github previews this file and removes the commas between the values, be sure you have them in your own file.
+To generate an observation plan for your target, you must already have done a fit of your signal using SHERLOCK and go in the resulting folder (usually named
+"fit_0"). You must also have a file containing basic informations about the (ground) observatories you want to consider, such as the "Observatories.csv" you can
+find in this example. Note that Github previews this file and removes the commas between the values, be sure you have them in your own file.
 Your "Observatories.csv" file must have these parameters:
   name : name of the observatory (call it whatever makes it for you, it's not regulated).
   tz : the time zone of the observatory, you can leave it empty, SHERLOCK gets it by itself.
@@ -29,7 +31,8 @@ The csv file contains the following informations:
   moon_phase : Phase of the Moon, from 0 (new Moon) to 1 (full Moon).
   moon_dist : Angular distance between the Moon and the target, in degrees.
   
-In the pdf file, you will find a quick recap of the targeted star, signal, few key parameters for the observation and the observatories. After that, begin a large table containing all the elements required to schedule an observation, along with small visual interpretation of the conditions of the observations.
+In the pdf file, you will find a quick recap of the targeted star, signal, few key parameters for the observation and the observatories. After that, begin a large
+table containing all the elements required to schedule an observation, along with small visual interpretation of the conditions of the observations.
 
 
 
