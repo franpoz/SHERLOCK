@@ -14,5 +14,5 @@ Error :
          kp is the magnitude from Kepler (optional)
          logg is the surface gravity
 
- - The program did not crash, but the plan is empty
+ - The program did not crash, but the plan is empty :
       The error bars were too large to allow for an estimation of the future transits with a reasonable error margin. You need to refine the fit to solve this issue.
