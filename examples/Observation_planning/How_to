@@ -1,6 +1,4 @@
-To generate an observation plan for your target, you must already have done a fit of your signal using SHERLOCK and go in the resulting folder (usually named "fit_0").
-You must also have a file containing basic informations about the (ground) observatories you want to consider, such as the "Observatories.csv" you can find in this example.
-Note that Github previews this file and removes the commas between the values, be sure you have them in your own file.
+To generate an observation plan for your target, you must already have done a fit of your signal using SHERLOCK and go in the resulting folder (usually named "fit_0"). You must also have a file containing basic informations about the (ground) observatories you want to consider, such as the "Observatories.csv" you can find in this example. Note that Github previews this file and removes the commas between the values, be sure you have them in your own file.
 Your "Observatories.csv" file must have these parameters:
   name : name of the observatory (call it whatever makes it for you, it's not regulated).
   tz : the time zone of the observatory, you can leave it empty, SHERLOCK gets it by itself.
@@ -11,22 +9,36 @@ Your "Observatories.csv" file must have these parameters:
 Once you have these files, you can execute the planning module of SHERLOCK using this line:
   python3 -m sherlockpipe.plan --observatories Observatories.csv
 
-If you encounter any issue, please refer to the "Troubleshooting" file, still at the draft state, we need your bugs to add more :)
+If you encounter any issue, please refer to the "Troubleshooting" file, still at the draft state, as we need your bugs to expand it :)
 If your error is not solved in the "Troubleshooting" file, please let us know about it, so we can work on a patch !
 
 During the execution, SHERLOCK will create a "plan" folder in which you will find two files, one csv and one pdf.
 The csv file contains the following informations:
   observatory : observatory's name as you defined it.
   timezone : time zone of the observatory.
-  start_obs : date and time where the observation would start, written as "2022-01-23T18:55:34.477". Format is yyyy-mm-dd for the date, then "T" for the time with the format hh:mm:ss.sss Hours are always in 24h format.
+  start_obs : date and time where the observation would start. Format is yyyy-mm-dd for the date, then "T" for the time, formated hh:mm:ss.sss in 24h format.
   end_obs : date and time where the observation would end, same format as for "start_obs".
   ingress : time where the transit should begin (best estimation), same format as for "start_obs".
   egress : time where the transit should end (best estimation), same format as for "start_obs".
   midtime : middle time of the transit (best estimation), same format as for "start_obs".
-  midtime_up_err_h : maximum time deviation from the midtime, in hours.
+  midtime_up_err_h : maximum time deviation from the midtime, in hours (?) mmmmmmmmmmmm.
   midtime_low_err_h : mmmmmmmmm deviation from the midtime, in hours.
   twilight_evening : earliest time at which the observation can start, same format as for "start_obs".
   twilight_morning : Latest time at which the observation can end, same format as for "start_obs".
-  observable : 
+  observable : Minimum fraction of the transit that must be observable to consider an observation.
   moon_phase : Phase of the Moon, from 0 (new Moon) to 1 (full Moon).
-  moon_dist : Angular distance between the Moon and the target, in degrees (mmmmmmm ?)
+  moon_dist : Angular distance between the Moon and the target, in degrees.
+  
+In the pdf file, you will find a quick recap of the targeted star, signal, few key parameters for the observation and the observatories. After that, begin a large table containing all the elements required to schedule an observation, along with small visual interpretation of the conditions of the observations.
+
+
+
+
+
+
+
+
+
+If something is not clear enough, please tell us so we can improve it !
+
+// end
