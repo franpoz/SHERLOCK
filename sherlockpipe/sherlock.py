@@ -6,7 +6,6 @@ import pandas
 import wotan
 import matplotlib.pyplot as plt
 import foldedleastsquares as tls
-from foldedleastsquares.template_generator.default_transit_template_generator import DefaultTransitTemplateGenerator
 import numpy as np
 import os
 import sys
@@ -150,9 +149,29 @@ class Sherlock:
         self.use_ois = True
         self.ois = self.ois[self.ois["Disposition"].notnull()]
         self.ois = self.ois[self.ois["Period (days)"].notnull()]
+        self.ois = self.ois[self.ois["Period (days)"] > 0]
         self.ois = self.ois[self.ois["Depth (ppm)"].notnull()]
-        self.ois = self.ois[(self.ois["Disposition"] == "KP") | (self.ois["Disposition"] == "CP") | (self.ois["Disposition"] == "PC")]
+        self.ois = self.ois[
+            (self.ois["Disposition"] == "KP") | (self.ois["Disposition"] == "CP") | (self.ois["Disposition"] == "PC")]
         self.ois = self.ois[self.ois.duplicated(subset=['Object Id'], keep=False)]
+        self.ois.sort_values(by=['Object Id', 'OI'])
+        return self
+
+    def filter_high_snr_long_period_ois(self):
+        """
+        Filters the in-memory OIs given some basic filters associated to big and long-period targets. This method is added
+        as an example
+        @return: the Sherlock object itself
+        @rtype: Sherlock
+        """
+        self.use_ois = True
+        self.ois = self.ois[self.ois["Disposition"].notnull()]
+        self.ois = self.ois[self.ois["Period (days)"].notnull()]
+        self.ois = self.ois[self.ois["Period (days)"] > 20]
+        self.ois = self.ois[self.ois["Depth (ppm)"].notnull()]
+        self.ois = self.ois[self.ois["Depth (ppm)"] > 7500]
+        self.ois = self.ois[
+            (self.ois["Disposition"] == "KP") | (self.ois["Disposition"] == "CP") | (self.ois["Disposition"] == "PC")]
         self.ois.sort_values(by=['Object Id', 'OI'])
         return self
 
