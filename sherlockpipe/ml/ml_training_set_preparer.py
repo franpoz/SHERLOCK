@@ -504,6 +504,49 @@ class MlTrainingSetPreparer:
         extracted_features_long = tsfresh.extract_relevant_features(tsfresh_long_df, tsfresh_tags_long, column_id='id',
                                                                     column_sort='time')
 
+    @staticmethod
+    def prepare_cadence_set_dir(root_dir, mode="short"):
+        """
+        Creates the flattened directory for training and testing sets for the selected cadence method.
+        @param root_dir: the directory where the data has been stored
+        @param mode: the cadence mode [short|long]
+        """
+        flatten_dir = root_dir + "/" + mode
+        positive_dir = root_dir + "/tp"
+        false_positive_dir = root_dir + "/fp"
+        negative_dir = root_dir + "/ntp"
+        sectors = np.arange(1, 27)
+        logging.info("Flattening positive dir %s", positive_dir)
+        for file in os.listdir(positive_dir):
+            src = positive_dir + "/" + file
+            dst = flatten_dir + "/" + file
+            if os.path.exists(src + "/periodogram_" + mode + ".csv") and \
+                    os.path.exists(src + "/time_series_" + mode + ".csv"):
+                os.symlink(src, dst, True)
+                with open(dst + "/score.txt", 'w') as the_file:
+                    the_file.write(str(1))
+        logging.info("Flattening negative dir %s", negative_dir)
+        for file in os.listdir(negative_dir):
+            src = negative_dir + "/" + file
+            dst = flatten_dir + "/" + file
+            if os.path.exists(src + "/periodogram_" + mode + ".csv") and \
+                    os.path.exists(src + "/time_series_" + mode + ".csv"):
+                os.symlink(src, dst, True)
+                with open(dst + "/score.txt", 'w') as the_file:
+                    the_file.write(str(0.5)) #TODO should be 0.5 or WHAT else?
+        logging.info("Flattening false positive dir %s", false_positive_dir)
+        for file in os.listdir(false_positive_dir):
+            for sector in sectors:
+                tic_sector_file = file + "/" + str(sector) + "/"
+                for file_in_sector in os.listdir(tic_sector_file):
+                    src = tic_sector_file + "/" + file_in_sector
+                    dst = flatten_dir + "/" + file_in_sector
+                    if os.path.exists(src + "/periodogram_" + mode + ".csv") and \
+                            os.path.exists(src + "/time_series_" + mode + ".csv"):
+                        os.symlink(src, dst, True)
+                        with open(dst + "/score.txt", 'w') as the_file:
+                            the_file.write(str(0))
+
 class PrepareTicInput:
     def __init__(self, dir, tic, target_ois, target_additional_ois_df, excluded_ois, label):
         self.dir = dir
