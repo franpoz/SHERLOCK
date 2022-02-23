@@ -141,7 +141,7 @@ class Vetter:
         tpfs = []
         for tpf_file in os.listdir(tpfs_dir):
             tpfs.append(TessTargetPixelFile(tpfs_dir + "/" + tpf_file))
-        self.plot_folded_curve(self.data_dir, "TIC " + id, lc, period, t0, duration, depth / 1000, rp_rstar, a_rstar)
+        self.plot_folded_curve(self.data_dir, id, lc, period, t0, duration, depth / 1000, rp_rstar, a_rstar)
         last_time = time[len(time) - 1]
         num_of_transits = int(ceil(((last_time - t0) / period)))
         transit_lists = t0 + period * range(0, num_of_transits)
