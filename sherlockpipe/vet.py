@@ -176,9 +176,12 @@ class Vetter:
         @param id: the target id
         @param lc: the input light curve with the data
         @param lc_data: the input light curve with the data and motion, centroids and bck flux data
-        @param transit_times: the single transits T0s
-        @param duration: the transit duration
+        @param transit_time: the single transit T0
         @param depth: the transit depth
+        @param duration: the transit duration
+        @param period: the transit duration
+        @param rp_rstar: radius of the planet / radius of the star
+        @param a_rstar: semimajor-axis / radius of the star
         """
         duration = duration / 60 / 24
         figsize = (32, 8)  # x,y
