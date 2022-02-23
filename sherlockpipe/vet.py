@@ -17,7 +17,7 @@ import matplotlib.gridspec as gridspec
 import yaml
 from lcbuilder.constants import CUTOUT_SIZE
 from lcbuilder.photometry.aperture_extractor import ApertureExtractor
-from lightkurve import TessLightCurve
+from lightkurve import TessLightCurve, TessTargetPixelFile
 from matplotlib.colorbar import Colorbar
 from matplotlib import patches
 from astropy.visualization.mpl_normalize import ImageNormalize
@@ -137,8 +137,11 @@ class Vetter:
         logging.info("Preparing folded light curves for target")
         lc = TessLightCurve(time=time, flux=flux, flux_err=flux_err, quality=zeros_lc)
         lc.extra_columns = []
+        tpfs_dir = self.object_dir + "/tpfs"
+        tpfs = []
+        for tpf_file in os.listdir(tpfs_dir):
+            tpfs.append(TessTargetPixelFile(tpfs_dir + "/" + tpf_file))
         self.plot_folded_curve(self.data_dir, "TIC " + id, lc, period, t0, duration, depth / 1000, rp_rstar, a_rstar)
-        transit_list = []
         last_time = time[len(time) - 1]
         num_of_transits = int(ceil(((last_time - t0) / period)))
         transit_lists = t0 + period * range(0, num_of_transits)
@@ -147,6 +150,8 @@ class Vetter:
         transit_lists = transit_lists[[len(transits_in_data_set) > 0 for transits_in_data_set in transits_in_data]]
         for index, transit_times in enumerate(transit_lists):
             Vetter.plot_single_transit(self.data_dir, str(id), lc, lc_data, transit_times, depth / 1000, duration, period, rp_rstar, a_rstar)
+            #TODO find aperture for given transit_time
+            Vetter.plot_single_transit_tpf(tpfs, transit_times, aperture, self.data_dir, duration)
 
     @staticmethod
     def normalize_lc_data(lc_data):
@@ -373,6 +378,19 @@ class Vetter:
         model[in_transit_indexes] = scaled_intransit
         model[model < 1] = 1 - ((1 - model[model < 1]) * depth / (1 - np.min(model)))
         return model_time, model
+
+    @staticmethod
+    def plot_single_transit_tpf(tpfs, transit_time, aperture, dir, duration):
+        for tpf in tpfs:
+            if tpf.time[0].value < transit_time and tpf.time[-1].value > transit_time:
+                tpf_short_framed = tpf[(tpf.time.value > transit_time - 3 * duration / 2) &
+                                       (tpf.time.value < transit_time + 3 * duration / 2)]
+                if len(tpf_short_framed) == 0:
+                    break
+                tpf.plot_pixels(aperture_mask=aperture)
+                plt.savefig(dir + "/tpf_single_transit_" + str(transit_time) + ".png")
+                plt.close()
+                break
 
     def vetting(self, candidate_df, star, cpus):
         """
