@@ -224,6 +224,8 @@ class Sherlock:
         mission_id = sherlock_target.object_info.mission_id()
         try:
             lc_build = self.__prepare(sherlock_target)
+            object_dir = self.__init_object_dir(sherlock_id)
+            lc_build.lc_data.to_csv(object_dir + "/lc_data.csv")
             time = lc_build.lc.time.value
             flux = lc_build.lc.flux.value
             flux_err = lc_build.lc.flux_err.value
@@ -287,7 +289,6 @@ class Sherlock:
                     logging.info('New best signal does not look very promising. End')
                 self.report[sherlock_id].append(object_report)
                 self.__setup_object_report_logging(sherlock_id, True)
-                object_dir = self.__init_object_dir(sherlock_id)
                 logging.info("Listing most promising candidates for ID %s:", sherlock_id)
                 logging.info("%-12s%-10s%-10s%-10s%-8s%-8s%-8s%-8s%-10s%-14s%-14s%-12s%-25s%-10s%-18s%-20s", "Detrend no.", "Period",
                              "Per_err", "Duration", "T0", "Depth", "SNR", "SDE", "FAP", "Border_score", "Matching OI", "Harmonic",
