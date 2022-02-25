@@ -1,9 +1,6 @@
 # from __future__ import print_function, absolute_import, division
 import logging
 import multiprocessing
-import shutil
-import types
-from distutils.dir_util import copy_tree
 from pathlib import Path
 import traceback
 
@@ -29,35 +26,15 @@ from astropy.table import Table
 from astropy.io import ascii
 import astropy.visualization as stretching
 from argparse import ArgumentParser
-
 from scipy import stats, ndimage
-
 from sherlockpipe import tpfplotter, constants
 import six
 import sys
-import sherlockpipe.LATTE
 sys.modules['astropy.extern.six'] = six
-sys.modules['LATTE'] = sherlockpipe.LATTE
-
 matplotlib.use('Agg')
 import pandas as pd
 import os
-from os.path import exists
-import ast
-import csv
-from sherlockpipe.LATTE import LATTEutils, LATTEbrew
-from os import path
 from math import ceil
-
-
-# get the system path
-syspath = str(os.path.abspath(LATTEutils.__file__))[0:-14]
-# ---------
-
-# --- IMPORTANT TO SET THIS ----
-out = 'pipeline'  # or TALK or 'pipeline'
-ttran = 0.1
-resources_dir = path.join(path.dirname(__file__))
 
 
 class Vetter:
@@ -65,27 +42,14 @@ class Vetter:
     Provides transiting candidate vetting information like centroids and spaceship motion, momentum dumps, neighbours
     curves inspection and more to give a deeper insight on the quality of the candidate signal.
     """
-    def __init__(self, object_dir, validate):
-        self.args = types.SimpleNamespace()
-        self.args.noshow = True
-        self.args.north = False
-        self.args.o = True
-        self.args.mpi = False
-        self.args.auto = True
-        self.args.save = True
-        self.args.nickname = ""  # TODO do we set the sherlock id?
-        self.args.FFI = False  # TODO get this from input
-        self.args.targetlist = "best_signal_latte_input.csv"
-        self.args.new_path = ""  # TODO check what to do with this
+    def __init__(self, object_dir):
         self.object_dir = os.getcwd() if object_dir is None else object_dir
         self.latte_dir = str(Path.home()) + "/.sherlockpipe/latte/"
         if not os.path.exists(self.latte_dir):
             os.mkdir(self.latte_dir)
         self.data_dir = self.object_dir
-        self.validation_runs = 5
-        self.validate = validate
 
-    def __process(self, indir, id, sectors_in, t0, period, duration, depth, rp_rstar, a_rstar, ffi, run, curve):
+    def __process(self, indir, id, sectors_in, t0, period, duration, depth, rp_rstar, a_rstar, ffi, run, curve, cpus):
         """
         Performs the analysis to generate PNGs and Data Validation Report.
         @param indir: the vetting source and resources directory
@@ -130,10 +94,12 @@ class Vetter:
         time_as_array = np.array(time)
         transits_in_data = [time_as_array[(transit > time_as_array - 0.5) & (transit < time_as_array + 0.5)] for transit in transit_lists]
         transit_lists = transit_lists[[len(transits_in_data_set) > 0 for transits_in_data_set in transits_in_data]]
-        # TODO parallelize
+        plot_transits_inputs = []
         for index, transit_times in enumerate(transit_lists):
-            Vetter.plot_single_transit(self.data_dir, str(id), lc, lc_data, tpfs, apertures, transit_times,
-                                       depth / 1000, duration, period, rp_rstar, a_rstar)
+            plot_transits_inputs.append((self.data_dir, str(id), lc, lc_data, tpfs, apertures, transit_times,
+                                       depth / 1000, duration, period, rp_rstar, a_rstar))
+        with multiprocessing.Pool(processes=cpus) as pool:
+            pool.map(Vetter.plot_single_transit, plot_transits_inputs)
 
     @staticmethod
     def normalize_lc_data(lc_data):
@@ -495,7 +461,7 @@ class Vetter:
         os.mkdir(vetting_dir)
         self.data_dir = vetting_dir
         try:
-            self.__process(vetting_dir, id, sectors, t0, period, duration, depth, rp_rstar, a_rstar, ffi, run, curve)
+            self.__process(vetting_dir, id, sectors, t0, period, duration, depth, rp_rstar, a_rstar, ffi, run, curve, cpus)
         except Exception as e:
             traceback.print_exc()
 
@@ -668,10 +634,8 @@ if __name__ == '__main__':
     ap.add_argument('--candidate', type=int, default=None, help="The candidate signal to be used.", required=False)
     ap.add_argument('--properties', help="The YAML file to be used as input.", required=False)
     ap.add_argument('--cpus', type=int, default=None, help="The number of CPU cores to be used.", required=False)
-    ap.add_argument('--no_validate', dest='validate', action='store_false',
-                    help="Whether to avoid running statistical validation")
     args = ap.parse_args()
-    vetter = Vetter(args.object_dir, args.validate)
+    vetter = Vetter(args.object_dir)
     file_dir = vetter.object_dir + "/vetting.log"
     if os.path.exists(file_dir):
         os.remove(file_dir)
