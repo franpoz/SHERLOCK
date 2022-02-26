@@ -65,41 +65,45 @@ class Vetter:
         @return: the given tic
         """
         logging.info("Running Transit Plots")
-        lc_file = "/lc.csv"
+        lc_file = "/" + str(run) + "/lc_" + str(curve) + ".csv"
         lc_file = self.object_dir + lc_file
         lc_data_file = self.object_dir + "/lc_data.csv"
+        tpfs_dir = self.object_dir + "/tpfs"
+        apertures = yaml.load(open(self.object_dir + "/apertures.yaml"), yaml.SafeLoader)
+        apertures = apertures["sectors"]
+        lc, lc_data, tpfs = Vetter.initialize_lc_and_tpfs(id, lc_file, lc_data_file, tpfs_dir)
+        self.plot_folded_curve(self.data_dir, id, lc, period, t0, duration, depth / 1000, rp_rstar, a_rstar)
+        last_time = lc.time.value[len(lc.time.value) - 1]
+        num_of_transits = int(ceil(((last_time - t0) / period)))
+        transit_lists = t0 + period * range(0, num_of_transits)
+        time_as_array = lc.time.value
+        transits_in_data = [time_as_array[(transit > time_as_array - 0.5) & (transit < time_as_array + 0.5)] for transit in transit_lists]
+        transit_lists = transit_lists[[len(transits_in_data_set) > 0 for transits_in_data_set in transits_in_data]]
+        plot_transits_inputs = []
+        for index, transit_times in enumerate(transit_lists):
+            plot_transits_inputs.append(SingleTransitProcessInput(self.data_dir, str(id), lc_file, lc_data_file,
+                                                                  tpfs_dir, apertures, transit_times, depth / 1000,
+                                                                  duration, period, rp_rstar, a_rstar))
+        with multiprocessing.Pool(processes=cpus) as pool:
+            pool.map(Vetter.plot_single_transit, plot_transits_inputs)
+
+    @staticmethod
+    def initialize_lc_and_tpfs(id, lc_file, lc_data_file, tpfs_dir):
         lc = pd.read_csv(lc_file, header=0)
         lc_data = pd.read_csv(lc_data_file, header=0)
         lc_data = Vetter.normalize_lc_data(lc_data)
-        logging.info("Reading apertures from directory")
-        apertures = yaml.load(open(self.object_dir + "/apertures.yaml"), yaml.SafeLoader)
-        apertures = apertures["sectors"]
         time, flux, flux_err = lc["#time"].values, lc["flux"].values, lc["flux_err"].values
         lc_len = len(time)
         zeros_lc = np.zeros(lc_len)
-        logging.info("Preparing folded light curves for target")
         lc = TessLightCurve(time=time, flux=flux, flux_err=flux_err, quality=zeros_lc)
         lc.extra_columns = []
-        tpfs_dir = self.object_dir + "/tpfs"
         tpfs = []
         mission, mission_prefix, mission_int_id = LcBuilder().parse_object_info(id)
         for tpf_file in os.listdir(tpfs_dir):
             tpf = TessTargetPixelFile(tpfs_dir + "/" + tpf_file) if mission == lcbuilder.constants.MISSION_TESS else \
                 KeplerTargetPixelFile(tpfs_dir + "/" + tpf_file)
             tpfs.append(tpf)
-        self.plot_folded_curve(self.data_dir, id, lc, period, t0, duration, depth / 1000, rp_rstar, a_rstar)
-        last_time = time[len(time) - 1]
-        num_of_transits = int(ceil(((last_time - t0) / period)))
-        transit_lists = t0 + period * range(0, num_of_transits)
-        time_as_array = np.array(time)
-        transits_in_data = [time_as_array[(transit > time_as_array - 0.5) & (transit < time_as_array + 0.5)] for transit in transit_lists]
-        transit_lists = transit_lists[[len(transits_in_data_set) > 0 for transits_in_data_set in transits_in_data]]
-        plot_transits_inputs = []
-        for index, transit_times in enumerate(transit_lists):
-            plot_transits_inputs.append((self.data_dir, str(id), lc, lc_data, tpfs, apertures, transit_times,
-                                       depth / 1000, duration, period, rp_rstar, a_rstar))
-        with multiprocessing.Pool(processes=cpus) as pool:
-            pool.map(Vetter.plot_single_transit, plot_transits_inputs)
+        return lc, lc_data, tpfs
 
     @staticmethod
     def normalize_lc_data(lc_data):
@@ -122,7 +126,7 @@ class Vetter:
         return lc_data
 
     @staticmethod
-    def plot_single_transit(file_dir, id, lc, lc_data, tpfs, apertures, transit_time, depth, duration, period, rp_rstar, a_rstar):
+    def plot_single_transit(singleTransitProcessInput):
         """
         Plots the phase-folded curve of the candidate for period, 2 * period and period / 2.
         @param file_dir: the directory to store the plot
@@ -136,7 +140,12 @@ class Vetter:
         @param rp_rstar: radius of the planet / radius of the star
         @param a_rstar: semimajor-axis / radius of the star
         """
-        duration = duration / 60 / 24
+        lc, lc_data, tpfs = Vetter.initialize_lc_and_tpfs(singleTransitProcessInput.id,
+                                                          singleTransitProcessInput.lc_file,
+                                                          singleTransitProcessInput.lc_data_file,
+                                                          singleTransitProcessInput.tpfs_dir)
+        transit_time = singleTransitProcessInput.transit_times
+        duration = singleTransitProcessInput.duration / 60 / 24
         fig = plt.figure(figsize=(24, 6), constrained_layout=True)
         fig.suptitle('Vetting of ' + str(id) + ' single transit at T=' + str(round(transit_time, 2)) + 'd', size=26)
         gs = gridspec.GridSpec(2, 3, hspace=0.4, wspace=0.1)  # 2 rows, 3 columns
@@ -175,20 +184,23 @@ class Vetter:
                                            (tpf.time.value < transit_time + plot_range)]
                     if len(tpf_short_framed) == 0:
                         break
-                    aperture_mask = ApertureExtractor.from_pixels_to_boolean_mask(apertures[sector], tpf.column,
-                                                                                  tpf.row, tpf.shape[1], tpf.shape[2])
+                    aperture_mask = ApertureExtractor.from_pixels_to_boolean_mask(
+                        singleTransitProcessInput.apertures[sector], tpf.column, tpf.row, tpf.shape[1], tpf.shape[2])
                     eroded_aperture_mask = ndimage.binary_erosion(aperture_mask)
                     chosen_aperture_lc = tpf.to_lightcurve(aperture_mask=aperture_mask)
                     smaller_aperture_lc = tpf.to_lightcurve(aperture_mask=eroded_aperture_mask)
                     break
-            single_transit_file = file_dir + "/single_transit_" + str(transit_time) + ".png"
-            tpf_single_transit_file = file_dir + "/tpf_single_transit_" + str(transit_time) + ".png"
+            single_transit_file = singleTransitProcessInput.data_dir + "/single_transit_" + str(transit_time) + ".png"
+            tpf_single_transit_file = singleTransitProcessInput.data_dir + "/tpf_single_transit_" + str(transit_time) + ".png"
             t1 = transit_time - duration / 2
             t4 = transit_time + duration / 2
             model_time, model_flux = Vetter.get_transit_model(duration, transit_time,
                                                               (transit_time - plot_range,
                                                                transit_time + plot_range),
-                                                              depth, period, rp_rstar, a_rstar)
+                                                              singleTransitProcessInput.depth,
+                                                              singleTransitProcessInput.period,
+                                                              singleTransitProcessInput.rp_rstar,
+                                                              singleTransitProcessInput.a_rstar)
             momentum_dumps_lc_data = None
             if not zoom_lc_data["quality"].isnull().all():
                 momentum_dumps_lc_data = zoom_lc_data[np.bitwise_and(zoom_lc_data["quality"].to_numpy(),
@@ -295,7 +307,7 @@ class Vetter:
                                       PIL.Image.ANTIALIAS)
             img_merge = np.vstack((np.asarray(i) for i in imgs))
             img_merge = PIL.Image.fromarray(img_merge)
-            img_merge.save(file_dir + "/single_transit_" + str(transit_time) + ".png", quality=95, optimize=True)
+            img_merge.save(single_transit_file, quality=95, optimize=True)
             os.remove(tpf_single_transit_file)
             logging.info("Processed single transit plot for T0=%.2f", transit_time)
         else:
@@ -625,6 +637,22 @@ class Vetter:
             logging.exception("Field Of View generation tried to exit.")
         except Exception as e:
             logging.exception("Exception found when generating Field Of View plots")
+
+class SingleTransitProcessInput:
+    def __init__(self, data_dir, id, lc_file, lc_data_file, tpfs_dir, apertures,
+                                         transit_times, depth, duration, period, rp_rstar, a_rstar):
+        self.data_dir = data_dir
+        self.id = id
+        self.lc_file = lc_file
+        self.lc_data_file = lc_data_file
+        self.tpfs_dir = tpfs_dir
+        self.apertures = apertures
+        self.transit_times = transit_times
+        self.depth = depth
+        self.duration = duration
+        self.period = period
+        self.rp_rstar = rp_rstar
+        self.a_rstar = a_rstar
 
 
 if __name__ == '__main__':
