@@ -126,28 +126,21 @@ class Vetter:
         return lc_data
 
     @staticmethod
-    def plot_single_transit(singleTransitProcessInput):
+    def plot_single_transit(single_transit_process_input):
         """
-        Plots the phase-folded curve of the candidate for period, 2 * period and period / 2.
-        @param file_dir: the directory to store the plot
-        @param id: the target id
-        @param lc: the input light curve with the data
-        @param lc_data: the input light curve with the data and motion, centroids and bck flux data
-        @param transit_time: the single transit T0
-        @param depth: the transit depth
-        @param duration: the transit duration
-        @param period: the transit duration
-        @param rp_rstar: radius of the planet / radius of the star
-        @param a_rstar: semimajor-axis / radius of the star
+        Plots the single transit info: single transit focused curve, drift and background plots, small vs used aperture
+        photometry and tpf flux values around the transit.
+        @param single_transit_process_input: wrapper class to provide pickable inputs for multiprocessing
         """
-        lc, lc_data, tpfs = Vetter.initialize_lc_and_tpfs(singleTransitProcessInput.id,
-                                                          singleTransitProcessInput.lc_file,
-                                                          singleTransitProcessInput.lc_data_file,
-                                                          singleTransitProcessInput.tpfs_dir)
-        transit_time = singleTransitProcessInput.transit_times
-        duration = singleTransitProcessInput.duration / 60 / 24
+        lc, lc_data, tpfs = Vetter.initialize_lc_and_tpfs(single_transit_process_input.id,
+                                                          single_transit_process_input.lc_file,
+                                                          single_transit_process_input.lc_data_file,
+                                                          single_transit_process_input.tpfs_dir)
+        transit_time = single_transit_process_input.transit_times
+        duration = single_transit_process_input.duration / 60 / 24
         fig = plt.figure(figsize=(24, 6), constrained_layout=True)
-        fig.suptitle('Vetting of ' + str(id) + ' single transit at T=' + str(round(transit_time, 2)) + 'd', size=26)
+        fig.suptitle('Vetting of ' + str(single_transit_process_input.id) + ' single transit at T=' +
+                     str(round(transit_time, 2)) + 'd', size=26)
         gs = gridspec.GridSpec(2, 3, hspace=0.4, wspace=0.1)  # 2 rows, 3 columns
         ax1 = fig.add_subplot(gs[0, 0])  # First row, first column
         ax2 = fig.add_subplot(gs[0, 1])  # First row, second column
@@ -164,7 +157,8 @@ class Vetter:
         zoom_mask = np.where((time > transit_time - plot_range) & (time < transit_time + plot_range))
         plot_time = time[zoom_mask]
         plot_flux = flux[zoom_mask]
-        zoom_lc_data = lc_data[(lc_data["time"] > transit_time - plot_range) & (lc_data["time"] < transit_time + plot_range)]
+        zoom_lc_data = lc_data[(lc_data["time"] > transit_time - plot_range) & (lc_data["time"] < transit_time +
+                                                                                plot_range)]
         aperture_mask = None
         chosen_aperture_lc = None
         smaller_aperture_lc = None
@@ -172,7 +166,8 @@ class Vetter:
         tpf_short_framed = None
         if len(plot_time) > 0:
             for tpf in tpfs:
-                tpf_zoom_mask = tpf[(tpf.time.value > transit_time - plot_range) & (tpf.time.value < transit_time + plot_range)]
+                tpf_zoom_mask = tpf[(tpf.time.value > transit_time - plot_range) & (tpf.time.value < transit_time +
+                                                                                    plot_range)]
                 if len(tpf_zoom_mask) > 0:
                     if hasattr(tpf, 'sector') and tpf.sector is not None:
                         sector = tpf.sector
@@ -185,22 +180,23 @@ class Vetter:
                     if len(tpf_short_framed) == 0:
                         break
                     aperture_mask = ApertureExtractor.from_pixels_to_boolean_mask(
-                        singleTransitProcessInput.apertures[sector], tpf.column, tpf.row, tpf.shape[1], tpf.shape[2])
+                        single_transit_process_input.apertures[sector], tpf.column, tpf.row, tpf.shape[1], tpf.shape[2])
                     eroded_aperture_mask = ndimage.binary_erosion(aperture_mask)
                     chosen_aperture_lc = tpf.to_lightcurve(aperture_mask=aperture_mask)
-                    smaller_aperture_lc = tpf.to_lightcurve(aperture_mask=eroded_aperture_mask)
+                    if True in eroded_aperture_mask:
+                        smaller_aperture_lc = tpf.to_lightcurve(aperture_mask=eroded_aperture_mask)
                     break
-            single_transit_file = singleTransitProcessInput.data_dir + "/single_transit_" + str(transit_time) + ".png"
-            tpf_single_transit_file = singleTransitProcessInput.data_dir + "/tpf_single_transit_" + str(transit_time) + ".png"
+            single_transit_file = single_transit_process_input.data_dir + "/single_transit_" + str(transit_time) + ".png"
+            tpf_single_transit_file = single_transit_process_input.data_dir + "/tpf_single_transit_" + str(transit_time) + ".png"
             t1 = transit_time - duration / 2
             t4 = transit_time + duration / 2
             model_time, model_flux = Vetter.get_transit_model(duration, transit_time,
                                                               (transit_time - plot_range,
                                                                transit_time + plot_range),
-                                                              singleTransitProcessInput.depth,
-                                                              singleTransitProcessInput.period,
-                                                              singleTransitProcessInput.rp_rstar,
-                                                              singleTransitProcessInput.a_rstar)
+                                                              single_transit_process_input.depth,
+                                                              single_transit_process_input.period,
+                                                              single_transit_process_input.rp_rstar,
+                                                              single_transit_process_input.a_rstar)
             momentum_dumps_lc_data = None
             if not zoom_lc_data["quality"].isnull().all():
                 momentum_dumps_lc_data = zoom_lc_data[np.bitwise_and(zoom_lc_data["quality"].to_numpy(),
@@ -210,14 +206,16 @@ class Vetter:
             axs[0].scatter(plot_time, plot_flux, color="darkorange", label="Photometry used aperture")
             axs[0].set_xlim([transit_time - plot_range, transit_time + plot_range])
             axs[0].set_title("Single Transit")
-            if momentum_dumps_lc_data is not None and len(momentum_dumps_lc_data) > 1:
+            if momentum_dumps_lc_data is not None and len(momentum_dumps_lc_data) > 0:
                 first_momentum_dump = True
                 for index, momentum_dump_row in momentum_dumps_lc_data.iterrows():
                     if first_momentum_dump:
-                        axs[0].axvline(x=momentum_dump_row["time"], color='purple', label='Momentum dump')
+                        axs[0].axvline(x=momentum_dump_row["time"], color='purple', alpha=0.3,
+                                       ls='--', lw=2, label='Momentum dump')
                         first_momentum_dump = False
                     else:
-                        axs[0].axvline(x=momentum_dump_row["time"], color='purple')
+                        axs[0].axvline(x=momentum_dump_row["time"], color='purple', alpha=0.3,
+                                       ls='--', lw=2)
             axs[0].legend(loc='upper left')
             axs[0].set_xlim([transit_time - plot_range, transit_time + plot_range])
             axs[0].set_xlabel("Time (d)")
@@ -244,7 +242,7 @@ class Vetter:
             axs[2].set_title("Y-axis drift")
             axs[2].set_xlabel("Time (d)")
             axs[2].set_ylabel("Normalized Y-axis data")
-            if eroded_aperture_mask is not None and True in eroded_aperture_mask and smaller_aperture_lc is not None:
+            if smaller_aperture_lc is not None:
                 axs[3].plot(model_time, model_flux, color="red")
                 axs[3].set_xlim([transit_time - plot_range, transit_time + plot_range])
                 axs[3].set_title("SAP comparison")
@@ -252,11 +250,11 @@ class Vetter:
                 axs[3].set_xlabel("Time (d)")
                 axs[3].set_ylabel("Flux norm.")
                 chosen_aperture_lc.flux = wotan.flatten(chosen_aperture_lc.time.value,
-                                                    chosen_aperture_lc.flux.value, window_length=0.75,
-                                                    return_trend=False, method="biweight", break_tolerance=0.5)
+                                                        chosen_aperture_lc.flux.value, window_length=0.75,
+                                                        return_trend=False, method="biweight", break_tolerance=0.5)
                 smaller_aperture_lc.flux = wotan.flatten(smaller_aperture_lc.time.value,
-                                                    smaller_aperture_lc.flux.value, window_length=0.75,
-                                                    return_trend=False, method="biweight", break_tolerance=0.5)
+                                                         smaller_aperture_lc.flux.value, window_length=0.75,
+                                                         return_trend=False, method="biweight", break_tolerance=0.5)
                 chosen_aperture_lc = chosen_aperture_lc[
                     (chosen_aperture_lc.time.value - plot_range < transit_time) &
                     (chosen_aperture_lc.time.value + plot_range > transit_time)]
@@ -270,7 +268,7 @@ class Vetter:
             axs[3].legend(loc='upper left')
             axs[4] = tpf_short_framed.plot(axs[4], aperture_mask=aperture_mask)
             axs[4].set_title("TPF apertures comparison")
-            if eroded_aperture_mask is not None and True in eroded_aperture_mask and smaller_aperture_lc is not None:
+            if smaller_aperture_lc is not None:
                 parsed_aperture = tpf_short_framed._parse_aperture_mask(eroded_aperture_mask)
                 for i in range(tpf_short_framed.shape[1]):
                     for j in range(tpf_short_framed.shape[2]):
