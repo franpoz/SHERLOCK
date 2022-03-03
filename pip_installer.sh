@@ -27,6 +27,7 @@ if ! [[ -z ${tests_results} ]]; then
   echo "Push docker image with tag ${git_tag}"
   sudo docker push sherlockpipe/sherlockpipe:latest
   sudo docker push sherlockpipe/sherlockpipe:${git_tag}
+  sudo docker images prune -all
 else
   echo "TESTS FAILED. See tests.log"
 fi

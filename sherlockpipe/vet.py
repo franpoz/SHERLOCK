@@ -1,23 +1,24 @@
 # from __future__ import print_function, absolute_import, division
 import logging
 import multiprocessing
-import shutil
-import types
-from distutils.dir_util import copy_tree
 from pathlib import Path
 import traceback
 
+import PIL
 import batman
 import foldedleastsquares
+import lcbuilder
 import lightkurve
 import numpy as np
 import matplotlib
 import matplotlib.pyplot as plt
 import matplotlib.gridspec as gridspec
+import wotan
 import yaml
 from lcbuilder.constants import CUTOUT_SIZE
+from lcbuilder.lcbuilder_class import LcBuilder
 from lcbuilder.photometry.aperture_extractor import ApertureExtractor
-from lightkurve import TessLightCurve
+from lightkurve import TessLightCurve, TessTargetPixelFile, KeplerTargetPixelFile
 from matplotlib.colorbar import Colorbar
 from matplotlib import patches
 from astropy.visualization.mpl_normalize import ImageNormalize
@@ -25,35 +26,15 @@ from astropy.table import Table
 from astropy.io import ascii
 import astropy.visualization as stretching
 from argparse import ArgumentParser
-
-from scipy import stats
-
-from sherlockpipe import tpfplotter
+from scipy import stats, ndimage
+from sherlockpipe import tpfplotter, constants
 import six
 import sys
-import sherlockpipe.LATTE
 sys.modules['astropy.extern.six'] = six
-sys.modules['LATTE'] = sherlockpipe.LATTE
-
 matplotlib.use('Agg')
 import pandas as pd
 import os
-from os.path import exists
-import ast
-import csv
-from sherlockpipe.LATTE import LATTEutils, LATTEbrew
-from os import path
 from math import ceil
-
-
-# get the system path
-syspath = str(os.path.abspath(LATTEutils.__file__))[0:-14]
-# ---------
-
-# --- IMPORTANT TO SET THIS ----
-out = 'pipeline'  # or TALK or 'pipeline'
-ttran = 0.1
-resources_dir = path.join(path.dirname(__file__))
 
 
 class Vetter:
@@ -61,88 +42,18 @@ class Vetter:
     Provides transiting candidate vetting information like centroids and spaceship motion, momentum dumps, neighbours
     curves inspection and more to give a deeper insight on the quality of the candidate signal.
     """
-    def __init__(self, object_dir, validate):
-        self.args = types.SimpleNamespace()
-        self.args.noshow = True
-        self.args.north = False
-        self.args.o = True
-        self.args.mpi = False
-        self.args.auto = True
-        self.args.save = True
-        self.args.nickname = ""  # TODO do we set the sherlock id?
-        self.args.FFI = False  # TODO get this from input
-        self.args.targetlist = "best_signal_latte_input.csv"
-        self.args.new_path = ""  # TODO check what to do with this
+    def __init__(self, object_dir):
         self.object_dir = os.getcwd() if object_dir is None else object_dir
         self.latte_dir = str(Path.home()) + "/.sherlockpipe/latte/"
         if not os.path.exists(self.latte_dir):
             os.mkdir(self.latte_dir)
         self.data_dir = self.object_dir
-        self.validation_runs = 5
-        self.validate = validate
 
-    def update(self):
+    def __process(self, indir, id, sectors_in, t0, period, duration, depth, rp_rstar, a_rstar, ffi, run, curve, cpus):
         """
-        Updates the LATTE metadata to be up to date with the latest TESS information.
-        """
-        indir = self.latte_dir
-        if os.path.exists(indir) and os.path.isdir(indir):
-            shutil.rmtree(indir, ignore_errors=True)
-        os.makedirs(indir)
-        with open("{}/_config.txt".format(indir), 'w') as f:
-            f.write(str(indir))
-        logging.info("Download the text files required ... ")
-        logging.info("Only the manifest text files (~325 M) will be downloaded and no TESS data.")
-        logging.info("This step may take a while but luckily it only has to run once... \n")
-        if not os.path.exists("{}".format(indir)):
-            os.makedirs(indir)
-        if not os.path.exists("{}/data".format(indir)):
-            os.makedirs("{}/data".format(indir))
-        outF = open(indir + "/data/temp.txt", "w")
-        outF.write("#all LC file links")
-        outF.close()
-        outF = open(indir + "/data/temp_tp.txt", "w+")
-        outF.write("#all LC file links")
-        outF.close()
-        LATTEutils.data_files(indir)
-        LATTEutils.tp_files(indir)
-        LATTEutils.TOI_TCE_files(indir)
-        LATTEutils.momentum_dumps_info(indir)
-
-    def __prepare(self, candidate_df):
-        """
-        Downloads and fills files to be used by LATTE analysis.
-        @return: the latte used directory, an open df to be used by LATTE analysis and the tic selected
-        """
-        # check whether a path already exists
-        indir = self.latte_dir
-        # SAVE the new output path
-        if not os.path.exists("{}/_config.txt".format(indir)):
-            self.update()
-        candidate_df['id'] = candidate_df['id'].str.replace("TIC ", "")
-        TIC_wanted = list(set(candidate_df['id']))
-        nlc = len(TIC_wanted)
-        logging.info("nlc length: {}".format(nlc))
-        logging.info('{}/manifest.csv'.format(str(indir)))
-        if exists('{}/manifest.csv'.format(str(indir))):
-            logging.info("Existing manifest file found, will skip previously processed LCs and append to end of manifest file")
-        else:
-            logging.info("Creating new manifest file")
-            metadata_header = ['id', 'Marked Transits', 'Sectors', 'RA', 'DEC', 'Solar Rad', 'TMag', 'Teff',
-                               'thissector', 'TOI', 'TCE', 'TCE link', 'EB', 'Systematics', 'Background Flux',
-                               'Centroids Positions', 'Momentum Dumps', 'Aperture Size', 'In/out Flux', 'Keep',
-                               'Comment', 'starttime']
-            with open('{}/manifest.csv'.format(str(indir)), 'w') as f:  # save in the photometry folder
-                writer = csv.writer(f, delimiter=',')
-                writer.writerow(metadata_header)
-        return indir, candidate_df, TIC_wanted, candidate_df.iloc[0]["ffi"]
-
-    def __process(self, indir, tic, sectors_in, t0, period, duration, depth, rp_rstar, a_rstar, ffi, run, curve):
-        """
-        Performs the LATTE analysis to generate PNGs and also the TPFPlotter analysis to get the field of view
-        information.
+        Performs the analysis to generate PNGs and Data Validation Report.
         @param indir: the vetting source and resources directory
-        @param tic: the tic to be processed
+        @param id: the tic to be processed
         @param sectors_in: the sectors to be used for the given tic
         @param t0: the candidate signal first epoch
         @param period: the candidate signal period
@@ -153,197 +64,249 @@ class Vetter:
         @param curve: The selected light curve in the given run
         @return: the given tic
         """
-        logging.info("Running TESS Point")
-        sectors_all, ra, dec = LATTEutils.tess_point(indir, tic)
-        try:
-            sectors = list(set(sectors_in) & set(sectors_all))
-            if len(sectors) == 0:
-                logging.info("The target was not observed in the sector(s) you stated ({}). \
-                        Therefore take all sectors that it was observed in: {}".format(sectors, sectors_all))
-                sectors = sectors_all
-        except:
-            sectors = sectors_all
-        logging.info("Downloading LATTE data")
-        sectors = np.sort(sectors)
-        if not ffi:
-            alltime, allflux, allflux_err, all_md, alltimebinned, allfluxbinned, allx1, allx2, ally1, ally2, alltime12, allfbkg, start_sec, end_sec, in_sec, tessmag, teff, srad = LATTEutils.download_data(
-                indir, sectors, tic)
-        else:
-            alltime_list, allflux, allflux_small, allflux_flat, all_md, allfbkg, allfbkg_t, start_sec, end_sec, in_sec, X1_list, X4_list, apmask_list, arrshape_list, tpf_filt_list, t_list, bkg_list, tpf_list = LATTEutils.download_data_FFI(indir, sectors, syspath, sectors_all, tic, True)
-            srad = "-"
-            tessmag = "-"
-            teff = "-"
-            alltime = alltime_list
-        simple = False
-        BLS = False
-        model = False
-        save = True
-        DV = True
+        logging.info("Running Transit Plots")
         lc_file = "/" + str(run) + "/lc_" + str(curve) + ".csv"
         lc_file = self.object_dir + lc_file
+        lc_data_file = self.object_dir + "/lc_data.csv"
+        tpfs_dir = self.object_dir + "/tpfs"
+        apertures = yaml.load(open(self.object_dir + "/apertures.yaml"), yaml.SafeLoader)
+        apertures = apertures["sectors"]
+        lc, lc_data, tpfs = Vetter.initialize_lc_and_tpfs(id, lc_file, lc_data_file, tpfs_dir)
+        self.plot_folded_curve(self.data_dir, id, lc, period, t0, duration, depth / 1000, rp_rstar, a_rstar)
+        last_time = lc.time.value[len(lc.time.value) - 1]
+        num_of_transits = int(ceil(((last_time - t0) / period)))
+        transit_lists = t0 + period * range(0, num_of_transits)
+        time_as_array = lc.time.value
+        transits_in_data = [time_as_array[(transit > time_as_array - 0.5) & (transit < time_as_array + 0.5)] for transit in transit_lists]
+        transit_lists = transit_lists[[len(transits_in_data_set) > 0 for transits_in_data_set in transits_in_data]]
+        plot_transits_inputs = []
+        for index, transit_times in enumerate(transit_lists):
+            plot_transits_inputs.append(SingleTransitProcessInput(self.data_dir, str(id), lc_file, lc_data_file,
+                                                                  tpfs_dir, apertures, transit_times, depth / 1000,
+                                                                  duration, period, rp_rstar, a_rstar))
+        with multiprocessing.Pool(processes=cpus) as pool:
+            pool.map(Vetter.plot_single_transit, plot_transits_inputs)
+
+    @staticmethod
+    def initialize_lc_and_tpfs(id, lc_file, lc_data_file, tpfs_dir):
         lc = pd.read_csv(lc_file, header=0)
+        lc_data = pd.read_csv(lc_data_file, header=0)
+        lc_data = Vetter.normalize_lc_data(lc_data)
         time, flux, flux_err = lc["#time"].values, lc["flux"].values, lc["flux_err"].values
         lc_len = len(time)
         zeros_lc = np.zeros(lc_len)
-        logging.info("Preparing folded light curves for target")
         lc = TessLightCurve(time=time, flux=flux, flux_err=flux_err, quality=zeros_lc)
         lc.extra_columns = []
-        self.plot_folded_curve(self.data_dir, "TIC " + tic, lc, period, t0, duration, depth / 1000, rp_rstar, a_rstar)
-        transit_list = []
-        last_time = alltime[len(alltime) - 1]
-        num_of_transits = int(ceil(((last_time - t0) / period)))
-        transit_lists = t0 + period * range(0, num_of_transits)
-        time_as_array = np.array(alltime)
-        transits_in_data = [time_as_array[(transit > time_as_array - 0.5) & (transit < time_as_array + 0.5)] for transit in transit_lists]
-        transit_lists = transit_lists[[len(transits_in_data_set) > 0 for transits_in_data_set in transits_in_data]]
-        transit_lists = [transit_lists[x:x + 3] for x in range(0, len(transit_lists), 3)]
-        for index, transit_list in enumerate(transit_lists):
-            transit_results_dir = self.data_dir + "/" + str(index)
-            if not os.path.exists(transit_results_dir):
-                os.mkdir(transit_results_dir)
-            Vetter.plot_single_transits(transit_results_dir, "TIC " + str(tic), lc, transit_list, duration, depth / 1000, period, rp_rstar, a_rstar)
-            logging.info("Brewing LATTE data for transits at T0s: %s", str(transit_list))
-            try:
-                if not ffi:
-                    LATTEbrew.brew_LATTE(tic, indir, syspath, transit_list, simple, BLS, model, save, DV, sectors,
-                                         sectors_all,
-                                         alltime, allflux, allflux_err, all_md, alltimebinned, allfluxbinned, allx1, allx2,
-                                         ally1, ally2, alltime12, allfbkg, start_sec, end_sec, in_sec, tessmag, teff, srad, ra,
-                                         dec, self.args)
-                else:
-                    LATTEbrew.brew_LATTE_FFI(tic, indir, syspath, transit_list, simple, BLS, model, save, DV, sectors,
-                                             sectors_all, alltime, allflux_flat, allflux_small, allflux, all_md, allfbkg,
-                                             allfbkg_t, start_sec, end_sec, in_sec, X1_list, X4_list, apmask_list,
-                                             arrshape_list, tpf_filt_list, t_list, bkg_list, tpf_list, ra, dec, self.args)
-                # LATTE_DV.LATTE_DV(tic, indir, syspath, transit_list, sectors_all, simple, BLS, model, save, DV, sectors,
-                #                      sectors_all,
-                #                      alltime, allflux, allflux_err, all_md, alltimebinned, allfluxbinned, allx1, allx2,
-                #                      ally1, ally2, alltime12, allfbkg, start_sec, end_sec, in_sec, tessmag, teff, srad, ra,
-                #                      dec, self.args)
-                tp_downloaded = True
-                copy_tree(vetter.latte_dir + "/" + tic, transit_results_dir)
-                shutil.rmtree(vetter.latte_dir + "/" + tic, ignore_errors=True)
-            except Exception as e:
-                traceback.print_exc()
-                # see if it made any plots - often it just fails on the TPs as they are very large
-                if exists("{}/{}/{}_fullLC_md.png".format(indir, tic, tic)):
-                    logging.warning("couldn't download TP but continue anyway")
-                    tp_downloaded = False
-                    shutil.move(vetter.latte_dir + "/" + tic, transit_results_dir)
-                else:
-                    continue
-        # check again whether the TPs downloaded - depending on where the code failed it might still have worked.
-        if exists("{}/{}/{}_aperture_size.png".format(indir, tic, tic)):
-            tp_downloaded = True
-        else:
-            tp_downloaded = False
-            logging.warn("code ran but no TP -- continue anyway")
-        # -------------
-        # check whether it's a TCE or a TOI
-
-        # TCE -----
-        lc_dv = np.genfromtxt('{}/data/tesscurl_sector_all_dv.sh'.format(indir), dtype=str)
-        TCE_links = []
-        for i in lc_dv:
-            if str(tic) in str(i[6]):
-                TCE_links.append(i[6])
-        if len(TCE_links) == 0:
-            TCE = " - "
-            TCE = False
-        else:
-            TCE_links = np.sort(TCE_links)
-            TCE_link = TCE_links[0]  # this link should allow you to acess the MAST DV report
-            TCE = True
-        # TOI -----TOI_planets = pd.read_csv('{}/data/TOI_list.txt'.format(indir), comment="#")
-        # TOIpl = TOI_planets.loc[TOI_planets['TIC'] == float(tic)]
-        #TOI = False
-        # TODO check why TOI is useful
-        # else:
-        #     TOI = True
-        #     TOI_name = (float(TOIpl["Full TOI ID"]))
-        # -------------
-        # return the tic so that it can be stored in the manifest to keep track of which files have already been produced
-        # and to be able to skip the ones that have already been processed if the code has to be restarted.
-        mnd = {}
-        mnd['id'] = tic
-        mnd['MarkedTransits'] = transit_list
-        mnd['Sectors'] = sectors_all
-        mnd['RA'] = ra
-        mnd['DEC'] = dec
-        mnd['SolarRad'] = srad
-        mnd['TMag'] = tessmag
-        mnd['Teff'] = teff
-        mnd['thissector'] = sectors
-        # make empty fields for the test to be checked
-        mnd['TOI'] = " "
-        if TCE == True:
-            mnd['TCE'] = "Yes"
-            mnd['TCE_link'] = TCE_link
-        else:
-            mnd['TCE'] = " "
-            mnd['TCE_link'] = " "
-        mnd['EB'] = " "
-        mnd['Systematics'] = " "
-        mnd['TransitShape'] = " "
-        mnd['BackgroundFlux'] = " "
-        mnd['CentroidsPositions'] = " "
-        mnd['MomentumDumps'] = " "
-        mnd['ApertureSize'] = " "
-        mnd['InoutFlux'] = " "
-        mnd['Keep'] = " "
-        mnd['Comment'] = " "
-        mnd['starttime'] = np.nanmin(alltime) if not isinstance(alltime, str) else "-"
-        return mnd
+        tpfs = []
+        mission, mission_prefix, mission_int_id = LcBuilder().parse_object_info(id)
+        for tpf_file in os.listdir(tpfs_dir):
+            tpf = TessTargetPixelFile(tpfs_dir + "/" + tpf_file) if mission == lcbuilder.constants.MISSION_TESS else \
+                KeplerTargetPixelFile(tpfs_dir + "/" + tpf_file)
+            tpfs.append(tpf)
+        return lc, lc_data, tpfs
 
     @staticmethod
-    def plot_single_transits(file_dir, id, lc, transit_times, duration, depth, period, rp_rstar, a_rstar):
-        """
-        Plots the phase-folded curve of the candidate for period, 2 * period and period / 2.
-        @param file_dir: the directory to store the plot
-        @param id: the target id
-        @param lc: the input light curve with the data
-        @param transit_times: the single transits T0s
-        @param duration: the transit duration
-        @param depth: the transit depth
-        """
-        duration = duration / 60 / 24
-        figsize = (8, 8)  # x,y
-        rows = len(transit_times)
-        cols = 1
-        fig, axs = plt.subplots(rows, cols, figsize=figsize, constrained_layout=True)
-        for index in np.arange(0, len(transit_times)):
-            current_axs = axs[index] if isinstance(axs, np.ndarray) or isinstance(axs, list) else axs
-            Vetter.plot_single_transit(id, current_axs, lc, transit_times[index], depth, duration, period, rp_rstar, a_rstar)
-        plt.savefig(file_dir + "/single_transits.png", dpi=200)
-        fig.clf()
-        plt.close(fig)
+    def normalize_lc_data(lc_data):
+        logging.info("Normalizing lc_data")
+        time = lc_data["time"].to_numpy()
+        dif = time[1:] - time[:-1]
+        jumps = np.where(np.abs(dif) > 1)[0]
+        jumps = np.append(jumps, len(lc_data))
+        previous_jump_index = 0
+        for jumpIndex in jumps:
+            token = lc_data["centroids_x"][previous_jump_index:jumpIndex]
+            lc_data["centroids_x"][previous_jump_index:jumpIndex] = token - np.nanmedian(token)
+            token = lc_data["centroids_y"][previous_jump_index:jumpIndex]
+            lc_data["centroids_y"][previous_jump_index:jumpIndex] = token - np.nanmedian(token)
+            token = lc_data["motion_x"][previous_jump_index:jumpIndex]
+            lc_data["motion_x"][previous_jump_index:jumpIndex] = token - np.nanmedian(token)
+            token = lc_data["motion_y"][previous_jump_index:jumpIndex]
+            lc_data["motion_y"][previous_jump_index:jumpIndex] = token - np.nanmedian(token)
+            previous_jump_index = jumpIndex
+        return lc_data
 
     @staticmethod
-    def plot_single_transit(id, axs, lc, transit_time, depth, duration, period, rp_rstar, a_rstar):
+    def plot_single_transit(single_transit_process_input):
+        """
+        Plots the single transit info: single transit focused curve, drift and background plots, small vs used aperture
+        photometry and tpf flux values around the transit.
+        @param single_transit_process_input: wrapper class to provide pickable inputs for multiprocessing
+        """
+        lc, lc_data, tpfs = Vetter.initialize_lc_and_tpfs(single_transit_process_input.id,
+                                                          single_transit_process_input.lc_file,
+                                                          single_transit_process_input.lc_data_file,
+                                                          single_transit_process_input.tpfs_dir)
+        transit_time = single_transit_process_input.transit_times
+        duration = single_transit_process_input.duration / 60 / 24
+        fig = plt.figure(figsize=(24, 6), constrained_layout=True)
+        fig.suptitle('Vetting of ' + str(single_transit_process_input.id) + ' single transit at T=' +
+                     str(round(transit_time, 2)) + 'd', size=26)
+        gs = gridspec.GridSpec(2, 3, hspace=0.4, wspace=0.1)  # 2 rows, 3 columns
+        ax1 = fig.add_subplot(gs[0, 0])  # First row, first column
+        ax2 = fig.add_subplot(gs[0, 1])  # First row, second column
+        ax3 = fig.add_subplot(gs[0, 2])  # First row, third column
+        ax4 = fig.add_subplot(gs[1, 0])  # First row, third column
+        ax5 = fig.add_subplot(gs[1, 1])  # First row, third column
+        ax6 = fig.add_subplot(gs[1, 2])  # First row, third column
+        axs = [ax1, ax2, ax3, ax4, ax5, ax6]
         sort_args = np.argsort(lc.time.value)
         time = lc.time.value[sort_args]
         flux = lc.flux.value[sort_args]
         flux_err = lc.flux_err.value[sort_args]
-        folded_plot_range = duration * 2
-        folded_phase_zoom_mask = np.where((time > transit_time - folded_plot_range) &
-                                          (time < transit_time + folded_plot_range))
-        folded_phase = time[folded_phase_zoom_mask]
-        folded_y = flux[folded_phase_zoom_mask]
-        if len(folded_phase) > 0:
-            in_transit = (folded_phase > transit_time - duration / 2) & (folded_phase < transit_time + duration / 2)
-            in_transit_center = (np.abs(folded_phase - transit_time)).argmin()
+        plot_range = duration * 2
+        zoom_mask = np.where((time > transit_time - plot_range) & (time < transit_time + plot_range))
+        plot_time = time[zoom_mask]
+        plot_flux = flux[zoom_mask]
+        zoom_lc_data = lc_data[(lc_data["time"] > transit_time - plot_range) & (lc_data["time"] < transit_time +
+                                                                                plot_range)]
+        aperture_mask = None
+        chosen_aperture_lc = None
+        smaller_aperture_lc = None
+        eroded_aperture_mask = None
+        tpf_short_framed = None
+        if len(plot_time) > 0:
+            for tpf in tpfs:
+                tpf_zoom_mask = tpf[(tpf.time.value > transit_time - plot_range) & (tpf.time.value < transit_time +
+                                                                                    plot_range)]
+                if len(tpf_zoom_mask) > 0:
+                    if hasattr(tpf, 'sector') and tpf.sector is not None:
+                        sector = tpf.sector
+                    elif hasattr(tpf, 'campaign') and tpf.campaign:
+                        sector = tpf.campaign
+                    else:
+                        sector = tpf.quarter
+                    tpf_short_framed = tpf[(tpf.time.value > transit_time - plot_range) &
+                                           (tpf.time.value < transit_time + plot_range)]
+                    if len(tpf_short_framed) == 0:
+                        break
+                    aperture_mask = ApertureExtractor.from_pixels_to_boolean_mask(
+                        single_transit_process_input.apertures[sector], tpf.column, tpf.row, tpf.shape[1], tpf.shape[2])
+                    eroded_aperture_mask = ndimage.binary_erosion(aperture_mask)
+                    chosen_aperture_lc = tpf.to_lightcurve(aperture_mask=aperture_mask)
+                    if True in eroded_aperture_mask:
+                        smaller_aperture_lc = tpf.to_lightcurve(aperture_mask=eroded_aperture_mask)
+                    break
+            single_transit_file = single_transit_process_input.data_dir + "/single_transit_" + str(transit_time) + ".png"
+            tpf_single_transit_file = single_transit_process_input.data_dir + "/tpf_single_transit_" + str(transit_time) + ".png"
+            t1 = transit_time - duration / 2
+            t4 = transit_time + duration / 2
             model_time, model_flux = Vetter.get_transit_model(duration, transit_time,
-                                                  (transit_time - folded_plot_range, transit_time + folded_plot_range),
-                                                  depth, period, rp_rstar, a_rstar)
-            axs.plot(model_time, model_flux, color="red")
-            axs.scatter(folded_phase[~in_transit], folded_y[~in_transit], color="gray")
-            axs.scatter(folded_phase[in_transit], folded_y[in_transit], color="darkorange")
-            axs.set_xlim([transit_time - folded_plot_range, transit_time + folded_plot_range])
-            axs.set_title(str(id) + " Single Transit at T={:.2f}d".format(transit_time))
-            #axs.set_ylim([1 - 3 * depth, 1 + 3 * depth])
-            axs.set_xlim([transit_time - folded_plot_range, transit_time + folded_plot_range])
-            axs.set_xlabel("Time (d)")
-            axs.set_ylabel("Flux norm.")
+                                                              (transit_time - plot_range,
+                                                               transit_time + plot_range),
+                                                              single_transit_process_input.depth,
+                                                              single_transit_process_input.period,
+                                                              single_transit_process_input.rp_rstar,
+                                                              single_transit_process_input.a_rstar)
+            momentum_dumps_lc_data = None
+            if not zoom_lc_data["quality"].isnull().all():
+                momentum_dumps_lc_data = zoom_lc_data[np.bitwise_and(zoom_lc_data["quality"].to_numpy(),
+                                                                     constants.MOMENTUM_DUMP_QUALITY_FLAG) >= 1]
+
+            axs[0].plot(model_time, model_flux, color="red")
+            axs[0].scatter(plot_time, plot_flux, color="darkorange", label="Photometry used aperture")
+            axs[0].set_xlim([transit_time - plot_range, transit_time + plot_range])
+            axs[0].set_title("Single Transit")
+            if momentum_dumps_lc_data is not None and len(momentum_dumps_lc_data) > 0:
+                first_momentum_dump = True
+                for index, momentum_dump_row in momentum_dumps_lc_data.iterrows():
+                    if first_momentum_dump:
+                        axs[0].axvline(x=momentum_dump_row["time"], color='purple', alpha=0.3,
+                                       ls='--', lw=2, label='Momentum dump')
+                        first_momentum_dump = False
+                    else:
+                        axs[0].axvline(x=momentum_dump_row["time"], color='purple', alpha=0.3,
+                                       ls='--', lw=2)
+            axs[0].legend(loc='upper left')
+            axs[0].set_xlim([transit_time - plot_range, transit_time + plot_range])
+            axs[0].set_xlabel("Time (d)")
+            axs[0].set_ylabel("Flux norm.")
+            axs[1].scatter(zoom_lc_data["time"], zoom_lc_data["motion_x"], color="red",
+                           label="X-axis motion")
+            axs[1].scatter(zoom_lc_data["time"], zoom_lc_data["centroids_x"],
+                           color="black", label="X-axis centroids")
+            axs[1].axvline(x=transit_time - duration / 2, color='r', label='T1')
+            axs[1].axvline(x=transit_time + duration / 2, color='r', label='T4')
+            axs[1].legend(loc='upper left')
+            axs[1].set_xlim([transit_time - plot_range, transit_time + plot_range])
+            axs[1].set_title("X-axis drift")
+            axs[1].set_xlabel("Time (d)")
+            axs[1].set_ylabel("Normalized Y-axis data")
+            axs[2].scatter(zoom_lc_data["time"], zoom_lc_data["motion_y"], color="red",
+                           label="Y-axis motion")
+            axs[2].scatter(zoom_lc_data["time"], zoom_lc_data["centroids_y"],
+                           color="black", label="Y-axis centroids")
+            axs[2].axvline(x=t1, color='r', label='T1')
+            axs[2].axvline(x=t4, color='r', label='T4')
+            axs[2].legend(loc='upper left')
+            axs[2].set_xlim([transit_time - plot_range, transit_time + plot_range])
+            axs[2].set_title("Y-axis drift")
+            axs[2].set_xlabel("Time (d)")
+            axs[2].set_ylabel("Normalized Y-axis data")
+            if smaller_aperture_lc is not None:
+                axs[3].plot(model_time, model_flux, color="red")
+                axs[3].set_xlim([transit_time - plot_range, transit_time + plot_range])
+                axs[3].set_title("SAP comparison")
+                axs[3].set_xlim([transit_time - plot_range, transit_time + plot_range])
+                axs[3].set_xlabel("Time (d)")
+                axs[3].set_ylabel("Flux norm.")
+                chosen_aperture_lc.flux = wotan.flatten(chosen_aperture_lc.time.value,
+                                                        chosen_aperture_lc.flux.value, window_length=0.75,
+                                                        return_trend=False, method="biweight", break_tolerance=0.5)
+                smaller_aperture_lc.flux = wotan.flatten(smaller_aperture_lc.time.value,
+                                                         smaller_aperture_lc.flux.value, window_length=0.75,
+                                                         return_trend=False, method="biweight", break_tolerance=0.5)
+                chosen_aperture_lc = chosen_aperture_lc[
+                    (chosen_aperture_lc.time.value - plot_range < transit_time) &
+                    (chosen_aperture_lc.time.value + plot_range > transit_time)]
+                smaller_aperture_lc = smaller_aperture_lc[
+                    (smaller_aperture_lc.time.value - plot_range < transit_time) &
+                    (smaller_aperture_lc.time.value + plot_range > transit_time)]
+                axs[3].scatter(chosen_aperture_lc.time.value, chosen_aperture_lc.flux.value, color="darkorange",
+                               label="Photometry used aperture")
+                axs[3].scatter(smaller_aperture_lc.time.value, smaller_aperture_lc.flux.value,
+                               color="c", label="Photometry smaller aperture")
+            axs[3].legend(loc='upper left')
+            axs[4] = tpf_short_framed.plot(axs[4], aperture_mask=aperture_mask)
+            axs[4].set_title("TPF apertures comparison")
+            if smaller_aperture_lc is not None:
+                parsed_aperture = tpf_short_framed._parse_aperture_mask(eroded_aperture_mask)
+                for i in range(tpf_short_framed.shape[1]):
+                    for j in range(tpf_short_framed.shape[2]):
+                        if parsed_aperture[i, j]:
+                            rect = patches.Rectangle(
+                                xy=(j + tpf_short_framed.column - 0.5, i + tpf_short_framed.row - 0.5),
+                                width=1,
+                                height=1,
+                                color='black',
+                                fill=False,
+                                hatch="\\\\",
+                            )
+                            axs[4].add_patch(rect)
+            axs[5].scatter(zoom_lc_data["time"], zoom_lc_data["background_flux"],
+                           color="blue", label="Background Flux")
+            axs[5].axvline(x=t1, color='r', label='T1')
+            axs[5].axvline(x=t4, color='r', label='T4')
+            axs[5].legend(loc='upper left')
+            axs[5].set_xlim([transit_time - plot_range, transit_time + plot_range])
+            axs[5].set_title("Background flux")
+            axs[5].set_xlabel("Time (d)")
+            axs[5].set_ylabel("Background flux (e/s)")
+            plt.savefig(single_transit_file, dpi=100, bbox_inches='tight')
+            plt.clf()
+            plt.close()
+            tpf_short_framed.plot_pixels(aperture_mask=aperture_mask)
+            plt.savefig(tpf_single_transit_file, dpi=100)
+            plt.clf()
+            plt.close()
+            images_list = [single_transit_file, tpf_single_transit_file]
+            imgs = [PIL.Image.open(i) for i in images_list]
+            imgs[0] = imgs[0].resize((imgs[1].size[0],
+                                      int(imgs[1].size[0] / imgs[0].size[0] * imgs[0].size[1])),
+                                      PIL.Image.ANTIALIAS)
+            img_merge = np.vstack((np.asarray(i) for i in imgs))
+            img_merge = PIL.Image.fromarray(img_merge)
+            img_merge.save(single_transit_file, quality=95, optimize=True)
+            os.remove(tpf_single_transit_file)
             logging.info("Processed single transit plot for T0=%.2f", transit_time)
         else:
             logging.info("Not plotting single transit for T0=%.2f as the data is empty", transit_time)
@@ -464,65 +427,53 @@ class Vetter:
         model[model < 1] = 1 - ((1 - model[model < 1]) * depth / (1 - np.min(model)))
         return model_time, model
 
-    def vetting(self, candidate, star, cpus):
+
+    def vetting(self, candidate_df, star, cpus):
         """
         Performs the LATTE vetting procedures
         @param candidate: the candidate dataframe containing id, period, t0, transits and sectors data.
         @param cpus: the number of cpus to be used. This parameter is of no use yet.
         """
-        indir, df, TIC_wanted, ffi = self.__prepare(candidate)
-        for tic in TIC_wanted:
-            # check the existing manifest to see if I've processed this file!
-            manifest_table = pd.read_csv('{}/manifest.csv'.format(str(indir)))
-            # get the transit time list
-            period = df.loc[df['id'] == tic]['period'].iloc[0]
-            t0 = df.loc[df['id'] == tic]['t0'].iloc[0]
-            rp_rstar = df.loc[df['id'] == tic]['rp_rs'].iloc[0]
-            a_rstar = df.loc[df['id'] == tic]['a'].iloc[0] / star["R_star"]
-            duration = df.loc[df['id'] == tic]['duration'].iloc[0]
-            depth = df.loc[df['id'] == tic]['depth'].iloc[0]
-            ffi = df.loc[df['id'] == tic]['ffi'].iloc[0]
-            run = int(candidate.loc[candidate['id'] == tic]['number'].iloc[0])
-            curve = int(candidate.loc[candidate['id'] == tic]['curve'].iloc[0])
-            logging.info("------------------")
-            logging.info("Candidate info")
-            logging.info("------------------")
-            logging.info("Period (d): %.2f", period)
-            logging.info("Epoch (d): %.2f", t0)
-            logging.info("Duration (min): %.2f", duration)
-            logging.info("Depth (ppt): %.2f", depth)
-            logging.info("FFI: %s", ffi)
-            logging.info("Run: %.0f", run)
-            logging.info("Detrend curve: %.0f", curve)
-            try:
-                sectors_in = ast.literal_eval(str(((df.loc[df['id'] == tic]['sectors']).values)[0]))
-                if (type(sectors_in) == int) or (type(sectors_in) == float):
-                    sectors = [sectors_in]
-                else:
-                    sectors = list(sectors_in)
-            except:
-                sectors = [0]
-            index = 0
+        df = candidate_df.iloc[0]
+        # TODO get the transit time list
+        id = df['id']
+        period = df['period']
+        t0 = df['t0']
+        rp_rstar = df['rp_rs']
+        a_rstar = df['a'] / star["R_star"] * constants.AU_TO_RSUN
+        duration = df['duration']
+        depth = df['depth']
+        ffi = df['ffi']
+        run = int(df['number'])
+        curve = int(df['curve'])
+        logging.info("------------------")
+        logging.info("Candidate info")
+        logging.info("------------------")
+        logging.info("Period (d): %.2f", period)
+        logging.info("Epoch (d): %.2f", t0)
+        logging.info("Duration (min): %.2f", duration)
+        logging.info("Depth (ppt): %.2f", depth)
+        logging.info("FFI: %s", ffi)
+        logging.info("Run: %.0f", run)
+        logging.info("Detrend curve: %.0f", curve)
+        try:
+            if (type(df["sectors"]) == int) or (type(df["sectors"]) == float):
+                sectors = [df["sectors"]]
+            else:
+                sectors = [int(sector) for sector in df["sectors"].split(',')]
+        except:
+            sectors = [0]
+        index = 0
+        vetting_dir = self.data_dir + "/vetting_" + str(index)
+        while os.path.exists(vetting_dir) or os.path.isdir(vetting_dir):
             vetting_dir = self.data_dir + "/vetting_" + str(index)
-            while os.path.exists(vetting_dir) or os.path.isdir(vetting_dir):
-                vetting_dir = self.data_dir + "/vetting_" + str(index)
-                index = index + 1
-            os.mkdir(vetting_dir)
-            self.data_dir = vetting_dir
-            ra = None
-            dec = None
-            try:
-                res = self.__process(indir, tic, sectors, t0, period, duration, depth, rp_rstar, a_rstar, ffi, run, curve)
-                ra = res['RA']
-                dec = res['DEC']
-                if res['id'] == -99:
-                    logging.error('something went wrong with the LATTE results')
-            except Exception as e:
-                traceback.print_exc()
-                try:
-                    sectors_all, ra, dec = LATTEutils.tess_point(indir, tic)
-                except Exception as e1:
-                    traceback.print_exc()
+            index = index + 1
+        os.mkdir(vetting_dir)
+        self.data_dir = vetting_dir
+        try:
+            self.__process(vetting_dir, id, sectors, t0, period, duration, depth, rp_rstar, a_rstar, ffi, run, curve, cpus)
+        except Exception as e:
+            traceback.print_exc()
 
     @staticmethod
     def plot_tpf(tpf, sector, aperture, dir):
@@ -685,6 +636,22 @@ class Vetter:
         except Exception as e:
             logging.exception("Exception found when generating Field Of View plots")
 
+class SingleTransitProcessInput:
+    def __init__(self, data_dir, id, lc_file, lc_data_file, tpfs_dir, apertures,
+                                         transit_times, depth, duration, period, rp_rstar, a_rstar):
+        self.data_dir = data_dir
+        self.id = id
+        self.lc_file = lc_file
+        self.lc_data_file = lc_data_file
+        self.tpfs_dir = tpfs_dir
+        self.apertures = apertures
+        self.transit_times = transit_times
+        self.depth = depth
+        self.duration = duration
+        self.period = period
+        self.rp_rstar = rp_rstar
+        self.a_rstar = a_rstar
+
 
 if __name__ == '__main__':
     ap = ArgumentParser(description='Vetting of Sherlock objects of interest')
@@ -693,10 +660,8 @@ if __name__ == '__main__':
     ap.add_argument('--candidate', type=int, default=None, help="The candidate signal to be used.", required=False)
     ap.add_argument('--properties', help="The YAML file to be used as input.", required=False)
     ap.add_argument('--cpus', type=int, default=None, help="The number of CPU cores to be used.", required=False)
-    ap.add_argument('--no_validate', dest='validate', action='store_false',
-                    help="Whether to avoid running statistical validation")
     args = ap.parse_args()
-    vetter = Vetter(args.object_dir, args.validate)
+    vetter = Vetter(args.object_dir)
     file_dir = vetter.object_dir + "/vetting.log"
     if os.path.exists(file_dir):
         os.remove(file_dir)

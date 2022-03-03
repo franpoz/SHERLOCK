@@ -117,7 +117,7 @@ class TestsSherlock(unittest.TestCase):
         try:
             Sherlock([SherlockTarget(MissionFfiIdObjectInfo("TIC 181804752", [9], smooth_enabled=False,
                                                             high_rms_enabled=False),
-                                     detrends_number=1, max_runs=1)]).run()
+                                     detrends_number=1, max_runs=1, oversampling=0.05)]).run()
             self.__assert_run_files(run_dir, assert_rms_mask=False)
         finally:
             self.__clean(run_dir)
@@ -126,7 +126,7 @@ class TestsSherlock(unittest.TestCase):
         run_dir = "TIC181804752_FFI_[9]"
         try:
             Sherlock([SherlockTarget(MissionFfiIdObjectInfo("TIC 181804752", [9], high_rms_enabled=True),
-                                     max_runs=1)]).run()
+                                     max_runs=1, oversampling=0.05)]).run()
             self.__assert_run_files(run_dir)
         finally:
             self.__clean(run_dir)
@@ -135,7 +135,7 @@ class TestsSherlock(unittest.TestCase):
         run_dir = None
         try:
             Sherlock([SherlockTarget(MissionFfiIdObjectInfo("TIC 181804752", [9], high_rms_enabled=True),
-                                     detrends_number=1)], True).run()
+                                     detrends_number=1, oversampling=0.05)], True).run()
             run_dir = "TIC181804752_FFI_[9]"
             self.assertTrue(os.path.exists(run_dir))
             self.assertTrue(os.path.exists(run_dir + "/Periodogram_Initial_TIC181804752_FFI_[9].png"))
@@ -147,7 +147,7 @@ class TestsSherlock(unittest.TestCase):
         run_dir = None
         try:
             Sherlock([SherlockTarget(MissionObjectInfo("TIC 259377017", [5], auto_detrend_enabled=True),
-                                     detrends_number=1, max_runs=1)], True).run()
+                                     detrends_number=1, max_runs=1, oversampling=0.05)], True).run()
             run_dir = "TIC259377017_[5]"
             self.assertTrue(os.path.exists(run_dir))
             self.assertTrue(os.path.exists(run_dir + "/Phase_detrend_period_TIC259377017_[5]_0.52_days.png"))
@@ -159,7 +159,7 @@ class TestsSherlock(unittest.TestCase):
         try:
             Sherlock([SherlockTarget(MissionFfiIdObjectInfo("EPIC 249631677", 'all', high_rms_enabled=True,
                                                             auto_detrend_enabled=False),
-                                     detrends_number=1, max_runs=1)], False).run()
+                                     detrends_number=1, max_runs=1, oversampling=0.05)], False).run()
             run_dir = "EPIC249631677_FFI_all"
             self.assertTrue(os.path.exists(run_dir))
             self.assertTrue(os.path.exists(run_dir + "/Periodogram_Initial_EPIC249631677_FFI_all.png"))
@@ -177,7 +177,7 @@ class TestsSherlock(unittest.TestCase):
                                                                                radius_min=0.10, radius_max=0.15,
                                                                                mass=0.3, mass_min=0.05, mass_max=0.075,
                                                                                ra=13.132258, dec=64.334238)),
-                                     detrends_number=1, max_runs=1)], True).run()
+                                     detrends_number=1, max_runs=1, oversampling=0.05)], True).run()
             run_dir = "TIC181804752_FFI_[9]"
             self.assertTrue(os.path.exists(run_dir))
             self.assertTrue(os.path.exists(run_dir + "/Periodogram_Initial_TIC181804752_FFI_[9].png"))
@@ -201,7 +201,7 @@ class TestsSherlock(unittest.TestCase):
         run_dir = None
         try:
             sherlock = Sherlock([SherlockTarget(MissionFfiIdObjectInfo("TIC 181804752", [9], high_rms_enabled=True),
-                                                detrends_number=1, max_runs=1, oversampling=5.5, t0_fit_margin=0.09,
+                                                detrends_number=1, max_runs=1, oversampling=0.05, t0_fit_margin=0.09,
                                                 duration_grid_step=1.075, fit_method="bls",
                                                 best_signal_algorithm="quorum", quorum_strength=0.31)], False)\
                 .run()
@@ -211,7 +211,7 @@ class TestsSherlock(unittest.TestCase):
                 self.assertTrue('Fit method: box' in content)
                 self.assertTrue('Duration step: 1.075' in content)
                 self.assertTrue('T0 Fit Margin: 0.09' in content)
-                self.assertTrue('Oversampling: 5' in content)
+                self.assertTrue('Oversampling: 0.05' in content)
                 self.assertTrue('Signal scoring algorithm: quorum' in content)
                 self.assertTrue('Quorum algorithm vote strength: 0.31' in content)
             self.__assert_run_files(run_dir)

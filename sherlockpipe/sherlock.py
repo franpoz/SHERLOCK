@@ -6,7 +6,6 @@ import pandas
 import wotan
 import matplotlib.pyplot as plt
 import foldedleastsquares as tls
-from foldedleastsquares.template_generator.default_transit_template_generator import DefaultTransitTemplateGenerator
 import numpy as np
 import os
 import sys
@@ -150,9 +149,29 @@ class Sherlock:
         self.use_ois = True
         self.ois = self.ois[self.ois["Disposition"].notnull()]
         self.ois = self.ois[self.ois["Period (days)"].notnull()]
+        self.ois = self.ois[self.ois["Period (days)"] > 0]
         self.ois = self.ois[self.ois["Depth (ppm)"].notnull()]
-        self.ois = self.ois[(self.ois["Disposition"] == "KP") | (self.ois["Disposition"] == "CP") | (self.ois["Disposition"] == "PC")]
+        self.ois = self.ois[
+            (self.ois["Disposition"] == "KP") | (self.ois["Disposition"] == "CP") | (self.ois["Disposition"] == "PC")]
         self.ois = self.ois[self.ois.duplicated(subset=['Object Id'], keep=False)]
+        self.ois.sort_values(by=['Object Id', 'OI'])
+        return self
+
+    def filter_high_snr_long_period_ois(self):
+        """
+        Filters the in-memory OIs given some basic filters associated to big and long-period targets. This method is added
+        as an example
+        @return: the Sherlock object itself
+        @rtype: Sherlock
+        """
+        self.use_ois = True
+        self.ois = self.ois[self.ois["Disposition"].notnull()]
+        self.ois = self.ois[self.ois["Period (days)"].notnull()]
+        self.ois = self.ois[self.ois["Period (days)"] > 20]
+        self.ois = self.ois[self.ois["Depth (ppm)"].notnull()]
+        self.ois = self.ois[self.ois["Depth (ppm)"] > 7500]
+        self.ois = self.ois[
+            (self.ois["Disposition"] == "KP") | (self.ois["Disposition"] == "CP") | (self.ois["Disposition"] == "PC")]
         self.ois.sort_values(by=['Object Id', 'OI'])
         return self
 
@@ -205,10 +224,12 @@ class Sherlock:
         mission_id = sherlock_target.object_info.mission_id()
         try:
             lc_build = self.__prepare(sherlock_target)
+            object_dir = self.__init_object_dir(sherlock_id)
+            lc_build.lc_data.to_csv(object_dir + "/lc_data.csv")
             time = lc_build.lc.time.value
             flux = lc_build.lc.flux.value
             flux_err = lc_build.lc.flux_err.value
-            period_grid = LcbuilderHelper.calculate_period_grid(time, sherlock_target.period_min,
+            period_grid, oversampling = LcbuilderHelper.calculate_period_grid(time, sherlock_target.period_min,
                                                                 sherlock_target.period_max,
                                                                 sherlock_target.oversampling,
                                                                 lc_build.star_info, lc_build.transits_min_count)
@@ -268,7 +289,6 @@ class Sherlock:
                     logging.info('New best signal does not look very promising. End')
                 self.report[sherlock_id].append(object_report)
                 self.__setup_object_report_logging(sherlock_id, True)
-                object_dir = self.__init_object_dir(sherlock_id)
                 logging.info("Listing most promising candidates for ID %s:", sherlock_id)
                 logging.info("%-12s%-10s%-10s%-10s%-8s%-8s%-8s%-8s%-10s%-14s%-14s%-12s%-25s%-10s%-18s%-20s", "Detrend no.", "Period",
                              "Per_err", "Duration", "T0", "Depth", "SNR", "SDE", "FAP", "Border_score", "Matching OI", "Harmonic",

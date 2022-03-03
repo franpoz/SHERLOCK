@@ -78,11 +78,6 @@ class Updater:
                         break
             with open(os.path.join(os.path.expanduser('~'), '.sherlockpipe/timestamp_eleanor.txt'), 'w+') as f:
                 f.write(str(time.time()))
-        if (force or time.time() - float(latte_timestamp) > 3600 * 24 * 7) and not ois:
-            print("------------------ Reloading LATTE data ------------------")
-            Vetter(None, False).update()
-            with open(os.path.join(os.path.expanduser('~'), '.sherlockpipe/timestamp_latte.txt'), 'w+') as f:
-                f.write(str(time.time()))
         print("DONE")
 
 
