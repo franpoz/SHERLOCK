@@ -1,4 +1,6 @@
 # Thise YAML file illustrates how to provide data for the vetting process.
+# Use it by calling SHERLOCK's vetting module :
+# python3 -m sherlockpipe.vet --properties vetting.yaml
 
 sectors: 2,13,27,28,29
 period: 0.59925 # in days
