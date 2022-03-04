@@ -40,6 +40,7 @@ setuptools.setup(
                         "matplotlib==3.3.4",
                         "mock==4.0.3",
                         'numba==0.53.1', # foldedleastsquares dependency
+                        'patoso==0.0.4',
                         'pyparsing==2.4.7', # Matplotlib dependency
                         'pytz', # Observation plan: Not using version because it gets the DB updated with each release
                         "pyyaml==5.4.1",

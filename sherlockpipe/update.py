@@ -7,7 +7,6 @@ from argparse import ArgumentParser
 import lcbuilder.eleanor
 sys.modules['eleanor'] = sys.modules['lcbuilder.eleanor']
 import eleanor
-from sherlockpipe.vet import Vetter
 from sherlockpipe.ois.OisManager import OisManager
 from eleanor.maxsector import maxsector
 
