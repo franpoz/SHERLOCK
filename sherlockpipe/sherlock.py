@@ -244,6 +244,7 @@ class Sherlock:
             lcs, wl = self.__detrend(sherlock_target, time, flux, lc_build.star_info)
             lcs = np.concatenate(([flux], lcs), axis=0)
             wl = np.concatenate(([0], wl), axis=0)
+            transits_stats_df = pandas.DataFrame(columns=['candidate', 't0', 'depth', 'depth_err'])
             while not self.explore and best_signal_score == 1 and id_run <= sherlock_target.max_runs:
                 self.__setup_object_logging(sherlock_id, False)
                 object_report = {}
@@ -252,6 +253,14 @@ class Sherlock:
                     self.__analyse(sherlock_target, time, lcs, flux_err, lc_build.star_info, id_run,
                                    lc_build.transits_min_count, lc_build.cadence, self.report[sherlock_id], wl,
                                    period_grid, lc_build.detrend_period)
+                for index in np.arange(len(transit_results[signal_selection.curve_index].t0s)):
+                    transits_stats_df = transits_stats_df.append({'candidate': str(int(id_run - 1)),
+                                              't0': transit_results[signal_selection.curve_index].t0s[index],
+                                              'depth': transit_results[signal_selection.curve_index].depths[index],
+                                              'depth_err': transit_results[signal_selection.curve_index].depths_err[index]},
+                                             ignore_index=True)
+                transits_stats_df = transits_stats_df.sort_values(by=['candidate', 't0'], ascending=True)
+                transits_stats_df.to_csv(object_dir + "transits_stats.csv", index=False)
                 best_signal_score = signal_selection.score
                 object_report["Object Id"] = mission_id
                 object_report["run"] = id_run
@@ -715,8 +724,11 @@ class Sherlock:
             depths = results.transit_depths[~np.isnan(results.transit_depths)]
             depth = (1. - np.mean(depths)) * 100 / 0.1  # change to ppt units
         else:
-            depths = results.transit_depths
+            t0s = results.transit_times
             depth = results.transit_depths
+        depths = results.transit_depths
+        depths_err = results.transit_depths_uncertainties
+        t0s = np.array(results.transit_times)
         in_transit = tls.transit_mask(time, results.period, results.duration, results.T0)
         transit_count = results.distinct_transit_count
         border_score = self.__compute_border_score(time, results, in_transit, cadence)
@@ -729,7 +741,8 @@ class Sherlock:
             duration = results['duration']
         harmonic = self.__is_harmonic(results, run_results, report, detrend_source_period)
         return TransitResult(results, results.period, results.period_uncertainty, duration,
-                             results.T0, depths, depth, transit_count, results.snr,
+                             results.T0, t0s, depths, depths_err, depth, results.odd_even_mismatch,
+                             results.depth_mean_even, results.depth_mean_odd, transit_count, results.snr,
                              results.SDE, results.FAP, border_score, in_transit, harmonic)
 
     def __calculate_planet_radius(self, star_info, depth):
