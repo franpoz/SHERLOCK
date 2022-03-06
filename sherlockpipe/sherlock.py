@@ -722,12 +722,12 @@ class Sherlock:
         results = model.power(**power_args)
         if results.T0 != 0:
             depths = results.transit_depths[~np.isnan(results.transit_depths)]
-            depth = (1. - np.mean(depths)) * 100 / 0.1  # change to ppt units
+            depth = (1. - np.mean(depths)) * 1000
         else:
             t0s = results.transit_times
             depth = results.transit_depths
-        depths = results.transit_depths
-        depths_err = results.transit_depths_uncertainties
+        depths = (1 - results.transit_depths) * 1000
+        depths_err = results.transit_depths_uncertainties * 1000
         t0s = np.array(results.transit_times)
         in_transit = tls.transit_mask(time, results.period, results.duration, results.T0)
         transit_count = results.distinct_transit_count
@@ -742,8 +742,8 @@ class Sherlock:
         harmonic = self.__is_harmonic(results, run_results, report, detrend_source_period)
         return TransitResult(results, results.period, results.period_uncertainty, duration,
                              results.T0, t0s, depths, depths_err, depth, results.odd_even_mismatch,
-                             results.depth_mean_even, results.depth_mean_odd, transit_count, results.snr,
-                             results.SDE, results.FAP, border_score, in_transit, harmonic)
+                             (1 - results.depth_mean_even[0]) * 1000, (1 - results.depth_mean_odd[0]) * 1000, transit_count,
+                             results.snr, results.SDE, results.FAP, border_score, in_transit, harmonic)
 
     def __calculate_planet_radius(self, star_info, depth):
         rp = np.nan
