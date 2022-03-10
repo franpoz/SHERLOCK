@@ -45,7 +45,6 @@ class Sherlock:
     RESULTS_DIR = './'
     VALID_DETREND_METHODS = ["biweight", "gp"]
     VALID_PERIODIC_DETREND_METHODS = ["biweight", "gp", "cosine", "cofiam"]
-    VALID_SIGNAL_SELECTORS = ["basic", "border-correct", "quorum"]
     NUM_CORES = multiprocessing.cpu_count() - 1
     TOIS_CSV = RESULTS_DIR + 'tois.csv'
     CTOIS_CSV = RESULTS_DIR + 'ctois.csv'
@@ -433,9 +432,12 @@ class Sherlock:
         if sherlock_target.t0_fit_margin is not None:
             logging.info('T0 Fit Margin: %.3f', sherlock_target.t0_fit_margin)
         logging.info('Signal scoring algorithm: %s', sherlock_target.best_signal_algorithm)
-        if sherlock_target.best_signal_algorithm == self.VALID_SIGNAL_SELECTORS[2]:
+        if sherlock_target.best_signal_algorithm == sherlock_target.VALID_SIGNAL_SELECTORS[2]:
             logging.info('Quorum algorithm vote strength: %.2f',
-                         sherlock_target.signal_score_selectors[self.VALID_SIGNAL_SELECTORS[2]].strength)
+                         sherlock_target.signal_score_selectors[sherlock_target.VALID_SIGNAL_SELECTORS[2]].strength)
+        elif sherlock_target.best_signal_algorithm == sherlock_target.VALID_SIGNAL_SELECTORS[5]:
+            logging.info('Quorum algorithm vote strength: %.2f',
+                         sherlock_target.signal_score_selectors[sherlock_target.VALID_SIGNAL_SELECTORS[5]].strength)
         mission, mission_prefix, object_num = self.lcbuilder.parse_object_info(object_info.mission_id())
         if object_info.reduce_simple_oscillations and \
                 object_info.oscillation_max_period < object_info.oscillation_min_period:

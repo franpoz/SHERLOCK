@@ -3,8 +3,11 @@ import os
 
 from lcbuilder.objectinfo.ObjectInfo import ObjectInfo
 
+from sherlockpipe.scoring.BasicSdeSignalSelector import BasicSdeSignalSelector
 from sherlockpipe.scoring.BasicSignalSelector import BasicSignalSelector
+from sherlockpipe.scoring.QuorumSdeBorderCorrectedSignalSelector import QuorumSdeBorderCorrectedSignalSelector
 from sherlockpipe.scoring.QuorumSnrBorderCorrectedSignalSelector import QuorumSnrBorderCorrectedSignalSelector
+from sherlockpipe.scoring.SdeBorderCorrectedSignalSelector import SdeBorderCorrectedSignalSelector
 from sherlockpipe.scoring.SnrBorderCorrectedSignalSelector import SnrBorderCorrectedSignalSelector
 from sherlockpipe.search_zones.HabitableSearchZone import HabitableSearchZone
 from sherlockpipe.search_zones.OptimisticHabitableSearchZone import OptimisticHabitableSearchZone
@@ -12,7 +15,7 @@ from sherlockpipe.search_zones.OptimisticHabitableSearchZone import OptimisticHa
 
 class SherlockTarget:
     MASK_MODES = ['mask', 'subtract']
-    VALID_SIGNAL_SELECTORS = ["basic", "border-correct", "quorum"]
+    VALID_SIGNAL_SELECTORS = ["basic", "border-correct", "quorum", "basic-snr", "border-correct-snr", "quorum-snr"]
 
     def __init__(self, object_info,
                  detrend_method='biweight', detrend_l_min=None, detrend_l_max=None, detrends_number=10,
@@ -65,9 +68,13 @@ class SherlockTarget:
         self.search_zone = search_zone if custom_search_zone is None else "user"
         if custom_search_zone is not None:
             self.search_zones_resolvers["user"] = custom_search_zone
-        self.signal_score_selectors = {self.VALID_SIGNAL_SELECTORS[0]: BasicSignalSelector(),
-                                       self.VALID_SIGNAL_SELECTORS[1]: SnrBorderCorrectedSignalSelector(),
-                                       self.VALID_SIGNAL_SELECTORS[2]: QuorumSnrBorderCorrectedSignalSelector(
+        self.signal_score_selectors = {self.VALID_SIGNAL_SELECTORS[0]: BasicSdeSignalSelector(),
+                                       self.VALID_SIGNAL_SELECTORS[1]: SdeBorderCorrectedSignalSelector(),
+                                       self.VALID_SIGNAL_SELECTORS[2]: QuorumSdeBorderCorrectedSignalSelector(
+                                           quorum_strength, min_quorum),
+                                       self.VALID_SIGNAL_SELECTORS[3]: BasicSdeSignalSelector(),
+                                       self.VALID_SIGNAL_SELECTORS[4]: SdeBorderCorrectedSignalSelector(),
+                                       self.VALID_SIGNAL_SELECTORS[5]: QuorumSdeBorderCorrectedSignalSelector(
                                            quorum_strength, min_quorum),
                                        "user": custom_selection_algorithm}
         self.best_signal_algorithm = best_signal_algorithm if custom_selection_algorithm is None else "user"
