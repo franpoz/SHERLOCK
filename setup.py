@@ -31,6 +31,7 @@ setuptools.setup(
                         'configparser==5.0.1',
                         "corner==2.1.0", # Allesfitter dependency
                         "cython==0.29.21",
+                        "dearwatson==0.1.8" # Vetting
                         "dynesty==1.0.1", # Allesfitter dependency
                         "ellc==1.8.5", # Allesfitter dependency
                         "emcee==3.0.2", # Allesfitter dependency
@@ -40,7 +41,6 @@ setuptools.setup(
                         "matplotlib==3.3.4",
                         "mock==4.0.3",
                         'numba==0.53.1', # foldedleastsquares dependency
-                        'patoso==0.0.4',
                         'pyparsing==2.4.7', # Matplotlib dependency
                         'pytz', # Observation plan: Not using version because it gets the DB updated with each release
                         "pyyaml==5.4.1",
