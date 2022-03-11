@@ -97,7 +97,8 @@ def get_offset(lat, lng, datetime):
 def create_observation_observables(object_id, object_dir, since, name, epoch, epoch_low_err, epoch_up_err, period,
                                    period_low_err, period_up_err, duration,
                                    observatories_file, timezone, latitude, longitude, altitude,
-                                   max_days, min_altitude, moon_min_dist, moon_max_dist, transit_fraction, baseline):
+                                   max_days, min_altitude, moon_min_dist, moon_max_dist, transit_fraction, baseline,
+                                   error_alert=True):
     """
 
     @param object_id: the candidate id
@@ -123,6 +124,7 @@ def create_observation_observables(object_id, object_dir, since, name, epoch, ep
     @param transit_fraction: the minimum transit observability (0.25 for at least ingress/egress, 0.5 for ingress/egress
     + midtime, 1 for ingress, egress and midtime).
     @param baseline: the required baseline in hours.
+    @param: error_alert: whether to create the alert date to signal imprecise observations
     @return: the generated data and target folders
     """
     if observatories_file is not None:
@@ -139,7 +141,7 @@ def create_observation_observables(object_id, object_dir, since, name, epoch, ep
     else:
         primary_eclipse_time = Time(epoch, format='jd')
     target = FixedTarget(SkyCoord(coords, unit=(u.deg, u.deg)))
-    n_transits = max_days // period
+    n_transits = int(max_days // period)
     system = EclipsingSystem(primary_eclipse_time=primary_eclipse_time, orbital_period=u.Quantity(period, unit="d"),
                              duration=u.Quantity(duration, unit="h"), name=name)
     observables_df = pd.DataFrame(columns=['observatory', 'timezone', 'start_obs', 'end_obs', 'ingress', 'egress',
@@ -181,7 +183,7 @@ def create_observation_observables(object_id, object_dir, since, name, epoch, ep
             egress = ingress_egress_times[i][1]
             lowest_ingress = ingress - low_err_delta[i]
             highest_egress = egress + up_err_delta[i]
-            if (highest_egress - lowest_ingress).jd > 0.33:
+            if error_alert and (highest_egress - lowest_ingress).jd > 0.33:
                 alert_date = midtransit_time if (alert_date is None) or (alert_date is not None and alert_date >= midtransit_time) else alert_date
                 break
             else:
@@ -302,7 +304,7 @@ if __name__ == '__main__':
                     required=False)
     ap.add_argument('--moon_max_dist', help="Minimum required moon distance for moon maximum illumination.", default=55,
                     required=False)
-    ap.add_argument('--max_days', help="Maximum number of days for the plan to take.", default=365, required=False)
+    ap.add_argument('--max_days', help="Maximum number of days for the plan to take.", type=int, default=365, required=False)
     ap.add_argument('--transit_fraction', help="Minimum transit fraction to be observable.", type=float, default=0.5,
                     required=False)
     ap.add_argument('--baseline', help="Required baseline (in hours) for the observation.", type=float, default=0.5,
@@ -312,6 +314,8 @@ if __name__ == '__main__':
                     required=False)
     ap.add_argument('--error_sigma', help="Sigma to be used for epoch and period errors.", type=int, default=2,
                     required=False)
+    ap.add_argument('--no_error_alert', help="Will not block imprecise observations to be plotted.",
+                    action='store_true', required=False)
     args = ap.parse_args()
     if args.observatories is None and (args.lat is None or args.lon is None or args.alt is None):
         raise ValueError("You either need to set the 'observatories' property or the lat, lon and alt.")
@@ -357,7 +361,7 @@ if __name__ == '__main__':
                                                             period_up_err, duration, args.observatories, args.tz, args.lat,
                                                             args.lon, args.alt, args.max_days, args.min_altitude,
                                                             args.moon_min_dist, args.moon_max_dist, args.transit_fraction,
-                                                            args.baseline)
+                                                            args.baseline, not args.no_error_alert)
         report = ObservationReport(observatories_df, observables_df, alert_date, object_id, name, plan_dir, ra, dec,
                                    epoch, epoch_low_err, epoch_up_err, period, period_low_err, period_up_err, duration,
                                    duration_low_err, duration_up_err, depth, depth_low_err, depth_up_err,
