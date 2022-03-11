@@ -17,8 +17,7 @@ import pandas as pd
 import os
 import ast
 import triceratops.triceratops as tr
-from sherlockpipe.vet import Vetter
-from lcbuilder.eleanor import maxsector
+from watson.watson import Watson
 
 
 class Validator:
@@ -186,7 +185,7 @@ class Validator:
             lc = KeplerLightCurve(time=time, flux=flux, flux_err=flux_err, quality=zeros_lc)
         lc.extra_columns = []
         fig, axs = plt.subplots(1, 1, figsize=(8, 4), constrained_layout=True)
-        axs, bin_centers, bin_means, bin_errs = Vetter.compute_phased_values_and_fill_plot(object_id, axs, lc, period,
+        axs, bin_centers, bin_means, bin_errs = Watson.compute_phased_values_and_fill_plot(object_id, axs, lc, period,
                                                                                            t0 + period / 2, depth,
                                                                                            duration, rp_rstar, a_rstar,
                                                                                            bins=bins)
