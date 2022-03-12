@@ -1,12 +1,9 @@
-# from __future__ import print_function, absolute_import, division
 import logging
 import math
 import multiprocessing
 import re
 import shutil
 import sys
-import types
-from pathlib import Path
 
 import allesfitter
 import numpy as np
@@ -49,12 +46,12 @@ class Fitter:
         star_file = allesfit_dir + "/params_star.csv"
         params_file = allesfit_dir + "/params.csv"
         settings_file = allesfit_dir + "/settings.csv"
-        lc_file = self.select_lc_file(candidate_df)
+        lc_file = Fitter.select_lc_file(candidate_df)
         shutil.copyfile(self.object_dir + lc_file, allesfit_dir + "/lc.csv")
         if os.path.exists(sherlock_star_file) and os.path.isfile(sherlock_star_file):
             shutil.copyfile(sherlock_star_file, star_file)
         shutil.copyfile(resources_dir + "/resources/allesfitter/settings.csv", settings_file)
-        fit_width = self.select_fit_width(candidate_df)
+        fit_width = Fitter.select_fit_width(candidate_df)
         # TODO replace sherlock properties from allesfitter files
         # TODO only use params_star when the star mass or radius was not assumed
         logging.info("Preparing fit properties")
@@ -76,7 +73,7 @@ class Fitter:
             f.write(text)
             f.truncate()
         with open(params_file, 'w') as f:
-            f.write(self.fill_candidates_params(candidate_df, star_df, fit_orbit))
+            f.write(Fitter.fill_candidates_params(candidate_df, star_df, fit_orbit, self.detrend))
             f.truncate()
         logging.info("Running initial guess")
         try:
@@ -84,7 +81,7 @@ class Fitter:
         except Exception as e:
             logging.exception(str(e))
         # TODO fix custom_plot for all candidates
-        #self.custom_plot(candidate_row["name"], candidate_row["period"], fit_width, allesfit_dir, "initial_guess")
+        # Fitter.custom_plot(candidate_row["name"], candidate_row["period"], fit_width, allesfit_dir, "initial_guess")
         if not self.only_initial:
             logging.info("Preparing bayesian fit")
             if not self.mcmc:
@@ -103,9 +100,10 @@ class Fitter:
                     logging.exception(str(e))
             logging.info("Generating custom plots")
             # TODO fix custom_plot for all candidates
-            #self.custom_plot(candidate_row["name"], candidate_row["period"], fit_width, allesfit_dir, "posterior")
+            # Fitter.custom_plot(candidate_row["name"], candidate_row["period"], fit_width, allesfit_dir, "posterior")
 
-    def select_lc_file(self, candidate_df):
+    @staticmethod
+    def select_lc_file(candidate_df):
         """
         Chooses the lightcurve file to be used for the fit. If the number of candidates is greater than 1, it will use
         the PDCSAP_flux by default. If only one candidate is used, the candidate is fit against its better Sherlock
@@ -120,7 +118,8 @@ class Fitter:
             lc_file = "/" + str(candidate_row["number"]) + "/lc_" + str(candidate_row["curve"]) + ".csv"
         return lc_file
 
-    def select_fit_width(self, candidate_df):
+    @staticmethod
+    def select_fit_width(candidate_df):
         """
         Calculates the window to be used for the fit around the transits.
         @param candidate_df: the candidates dataframe
@@ -133,7 +132,16 @@ class Fitter:
                 fit_width = fit_width if fit_width > row_fit_width else row_fit_width
         return fit_width
 
-    def custom_plot(self, name, period, fit_width, allesfit_dir, mode="posterior"):
+    @staticmethod
+    def custom_plot(name, period, fit_width, allesfit_dir, mode="posterior"):
+        """
+        Creates a custom fit plot from the allesfitter data
+        @param name: the candidate name
+        @param period: the final period
+        @param fit_width: the fit_width window
+        @param allesfit_dir: the directory where allesfitter data is stred
+        @param mode: the allesfitter plot model
+        """
         allesclass = allesfitter.allesclass(allesfit_dir)
         baseline_width = fit_width * 24
         baseline_to_period = fit_width / period
@@ -162,22 +170,24 @@ class Fitter:
         style = ['phasezoom_occ']
         style = ['phase_variations']
 
-    def fill_candidates_params(self, candidate_df, star_df, fit_orbit):
+    @staticmethod
+    def fill_candidates_params(candidate_df, star_df, fit_orbit, detrend_mode):
         """
         Fills the candidate planets initial parameters and their distribution to be fit.
         @param candidate_df: the candidates dataframe
         @param star_df: the star dataframe
         @param fit_orbit: whether to fit eccentricity and arg. of periastron.
+        @param detrend_mode: type of detrend to be used
         @return: the allesfitter candidates parameters
         """
         candidate_priors_text = ""
         for key, row in candidate_df.iterrows():
             candidate_priors_text = candidate_priors_text + \
-                                    self.fill_candidate_params(row, star_df, fit_orbit)
-        return candidate_priors_text + self.fill_instrument_params(star_df)
+                                    Fitter.fill_candidate_params(row, star_df, fit_orbit)
+        return candidate_priors_text + Fitter.fill_instrument_params(star_df, detrend_mode)
 
-
-    def fill_candidate_params(self, candidate_row, star_df, fit_orbit):
+    @staticmethod
+    def fill_candidate_params(candidate_row, star_df, fit_orbit):
         """
         Fills the candidate planet initial parameters and their distribution to be fit.
         @param candidate_row: the candidate row from the dataframe
@@ -199,12 +209,15 @@ ${sherlock:name}_f_s,0.0,${sherlock:fit_orbit},uniform -1.0 1.0,$\sqrt{e_b} \sin
         candidate_params = re.sub('\\${sherlock:t0_min}', str(candidate_row["t0"] - 0.02), candidate_params)
         candidate_params = re.sub('\\${sherlock:t0_max}', str(candidate_row["t0"] + 0.02), candidate_params)
         candidate_params = re.sub('\\${sherlock:period}', str(candidate_row["period"]), candidate_params)
-        candidate_params = re.sub('\\${sherlock:period_min}', str(candidate_row["period"] - candidate_row["per_err"]), candidate_params)
-        candidate_params = re.sub('\\${sherlock:period_max}', str(candidate_row["period"] + candidate_row["per_err"]), candidate_params)
+        candidate_params = re.sub('\\${sherlock:period_min}', str(candidate_row["period"] - candidate_row["per_err"]),
+                                  candidate_params)
+        candidate_params = re.sub('\\${sherlock:period_max}', str(candidate_row["period"] + candidate_row["per_err"]),
+                                  candidate_params)
         candidate_params = re.sub('\\${sherlock:fit_orbit}', str(int(fit_orbit)), candidate_params)
         rp_rs = candidate_row["rp_rs"] if candidate_row["rp_rs"] != "-" else 0.1
         depth = candidate_row["depth"] / 1000
-        # TODO calculate depth error in SHERLOCK maybe given the std deviation from the depths or even using the residuals
+        # TODO calculate depth error in SHERLOCK maybe given the std deviation from the depths or even using the
+        #  residuals
         depth_err = depth * 0.2
         rp_rs_err = 0.5 / math.sqrt(depth) * depth_err
         candidate_params = re.sub('\\${sherlock:rp_rs}', str(rp_rs), candidate_params)
@@ -241,10 +254,12 @@ ${sherlock:name}_f_s,0.0,${sherlock:fit_orbit},uniform -1.0 1.0,$\sqrt{e_b} \sin
         candidate_params = re.sub('\\${sherlock:name}', str(candidate_row["name"]), candidate_params)
         return candidate_params
 
-    def fill_instrument_params(self, star_df):
+    @staticmethod
+    def fill_instrument_params(star_df, detrend_mode):
         """
         Fills the star and systematics information for each instrument (so far only one)
         @param star_df: the star dataframe
+        @param detrend_mode: type of detrend to be used
         @return: the allesfitter instrument params
         """
         instrument_params = """#dilution per instrument,,,,,
@@ -271,9 +286,11 @@ ${sherlock:baseline_params}
         else:
             instrument_params = re.sub('\\${sherlock:ld_a}', "0.5", instrument_params)
             instrument_params = re.sub('\\${sherlock:ld_b}', "0.5", instrument_params)
-        if self.detrend == 'gp':
-            baseline_params = 'baseline_gp_matern32_lnsigma_flux_lc,0.0,1,uniform -15.0 15.0,$\mathrm{gp: \ln{\sigma} (lc)}$,\n' + \
-                              'baseline_gp_matern32_lnrho_flux_lc,0.0,1,uniform -15.0 15.0,$\mathrm{gp: \ln{\rho} (lc)}$,'
+        if detrend_mode == 'gp':
+            baseline_params = 'baseline_gp_matern32_lnsigma_flux_lc,0.0,1,uniform -15.0 15.0,' \
+                              '$\mathrm{gp: \ln{\sigma} (lc)}$,\n' + \
+                              'baseline_gp_matern32_lnrho_flux_lc,0.0,1,uniform -15.0 15.0,' \
+                              '$\mathrm{gp: \ln{\rho} (lc)}$,'
         else:
             baseline_params = ""
         instrument_params = re.sub('\\${sherlock:baseline_params}', baseline_params, instrument_params)
@@ -287,14 +304,14 @@ if __name__ == '__main__':
                     required=False)
     ap.add_argument('--candidate', type=str, default=None, help="The CSV candidate signals to be used.", required=False)
     ap.add_argument('--only_initial', dest='only_initial', action='store_true',
-                        help="Whether to only run an initial guess of the transit")
+                    help="Whether to only run an initial guess of the transit")
     ap.set_defaults(only_initial=False)
     ap.add_argument('--cpus', type=int, default=None, help="The number of CPU cores to be used.", required=False)
     ap.add_argument('--tolerance', type=float, default=0.01, help="The tolerance of the nested sampling algorithm.",
                     required=False)
     ap.add_argument('--mcmc', dest='mcmc', action='store_true', help="Whether to run using mcmc or ns. Default is ns.")
-    ap.add_argument('--detrend', dest='detrend', default="hybrid_spline", help="Type of detrending to be used", required=False,
-                    choices=['no', 'gp'])
+    ap.add_argument('--detrend', dest='detrend', default="hybrid_spline", help="Type of detrending to be used",
+                    required=False, choices=['no', 'gp'])
     ap.add_argument('--fit_orbit', dest='fit_orbit', action='store_true', help="Whether to fit eccentricity and "
                                                                                "argument of periastron")
     ap.add_argument('--properties', help="The YAML file to be used as input.", required=False)
@@ -327,7 +344,8 @@ if __name__ == '__main__':
     candidate_selections = None
     if args.candidate is None:
         user_properties = yaml.load(open(args.properties), yaml.SafeLoader)
-        candidates_df = pd.DataFrame(columns=['id', 'period', 't0', 'duration', 'cpus', 'rp_rs', 'a', 'number', 'name', 'lc'])
+        candidates_df = pd.DataFrame(columns=['id', 'period', 't0', 'duration', 'cpus', 'rp_rs', 'a', 'number', 'name',
+                                              'lc'])
         candidates_df = candidates_df.append(user_properties["planets"], ignore_index=True)
         user_star_df = pd.DataFrame(columns=['R_star', 'M_star'])
         if "star" in user_properties and user_properties["star"] is not None:
@@ -367,7 +385,7 @@ if __name__ == '__main__':
         for candidate_selection in candidate_selections:
             candidates_df['number'][candidate_selection - 1] = candidate_selection
             candidates_df['name'][candidate_selection - 1] = 'SOI_' + \
-                                                            str(candidates_df['number'][candidate_selection - 1])
+                                                             str(candidates_df['number'][candidate_selection - 1])
         candidates_df = candidates_df.iloc[[candidate_selection - 1 for candidate_selection in candidate_selections]]
         logging.info("Selected signal numbers " + str(candidate_selections))
     if args.cpus is None:
