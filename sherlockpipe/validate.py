@@ -1,4 +1,3 @@
-# from __future__ import print_function, absolute_import, division
 import copy
 import logging
 import multiprocessing
@@ -61,7 +60,7 @@ class Validator:
         lc_file = "/" + str(run) + "/lc_" + str(curve) + ".csv"
         lc_file = self.data_dir + lc_file
         try:
-            sectors_in = ast.literal_eval(str(((candidate.loc[candidate['id'] == object_id]['sectors']).values)[0]))
+            sectors_in = ast.literal_eval(str((candidate.loc[candidate['id'] == object_id]['sectors']).values[0]))
             if (type(sectors_in) == int) or (type(sectors_in) == float):
                 sectors = [sectors_in]
             else:
@@ -72,7 +71,8 @@ class Validator:
         object_id = object_id.iloc[0]
         try:
             Validator.execute_triceratops(cpus, validation_dir, object_id, sectors, lc_file, transit_depth,
-                                          period, t0, duration, rp_rstar, a_rstar, bins, scenarios, sigma_mode, contrast_curve_file)
+                                          period, t0, duration, rp_rstar, a_rstar, bins, scenarios, sigma_mode,
+                                          contrast_curve_file)
         except Exception as e:
             traceback.print_exc()
         # try:
@@ -156,7 +156,8 @@ class Validator:
         for sector, aperture in apertures.items():
             if sector in sectors:
                 valid_apertures[sector] = aperture
-                target.plot_field(save=True, fname=save_dir + "/field_S" + str(sector), sector=sector, ap_pixels=aperture)
+                target.plot_field(save=True, fname=save_dir + "/field_S" + str(sector), sector=sector,
+                                  ap_pixels=aperture)
         apertures = np.array([aperture for sector, aperture in apertures.items()])
         valid_apertures = np.array([aperture for sector, aperture in valid_apertures.items()])
         depth = transit_depth / 1000
@@ -199,10 +200,9 @@ class Validator:
         input_n_times = [ValidatorInput(save_dir, copy.deepcopy(target), bin_centers, bin_means, sigma, period, depth,
                                         valid_apertures, value, contrast_curve_file)
                          for value in range(0, scenarios)]
-        thread_validator = TriceratopsThreadValidator()
         logging.info("Start validation processes")
         with Pool(processes=cpus) as pool:
-            validation_results = pool.map(thread_validator.validate, input_n_times)
+            validation_results = pool.map(input_n_times)
         logging.info("Finished validation processes")
         fpp_sum = 0
         fpp2_sum = 0
@@ -438,7 +438,8 @@ class TriceratopsThreadValidator:
     def __init__(self) -> None:
         super().__init__()
 
-    def validate(self, input):
+    @staticmethod
+    def validate(input):
         """
         Computes the input scenario FPP and NFPP. In addition, FPP2 and FPP3+, from the probability boost proposed in
         Lissauer et al. (2012) eq. 8 and 9 for systems where one or more planets have already been confirmed, are also
@@ -453,7 +454,7 @@ class TriceratopsThreadValidator:
         fpp3 = 1 - 50 * (1 - input.target.FPP) / (50 * (1 - input.target.FPP) + input.target.FPP)
         input.target.probs.to_csv(input.save_dir + "/validation_" + str(input.run) + "_scenarios.csv", index=False)
         input.target.plot_fits(save=True, fname=input.save_dir + "/scenario_" + str(input.run) + "_fits",
-                         time=input.time, flux_0=input.flux, flux_err_0=input.sigma)
+                               time=input.time, flux_0=input.flux, flux_err_0=input.sigma)
         return input.target.FPP, input.target.NFPP, fpp2, fpp3, input.target.probs, input.target.star_num, \
                input.target.u1, input.target.u2, input.target.fluxratio_EB, input.target.fluxratio_comp
 
@@ -537,4 +538,5 @@ if __name__ == '__main__':
         cpus = multiprocessing.cpu_count() - 1
     else:
         cpus = args.cpus
-    validator.validate(candidate, star_df.iloc[0], cpus, args.contrast_curve, args.bins, args.scenarios, args.sigma_mode)
+    validator.validate(candidate, star_df.iloc[0], cpus, args.contrast_curve, args.bins, args.scenarios,
+                       args.sigma_mode)
