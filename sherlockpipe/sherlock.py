@@ -18,7 +18,7 @@ from lcbuilder.objectinfo.MissionObjectInfo import MissionObjectInfo
 from lcbuilder.objectinfo.MissionFfiIdObjectInfo import MissionFfiIdObjectInfo
 from lcbuilder.objectinfo.MissionFfiCoordsObjectInfo import MissionFfiCoordsObjectInfo
 from lcbuilder.objectinfo.InvalidNumberOfSectorsError import InvalidNumberOfSectorsError
-from patoso.patoso import Patoso
+from watson.watson import Watson
 
 from sherlockpipe.ois.OisManager import OisManager
 from lcbuilder.star.HabitabilityCalculator import HabitabilityCalculator
@@ -510,7 +510,7 @@ class Sherlock:
             logging.info("Field Of View Plots")
             logging.info("======================================")
             fov_dir = object_dir + "/fov"
-            Patoso.vetting_field_of_view(fov_dir, mission, object_num, lc_build.cadence, lc_build.star_info.ra,
+            Watson.vetting_field_of_view(fov_dir, mission, object_num, lc_build.cadence, lc_build.star_info.ra,
                                          lc_build.star_info.dec, lc_build.sectors if isinstance(lc_build.sectors, list)
                                          else lc_build.sectors.tolist(), lc_build.tpf_source, lc_build.tpf_apertures)
         return lc_build
