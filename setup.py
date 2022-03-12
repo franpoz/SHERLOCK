@@ -31,7 +31,7 @@ setuptools.setup(
                         'configparser==5.0.1',
                         "corner==2.1.0", # Allesfitter dependency
                         "cython==0.29.21",
-                        "dearwatson==0.1.10" # Vetting
+                        "dearwatson==0.1.10", # Vetting
                         "dynesty==1.0.1", # Allesfitter dependency
                         "ellc==1.8.5", # Allesfitter dependency
                         "emcee==3.0.2", # Allesfitter dependency
