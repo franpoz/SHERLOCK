@@ -1,14 +1,11 @@
-# import os
 import datetime
 from astropy.coordinates import Angle
 from reportlab.lib import colors
 from reportlab.lib.pagesizes import A4
-# from reportlab.lib.pagesizes import landscape
 from reportlab.lib.units import inch, cm
 from reportlab.lib.enums import TA_CENTER, TA_JUSTIFY
 from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
-from reportlab.platypus import BaseDocTemplate, PageTemplate, Frame, Paragraph, Spacer, PageBreak, \
-    Image, Table, TableStyle
+from reportlab.platypus import BaseDocTemplate, PageTemplate, Frame, Paragraph, Spacer, Image, Table, TableStyle
 from os import path
 from uncertainties import ufloat
 from astropy import units as u
@@ -16,7 +13,11 @@ from astropy import units as u
 width, height = A4
 resources_dir = path.join(path.dirname(__file__))
 
+
 class ObservationReport:
+    """
+    Used to create a pdf file from the parameters and images generated in the plan stage.
+    """
     LOGO_IMAGE = resources_dir + "/resources/images/sherlock3.png"
     ALERT_IMAGE = resources_dir + "/resources/images/alert.png"
 
@@ -55,11 +56,15 @@ class ObservationReport:
         self.k = k
 
     def df_manipulations(self):
+        """
+        Performs changes of data from the initial dataframe for better formatting in the report.
+        @return: the final dataframe
+        """
         self.df['Observatory'] = self.df['observatory'].str.replace("-", " ")
         self.df['TZ'] = self.df['timezone'].fillna(0).astype('int')
         self.df['TZ'] = self.df['TZ'].astype('str')
         self.df['timezone'].astype(str)
-        # Le quitamos los milisegundos a todos los campos de fecha:
+        # Removing milliseconds from dates:
         self.df['ingress'] = self.df['ingress'].str[:-4]
         self.df['twilight_evening'] = self.df['twilight_evening'].str[:-4]
         self.df['midtime'] = self.df['midtime'].str[:-4]
@@ -74,14 +79,11 @@ class ObservationReport:
         self.df['Image'] = self.df['image_path'].apply(lambda x: Image(x))
 
 
-        # No vale con tener las fechas, las queremos ordenadas por filas. Nos quedamos con las columnas que necesitamos.
-        df_fechas = self.df[['twilight_evening', 'ingress', 'midtime', 'egress', 'start_obs', 'end_obs', 'twilight_morning']]
-        # Les ponemos el nombre definitivo:
-        df_fechas.columns = ['TWE', 'I', 'M', 'E', 'SO', 'EO', 'TWM']
-        # Convertimos el df en un diccionario manteniendo el index como key para ordenarlo.
-        dict_fechas = df_fechas.to_dict('index')
+        # We want to sort the dates row-wise, only keeping the interesting columns
+        df_dates = self.df[['twilight_evening', 'ingress', 'midtime', 'egress', 'start_obs', 'end_obs', 'twilight_morning']]
+        df_dates.columns = ['TWE', 'I', 'M', 'E', 'SO', 'EO', 'TWM']
+        dict_fechas = df_dates.to_dict('index')
         new_dict_fechas = {}
-        # Recorremos el diccionario:
         for item in dict_fechas:
             # Lo ordenamos por los valores de cada key:
             list_of_tuples = sorted(dict_fechas[item].items(), key=lambda item: item[1])
@@ -100,27 +102,21 @@ class ObservationReport:
                 if tup[0] == 'TWE':
                     night = 1
                 list_of_tuples_with_night.append(tup)
-
             # Unimos las tuplas separando key y value con ":":
             join_list = [': '.join(tup) for tup in list_of_tuples_with_night]
             # Para terminar, el nuevo diccionario une los elementos de la lista separando por saltos de línea:
             new_dict_fechas[item] = '<br/>'.join(join_list)
-
         # Finalmente, creamos la columna Event times mapeando el index del dataframe con el del diccionario:
         self.df['Event times'] = self.df.index.to_series().map(new_dict_fechas)
-
         # La columna Transit Times Error será el concatenado de los errores:
         self.df['TT Error'] = '-' + self.df['midtime_low_err_h'].map(str) + '<br/>+' + self.df['midtime_up_err_h'].map(
             str)
-
         # La columna Moon será el concatenado de la moon_phase y de moon_dist:
         self.df['moon_phase'] = (self.df['moon_phase'] * 100).astype(int)
         self.df['moon_dist'] = self.df['moon_dist'].astype(int)
         self.df['Moon'] = self.df['moon_phase'].map(str) + '%<br/>' + self.df['moon_dist'].map(str) + 'º'
-
         # El dataframe final solo tendrá unas pocas columnas del excel inicial:
         df_output = self.df[['Observatory', 'TZ', 'Event times', 'TT Error', 'Moon', 'Image']]
-
         return df_output
 
     @staticmethod
@@ -135,12 +131,13 @@ class ObservationReport:
             table_object.setStyle(TableStyle([('BACKGROUND', (0, each), (-1, each), bg_color)]))
 
     def create_header(self, canvas, doc):
+        """
+        Initializes the common header for all the pages.
+        @param canvas: the report canvas
+        @param doc: the report document
+        """
         canvas.saveState()
-
-        # Logo:
         canvas.drawImage(self.LOGO_IMAGE, x=0, y=26.8 * cm, height=2.7 * cm, width=2.7 * cm, preserveAspectRatio=True)
-
-        # Title:
         object_id_text = 'Sherlock observation plan: %s' % self.object_id
         canvas.setFont(psfontname="Helvetica", size=12)
         canvas.drawRightString(x=12 * cm, y=28 * cm, text=object_id_text)
@@ -148,19 +145,19 @@ class ObservationReport:
             object_id_text = '%s OBSERVATION PLAN' % self.object_id
             canvas.setFont(psfontname="Helvetica-Bold", size=25)
             canvas.drawCentredString(x=10 * cm, y=25.5 * cm, text=object_id_text)
-
-        # Report date:
         report_date = datetime.datetime.now().strftime("%a, %d %B %Y, %H:%M:%S")
         report_date_text = '%s' % report_date
-
         canvas.setFont("Helvetica", 9)
         canvas.drawRightString(20.5 * cm, 28 * cm, report_date_text)
-
         canvas.restoreState()
 
     def create_footer(self, canvas, doc):
+        """
+        Initializes the common footer for all the pages
+        @param canvas: the report canvas
+        @param doc: the report document
+        """
         canvas.saveState()
-
         # if doc.page == 1:
         #     # Footer con superíndice:
         #     textobject = canvas.beginText()
@@ -180,20 +177,19 @@ class ObservationReport:
         #         textobject.textLine(line)
         #
         #     canvas.drawText(textobject)
-
-        # Powered by:
         page = "Powered by Astropy, Astroplan and ReportLab"
         canvas.setFont("Helvetica", 9)
         canvas.drawRightString(7 * cm, 0.5 * cm, page)
-
-        # Page:
         page = "Page %s" % doc.page
         canvas.setFont("Helvetica", 9)
         canvas.drawRightString(20.5 * cm, 0.5 * cm, page)
-
         canvas.restoreState()
 
     def create_report(self):
+        """
+        Creates the final report with all the star parameters, the candidate information and the observation nights
+        data, storing it in a pdf.
+        """
         df_manipulated = self.df_manipulations()
         # Styles to be used
         styles = getSampleStyleSheet()
@@ -276,10 +272,10 @@ class ObservationReport:
                              '0.5 - Transit midtime and either ingress or egress at least are required,\n' \
                              '0.25 - Only ingress or egress are required. ' \
                              'Days interval is the maximum number of days to search for observable transits.' \
-                             'Min altitude is the minimum altitude above the horizon to consider an observable transit. ' \
-                             'Min Moon Dist is the minimum distance to be kept from the target to the new moon. ' \
-                             'Max Moon Dist is the minimum distance to be kept from the target to the full moon. ' \
-                             ' </font>'
+                             'Min altitude is the minimum altitude above the horizon to consider an observable ' \
+                             'transit. Min Moon Dist is the minimum distance to be kept from the target to the new ' \
+                             'moon. Max Moon Dist is the minimum distance to be kept from the target to the full ' \
+                             'moon. </font>'
         story.append(Spacer(1, 5))
         story.append(Paragraph(table3_descripcion, styles["ParagraphAlignCenter"]))
 
