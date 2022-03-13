@@ -72,9 +72,9 @@ class SherlockTarget:
                                        self.VALID_SIGNAL_SELECTORS[1]: SdeBorderCorrectedSignalSelector(),
                                        self.VALID_SIGNAL_SELECTORS[2]: QuorumSdeBorderCorrectedSignalSelector(
                                            quorum_strength, min_quorum),
-                                       self.VALID_SIGNAL_SELECTORS[3]: BasicSdeSignalSelector(),
-                                       self.VALID_SIGNAL_SELECTORS[4]: SdeBorderCorrectedSignalSelector(),
-                                       self.VALID_SIGNAL_SELECTORS[5]: QuorumSdeBorderCorrectedSignalSelector(
+                                       self.VALID_SIGNAL_SELECTORS[3]: BasicSignalSelector(),
+                                       self.VALID_SIGNAL_SELECTORS[4]: SnrBorderCorrectedSignalSelector(),
+                                       self.VALID_SIGNAL_SELECTORS[5]: QuorumSnrBorderCorrectedSignalSelector(
                                            quorum_strength, min_quorum),
                                        "user": custom_selection_algorithm}
         self.best_signal_algorithm = best_signal_algorithm if custom_selection_algorithm is None else "user"
