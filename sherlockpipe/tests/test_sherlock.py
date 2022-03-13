@@ -4,8 +4,12 @@ import unittest
 from lcbuilder.star.starinfo import StarInfo
 from lcbuilder.objectinfo.MissionFfiIdObjectInfo import MissionFfiIdObjectInfo
 from lcbuilder.objectinfo.MissionObjectInfo import MissionObjectInfo
+
+from sherlockpipe.scoring.BasicSdeSignalSelector import BasicSdeSignalSelector
 from sherlockpipe.scoring.BasicSignalSelector import BasicSignalSelector
+from sherlockpipe.scoring.QuorumSdeBorderCorrectedSignalSelector import QuorumSdeBorderCorrectedSignalSelector
 from sherlockpipe.scoring.QuorumSnrBorderCorrectedSignalSelector import QuorumSnrBorderCorrectedSignalSelector
+from sherlockpipe.scoring.SdeBorderCorrectedSignalSelector import SdeBorderCorrectedSignalSelector
 from sherlockpipe.scoring.SnrBorderCorrectedSignalSelector import SnrBorderCorrectedSignalSelector
 from sherlockpipe.sherlock import Sherlock
 from sherlockpipe.sherlock_target import SherlockTarget
@@ -53,12 +57,22 @@ class TestsSherlock(unittest.TestCase):
 
     def test_scoring_algorithm(self):
         sherlock = Sherlock([SherlockTarget(object_info=None, best_signal_algorithm="basic")])
-        self.assertTrue(isinstance(sherlock.sherlock_targets[0].signal_score_selectors["basic"], BasicSignalSelector))
+        self.assertTrue(
+            isinstance(sherlock.sherlock_targets[0].signal_score_selectors["basic"], BasicSdeSignalSelector))
         sherlock = Sherlock([SherlockTarget(object_info=None, best_signal_algorithm="border-correct")])
         self.assertTrue(isinstance(sherlock.sherlock_targets[0].signal_score_selectors["border-correct"],
-                                   SnrBorderCorrectedSignalSelector))
+                                   SdeBorderCorrectedSignalSelector))
         sherlock = Sherlock([SherlockTarget(object_info=None, best_signal_algorithm="quorum")])
         self.assertTrue(isinstance(sherlock.sherlock_targets[0].signal_score_selectors["quorum"],
+                                   QuorumSdeBorderCorrectedSignalSelector))
+        sherlock = Sherlock([SherlockTarget(object_info=None, best_signal_algorithm="basic-snr")])
+        self.assertTrue(
+            isinstance(sherlock.sherlock_targets[0].signal_score_selectors["basic-snr"], BasicSignalSelector))
+        sherlock = Sherlock([SherlockTarget(object_info=None, best_signal_algorithm="border-correct-snr")])
+        self.assertTrue(isinstance(sherlock.sherlock_targets[0].signal_score_selectors["border-correct-snr"],
+                                   SnrBorderCorrectedSignalSelector))
+        sherlock = Sherlock([SherlockTarget(object_info=None, best_signal_algorithm="quorum-snr")])
+        self.assertTrue(isinstance(sherlock.sherlock_targets[0].signal_score_selectors["quorum-snr"],
                                    QuorumSnrBorderCorrectedSignalSelector))
 
     def test_apdate_tois(self):
@@ -201,7 +215,7 @@ class TestsSherlock(unittest.TestCase):
         run_dir = None
         try:
             sherlock = Sherlock([SherlockTarget(MissionFfiIdObjectInfo("TIC 181804752", [9], high_rms_enabled=True),
-                                                detrends_number=1, max_runs=1, oversampling=0.05, t0_fit_margin=0.09,
+                                                detrends_number=1, max_runs=1, oversampling=0.1, t0_fit_margin=0.09,
                                                 duration_grid_step=1.075, fit_method="bls",
                                                 best_signal_algorithm="quorum", quorum_strength=0.31)], False)\
                 .run()
@@ -211,7 +225,7 @@ class TestsSherlock(unittest.TestCase):
                 self.assertTrue('Fit method: box' in content)
                 self.assertTrue('Duration step: 1.075' in content)
                 self.assertTrue('T0 Fit Margin: 0.09' in content)
-                self.assertTrue('Oversampling: 0.05' in content)
+                self.assertTrue('Oversampling: 0.1' in content)
                 self.assertTrue('Signal scoring algorithm: quorum' in content)
                 self.assertTrue('Quorum algorithm vote strength: 0.31' in content)
             self.__assert_run_files(run_dir)
@@ -226,6 +240,7 @@ class TestsSherlock(unittest.TestCase):
         lc_file = object_dir + "/lc.csv"
         report_file = object_dir + "/TIC181804752_FFI_[9]_report.log"
         candidates_csv_file = object_dir + "/candidates.csv"
+        transits_stats_csv_file = object_dir + "/transits_stats.csv"
         try:
             self.assertTrue(os.path.exists(run_dir))
             self.assertTrue(os.path.isfile(periodogram_file))
@@ -235,6 +250,7 @@ class TestsSherlock(unittest.TestCase):
             self.assertTrue(os.path.isfile(lc_file))
             self.assertTrue(os.path.isfile(report_file))
             self.assertTrue(os.path.isfile(candidates_csv_file))
+            self.assertTrue(os.path.isfile(transits_stats_csv_file))
         finally:
             shutil.rmtree(object_dir, ignore_errors=True)
 
