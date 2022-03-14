@@ -20,7 +20,6 @@ if ! [[ -z ${tests_results} ]]; then
   git push --tags
   python3 setup.py sdist bdist_wheel
   python3 -m twine upload dist/*
-  rm tests.log
   echo "Build docker image"
   sudo docker build ./docker/ --no-cache
   docker_image_id=$(sudo docker images | awk '{print $3}' | awk 'NR==2')
@@ -31,6 +30,7 @@ if ! [[ -z ${tests_results} ]]; then
   sudo docker push sherlockpipe/sherlockpipe:latest
   sudo docker push sherlockpipe/sherlockpipe:${git_tag}
   sudo docker images prune -all
+  rm tests.log
 else
   echo "TESTS FAILED. See tests.log"
 fi
