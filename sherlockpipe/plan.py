@@ -216,13 +216,17 @@ def create_observation_observables(object_id, object_dir, since, name, epoch, ep
             observables_df = observables_df.append({"observatory": observatory_row["name"],
                                                     "timezone": observer_timezone, "ingress": ingress.isot,
                                                     "start_obs": start_obs.isot, "end_obs": end_obs.isot,
-                                   "egress": egress.isot, "midtime": midtransit_time.isot,
-                                   "midtime_up_err_h": str(int(midtransit_time_up_err[i] // 1)) + ":" + str(int(midtransit_time_up_err[i] % 1 * 60)),
-                                   "midtime_low_err_h": str(int(midtransit_time_low_err[i] // 1)) + ":" + str(int(midtransit_time_low_err[i] % 1 * 60)),
-                                   "twilight_evening": twilight_evening.isot,
-                                   "twilight_morning": twilight_morning.isot,
-                                   "observable": observable, "moon_phase": moon_phase, "moon_dist": moon_dist},
-                                                   ignore_index=True)
+                                                    "egress": egress.isot, "midtime": midtransit_time.isot,
+                                                    "midtime_up_err_h":
+                                                        str(int(midtransit_time_up_err[i] // 1)) + ":" +
+                                                        str(int(midtransit_time_up_err[i] % 1 * 60)).zfill(2),
+                                                    "midtime_low_err_h":
+                                                        str(int(midtransit_time_low_err[i] // 1)) + ":" +
+                                                        str(int(midtransit_time_low_err[i] % 1 * 60)).zfill(2),
+                                                    "twilight_evening": twilight_evening.isot,
+                                                    "twilight_morning": twilight_morning.isot,
+                                                    "observable": observable, "moon_phase": moon_phase,
+                                                    "moon_dist": moon_dist}, ignore_index=True)
             plot_time = start_plot + (end_plot - start_plot) * np.linspace(0, 1, 100)
             plt.tick_params(labelsize=6)
             airmass_ax = plot_airmass(target, observer_site, plot_time, brightness_shading=False, altitude_yaxis=True)
@@ -245,27 +249,27 @@ def create_observation_observables(object_id, object_dir, since, name, epoch, ep
             hour_min_sec_arr = end_obs.isot.split("T")[1].split(":")
             xticks_labels.append("T1_" + hour_min_sec_arr[0] + ":" + hour_min_sec_arr[1])
             plt.axvline(x=end_obs.plot_date, color="violet")
-            if lowest_ingress > start_plot and lowest_ingress < end_plot:
+            if start_plot < lowest_ingress < end_plot:
                 xticks.append(lowest_ingress.plot_date)
                 hour_min_sec_arr = lowest_ingress.isot.split("T")[1].split(":")
                 xticks_labels.append("T1_" + hour_min_sec_arr[0] + ":" + hour_min_sec_arr[1])
                 plt.axvline(x=lowest_ingress.plot_date, color="red")
-            if ingress > start_plot and ingress < end_plot:
+            if start_plot < ingress < end_plot:
                 xticks.append(ingress.plot_date)
                 hour_min_sec_arr = ingress.isot.split("T")[1].split(":")
                 xticks_labels.append("T1_" + hour_min_sec_arr[0] + ":" + hour_min_sec_arr[1])
                 plt.axvline(x=ingress.plot_date, color="orange")
-            if midtransit_time > start_plot and midtransit_time < end_plot:
+            if start_plot < midtransit_time < end_plot:
                 xticks.append(midtransit_time.plot_date)
                 hour_min_sec_arr = midtransit_time.isot.split("T")[1].split(":")
                 xticks_labels.append("T0_" + hour_min_sec_arr[0] + ":" + hour_min_sec_arr[1])
                 plt.axvline(x=midtransit_time.plot_date, color="black")
-            if egress > start_plot and egress < end_plot:
+            if start_plot < egress < end_plot:
                 xticks.append(egress.plot_date)
                 hour_min_sec_arr = egress.isot.split("T")[1].split(":")
                 xticks_labels.append("T4_" + hour_min_sec_arr[0] + ":" + hour_min_sec_arr[1])
                 plt.axvline(x=egress.plot_date, color="orange")
-            if highest_egress > start_plot and highest_egress < end_plot:
+            if start_plot < highest_egress < end_plot:
                 xticks.append(highest_egress.plot_date)
                 hour_min_sec_arr = highest_egress.isot.split("T")[1].split(":")
                 xticks_labels.append("T4_" + hour_min_sec_arr[0] + ":" + hour_min_sec_arr[1])
