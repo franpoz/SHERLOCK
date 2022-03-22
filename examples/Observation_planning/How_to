@@ -23,8 +23,8 @@ The csv file contains the following informations:
   ingress : time where the transit should begin (best estimation), same format as for "start_obs".
   egress : time where the transit should end (best estimation), same format as for "start_obs".
   midtime : middle time of the transit (best estimation), same format as for "start_obs".
-  midtime_up_err_h : maximum time deviation from the midtime, in hours (?) mmmmmmmmmmmm.
-  midtime_low_err_h : mmmmmmmmm deviation from the midtime, in hours.
+  midtime_up_err_h : upper temporal limit for the midtime, in hours.
+  midtime_low_err_h : lower temporal limit for the midtime, in hours.
   twilight_evening : earliest time at which the observation can start, same format as for "start_obs".
   twilight_morning : Latest time at which the observation can end, same format as for "start_obs".
   observable : Minimum fraction of the transit that must be observable to consider an observation.
@@ -52,18 +52,7 @@ patch is the part of the sky where the target would be too low to observe. Verti
   Orange : Expected times of the ingress and egress.
   Pink/violet : Start and end of the observation.
   Red : Temporal incertainity for the ingres (left line) and egress (right line).
-
-
-(mmmmmmm todo : explain left axis : unit and details).
-
-
-
-
-
-
-
-
-
+The left axis shows the air mass along the line of sight
 
 
 If something is not clear enough, please tell us so we can improve it !
