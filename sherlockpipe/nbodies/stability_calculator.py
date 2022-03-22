@@ -51,7 +51,7 @@ class StabilityCalculator(ABC):
         @return: the planet inputs with the filled masses
         """
         for planet_param in planet_params:
-            if planet_param.radius is None and (planet_param.mass_low is None or planet_param.mass_up is None):
+            if planet_param.radius is None and (planet_param.mass_low_err is None or planet_param.mass_low_err is None):
                 raise ValueError("There is one body without either radius or mass information: " +
                                  json.dumps(planet_param.__dict__))
             if planet_param.radius is not None:

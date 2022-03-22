@@ -78,9 +78,9 @@ if __name__ == '__main__':
     star_mass_up = star_mass if star_mass_up_err is None else star_mass + star_mass_up_err
     star_mass_bins = args.star_mass_bins
     free_params = args.free_params.split(",") if args.free_params is not None else []
-    candidates = pd.read_csv(object_dir + "/../candidates.csv")
     planets_params = []
     if args.properties is None:
+        candidates = pd.read_csv(object_dir + "/../candidates.csv")
         ns_derived_file = object_dir + "/results/ns_derived_table.csv"
         ns_file = object_dir + "/results/ns_table.csv"
         if not os.path.exists(ns_derived_file) or not os.path.exists(ns_file):
@@ -137,11 +137,11 @@ if __name__ == '__main__':
         user_properties = yaml.load(open(args.properties), yaml.SafeLoader)
         user_planet_params = []
         for planet in user_properties["BODIES"]:
-            period_bins = args.ecc_bins if "P_BINS" not in planet or args.period_bins is not None else planet["P_BINS"]
-            ecc_bins = args.ecc_bins if "E_BINS" not in planet or args.ecc_bins is not None else planet["E_BINS"]
-            mass_bins = args.mass_bins if "M_BINS" not in planet or args.mass_bins is not None else planet["M_BINS"]
-            inc_bins = args.inc_bins if "I_BINS" not in planet or args.inc_bins is not None else planet["I_BINS"]
-            om_bins = args.omega_bins if "O_BINS" not in planet or args.omega_bins is not None else planet["O_BINS"]
+            period_bins = args.period_bins if "P_BINS" not in planet else planet["P_BINS"]
+            ecc_bins = args.ecc_bins if "E_BINS" not in planet else planet["E_BINS"]
+            mass_bins = args.mass_bins if "M_BINS" not in planet else planet["M_BINS"]
+            inc_bins = args.inc_bins if "I_BINS" not in planet else planet["I_BINS"]
+            om_bins = args.omega_bins if "O_BINS" not in planet else planet["O_BINS"]
             user_planet_params.append(PlanetInput(period=get_from_user(planet, "P"),
                                                   period_low_err=get_from_user(planet, "P_LOW"),
                                                   period_up_err=get_from_user(planet, "P_UP"),
@@ -164,12 +164,10 @@ if __name__ == '__main__':
                                                   inc_bins=inc_bins, omega_bins=om_bins))
         planets_params = planets_params + user_planet_params
         if "STAR" in user_properties:
-            star_mass = star_mass_low if "M_LOW" not in user_properties["STAR"] else user_properties["STAR"]["M_LOW"]
+            star_mass = star_mass_low if "M" not in user_properties["STAR"] else user_properties["STAR"]["M"]
             star_mass_low = star_mass_low if "M_LOW" not in user_properties["STAR"] else star_mass - user_properties["STAR"]["M_LOW"]
             star_mass_up = star_mass_up if "M_UP" not in user_properties["STAR"] else star_mass + user_properties["STAR"]["M_UP"]
-            star_mass_bins = args.star_mass_bins if "M_BINS" not in user_properties["STAR"] \
-                                                    or args.star_mass_bins is not None \
-                                                 else user_properties["STAR"]["M_BINS"]
+            star_mass_bins = args.star_mass_bins if "M_BINS" not in user_properties["STAR"] else user_properties["STAR"]["M_BINS"]
     stability_calculator = SpockStabilityCalculator() if len(planets_params) >= 3 and args.use_spock \
                            else MegnoStabilityCalculator(args.years) #TODO add check of periods ratio less than 2 for spock
     logger.info("%.0f planets to be simulated. %s will be used", len(planets_params),

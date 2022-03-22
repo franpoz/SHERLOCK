@@ -1,11 +1,1 @@
-[submodule "sherlockpipe/tpfplotter"]
-	path = sherlockpipe/tpfplotter
-	url = https://github.com/jlillo/tpfplotter
-	branch = master
-	update = merge
-[submodule "sherlockpipe/LATTEsub"]
-	path = sherlockpipe/LATTEsub
-	url = https://github.com/martindevora/LATTE
-    branch = master
-	update = merge
 

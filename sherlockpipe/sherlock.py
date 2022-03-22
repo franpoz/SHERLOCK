@@ -18,6 +18,8 @@ from lcbuilder.objectinfo.MissionObjectInfo import MissionObjectInfo
 from lcbuilder.objectinfo.MissionFfiIdObjectInfo import MissionFfiIdObjectInfo
 from lcbuilder.objectinfo.MissionFfiCoordsObjectInfo import MissionFfiCoordsObjectInfo
 from lcbuilder.objectinfo.InvalidNumberOfSectorsError import InvalidNumberOfSectorsError
+from watson.watson import Watson
+
 from sherlockpipe.ois.OisManager import OisManager
 from lcbuilder.star.HabitabilityCalculator import HabitabilityCalculator
 from sherlockpipe.transitresult import TransitResult
@@ -26,7 +28,6 @@ from scipy.ndimage.interpolation import shift
 from scipy import stats
 
 from sherlockpipe.update import Updater
-from sherlockpipe.vet import Vetter
 
 
 class Sherlock:
@@ -44,7 +45,6 @@ class Sherlock:
     RESULTS_DIR = './'
     VALID_DETREND_METHODS = ["biweight", "gp"]
     VALID_PERIODIC_DETREND_METHODS = ["biweight", "gp", "cosine", "cofiam"]
-    VALID_SIGNAL_SELECTORS = ["basic", "border-correct", "quorum"]
     NUM_CORES = multiprocessing.cpu_count() - 1
     TOIS_CSV = RESULTS_DIR + 'tois.csv'
     CTOIS_CSV = RESULTS_DIR + 'ctois.csv'
@@ -243,6 +243,7 @@ class Sherlock:
             lcs, wl = self.__detrend(sherlock_target, time, flux, lc_build.star_info)
             lcs = np.concatenate(([flux], lcs), axis=0)
             wl = np.concatenate(([0], wl), axis=0)
+            transits_stats_df = pandas.DataFrame(columns=['candidate', 't0', 'depth', 'depth_err'])
             while not self.explore and best_signal_score == 1 and id_run <= sherlock_target.max_runs:
                 self.__setup_object_logging(sherlock_id, False)
                 object_report = {}
@@ -251,6 +252,14 @@ class Sherlock:
                     self.__analyse(sherlock_target, time, lcs, flux_err, lc_build.star_info, id_run,
                                    lc_build.transits_min_count, lc_build.cadence, self.report[sherlock_id], wl,
                                    period_grid, lc_build.detrend_period)
+                for index in np.arange(len(transit_results[signal_selection.curve_index].t0s)):
+                    transits_stats_df = transits_stats_df.append({'candidate': str(int(id_run - 1)),
+                                              't0': transit_results[signal_selection.curve_index].t0s[index],
+                                              'depth': transit_results[signal_selection.curve_index].depths[index],
+                                              'depth_err': transit_results[signal_selection.curve_index].depths_err[index]},
+                                             ignore_index=True)
+                transits_stats_df = transits_stats_df.sort_values(by=['candidate', 't0'], ascending=True)
+                transits_stats_df.to_csv(object_dir + "transits_stats.csv", index=False)
                 best_signal_score = signal_selection.score
                 object_report["Object Id"] = mission_id
                 object_report["run"] = id_run
@@ -423,9 +432,12 @@ class Sherlock:
         if sherlock_target.t0_fit_margin is not None:
             logging.info('T0 Fit Margin: %.3f', sherlock_target.t0_fit_margin)
         logging.info('Signal scoring algorithm: %s', sherlock_target.best_signal_algorithm)
-        if sherlock_target.best_signal_algorithm == self.VALID_SIGNAL_SELECTORS[2]:
+        if sherlock_target.best_signal_algorithm == sherlock_target.VALID_SIGNAL_SELECTORS[2]:
             logging.info('Quorum algorithm vote strength: %.2f',
-                         sherlock_target.signal_score_selectors[self.VALID_SIGNAL_SELECTORS[2]].strength)
+                         sherlock_target.signal_score_selectors[sherlock_target.VALID_SIGNAL_SELECTORS[2]].strength)
+        elif sherlock_target.best_signal_algorithm == sherlock_target.VALID_SIGNAL_SELECTORS[5]:
+            logging.info('Quorum algorithm vote strength: %.2f',
+                         sherlock_target.signal_score_selectors[sherlock_target.VALID_SIGNAL_SELECTORS[5]].strength)
         mission, mission_prefix, object_num = self.lcbuilder.parse_object_info(object_info.mission_id())
         if object_info.reduce_simple_oscillations and \
                 object_info.oscillation_max_period < object_info.oscillation_min_period:
@@ -498,7 +510,7 @@ class Sherlock:
             logging.info("Field Of View Plots")
             logging.info("======================================")
             fov_dir = object_dir + "/fov"
-            Vetter.vetting_field_of_view(fov_dir, mission, object_num, lc_build.cadence, lc_build.star_info.ra,
+            Watson.vetting_field_of_view(fov_dir, mission, object_num, lc_build.cadence, lc_build.star_info.ra,
                                          lc_build.star_info.dec, lc_build.sectors if isinstance(lc_build.sectors, list)
                                          else lc_build.sectors.tolist(), lc_build.tpf_source, lc_build.tpf_apertures)
         return lc_build
@@ -712,10 +724,13 @@ class Sherlock:
         results = model.power(**power_args)
         if results.T0 != 0:
             depths = results.transit_depths[~np.isnan(results.transit_depths)]
-            depth = (1. - np.mean(depths)) * 100 / 0.1  # change to ppt units
+            depth = (1. - np.mean(depths)) * 1000
         else:
-            depths = results.transit_depths
+            t0s = results.transit_times
             depth = results.transit_depths
+        depths = (1 - results.transit_depths) * 1000
+        depths_err = results.transit_depths_uncertainties * 1000
+        t0s = np.array(results.transit_times)
         in_transit = tls.transit_mask(time, results.period, results.duration, results.T0)
         transit_count = results.distinct_transit_count
         border_score = self.__compute_border_score(time, results, in_transit, cadence)
@@ -728,8 +743,9 @@ class Sherlock:
             duration = results['duration']
         harmonic = self.__is_harmonic(results, run_results, report, detrend_source_period)
         return TransitResult(results, results.period, results.period_uncertainty, duration,
-                             results.T0, depths, depth, transit_count, results.snr,
-                             results.SDE, results.FAP, border_score, in_transit, harmonic)
+                             results.T0, t0s, depths, depths_err, depth, results.odd_even_mismatch,
+                             (1 - results.depth_mean_even[0]) * 1000, (1 - results.depth_mean_odd[0]) * 1000, transit_count,
+                             results.snr, results.SDE, results.FAP, border_score, in_transit, harmonic)
 
     def __calculate_planet_radius(self, star_info, depth):
         rp = np.nan

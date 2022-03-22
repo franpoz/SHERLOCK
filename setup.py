@@ -3,7 +3,7 @@ import setuptools
 with open("README.md", "r") as fh:
     long_description = fh.read()
 
-version = "0.27.11"
+version = "0.28.3"
 setuptools.setup(
     name="sherlockpipe", # Replace with your own username
     version=version,
@@ -25,27 +25,19 @@ setuptools.setup(
                         "astroquery==0.4.1",
                         "allesfitter==1.2.8",
                         'argparse==1.4.0',
-                        'beautifulsoup4==4.9.3',
-                        "bokeh==2.2.3", # TPFPlotter dependency
+                        'beautifulsoup4==4.9.3', # Parsing HTML and XML, for OIs extraction
                         "celerite==0.4.0", # Allesfitter dependency
-                        'configparser==5.0.1',
                         "corner==2.1.0", # Allesfitter dependency
                         "cython==0.29.21",
+                        "dearwatson==0.1.12", # Vetting
                         "dynesty==1.0.1", # Allesfitter dependency
                         "ellc==1.8.5", # Allesfitter dependency
                         "emcee==3.0.2", # Allesfitter dependency
-                        "extension-helpers==0.1",
-                        "imageio==2.9.0",
-                        "lcbuilder==0.7.15",
-                        "matplotlib==3.3.4",
                         "mock==4.0.3",
                         'numba==0.53.1', # foldedleastsquares dependency
-                        'pyparsing==2.4.7', # Matplotlib dependency
                         'pytz', # Observation plan: Not using version because it gets the DB updated with each release
-                        "pyyaml==5.4.1",
                         "requests==2.25.1",
                         "rebound==3.17.3",
-                        "reportlab==3.5.59",
                         "reproject==0.4",
                         "seaborn==0.11.1",
                         'setuptools>=41.0.0',
