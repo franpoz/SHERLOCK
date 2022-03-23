@@ -225,7 +225,8 @@ class Sherlock:
         try:
             lc_build = self.__prepare(sherlock_target)
             object_dir = self.__init_object_dir(sherlock_id)
-            lc_build.lc_data.to_csv(object_dir + "/lc_data.csv")
+            if lc_build.lc_data is not None:
+                lc_build.lc_data.to_csv(object_dir + "/lc_data.csv")
             time = lc_build.lc.time.value
             flux = lc_build.lc.flux.value
             flux_err = lc_build.lc.flux_err.value
