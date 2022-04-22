@@ -31,7 +31,7 @@ Some of the *SHERLOCK* dependencies need ``numpy`` and ``Cython``  before being 
    gcc
    locales
    python3-tk
-   libpython3.8-dev
+   python3.8-dev
 
 In case you are running a non-Linux distribution you will need to guess your OS packages matching the ones we mention for Linux.
 
