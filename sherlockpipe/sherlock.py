@@ -241,8 +241,20 @@ class Sherlock:
             logging.info('SEARCH RUNS with period grid: [%.2f - %.2f] and length %.0f', np.min(period_grid),
                          np.max(period_grid), len(period_grid))
             logging.info('================================================')
-            lcs, wl = self.__detrend(sherlock_target, time, flux, lc_build.star_info)
+            lcs, wl = self.__detrend(sherlock_target, time, flux, flux_err,
+                                     lc_build.star_info)
             lcs = np.concatenate(([flux], lcs), axis=0)
+            object_info = sherlock_target.object_info
+            object_dir = self.__init_object_dir(object_info.sherlock_id())
+            i = 0
+            for lc in lcs:
+                lc_df = pandas.DataFrame(columns=['#time', 'flux', 'flux_err'])
+                args = np.argwhere(~np.isnan(lc)).flatten()
+                lc_df['#time'] = time[args]
+                lc_df['flux'] = lc[args]
+                lc_df['flux_err'] = flux_err[args]
+                lc_df.to_csv(object_dir + "/lc_" + str(i) + ".csv", index=False)
+                i = i + 1
             wl = np.concatenate(([0], wl), axis=0)
             transits_stats_df = pandas.DataFrame(columns=['candidate', 't0', 'depth', 'depth_err'])
             while not self.explore and best_signal_score == 1 and id_run <= sherlock_target.max_runs:
@@ -528,7 +540,7 @@ class Sherlock:
         logging.info(signal_selection.get_message())
         return transit_results, signal_selection
 
-    def __detrend(self, sherlock_target, time, lc, star_info):
+    def __detrend(self, sherlock_target, time, lc, flux_err, star_info):
         wl_min = self.wl_min[star_info.object_id]
         wl_max = self.wl_max[star_info.object_id]
         bins = len(time) * 2 / sherlock_target.bin_minutes
@@ -627,12 +639,6 @@ class Sherlock:
                      "Semi-major axis", "Habitability Zone")
         transit_results = {}
         run_dir = self.__init_object_run_dir(object_info.sherlock_id(), id_run)
-        lc_df = pandas.DataFrame(columns=['#time', 'flux', 'flux_err'])
-        args = np.argwhere(~np.isnan(lcs[0])).flatten()
-        lc_df['#time'] = time[args]
-        lc_df['flux'] = lcs[0][args]
-        lc_df['flux_err'] = flux_err[args]
-        lc_df.to_csv(run_dir + "/lc_0.csv", index=False)
         transit_result = self.__adjust_transit(sherlock_target, time, lcs[0], star_info, transits_min_count,
                                                transit_results, report, cadence, period_grid, detrend_source_period)
         transit_results[0] = transit_result
@@ -658,11 +664,6 @@ class Sherlock:
                                  id_run)
         for i in range(1, len(wl)):
             lc_df = pandas.DataFrame(columns=['#time', 'flux', 'flux_err'])
-            args = np.argwhere(~np.isnan(lcs[i])).flatten()
-            lc_df['#time'] = time[args]
-            lc_df['flux'] = lcs[i][args]
-            lc_df['flux_err'] = flux_err[args]
-            lc_df.to_csv(run_dir + "/lc_" + str(i) + ".csv", index=False)
             transit_result = self.__adjust_transit(sherlock_target, time, lcs[i], star_info, transits_min_count,
                                                    transit_results, report, cadence, period_grid, detrend_source_period)
             transit_results[i] = transit_result
