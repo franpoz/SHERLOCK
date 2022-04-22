@@ -20,7 +20,7 @@ setuptools.setup(
         "License :: OSI Approved :: MIT License",
         "Operating System :: OS Independent",
     ],
-    python_requires='>=3.6.8',
+    python_requires='>=3.8',
     install_requires=['astroplan==0.7',
                         "astroquery==0.4.1",
                         "allesfitter==1.2.8",
@@ -29,7 +29,7 @@ setuptools.setup(
                         "celerite==0.4.0", # Allesfitter dependency
                         "corner==2.1.0", # Allesfitter dependency
                         "cython==0.29.21",
-                        "dearwatson==0.1.15", # Vetting
+                        "dearwatson==0.1.18", # Vetting
                         "dynesty==1.0.1", # Allesfitter dependency
                         "ellc==1.8.5", # Allesfitter dependency
                         "emcee==3.0.2", # Allesfitter dependency
