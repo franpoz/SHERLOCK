@@ -98,7 +98,7 @@ def create_observation_observables(object_id, object_dir, since, name, epoch, ep
                                    period_low_err, period_up_err, duration,
                                    observatories_file, timezone, latitude, longitude, altitude,
                                    max_days, min_altitude, moon_min_dist, moon_max_dist, transit_fraction, baseline,
-                                   error_alert=True):
+                                   error_alert=True, time_unit='jd'):
     """
 
     @param object_id: the candidate id
@@ -124,7 +124,8 @@ def create_observation_observables(object_id, object_dir, since, name, epoch, ep
     @param transit_fraction: the minimum transit observability (0.25 for at least ingress/egress, 0.5 for ingress/egress
     + midtime, 1 for ingress, egress and midtime).
     @param baseline: the required baseline in hours.
-    @param: error_alert: whether to create the alert date to signal imprecise observations
+    @param error_alert: whether to create the alert date to signal imprecise observations
+    @param time_unit: the unit of the light curve data
     @return: the generated data and target folders
     """
     if observatories_file is not None:
@@ -133,13 +134,7 @@ def create_observation_observables(object_id, object_dir, since, name, epoch, ep
         observatories_df = pd.DataFrame(columns=['name', 'tz', 'lat', 'long', 'alt'])
         observatories_df = observatories_df.append("Obs-1", timezone, latitude, longitude, altitude)
     # TODO probably convert epoch to proper JD
-    mission, mission_prefix, id_int = LcBuilder().parse_object_info(object_id)
-    if mission == "TESS":
-        primary_eclipse_time = Time(epoch, format='btjd', scale="tdb")
-    elif mission == "Kepler" or mission == "K2":
-        primary_eclipse_time = Time(epoch, format='bkjd', scale="tdb")
-    else:
-        primary_eclipse_time = Time(epoch, format='jd')
+    primary_eclipse_time = Time(epoch, format=time_unit, scale="tdb")
     target = FixedTarget(SkyCoord(coords, unit=(u.deg, u.deg)))
     n_transits = int(max_days // period)
     system = EclipsingSystem(primary_eclipse_time=primary_eclipse_time, orbital_period=u.Quantity(period, unit="d"),
@@ -184,7 +179,9 @@ def create_observation_observables(object_id, object_dir, since, name, epoch, ep
             lowest_ingress = ingress - low_err_delta[i]
             highest_egress = egress + up_err_delta[i]
             if error_alert and (highest_egress - lowest_ingress).jd > 0.33:
-                alert_date = midtransit_time if (alert_date is None) or (alert_date is not None and alert_date >= midtransit_time) else alert_date
+                alert_date = midtransit_time \
+                    if (alert_date is None) or (alert_date is not None and alert_date >= midtransit_time) \
+                    else alert_date
                 break
             else:
                 baseline_low = lowest_ingress - baseline * u.hour
@@ -201,6 +198,7 @@ def create_observation_observables(object_id, object_dir, since, name, epoch, ep
                 end_obs = transit_times[observable_transit_times_true[len(observable_transit_times_true) - 1]][0]
                 start_plot = baseline_low
                 end_plot = baseline_up
+                #TODO check whether twilight evening happens before twilight morning, if not, the check is different
                 if twilight_evening > start_obs:
                     start_obs = twilight_evening
                 if twilight_morning < end_obs:
@@ -320,6 +318,8 @@ if __name__ == '__main__':
                     required=False)
     ap.add_argument('--no_error_alert', help="Will not block imprecise observations to be plotted.",
                     action='store_true', required=False)
+    ap.add_argument('--time_unit', help="Time unit to be used for the light curve measurements.", default=None,
+                    required=False)
     args = ap.parse_args()
     if args.observatories is None and (args.lat is None or args.lon is None or args.alt is None):
         raise ValueError("You either need to set the 'observatories' property or the lat, lon and alt.")
@@ -359,13 +359,22 @@ if __name__ == '__main__':
         depth = depth_row["value"] * 1000
         depth_low_err = depth_row["lower_error"] * 1000
         depth_up_err = depth_row["upper_error"] * 1000
+        mission, mission_prefix, id_int = LcBuilder().parse_object_info(object_id)
+        if args.time_unit is None and mission == "TESS":
+            time_unit = 'btjd'
+        elif args.time_unit is None and mission == "Kepler" or mission == "K2":
+            time_unit = 'bkjd'
+        elif args.time_unit is not None:
+            time_unit = args.time_unit
+        else:
+            time_unit = 'jd'
         observatories_df, observables_df, alert_date, plan_dir, images_dir = create_observation_observables(object_id, object_dir,
                                                                                                 since, name, epoch,
                                                             epoch_low_err, epoch_up_err, period, period_low_err,
                                                             period_up_err, duration, args.observatories, args.tz, args.lat,
                                                             args.lon, args.alt, args.max_days, args.min_altitude,
                                                             args.moon_min_dist, args.moon_max_dist, args.transit_fraction,
-                                                            args.baseline, not args.no_error_alert)
+                                                            args.baseline, not args.no_error_alert, time_unit)
         report = ObservationReport(observatories_df, observables_df, alert_date, object_id, name, plan_dir, ra, dec,
                                    epoch, epoch_low_err, epoch_up_err, period, period_low_err, period_up_err, duration,
                                    duration_low_err, duration_up_err, depth, depth_low_err, depth_up_err,
