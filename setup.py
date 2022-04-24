@@ -46,7 +46,7 @@ setuptools.setup(
                         'statsmodels==0.12.2', # Allesfitter dependency
                         'timezonefinder==5.2.0', # Observation plan
                         'tqdm==4.56.0',
-                        'triceratops==1.0.10',
+                        'triceratops==1.0.15',
                         'uncertainties==3.1.5'
     ]
 )
