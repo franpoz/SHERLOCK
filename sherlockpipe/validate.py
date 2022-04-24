@@ -18,12 +18,15 @@ import ast
 import triceratops.triceratops as tr
 from watson.watson import Watson
 
+from sherlockpipe.tool_with_candidate import ToolWithCandidate
 
-class Validator:
+
+class Validator(ToolWithCandidate):
     """
     This class intends to provide a statistical validation tool for SHERLOCK Candidates.
     """
-    def __init__(self, object_dir, validation_dir):
+    def __init__(self, object_dir, validation_dir, is_candidate_from_search, candidates_df):
+        super().__init__(is_candidate_from_search, candidates_df)
         self.object_dir = os.getcwd() if object_dir is None else object_dir
         self.data_dir = validation_dir
 
@@ -57,8 +60,8 @@ class Validator:
         logging.info("Run: %.0f", run)
         logging.info("Detrend curve: %.0f", curve)
         logging.info("Contrast curve file %s", contrast_curve_file)
-        lc_file = "/" + str(run) + "/lc_" + str(curve) + ".csv"
-        lc_file = self.data_dir + lc_file
+        lc_file = "/lc_" + str(curve) + ".csv"
+        lc_file = self.object_dir + lc_file
         try:
             sectors_in = ast.literal_eval(str((candidate.loc[candidate['id'] == object_id]['sectors']).values[0]))
             if (type(sectors_in) == int) or (type(sectors_in) == float):
@@ -70,9 +73,9 @@ class Validator:
         self.data_dir = validation_dir
         object_id = object_id.iloc[0]
         try:
-            Validator.execute_triceratops(cpus, validation_dir, object_id, sectors, lc_file, transit_depth,
+            self.execute_triceratops(cpus, validation_dir, object_id, sectors, lc_file, transit_depth,
                                           period, t0, duration, rp_rstar, a_rstar, bins, scenarios, sigma_mode,
-                                          contrast_curve_file)
+                                          contrast_curve_file, run)
         except Exception as e:
             traceback.print_exc()
         # try:
@@ -80,9 +83,9 @@ class Validator:
         # except Exception as e:
         #     traceback.print_exc()
 
-    @staticmethod
-    def execute_triceratops(cpus, indir, object_id, sectors, lc_file, transit_depth, period, t0,
-                            transit_duration, rp_rstar, a_rstar, bins, scenarios, sigma_mode, contrast_curve_file):
+    def execute_triceratops(self, cpus, indir, object_id, sectors, lc_file, transit_depth, period, t0,
+                            transit_duration, rp_rstar, a_rstar, bins, scenarios, sigma_mode, contrast_curve_file,
+                            run):
         """ Calculates probabilities of the signal being caused by any of the following astrophysical sources:
         TP No unresolved companion. Transiting planet with Porb around target star. (i, Rp)
         EB No unresolved companion. Eclipsing binary with Porb around target star. (i, qshort)
@@ -121,6 +124,7 @@ class Validator:
         @param scenarios: the number of scenarios to validate
         @param sigma_mode: the way to calculate the sigma for the validation ['flux_err' | 'binning']
         @param contrast_curve_file: the auxiliary contrast curve file to give more information to the validation engine.
+        @param run: the search run where the candidate was spotted
         """
         save_dir = indir + "/triceratops"
         if os.path.exists(save_dir):
@@ -135,7 +139,7 @@ class Validator:
         mission, mission_prefix, id_int = LcBuilder().parse_object_info(object_id)
         if mission == "TESS":
             sectors = np.array(sectors)
-            sectors_cut = TesscutClass().get_sectors("TIC " + str(id_int))
+            sectors_cut = TesscutClass().get_sectors(objectname="TIC " + str(id_int))
             sectors_cut = np.array([sector_row["sector"] for sector_row in sectors_cut])
             if len(sectors) != len(sectors_cut):
                 logging.warning("WARN: Some sectors were not found in TESSCUT")
@@ -146,6 +150,9 @@ class Validator:
                 logging.warning("There are no available sectors to be validated, skipping TRICERATOPS.")
                 return save_dir, None, None
         logging.info("Will execute validation for sectors: " + str(sectors))
+        lc = pd.read_csv(lc_file, header=0)
+        time, flux, flux_err = lc["#time"].values, lc["flux"].values, lc["flux_err"].values
+        time, flux, flux_err = self.mask_previous_candidates(time, flux, flux_err, run)
         logging.info("Acquiring triceratops target")
         target = tr.target(ID=id_int, mission=mission, sectors=sectors)
         # TODO allow user input apertures
@@ -175,8 +182,6 @@ class Validator:
         logging.info("Calculating validation closest stars depths")
         target.calc_depths(depth, valid_apertures)
         target.stars.to_csv(save_dir + "/stars.csv", index=False)
-        lc = pd.read_csv(lc_file, header=0)
-        time, flux, flux_err = lc["#time"].values, lc["flux"].values, lc["flux_err"].values
         lc_len = len(time)
         zeros_lc = np.zeros(lc_len)
         logging.info("Preparing validation light curve for target")
@@ -223,6 +228,10 @@ class Validator:
         target.fluxratio_EB = np.zeros(scenarios_num)
         target.fluxratio_comp = np.zeros(scenarios_num)
         logging.info("Computing final probabilities from the %s scenarios", scenarios)
+        fpps = [validation_result[0] for validation_result in validation_results]
+        nfpps = [validation_result[1] for validation_result in validation_results]
+        fpp_err = np.std(fpps)
+        nfpp_err = np.std(nfpps)
         i = 0
         with open(save_dir + "/validation.csv", 'w') as the_file:
             the_file.write("scenario,FPP,NFPP,FPP2,FPP3+\n")
@@ -253,15 +262,16 @@ class Validator:
             nfpp_sum = nfpp_sum / scenarios
             fpp2_sum = fpp2_sum / scenarios
             fpp3_sum = fpp3_sum / scenarios
-            logging.info("---------------------------------")
-            logging.info("Final probabilities computed")
-            logging.info("---------------------------------")
-            logging.info("FPP=%s", fpp_sum)
-            logging.info("NFPP=%s", nfpp_sum)
-            logging.info("FPP2(Lissauer et al, 2012)=%s", fpp2_sum)
-            logging.info("FPP3+(Lissauer et al, 2012)=%s", fpp3_sum)
             the_file.write("MEAN" + "," + str(fpp_sum) + "," + str(nfpp_sum) + "," + str(fpp2_sum) + "," +
                            str(fpp3_sum))
+        logging.info("---------------------------------")
+        logging.info("Final probabilities computed")
+        logging.info("---------------------------------")
+        logging.info("FPP=%s", fpp_sum)
+        logging.info("NFPP=%s", nfpp_sum)
+        logging.info("FPP2(Lissauer et al, 2012)=%s", fpp2_sum)
+        logging.info("FPP3+(Lissauer et al, 2012)=%s", fpp3_sum)
+        Validator.plot_triceratops_output(fpp_sum, nfpp_sum, fpp_err, nfpp_err, save_dir)
         probs_total_df = probs_total_df.groupby("scenario", as_index=False).mean()
         probs_total_df["scenario"] = pd.Categorical(probs_total_df["scenario"], ["TP", "EB", "EBx2P", "PTP", "PEB",
                                                                                  "PEBx2P", "STP", "SEB", "SEBx2P",
@@ -273,6 +283,35 @@ class Validator:
         # target.plot_fits(save=True, fname=save_dir + "/scenario_fits", time=lc.time.value, flux_0=lc.flux.value,
         #                  flux_err_0=sigma)
         return save_dir
+
+    def is_candidate_aware(self):
+        return self.is_candidate_from_search
+
+    @staticmethod
+    def plot_triceratops_output(fpp, nfpp, fpp_err, nfpp_err, target_dir):
+        likely = (0.5, 0.001)
+        likely_nfpp = 0.1
+        fig, axs = plt.subplots(1, 1, figsize=(8, 8), constrained_layout=True)
+        #axs.set_xlim([0, 1])
+        #axs.set_ylim([0, 1])
+        axs.set_yscale('log', base=10)
+        #axs.set_yscale('log', base=10)
+        axs.set_title("FPP / NFPP Map", fontsize=25)
+        axs.set_xlabel('FPP', fontsize=25)
+        axs.set_ylabel('NFPP', fontsize=25)
+        axs.axhspan(0, likely[1], 0, likely[0], color="lightgreen", label="Likely Planet")
+        axs.axhspan(likely_nfpp, 1, color="gainsboro", label="Likely NFP")
+        axs.errorbar(fpp, nfpp, xerr=fpp_err, yerr=nfpp_err, marker="o", markersize=15, markerfacecolor="blue",
+                     ecolor="cyan")
+        axs.plot(0.000001, 0.000001, markersize=0)
+        #axs.legend(loc='upper right', fontsize=25)
+        axs.text(0.77, 0.115, "Likely NFP", fontsize=20)
+        axs.text(0.23, 0.00057, "Likely Planet", fontsize=20)
+        axs.tick_params(axis='both', which='major', labelsize=15)
+        axs.set_xlim([0, 1])
+        axs.set_ylim([0, 1])
+        fig.savefig(target_dir + "/triceratops_map.png")
+        fig.clf()
 
 
     # def execute_vespa(self, cpus, indir, object_id, sectors, lc_file, transit_depth, period, epoch, duration, rprs):
@@ -495,12 +534,12 @@ if __name__ == '__main__':
     args = ap.parse_args()
     index = 0
     object_dir = os.getcwd() if args.object_dir is None else args.object_dir
+    candidates = pd.read_csv(object_dir + "/candidates.csv")
     validation_dir = object_dir + "/validation_" + str(index)
     while os.path.exists(validation_dir) or os.path.isdir(validation_dir):
         validation_dir = object_dir + "/validation_" + str(index)
         index = index + 1
     os.mkdir(validation_dir)
-    validator = Validator(object_dir, validation_dir)
     file_dir = validation_dir + "/validation.log"
     if os.path.exists(file_dir):
         os.remove(file_dir)
@@ -518,7 +557,7 @@ if __name__ == '__main__':
     handler.setFormatter(formatter)
     logger.addHandler(handler)
     logging.info("Starting validation")
-    star_df = pd.read_csv(validator.object_dir + "/params_star.csv")
+    star_df = pd.read_csv(object_dir + "/params_star.csv")
     if args.candidate is None:
         logging.info("Reading validation input from properties file: %s", args.properties)
         user_properties = yaml.load(open(args.properties), yaml.SafeLoader)
@@ -527,17 +566,16 @@ if __name__ == '__main__':
         candidate['id'] = star_df.iloc[0]["obj_id"]
     else:
         candidate_selection = int(args.candidate)
-        candidates = pd.read_csv(validator.object_dir + "/candidates.csv")
         if candidate_selection < 1 or candidate_selection > len(candidates.index):
             raise SystemExit("User selected a wrong candidate number.")
         candidates = candidates.rename(columns={'Object Id': 'id'})
         candidate = candidates.iloc[[candidate_selection - 1]]
         candidate['number'] = [candidate_selection]
-        validator.data_dir = validator.object_dir
         logging.info("Selected signal number " + str(candidate_selection))
     if args.cpus is None:
         cpus = multiprocessing.cpu_count() - 1
     else:
         cpus = args.cpus
+    validator = Validator(object_dir, validation_dir, len(candidate) == 1, candidates)
     validator.validate(candidate, star_df.iloc[0], cpus, args.contrast_curve, args.bins, args.scenarios,
                        args.sigma_mode)

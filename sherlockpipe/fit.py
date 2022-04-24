@@ -15,16 +15,19 @@ import os
 from os import path
 import matplotlib.pyplot as plt
 
+from sherlockpipe.tool_with_candidate import ToolWithCandidate
 
 resources_dir = path.join(path.dirname(__file__))
 
 
-class Fitter:
+class Fitter(ToolWithCandidate):
     """
     Used to run a bayesian fit on the Sherlock search results.
     """
 
-    def __init__(self, object_dir, fit_dir, only_initial, mcmc=False, detrend=None):
+    def __init__(self, object_dir, fit_dir, only_initial, is_candidate_from_search, candidates_df, mcmc=False,
+                 detrend=None):
+        super().__init__(is_candidate_from_search, candidates_df)
         self.object_dir = os.getcwd() if object_dir is None else object_dir
         self.data_dir = fit_dir
         self.only_initial = only_initial
@@ -47,7 +50,15 @@ class Fitter:
         params_file = allesfit_dir + "/params.csv"
         settings_file = allesfit_dir + "/settings.csv"
         lc_file = Fitter.select_lc_file(candidate_df)
-        shutil.copyfile(self.object_dir + lc_file, allesfit_dir + "/lc.csv")
+        run = int(candidate_df['number'].iloc[0])
+        lc = pd.read_csv(self.object_dir + lc_file, header=0)
+        time, flux, flux_err = lc["#time"].values, lc["flux"].values, lc["flux_err"].values
+        time, flux, flux_err = self.mask_previous_candidates(time, flux, flux_err, run)
+        lc = pd.DataFrame(columns=['#time', 'flux', 'flux_err'])
+        lc['#time'] = time
+        lc['flux'] = flux
+        lc['flux_err'] = flux_err
+        lc.to_csv(allesfit_dir + "/lc.csv", index=False)
         if os.path.exists(sherlock_star_file) and os.path.isfile(sherlock_star_file):
             shutil.copyfile(sherlock_star_file, star_file)
         shutil.copyfile(resources_dir + "/resources/allesfitter/settings.csv", settings_file)
@@ -115,7 +126,7 @@ class Fitter:
             lc_file = "/lc.csv"
         else:
             candidate_row = candidate_df.iloc[0]
-            lc_file = "/" + str(candidate_row["number"]) + "/lc_" + str(candidate_row["curve"]) + ".csv"
+            lc_file = "/lc_" + str(candidate_row["curve"]) + ".csv"
         return lc_file
 
     @staticmethod
@@ -318,6 +329,12 @@ if __name__ == '__main__':
     args = ap.parse_args()
     index = 0
     object_dir = os.getcwd() if args.object_dir is None else args.object_dir
+    candidates_df = pd.read_csv(object_dir + "/candidates.csv")
+    candidate_selections = []
+    if args.candidate is not None:
+        candidate_selections = str(args.candidate)
+        candidate_selections = candidate_selections.split(",")
+        candidate_selections = list(map(int, candidate_selections))
     fitting_dir = object_dir + "/fit_" + str(index)
     while os.path.exists(fitting_dir) or os.path.isdir(fitting_dir):
         fitting_dir = object_dir + "/fit_" + str(index)
@@ -326,7 +343,6 @@ if __name__ == '__main__':
     file_dir = fitting_dir + "/fit.log"
     if os.path.exists(file_dir):
         os.remove(file_dir)
-    fitter = Fitter(object_dir, fitting_dir, args.only_initial, args.mcmc, args.detrend)
     formatter = logging.Formatter('%(message)s')
     logger = logging.getLogger()
     while len(logger.handlers) > 0:
@@ -340,13 +356,12 @@ if __name__ == '__main__':
     handler.setLevel(logging.INFO)
     handler.setFormatter(formatter)
     logger.addHandler(handler)
-    star_df = pd.read_csv(fitter.object_dir + "/params_star.csv")
-    candidate_selections = None
+    star_df = pd.read_csv(object_dir + "/params_star.csv")
     if args.candidate is None:
         user_properties = yaml.load(open(args.properties), yaml.SafeLoader)
-        candidates_df = pd.DataFrame(columns=['id', 'period', 't0', 'duration', 'cpus', 'rp_rs', 'a', 'number', 'name',
+        selected_candidates_df = pd.DataFrame(columns=['id', 'period', 't0', 'duration', 'cpus', 'rp_rs', 'a', 'number', 'name',
                                               'lc'])
-        candidates_df = candidates_df.append(user_properties["planets"], ignore_index=True)
+        selected_candidates_df = selected_candidates_df.append(user_properties["planets"], ignore_index=True)
         user_star_df = pd.DataFrame(columns=['R_star', 'M_star'])
         if "star" in user_properties and user_properties["star"] is not None:
             user_star_df = user_star_df.append(user_properties["star"], ignore_index=True)
@@ -360,36 +375,36 @@ if __name__ == '__main__':
                 star_df.at[0, "ld_b"] = user_star_df.iloc[0]["ld_b"]
             if ("a" not in user_properties["planet"] or user_properties["planet"]["a"] is None)\
                     and star_df.iloc[0]["M_star"] is not None and not np.isnan(star_df.iloc[0]["M_star"]):
-                candidates_df.at[0, "a"] = HabitabilityCalculator() \
+                selected_candidates_df.at[0, "a"] = HabitabilityCalculator() \
                     .calculate_semi_major_axis(user_properties["planet"]["period"],
                                                user_properties["star"]["M_star"])
             elif ("a" not in user_properties["planet"] or user_properties["planet"]["a"] is None)\
                     and (star_df.iloc[0]["M_star"] is None or np.isnan(star_df.iloc[0]["M_star"])):
                 raise ValueError("Cannot guess semi-major axis without star mass.")
-        candidates_df['number'] = user_properties["number"]
-        candidates_df['curve'] = user_properties["curve"]
-        if candidates_df.iloc[0]["a"] is None or np.isnan(candidates_df.iloc[0]["a"]):
+        selected_candidates_df['number'] = user_properties["number"]
+        selected_candidates_df['curve'] = user_properties["curve"]
+        if selected_candidates_df.iloc[0]["a"] is None or np.isnan(selected_candidates_df.iloc[0]["a"]):
             raise ValueError("Semi-major axis is neither provided nor inferred.")
-        if candidates_df.iloc[0]["name"] is None:
+        if selected_candidates_df.iloc[0]["name"] is None:
             raise ValueError("You need to provide a name for your candidate.")
-        if candidates_df.iloc[0]["lc"] is None:
+        if selected_candidates_df.iloc[0]["lc"] is None:
             raise ValueError("You need to provide a light curve relative path for your candidate.")
     else:
-        candidate_selections = str(args.candidate)
-        candidate_selections = candidate_selections.split(",")
-        candidate_selections = list(map(int, candidate_selections))
-        candidates_df = pd.read_csv(fitter.object_dir + "/candidates.csv")
-        candidates_df = candidates_df.rename(columns={'Object Id': 'TICID'})
-        candidates_df["number"] = ""
-        candidates_df["name"] = ""
+        selected_candidates_df = pd.read_csv(object_dir + "/candidates.csv")
+        selected_candidates_df = selected_candidates_df.rename(columns={'Object Id': 'TICID'})
+        selected_candidates_df["number"] = ""
+        selected_candidates_df["name"] = ""
         for candidate_selection in candidate_selections:
-            candidates_df['number'][candidate_selection - 1] = candidate_selection
-            candidates_df['name'][candidate_selection - 1] = 'SOI_' + \
-                                                             str(candidates_df['number'][candidate_selection - 1])
-        candidates_df = candidates_df.iloc[[candidate_selection - 1 for candidate_selection in candidate_selections]]
+            selected_candidates_df['number'][candidate_selection - 1] = candidate_selection
+            selected_candidates_df['name'][candidate_selection - 1] = 'SOI_' + \
+                        str(selected_candidates_df['number'][candidate_selection - 1])
+        selected_candidates_df = selected_candidates_df.iloc[
+            [candidate_selection - 1 for candidate_selection in candidate_selections]]
         logging.info("Selected signal numbers " + str(candidate_selections))
     if args.cpus is None:
         cpus = multiprocessing.cpu_count() - 1
     else:
         cpus = args.cpus
-    fitter.fit(candidates_df, star_df, cpus, fitting_dir, args.tolerance, args.fit_orbit)
+    fitter = Fitter(object_dir, fitting_dir, args.only_initial, len(selected_candidates_df) == 1, candidates_df,
+                    args.mcmc, args.detrend)
+    fitter.fit(selected_candidates_df, star_df, cpus, fitting_dir, args.tolerance, args.fit_orbit)
