@@ -850,7 +850,9 @@ class Sherlock:
             bin_width = (bin_edges[1] - bin_edges[0])
             bin_centers = bin_edges[1:] - bin_width / 2
             bin_size = int(folded_plot_range * 2 / bins * transit_result.period * 24 * 60)
-            ax2.errorbar(bin_centers, bin_means, yerr=bin_stds / 2, xerr=bin_width / 2, marker='o', markersize=4,
+            bin_means_data_mask = np.isnan(bin_means)
+            ax2.errorbar(bin_centers[~bin_means_data_mask], bin_means[~bin_means_data_mask],
+                         yerr=bin_stds[~bin_means_data_mask] / 2, xerr=bin_width / 2, marker='o', markersize=4,
                          color='darkorange', alpha=1, linestyle='none', label='Bin size: ' + str(bin_size) + "m")
             ax2.legend(loc="upper right")
         ax3 = plt.gca()
