@@ -56,7 +56,7 @@ MIN_SECTORS: 1
 # Maximum number of SECTORS for an execution. If the target contains more, it will be skipped.
 MAX_SECTORS: 999999
 # SNR threshold for a candidate to be accepted and finish the execution.
-SNR_MIN: 7
+SNR_MIN: 5
 # SDE threshold for a candidate to be accepted and finish the execution.
 SDE_MIN: 5
 # Number of processes to be spawned by SHERLOCK search.
