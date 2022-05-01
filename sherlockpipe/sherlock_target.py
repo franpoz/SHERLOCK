@@ -31,7 +31,8 @@ class SherlockTarget:
                  min_quorum=0, fit_method='tls', oversampling=10,
                  t0_fit_margin=0.05, duration_grid_step=1.1,
                  source_properties_file=None,
-                 cache_dir=os.path.expanduser('~') + "/"):
+                 cache_dir=os.path.expanduser('~') + "/",
+                 ignore_original=False):
         self.min_sectors = min_sectors
         self.max_sectors = max_sectors
         self.bin_minutes = bin_minutes
@@ -93,3 +94,5 @@ class SherlockTarget:
             self.user_transit_template = custom_transit_template
         self.object_info = object_info
         self.source_properties_file = source_properties_file
+        self.cache_dir = cache_dir
+        self.ignore_original = ignore_original
