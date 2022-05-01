@@ -22,6 +22,9 @@ DETREND_L_MIN:
 DETREND_L_MAX:
 # Number of detrend models to be generated from the original light curve
 DETRENDS_NUMBER: 6
+# Whether original light curve is to be ignored in the analysis. Sometimes the curve is very irregular and has much data
+# down below 1 and hence, many signals are found there with strong SDEs.
+IGNORE_ORIGINAL: False
 # Number of cpu cores to be used for parallel detrend model creation
 DETREND_CORES: 7
 # The corrected flux provided by ELEANOR to be used for TESS long cadence data. Options are [pca_flux and corr_flux]

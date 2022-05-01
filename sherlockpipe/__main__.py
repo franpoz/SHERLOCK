@@ -215,6 +215,7 @@ if __name__ == '__main__':
             oscillation_max_period = get_from_user_or_config(target_configs, sherlock_user_properties,
                                                              "OSCILLATIONS_MAX_PERIOD")
             exptime_binning = get_from_user_or_config(target_configs, sherlock_user_properties, "EXPTIME_BINNING")
+            ignore_original = get_from_user_or_config(target_configs, sherlock_user_properties, "IGNORE_ORIGINAL")
             mission = None
             mode = get_from_user_or_config_or_default(target_configs, sherlock_user_properties, "MODE", "GLOBAL")
             sectors = get_from_user_or_config_or_default(target_configs, sherlock_user_properties, "SECTORS", "all")
@@ -242,7 +243,7 @@ if __name__ == '__main__':
                                        cpu_cores, max_runs, period_min,
                                        period_max, period_protect, best_signal_algorithm, quorum_strength,
                                        min_quorum, fit_method, oversampling,
-                                       t0_fit_margin, duration_grid_step, args.properties)
+                                       t0_fit_margin, duration_grid_step, args.properties, cache_dir, ignore_original)
                         sherlock_targets.append(sherlock_target)
                 if mode == "SECTOR" or mode == "BOTH" and isinstance(built_object_info, (
                         MissionObjectInfo, MissionFfiCoordsObjectInfo, MissionFfiIdObjectInfo)):
@@ -271,7 +272,7 @@ if __name__ == '__main__':
                                        cpu_cores, max_runs, period_min,
                                        period_max, period_protect, best_signal_algorithm, quorum_strength,
                                        min_quorum, fit_method, oversampling,
-                                       t0_fit_margin, duration_grid_step, args.properties)
+                                       t0_fit_margin, duration_grid_step, args.properties, cache_dir, ignore_original)
                         sherlock_targets.append(sherlock_target)
             else:
                 built_object_info = lcbuilder.build_object_info(target, author, sectors, file, exptime,
@@ -285,7 +286,8 @@ if __name__ == '__main__':
                                                                 prepare_algorithm,
                                                                 reduce_simple_oscillations, oscillation_snr_threshold,
                                                                 oscillation_amplitude_threshold, oscillation_ws_scale,
-                                                                oscillation_min_period, oscillation_max_period, exptime_binning)
+                                                                oscillation_min_period, oscillation_max_period,
+                                                                exptime_binning)
                 sherlock_target = SherlockTarget(built_object_info,
                                                  detrend_method, detrend_l_min, detrend_l_max, detrends_number,
                                                  detrend_cores,
@@ -299,7 +301,8 @@ if __name__ == '__main__':
                                                  cpu_cores, max_runs, period_min,
                                                  period_max, period_protect, best_signal_algorithm, quorum_strength,
                                                  min_quorum, fit_method, oversampling,
-                                                 t0_fit_margin, duration_grid_step, args.properties)
+                                                 t0_fit_margin, duration_grid_step, args.properties, cache_dir,
+                                                 ignore_original)
                 if mode == "GLOBAL" or mode == "BOTH":
                     sherlock_targets.append(sherlock_target)
                 if mode == "SECTOR" or mode == "BOTH" and isinstance(built_object_info, (
@@ -328,7 +331,7 @@ if __name__ == '__main__':
                                        cpu_cores, max_runs, period_min,
                                        period_max, period_protect, best_signal_algorithm, quorum_strength,
                                        min_quorum, fit_method, oversampling,
-                                       t0_fit_margin, duration_grid_step, args.properties)
+                                       t0_fit_margin, duration_grid_step, args.properties, cache_dir, ignore_original)
                         sherlock_targets.append(sherlock_target)
                 if mode != "GLOBAL" and mode != "BOTH" and not (mode == "SECTOR" or mode == "BOTH" and isinstance(built_object_info, (
                         MissionObjectInfo, MissionFfiCoordsObjectInfo, MissionFfiIdObjectInfo))):

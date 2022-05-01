@@ -288,12 +288,16 @@ class Sherlock:
                 object_report["duration"] = transit_results[signal_selection.curve_index].duration * 60 * 24
                 object_report["t0"] = transit_results[signal_selection.curve_index].t0
                 object_report["depth"] = transit_results[signal_selection.curve_index].depth
-                object_report['rp_rs'] = transit_results[signal_selection.curve_index].results.rp_rs
-                real_transit_args = np.argwhere(~np.isnan(transit_results[signal_selection.curve_index]
-                                                          .results.transit_depths))
-                object_report["transits"] = np.array(transit_results[signal_selection.curve_index]
-                                                          .results.transit_times)[real_transit_args.flatten()]
-                object_report["transits"] = ','.join(map(str, object_report["transits"]))
+                if transit_results[signal_selection.curve_index].results is not None:
+                    object_report['rp_rs'] = transit_results[signal_selection.curve_index].results.rp_rs
+                    real_transit_args = np.argwhere(~np.isnan(transit_results[signal_selection.curve_index]
+                                                              .results.transit_depths))
+                    object_report["transits"] = np.array(transit_results[signal_selection.curve_index]
+                                                         .results.transit_times)[real_transit_args.flatten()]
+                    object_report["transits"] = ','.join(map(str, object_report["transits"]))
+                else:
+                    object_report['rp_rs'] = 0
+                    object_report["transits"] = ""
                 object_report["sectors"] = ','.join(map(str, lc_build.sectors)) \
                     if lc_build.sectors is not None and len(lc_build.sectors) > 0 else None
                 object_report["ffi"] = isinstance(sherlock_target, MissionFfiIdObjectInfo) or \
@@ -507,8 +511,8 @@ class Sherlock:
             transit_duration = wotan.t14(R_s=lc_build.star_info.radius, M_s=lc_build.star_info.mass,
                                          P=sherlock_target.period_protect, small_planet=True)
             if sherlock_target.detrend_method == 'gp':
-                self.wl_min[sherlock_id] = 1
-                self.wl_max[sherlock_id] = 12
+                self.wl_min[sherlock_id] = 3 * transit_duration
+                self.wl_max[sherlock_id] = 20 * transit_duration
             else:
                 self.wl_min[sherlock_id] = 3 * transit_duration  # minimum transit duration
                 self.wl_max[sherlock_id] = 20 * transit_duration  # maximum transit duration
@@ -523,7 +527,7 @@ class Sherlock:
             logging.info("Field Of View Plots")
             logging.info("======================================")
             fov_dir = object_dir + "/fov"
-            Watson.vetting_field_of_view(fov_dir, mission, object_num, lc_build.cadence, lc_build.star_info.ra,
+            Watson.vetting_field_of_view(fov_dir, mission, object_num, lc_build.F, lc_build.star_info.ra,
                                          lc_build.star_info.dec, lc_build.sectors if isinstance(lc_build.sectors, list)
                                          else lc_build.sectors.tolist(), lc_build.tpf_source, lc_build.tpf_apertures)
         return lc_build
@@ -638,32 +642,33 @@ class Sherlock:
                      "SNR", "SDE", "FAP", "Border_score", "Matching OI", "Harmonic", "Planet radius (R_Earth)", "Rp/Rs",
                      "Semi-major axis", "Habitability Zone")
         transit_results = {}
-        run_dir = self.__init_object_run_dir(object_info.sherlock_id(), id_run)
-        transit_result = self.__adjust_transit(sherlock_target, time, lcs[0], star_info, transits_min_count,
-                                               transit_results, report, cadence, period_grid, detrend_source_period)
+        if not sherlock_target.ignore_original:
+            transit_result = self.__adjust_transit(sherlock_target, time, lcs[0], star_info, transits_min_count,
+                                                   transit_results, report, cadence, period_grid, detrend_source_period)
+            r_planet = self.__calculate_planet_radius(star_info, transit_result.depth)
+            rp_rs = transit_result.results.rp_rs
+            a, habitability_zone = self.habitability_calculator \
+                .calculate_hz_score(star_info.teff, star_info.mass, star_info.lum, transit_result.period)
+            oi = self.__find_matching_oi(object_info, transit_result.period)
+            logging.info('%-12s%-12.5f%-10.6f%-8s%-18.3f%-14.1f%-14.4f%-12.3f%-12.3f%-14s%-16.2f%-14s%-12s%-25.5f%-10.5f%-18.5f%-20s',
+                         "PDCSAP_FLUX", transit_result.period,
+                         transit_result.per_err, transit_result.count, transit_result.depth,
+                         transit_result.duration * 24 * 60, transit_result.t0, transit_result.snr, transit_result.sde,
+                         transit_result.fap, transit_result.border_score, oi, transit_result.harmonic, r_planet, rp_rs, a,
+                         habitability_zone)
+            plot_title = 'Run ' + str(id_run) + 'PDCSAP_FLUX # P=' + \
+                         format(transit_result.period, '.2f') + 'd # T0=' + format(transit_result.t0, '.2f') + \
+                         ' # Depth=' + format(transit_result.depth, '.4f') + 'ppt # Dur=' + \
+                         format(transit_result.duration * 24 * 60, '.0f') + 'm # SNR:' + \
+                         str(format(transit_result.snr, '.2f')) + ' # SDE:' + str(format(transit_result.sde, '.2f')) + \
+                         ' # FAP:' + format(transit_result.fap, '.6f')
+            plot_file = 'Run_' + str(id_run) + '_PDCSAP-FLUX_' + str(star_info.object_id) + '.png'
+            self.__save_transit_plot(star_info.object_id, plot_title, plot_file, time, lcs[0], transit_result, cadence,
+                                     id_run)
+        else:
+            transit_result = TransitResult(None, 0, 0, 0, 0, [], [], 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, [], False)
         transit_results[0] = transit_result
-        r_planet = self.__calculate_planet_radius(star_info, transit_result.depth)
-        rp_rs = transit_result.results.rp_rs
-        a, habitability_zone = self.habitability_calculator \
-            .calculate_hz_score(star_info.teff, star_info.mass, star_info.lum, transit_result.period)
-        oi = self.__find_matching_oi(object_info, transit_result.period)
-        logging.info('%-12s%-12.5f%-10.6f%-8s%-18.3f%-14.1f%-14.4f%-12.3f%-12.3f%-14s%-16.2f%-14s%-12s%-25.5f%-10.5f%-18.5f%-20s',
-                     "PDCSAP_FLUX", transit_result.period,
-                     transit_result.per_err, transit_result.count, transit_result.depth,
-                     transit_result.duration * 24 * 60, transit_result.t0, transit_result.snr, transit_result.sde,
-                     transit_result.fap, transit_result.border_score, oi, transit_result.harmonic, r_planet, rp_rs, a,
-                     habitability_zone)
-        plot_title = 'Run ' + str(id_run) + 'PDCSAP_FLUX # P=' + \
-                     format(transit_result.period, '.2f') + 'd # T0=' + format(transit_result.t0, '.2f') + \
-                     ' # Depth=' + format(transit_result.depth, '.4f') + 'ppt # Dur=' + \
-                     format(transit_result.duration * 24 * 60, '.0f') + 'm # SNR:' + \
-                     str(format(transit_result.snr, '.2f')) + ' # SDE:' + str(format(transit_result.sde, '.2f')) + \
-                     ' # FAP:' + format(transit_result.fap, '.6f')
-        plot_file = 'Run_' + str(id_run) + '_PDCSAP-FLUX_' + str(star_info.object_id) + '.png'
-        self.__save_transit_plot(star_info.object_id, plot_title, plot_file, time, lcs[0], transit_result, cadence,
-                                 id_run)
         for i in range(1, len(wl)):
-            lc_df = pandas.DataFrame(columns=['#time', 'flux', 'flux_err'])
             transit_result = self.__adjust_transit(sherlock_target, time, lcs[i], star_info, transits_min_count,
                                                    transit_results, report, cadence, period_grid, detrend_source_period)
             transit_results[i] = transit_result
@@ -794,7 +799,7 @@ class Sherlock:
             if len(period_harmonic) > 0:
                 period_harmonic = scales[period_harmonic[0]]
                 return str(period_harmonic) + "*SOI" + str(key + 1)
-        period_scales = [round(tls_results.period / run_results[key].period, 2) for key in run_results]
+        period_scales = [round(tls_results.period / run_results[key].period, 2) if run_results[key].period > 0 else 0 for key in run_results]
         for key, period_scale in enumerate(period_scales):
             period_harmonic = np.array(np.argwhere(
                 (np.array(scales) > period_scale - 0.02) & (np.array(scales) < period_scale + 0.02))).flatten()
