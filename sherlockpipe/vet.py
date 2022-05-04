@@ -78,7 +78,7 @@ if __name__ == '__main__':
     else:
         cpus = args.cpus
     transits_mask = []
-    for i in range(0, int(candidate['number'])):
+    for i in range(0, int(candidate['number']) - 1):
         transits_mask.append({"P": candidates.iloc[i]["period"], "T0": candidates.iloc[i]["t0"],
                               "D": candidates.iloc[i]["duration"]})
     vetter.run(cpus, candidate=candidate, star_df=star_df.iloc[0], transits_df=transits_df, transits_mask=transits_mask)
