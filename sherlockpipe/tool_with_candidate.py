@@ -18,7 +18,7 @@ class ToolWithCandidate:
                 duration = candidate_row["duration"]
                 duration = duration / 60 / 24
                 t0 = candidate_row["t0"]
-                logging.info("Masking candidate number %.0f with P=%.3fd, T0=%.2f and D=%.2fm", index + 1, period, t0,
+                logging.info("Masking candidate number %.0f with P=%.3fd, T0=%.2f and D=%.2fd", index + 1, period, t0,
                              duration)
                 mask = foldedleastsquares.transit_mask(time, period, duration * 2, t0)
                 time = time[~mask]
