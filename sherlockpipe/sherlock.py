@@ -527,7 +527,7 @@ class Sherlock:
             logging.info("Field Of View Plots")
             logging.info("======================================")
             fov_dir = object_dir + "/fov"
-            Watson.vetting_field_of_view(fov_dir, mission, object_num, lc_build.F, lc_build.star_info.ra,
+            Watson.vetting_field_of_view(fov_dir, mission, object_num, lc_build.cadence, lc_build.star_info.ra,
                                          lc_build.star_info.dec, lc_build.sectors if isinstance(lc_build.sectors, list)
                                          else lc_build.sectors.tolist(), lc_build.tpf_source, lc_build.tpf_apertures)
         return lc_build
