@@ -308,7 +308,6 @@ class Validator(ToolWithCandidate):
         axs.text(0.23, 0.00057, "Likely Planet", fontsize=20)
         axs.tick_params(axis='both', which='major', labelsize=15)
         axs.set_xlim([0, 1])
-        axs.set_ylim([0, 1])
         fig.savefig(target_dir + "/triceratops_map.png")
         fig.clf()
 
