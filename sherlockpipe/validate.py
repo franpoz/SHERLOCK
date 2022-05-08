@@ -165,8 +165,7 @@ class Validator(ToolWithCandidate):
                 valid_apertures[sector] = aperture
                 target.plot_field(save=True, fname=save_dir + "/field_S" + str(sector), sector=sector,
                                   ap_pixels=aperture)
-        apertures = np.array([aperture for sector, aperture in apertures.items()])
-        valid_apertures = np.array([aperture for sector, aperture in valid_apertures.items()])
+        valid_apertures = np.array([aperture for sector, aperture in valid_apertures.items()], dtype=object)
         depth = transit_depth / 1000
         if contrast_curve_file is not None:
             logging.info("Reading contrast curve %s", contrast_curve_file)
