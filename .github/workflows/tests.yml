@@ -1,0 +1,43 @@
+name: WATSON tests
+
+on:
+  push:
+    branches: [ main, master ]
+  pull_request:
+    # The branches below must be a subset of the branches above
+    branches: [ main, master ]
+
+jobs:
+  test:
+    name: test ${{ matrix.py }} - ${{ matrix.os }}
+    runs-on: ubuntu-18.04
+    strategy:
+      fail-fast: false
+      matrix:
+        os:
+          - Ubuntu
+        py:
+          - "3.8"
+          - "3.9"
+        toxenv:
+          - "py38"
+          - "py39"
+        exclude:
+          - py: "3.8"
+            toxenv: "py39"
+          - py: "3.9"
+            toxenv: "py38"
+    steps:
+      - name: Setup python for test ${{ matrix.py }}
+        uses: actions/setup-python@v2
+        with:
+          python-version: ${{ matrix.py }}
+      - uses: actions/checkout@v2
+        with:
+          submodules: recursive
+      - name: Install tox
+        run: python -m pip install tox
+      - name: Run test suite
+        run: tox -vv -e "${{ matrix.toxenv }}"
+        env:
+          PYTEST_ADDOPTS: "-vv --durations=10"
