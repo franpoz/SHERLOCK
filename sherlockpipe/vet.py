@@ -5,8 +5,6 @@ from argparse import ArgumentParser
 import sys
 import pandas as pd
 import os
-
-from lcbuilder.helper import LcbuilderHelper
 from watson.watson import Watson
 
 from sherlockpipe.tool_with_candidate import ToolWithCandidate
