@@ -3,7 +3,7 @@ import setuptools
 with open("README.md", "r") as fh:
     long_description = fh.read()
 
-version = "0.28.7"
+version = "0.29.0"
 setuptools.setup(
     name="sherlockpipe", # Replace with your own username
     version=version,
@@ -22,13 +22,13 @@ setuptools.setup(
     ],
     python_requires='>=3.8',
     install_requires=['astroplan==0.7',
-                        "astroquery==0.4.1",
+                        "astroquery==0.4.6",
                         "allesfitter==1.2.8",
                         'argparse==1.4.0',
                         'beautifulsoup4==4.9.3', # Parsing HTML and XML, for OIs extraction
                         "celerite==0.4.0", # Allesfitter dependency
                         "corner==2.1.0", # Allesfitter dependency
-                        "cython==0.29.21",
+                        "Cython==0.29.21",
                         "dearwatson==0.2.7", # Vetting
                         "dynesty==1.0.1", # Allesfitter dependency
                         "ellc==1.8.5", # Allesfitter dependency
