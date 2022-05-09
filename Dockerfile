@@ -12,6 +12,7 @@ ENV LLVM_CONFIG=/usr/bin/llvm-config-9
 RUN python3.8 -m pip install pip -U
 RUN python3.8 -m pip install setuptools -U
 RUN python3.8 -m pip install extension-helpers -U
+RUN python3.8 -m pip install wheel -U
 RUN python3.8 -m pip install Cython
 RUN python3.8 -m pip install numpy
 RUN python3.8 -m pip install sherlockpipe --pre --ignore-installed PyYAML
