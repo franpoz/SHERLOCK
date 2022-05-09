@@ -1,0 +1,2 @@
+include tox.ini
+graft sherlockpipe/resources
