@@ -164,7 +164,7 @@ class TestsSherlock(unittest.TestCase):
                                      detrends_number=1, max_runs=1, oversampling=0.05)], True).run()
             run_dir = "TIC259377017_[5]"
             self.assertTrue(os.path.exists(run_dir))
-            self.assertTrue(os.path.exists(run_dir + "/Phase_detrend_period_TIC259377017_[5]_0.52_days.png"))
+            self.assertTrue(os.path.exists(run_dir + '/Phase_detrend_period_TIC259377017_[5]_0.25_days.png'))
         finally:
             self.__clean(run_dir)
 
