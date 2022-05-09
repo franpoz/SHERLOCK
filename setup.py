@@ -23,7 +23,7 @@ setuptools.setup(
     python_requires='>=3.8',
     install_requires=['astroplan==0.7',
                         "astroquery==0.4.6",
-                        "allesfitter==1.2.8",
+                        "allesfitter==1.2.9",
                         'argparse==1.4.0',
                         'beautifulsoup4==4.9.3', # Parsing HTML and XML, for OIs extraction
                         "celerite==0.4.0", # Allesfitter dependency
