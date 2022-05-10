@@ -541,7 +541,7 @@ if __name__ == '__main__':
     file_dir = validation_dir + "/validation.log"
     if os.path.exists(file_dir):
         os.remove(file_dir)
-    formatter = logging.Formatter('%(message)s')
+    formatter = logging.Formatter(fmt='%(asctime)s %(levelname)-8s %(message)s', datefmt='%Y-%m-%d %H:%M:%S')
     logger = logging.getLogger()
     while len(logger.handlers) > 0:
         logger.handlers.pop()

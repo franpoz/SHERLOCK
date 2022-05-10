@@ -290,6 +290,7 @@ def create_observation_observables(object_id, object_dir, since, name, epoch, ep
     print("Observation plan created in directory: " + object_dir)
     return observatories_df, observables_df, alert_date, plan_dir, images_dir
 
+
 if __name__ == '__main__':
     ap = ArgumentParser(description='Planning of observations from Sherlock objects of interest')
     ap.add_argument('--object_dir',

@@ -75,6 +75,7 @@ class Sherlock:
         """
         self.explore = explore
         self.cache_dir = cache_dir
+        self.__setup_logging()
         self.ois_manager = OisManager(self.cache_dir)
         self.setup_files(update_ois, update_force, update_clean)
         self.sherlock_targets = sherlock_targets
@@ -204,7 +205,6 @@ class Sherlock:
         """
         Entrypoint of Sherlock which launches the main execution for all the input object_infos
         """
-        self.__setup_logging()
         logging.info('SHERLOCK (Searching for Hints of Exoplanets fRom Lightcurves Of spaCe-base seeKers)')
         logging.info('Version %s', sys.modules["sherlockpipe"].__version__)
         logging.info('MODE: %s', "ANALYSE" if not self.explore else "EXPLORE")
@@ -375,7 +375,7 @@ class Sherlock:
         return dir + "/"
 
     def __setup_logging(self):
-        formatter = logging.Formatter('%(message)s')
+        formatter = logging.Formatter(fmt='%(message)s', datefmt='%Y-%m-%d %H:%M:%S')
         logger = logging.getLogger()
         while len(logger.handlers) > 0:
             logger.handlers.pop()
@@ -390,7 +390,7 @@ class Sherlock:
         logger = logging.getLogger()
         while len(logger.handlers) > 1:
             logger.handlers.pop()
-        formatter = logging.Formatter('%(message)s')
+        formatter = logging.Formatter(fmt='%(asctime)s %(levelname)-8s %(message)s', datefmt='%Y-%m-%d %H:%M:%S')
         handler = logging.FileHandler(object_dir + str(object_id) + "_report.log")
         handler.setLevel(logging.INFO)
         handler.setFormatter(formatter)
@@ -401,7 +401,7 @@ class Sherlock:
         object_dir = self.__setup_object_logging(object_id, False)
         logger = logging.getLogger()
         logger.handlers.pop()
-        formatter = logging.Formatter('%(message)s')
+        formatter = logging.Formatter(fmt='%(asctime)s %(levelname)-8s %(message)s', datefmt='%Y-%m-%d %H:%M:%S')
         file = object_dir + str(object_id) + "_candidates.log"
         if clean and os.path.exists(file):
             os.remove(file)
