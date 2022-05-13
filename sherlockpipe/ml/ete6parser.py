@@ -68,7 +68,7 @@ def create_injection_dataframe(injections_dir, lcs_dir):
             print("Processed " + str(i) + " TICs. Found ")
 
 
-def create_target_csvs(lcs_dir, models_dir, lc_length=2610):
+def create_target_csvs(lcs_dir, models_dir, lc_length=20610):
     for file in os.listdir(lcs_dir):
         lc_file = lcs_dir + '/' + file
         lc_df = pd.DataFrame(columns=['#time', 'flux', 'flux_err', 'planet_model', 'eb_model', 'bckeb_model',
