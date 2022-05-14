@@ -86,14 +86,13 @@ def create_target_csvs(lcs_dir, models_dir, max_lc_length=20610):
             model_df = pd.read_csv(model_file, header=None)
             eb_model_flux = model_df[0].to_numpy()
             eb_model_flux = eb_model_flux / np.median(eb_model_flux)
-            resample_model(eb_model_flux, lc.time.value)
+            eb_model_flux = resample_model(eb_model_flux, lc.time.value)
         model_file = models_dir + '/backebs/BackEBs/BackEBs_' + '_' + leading_zeros_object_id + '.txt'
         if os.path.exists(model_file):
             model_df = pd.read_csv(model_file, header=None)
             backeb_model_flux = model_df[0].to_numpy()
             backeb_model_flux = backeb_model_flux / np.median(backeb_model_flux)
             resample_model(backeb_model_flux, lc.time.value)
-
             # import matplotlib.pyplot as plt
             # plt.scatter(np.linspace(lc.time.value[0], lc.time.value[-1], len(eb_model_flux)), eb_model_flux)
             # plt.scatter(lc.time.value, lc.pdcsap_flux.value / np.median(lc.pdcsap_flux.value))
@@ -121,27 +120,38 @@ def create_target_csvs(lcs_dir, models_dir, max_lc_length=20610):
         lc_df['bckeb_model'] = np.concatenate((np.array(backeb_model_flux), padding_ones))
         lc_df['planet_model'] = np.concatenate((np.array(planet_model_flux), padding_ones))
         lc_df.to_csv(lcs_dir + '/' + leading_zeros_object_id + '_lc.csv')
-        star_info = TicStarCatalog().catalog_info(object_id)
-        star_df = pd.DataFrame(columns=['ld_a', 'ld_b', 'Teff', 'lum', 'logg', 'radius', 'mass', 'v', 'j', 'h', 'k'])
-        star_df.append({'ld_a': star_info[0][0], 'ld_b': star_info[0][1], 'Teff': star_info[1], 'lum': star_info[2],
-                        'logg': star_info[3], 'radius': star_info[5], 'mass': star_info[8], 'v': star_info[13],
-                        'j': star_info[15], 'h': star_info[17], 'k': star_info[19]}, ignore_index=True)
-        star_df.to_csv(lcs_dir + '/' + leading_zeros_object_id + '_star.csv')
+        # star_info = TicStarCatalog().catalog_info(object_id)
+        # star_df = pd.DataFrame(columns=['ld_a', 'ld_b', 'Teff', 'lum', 'logg', 'radius', 'mass', 'v', 'j', 'h', 'k'])
+        # star_df.append({'ld_a': star_info[0][0], 'ld_b': star_info[0][1], 'Teff': star_info[1], 'lum': star_info[2],
+        #                 'logg': star_info[3], 'radius': star_info[5], 'mass': star_info[8], 'v': star_info[13],
+        #                 'j': star_info[15], 'h': star_info[17], 'k': star_info[19]}, ignore_index=True)
+        # star_df.to_csv(lcs_dir + '/' + leading_zeros_object_id + '_star.csv')
 
 def resample_model(model, lc_time):
-    time_gaps_indexes = np.argwhere(np.abs(lc_time[1:] - lc_time[:-1]) > 0.014)
-    time_gap_range_bottom = lc_time[time_gaps_indexes].flatten()
-    time_gap_range_up = lc_time[time_gaps_indexes + 1].flatten()
-    time_model = np.linspace(lc_time[0], lc_time[-1], len(model))
-    time_values_to_add = []
+    total_missing_points = len(model) - len(lc_time)
+    gaps_sizes = []
+    time_gaps_indexes = np.argwhere(np.abs(lc_time[1:] - lc_time[:-1]) > 0.014).flatten()
+    for time_gap_index in time_gaps_indexes:
+        gaps_sizes = gaps_sizes + [lc_time[time_gap_index + 1] - lc_time[time_gap_index]]
+    total_gap_size = np.sum(gaps_sizes)
+    gap_sizes_percent = [gap_size / total_gap_size for gap_size in gaps_sizes]
+    gap_points = []
+    for gap_size_percent in gap_sizes_percent[:-1]:
+        gap_points = gap_points + [int(np.round(total_missing_points * gap_size_percent))]
+    gap_points = gap_points + [total_missing_points - np.sum(gap_points)]
+    added_gap_points = 0
     i = 0
-    for time_gap_bottom in time_gap_range_bottom:
-        time_model_nogaps = np.argwhere((np.around(time_gap_bottom, 4) >= np.around(time_model, 4)) |
-                                        (np.around(time_model, 4) >= np.around(time_gap_range_up[i], 4))).flatten()
-        time_values_to_add = time_values_to_add + time_gaps_indexes
-        time_model = time_model[time_model_nogaps]
-        model = model[time_model_nogaps]
+    corrected_time_gap_indexes = np.array([])
+    for time_gap_index in time_gaps_indexes:
+        corrected_time_gap_index = time_gap_index + added_gap_points
+        corrected_time_gap_indexes = np.concatenate((corrected_time_gap_indexes, np.arange(corrected_time_gap_index + 1, corrected_time_gap_index + 1 + gap_points[i])))
+        lc_time = np.concatenate((lc_time[0:corrected_time_gap_index + 1],
+                                  np.linspace(lc_time[corrected_time_gap_index] + 0.001388, lc_time[corrected_time_gap_index + 1], gap_points[i]).flatten(),
+                                  lc_time[corrected_time_gap_index + 1:]))
+        added_gap_points = gap_points[i]
         i = i + 1
+    model = np.delete(model, corrected_time_gap_indexes.astype(int))
+
     # time_gaps_indexes = np.argwhere(np.abs(lc_time[1:] - lc_time[:-1]) > 0.014).flatten()
     # time_gap_range_bottom = lc_time[time_gaps_indexes].flatten()
     # time_gap_range_up = lc_time[time_gaps_indexes + 1].flatten()
