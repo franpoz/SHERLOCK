@@ -129,16 +129,29 @@ def create_target_csvs(lcs_dir, models_dir, max_lc_length=20610):
         star_df.to_csv(lcs_dir + '/' + leading_zeros_object_id + '_star.csv')
 
 def resample_model(model, lc_time):
-    time_gaps_indexes = np.argwhere(np.abs(lc_time[1:] - lc_time[:-1]) > 0.014).flatten()
+    time_gaps_indexes = np.argwhere(np.abs(lc_time[1:] - lc_time[:-1]) > 0.014)
     time_gap_range_bottom = lc_time[time_gaps_indexes].flatten()
     time_gap_range_up = lc_time[time_gaps_indexes + 1].flatten()
     time_model = np.linspace(lc_time[0], lc_time[-1], len(model))
     time_values_to_add = []
     i = 0
-    for time_gap_index in time_gaps_indexes:
-        time_values_to_add = np.concatenate((time_values_to_add, np.arange(lc_time[time_gap_index] + 0.00138888, lc_time[time_gap_index + 1], 0.00138888)))
+    for time_gap_bottom in time_gap_range_bottom:
+        time_model_nogaps = np.argwhere((np.around(time_gap_bottom, 4) >= np.around(time_model, 4)) |
+                                        (np.around(time_model, 4) >= np.around(time_gap_range_up[i], 4))).flatten()
+        time_values_to_add = time_values_to_add + time_gaps_indexes
+        time_model = time_model[time_model_nogaps]
+        model = model[time_model_nogaps]
         i = i + 1
-
+    # time_gaps_indexes = np.argwhere(np.abs(lc_time[1:] - lc_time[:-1]) > 0.014).flatten()
+    # time_gap_range_bottom = lc_time[time_gaps_indexes].flatten()
+    # time_gap_range_up = lc_time[time_gaps_indexes + 1].flatten()
+    # time_model = np.linspace(lc_time[0], lc_time[-1], len(model))
+    # time_values_to_add = []
+    # i = 0
+    # for time_gap_index in time_gaps_indexes:
+    #     time_values_to_add = np.concatenate((time_values_to_add, np.arange(lc_time[time_gap_index] + 0.00138888,
+    #                                                                        lc_time[time_gap_index + 1], 0.00138888)))
+    #     i = i + 1
     return model
 
 def uncompress_data(data_dir):
