@@ -68,7 +68,7 @@ def create_injection_dataframe(injections_dir, lcs_dir):
             print("Processed " + str(i) + " TICs. Found ")
 
 
-def create_target_csvs(lcs_dir, models_dir, lc_length=20610):
+def create_target_csvs(lcs_dir, models_dir, max_lc_length=20610):
     for file in os.listdir(lcs_dir):
         lc_file = lcs_dir + '/' + file
         lc_df = pd.DataFrame(columns=['#time', 'flux', 'flux_err', 'planet_model', 'eb_model', 'bckeb_model',
@@ -77,42 +77,69 @@ def create_target_csvs(lcs_dir, models_dir, lc_length=20610):
         object_id = lc.meta['OBJECT']
         object_id = int(object_id.split(' ')[1])
         leading_zeros_object_id = '{:09}'.format(object_id)
+        lc_length = len(lc)
         eb_model_flux = np.ones(lc_length)
         backeb_model_flux = np.ones(lc_length)
         planet_model_flux = np.ones(lc_length)
         model_file = models_dir + '/ebs/EBs/EBs' + '_' + leading_zeros_object_id + '.txt'
         if os.path.exists(model_file):
-            model_df = pd.read_csv(model_file)
-            eb_model_flux = model_df[0]
+            model_df = pd.read_csv(model_file, header=None)
+            eb_model_flux = model_df[0].to_numpy()
             eb_model_flux = eb_model_flux / np.median(eb_model_flux)
+            resample_model(eb_model_flux, lc.time.value)
         model_file = models_dir + '/backebs/BackEBs/BackEBs_' + '_' + leading_zeros_object_id + '.txt'
         if os.path.exists(model_file):
-            model_df = pd.read_csv(model_file)
-            backeb_model_flux = model_df[0]
+            model_df = pd.read_csv(model_file, header=None)
+            backeb_model_flux = model_df[0].to_numpy()
             backeb_model_flux = backeb_model_flux / np.median(backeb_model_flux)
+            resample_model(backeb_model_flux, lc.time.value)
+
+            # import matplotlib.pyplot as plt
+            # plt.scatter(np.linspace(lc.time.value[0], lc.time.value[-1], len(eb_model_flux)), eb_model_flux)
+            # plt.scatter(lc.time.value, lc.pdcsap_flux.value / np.median(lc.pdcsap_flux.value))
+            # plt.show()
         model_file = models_dir + '/planets/Planets/Planets' + '_' + leading_zeros_object_id + '.txt'
         if os.path.exists(model_file):
-            model_df = pd.read_csv(model_file)
-            planet_model_flux = model_df[0]
+            model_df = pd.read_csv(model_file, header=None)
+            planet_model_flux = model_df[0].to_numpy()
             planet_model_flux = planet_model_flux / np.median(planet_model_flux)
-        lc_df['#time'] = np.array(lc.time.value)
-        lc_df['flux'] = np.array(lc.pdcsap_flux.value)
-        lc_df['flux_err'] = np.array(lc.time.value)
-        lc_df['centroid_x'] = np.array(lc.centroid_col.value)
-        lc_df['centroid_y'] = np.array(lc.centroid_row.value)
-        lc_df['motion_x'] = np.array(lc.mom_centr1.value)
-        lc_df['motion_y'] = np.array(lc.mom_centr2.value)
-        lc_df['bck_flux'] = np.array(lc.sap_bck.value)
-        lc_df['eb_model'] = np.array(eb_model_flux)
-        lc_df['bckeb_model'] = np.array(backeb_model_flux)
-        lc_df['planet_model'] = np.array(planet_model_flux)
+            resample_model(planet_model_flux, lc.time.value)
+        padding_zeros_count = max_lc_length - lc_length
+        padding_zeros_count = 0 if padding_zeros_count < 0 else padding_zeros_count
+        padding_zeros = np.zeros(padding_zeros_count)
+        padding_ones = np.ones(padding_zeros_count)
+        padding_nans = np.full(padding_zeros_count, np.nan)
+        lc_df['#time'] = np.concatenate((np.array(lc.time.value), padding_nans))
+        lc_df['flux'] = np.concatenate((np.array(lc.pdcsap_flux.value), padding_ones))
+        lc_df['flux_err'] = np.concatenate((np.array(lc.time.value), padding_zeros))
+        lc_df['centroid_x'] = np.concatenate((np.array(lc.centroid_col.value), padding_nans))
+        lc_df['centroid_y'] = np.concatenate((np.array(lc.centroid_row.value), padding_nans))
+        lc_df['motion_x'] = np.concatenate((np.array(lc.mom_centr1.value), padding_nans))
+        lc_df['motion_y'] = np.concatenate((np.array(lc.mom_centr2.value), padding_nans))
+        lc_df['bck_flux'] = np.concatenate((np.array(lc.sap_bkg.value), padding_nans))
+        lc_df['eb_model'] = np.concatenate((np.array(eb_model_flux), padding_ones))
+        lc_df['bckeb_model'] = np.concatenate((np.array(backeb_model_flux), padding_ones))
+        lc_df['planet_model'] = np.concatenate((np.array(planet_model_flux), padding_ones))
         lc_df.to_csv(lcs_dir + '/' + leading_zeros_object_id + '_lc.csv')
         star_info = TicStarCatalog().catalog_info(object_id)
         star_df = pd.DataFrame(columns=['ld_a', 'ld_b', 'Teff', 'lum', 'logg', 'radius', 'mass', 'v', 'j', 'h', 'k'])
         star_df.append({'ld_a': star_info[0][0], 'ld_b': star_info[0][1], 'Teff': star_info[1], 'lum': star_info[2],
                         'logg': star_info[3], 'radius': star_info[5], 'mass': star_info[8], 'v': star_info[13],
-                        'j': star_info[15], 'h': star_info[17], 'k': star_info[19]})
+                        'j': star_info[15], 'h': star_info[17], 'k': star_info[19]}, ignore_index=True)
         star_df.to_csv(lcs_dir + '/' + leading_zeros_object_id + '_star.csv')
+
+def resample_model(model, lc_time):
+    time_gaps_indexes = np.argwhere(np.abs(lc_time[1:] - lc_time[:-1]) > 0.014).flatten()
+    time_gap_range_bottom = lc_time[time_gaps_indexes].flatten()
+    time_gap_range_up = lc_time[time_gaps_indexes + 1].flatten()
+    time_model = np.linspace(lc_time[0], lc_time[-1], len(model))
+    time_values_to_add = []
+    i = 0
+    for time_gap_index in time_gaps_indexes:
+        time_values_to_add = np.concatenate((time_values_to_add, np.arange(lc_time[time_gap_index] + 0.00138888, lc_time[time_gap_index + 1], 0.00138888)))
+        i = i + 1
+
+    return model
 
 def uncompress_data(data_dir):
     for file in os.listdir(data_dir):
