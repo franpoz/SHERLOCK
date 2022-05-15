@@ -72,7 +72,7 @@ def create_injection_dataframe(injections_dir, lcs_dir):
 def create_target_csvs(lcs_dir, models_dir, max_lc_length=20610):
     i = 0
     for file in list(pathlib.Path(lcs_dir).glob('*.fits')):
-        lc_file = lcs_dir + '/' + str(file)
+        lc_file = str(file)
         lc_df = pd.DataFrame(columns=['#time', 'flux', 'flux_err', 'planet_model', 'eb_model', 'bckeb_model',
                                       'centroid_x', 'centroid_y', 'motion_x', 'motion_y', 'bck_flux'])
         try:

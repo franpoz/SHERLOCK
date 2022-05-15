@@ -99,7 +99,7 @@ class AutoEncoder():
         self.model.compile(optimizer=optimizer, loss=loss)
 
     def prepare_training_data(self, training_dir, train_percent=0.8, test_percent=0.2):
-        lc_filenames = list(pathlib.Path(training_dir).glob('*_lc.csv'))
+        lc_filenames = [str(file) for file in list(pathlib.Path(training_dir).glob('*_lc.csv'))]
         lc_filenames.sort()
         lc_filenames = shuffle(lc_filenames)
         train_last_index = int(self.input_size * train_percent)
@@ -107,8 +107,6 @@ class AutoEncoder():
         dataset_length = len(lc_filenames)
         test_last_index = test_last_index if test_last_index < dataset_length else dataset_length
         return lc_filenames[0:train_last_index], lc_filenames[train_last_index:test_last_index]
-
-
 
     def train(self, training_dir, batch_size, epochs, dataset_iterations_per_epoch=1, train_percent=0.8,
               test_percent=0.2):
