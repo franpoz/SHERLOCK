@@ -120,6 +120,7 @@ class AutoEncoder():
                        epochs=epochs, verbose=1,
                        validation_data=validation_batch_generator,
                        validation_steps=int(test_dataset_size // batch_size))
+        self.model.save(training_dir + '/DETREND')
 
 
 class AutoencoderGenerator(tf.keras.utils.Sequence):
@@ -129,7 +130,7 @@ class AutoencoderGenerator(tf.keras.utils.Sequence):
         self.input_size = input_size
 
     def __len__(self):
-        return (np.ceil(len(self.lc_filenames) / float(self.batch_size))).astype(np.int)
+        return (np.ceil(len(self.lc_filenames) / float(self.batch_size))).astype(int)
 
     def __getitem__(self, idx):
         batch_filenames = self.lc_filenames[idx * self.batch_size: (idx + 1) * self.batch_size]
