@@ -10,12 +10,12 @@ from sklearn.utils import shuffle
 
 
 class AutoEncoder():
-    def __init__(self, input_size=20610):
+    def __init__(self, input_size=(20610, 7)):
         self.input_size = input_size
 
     def build(self):
-        # (flux, centroidx, centroidy, motionx, motiony, bck)
-        input = keras.Input(shape=(self.input_size, 6))
+        # (flux, flux_err, centroidx, centroidy, motionx, motiony, bck)
+        input = keras.Input(shape=(self.input_size))
         autoencoder_layer1_strides = 10
         autoencoder_layer1_filters = 5000
         autoencoder_layer1_ks = 100
@@ -83,9 +83,9 @@ class AutoEncoder():
         self.dec_layer1 = keras.layers.Conv1DTranspose(filters=autoencoder_layer1_filters, kernel_size=autoencoder_layer1_ks, padding="same")(self.dec_layer1)
         self.dec_layer1 = keras.layers.Add()([self.enc_layer1_r, self.dec_layer1])
         self.linear_proj = keras.layers.GlobalAveragePooling1D()(self.dec_layer1)
-        self.linear_proj = keras.layers.Dense(self.input_size, activation="relu")(self.linear_proj)
+        self.linear_proj = keras.layers.Dense(self.input_size[0], activation="relu")(self.linear_proj)
         self.linear_proj = keras.layers.Dropout(rate=0.1)(self.linear_proj)
-        self.linear_proj = keras.layers.Dense(self.input_size, activation="softmax")(self.linear_proj)
+        self.linear_proj = keras.layers.Dense(self.input_size[0], activation="softmax")(self.linear_proj)
         self.model = Model(inputs=input, outputs=self.linear_proj)
         return self
 
@@ -102,9 +102,9 @@ class AutoEncoder():
         lc_filenames = [str(file) for file in list(pathlib.Path(training_dir).glob('*_lc.csv'))]
         lc_filenames.sort()
         lc_filenames = shuffle(lc_filenames)
-        train_last_index = int(self.input_size * train_percent)
-        test_last_index = train_last_index + int(self.input_size * test_percent)
         dataset_length = len(lc_filenames)
+        train_last_index = int(dataset_length * train_percent)
+        test_last_index = train_last_index + int(dataset_length * test_percent)
         test_last_index = test_last_index if test_last_index < dataset_length else dataset_length
         return lc_filenames[0:train_last_index], lc_filenames[train_last_index:test_last_index]
 
@@ -134,19 +134,42 @@ class AutoencoderGenerator(tf.keras.utils.Sequence):
     def __getitem__(self, idx):
         batch_filenames = self.lc_filenames[idx * self.batch_size: (idx + 1) * self.batch_size]
         filenames_shuffled = shuffle(batch_filenames)
-        batch_data_array = np.empty((len(filenames_shuffled), self.input_size, 6))
-        batch_data_values = np.empty((len(filenames_shuffled), self.input_size))
+        batch_data_array = np.empty((len(filenames_shuffled), self.input_size[0], self.input_size[1]))
+        batch_data_values = np.empty((len(filenames_shuffled), self.input_size[0]))
         i = 0
         for file in filenames_shuffled:
-            input_df = pd.read_csv(file, comments="#", usecols=['flux', 'flux_err', 'centroid_x', 'centroid_y',
+            input_df = pd.read_csv(file, usecols=['#time', 'flux', 'flux_err', 'centroid_x', 'centroid_y',
                                                                 'motion_x', 'motion_y', 'bck_flux'], low_memory=True)
-            values_df = pd.read_csv(file, comments="#", usecols=['eb_model', 'bckeb_model', 'planet_model'],
+            values_df = pd.read_csv(file, usecols=['eb_model', 'bckeb_model', 'planet_model'],
                                     low_memory=True)
+            input_df = self.__prepare_input_data(input_df)
+            input_df = input_df.drop('#time', axis=1)
             batch_data_array[i] = input_df.to_numpy()
-            values_df['model'] = (1 - values_df['eb_model']) + (1 - values_df['bckeb_model']) + (1 - values_df['planet_model'])
+            values_df['model'] = 1 - ((1 - values_df['eb_model']) + (1 - values_df['bckeb_model']) + (1 - values_df['planet_model']))
             batch_data_values[i] = values_df['model'].to_numpy()
             i = i + 1
         return batch_data_array, batch_data_values
+
+    def __prepare_input_data(self, input_df):
+        time = input_df["#time"].to_numpy()
+        dif = time[1:] - time[:-1]
+        jumps = np.where(np.abs(dif) > 0.25)[0]
+        jumps = np.append(jumps, len(input_df))
+        previous_jump_index = 0
+        for jumpIndex in jumps:
+            token = input_df["centroid_x"][previous_jump_index:jumpIndex].to_numpy()
+            input_df["centroid_x"][previous_jump_index:jumpIndex] = np.tanh(token - np.nanmedian(token))
+            token = input_df["centroid_y"][previous_jump_index:jumpIndex].to_numpy()
+            input_df["centroid_y"][previous_jump_index:jumpIndex] = np.tanh(token - np.nanmedian(token))
+            token = input_df["motion_x"][previous_jump_index:jumpIndex].to_numpy()
+            input_df["motion_x"][previous_jump_index:jumpIndex] = np.tanh(token - np.nanmedian(token))
+            token = input_df["motion_y"][previous_jump_index:jumpIndex].to_numpy()
+            input_df["motion_y"][previous_jump_index:jumpIndex] = np.tanh(token - np.nanmedian(token))
+            token = input_df["bck_flux"][previous_jump_index:jumpIndex].to_numpy()
+            input_df["bck_flux"][previous_jump_index:jumpIndex] = np.tanh(token - np.nanmedian(token))
+            previous_jump_index = jumpIndex
+        return input_df
+
 
 auto_encoder = AutoEncoder().build().inform()
 auto_encoder.train("/mnt/DATA-2/ete6/lcs/", 200, 50)
