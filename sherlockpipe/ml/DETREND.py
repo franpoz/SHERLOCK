@@ -1,3 +1,5 @@
+import collections
+import csv
 import os
 import pathlib
 
@@ -6,6 +8,7 @@ import keras
 import tensorflow as tf
 import pandas as pd
 from keras import Model
+from keras.callbacks import CSVLogger
 from sklearn.utils import shuffle
 
 
@@ -87,19 +90,21 @@ class AutoEncoder():
         self.linear_proj = keras.layers.Dropout(rate=0.1)(self.linear_proj)
         self.linear_proj = keras.layers.Dense(self.input_size[0], activation="softmax")(self.linear_proj)
         self.model = Model(inputs=input, outputs=self.linear_proj)
+        self.compile("adam", "binary_crossentropy")
         return self
 
     def inform(self):
         keras.utils.vis_utils.plot_model(self.model, "detrend_autoencoder_resnet.png", show_shapes=True)
-        self.compile("adam", "binary_crossentropy")
         self.model.summary()
         return self
 
     def compile(self, optimizer, loss):
         self.model.compile(optimizer=optimizer, loss=loss)
 
-    def prepare_training_data(self, training_dir, train_percent=0.8, test_percent=0.2):
+    def prepare_training_data(self, training_dir, train_percent=0.8, test_percent=0.2, training_set_limit=None):
         lc_filenames = [str(file) for file in list(pathlib.Path(training_dir).glob('*_lc.csv'))]
+        if training_set_limit is not None:
+            lc_filenames = lc_filenames[:training_set_limit]
         lc_filenames.sort()
         lc_filenames = shuffle(lc_filenames)
         dataset_length = len(lc_filenames)
@@ -109,18 +114,28 @@ class AutoEncoder():
         return lc_filenames[0:train_last_index], lc_filenames[train_last_index:test_last_index]
 
     def train(self, training_dir, batch_size, epochs, dataset_iterations_per_epoch=1, train_percent=0.8,
-              test_percent=0.2):
-        train_filenames, test_filenames = self.prepare_training_data(training_dir, train_percent, test_percent)
+              test_percent=0.2, training_set_limit=None):
+        train_filenames, test_filenames = self.prepare_training_data(training_dir, train_percent, test_percent,
+                                                                     training_set_limit)
         training_batch_generator = AutoencoderGenerator(train_filenames, batch_size, self.input_size)
         validation_batch_generator = AutoencoderGenerator(test_filenames, batch_size, self.input_size)
         train_dataset_size = len(train_filenames)
         test_dataset_size = len(test_filenames)
+        csv_logger = CSVLogger('training_log.csv')
+        model_path = training_dir + '/DETREND'
+        steps_per_epoch = int(dataset_iterations_per_epoch * train_dataset_size // batch_size)
+        cp_callback = tf.keras.callbacks.ModelCheckpoint(
+            filepath=model_path,
+            verbose=1,
+            save_weights_only=True,
+            save_freq=steps_per_epoch)
         self.model.fit(x=training_batch_generator,
-                       steps_per_epoch=int(dataset_iterations_per_epoch * train_dataset_size // batch_size),
+                       steps_per_epoch=steps_per_epoch,
                        epochs=epochs, verbose=1,
                        validation_data=validation_batch_generator,
-                       validation_steps=int(test_dataset_size // batch_size))
-        self.model.save(training_dir + '/DETREND')
+                       validation_steps=int(test_dataset_size // batch_size),
+                       callbacks=[csv_logger, cp_callback])
+        self.model.save(model_path)
 
 
 class AutoencoderGenerator(tf.keras.utils.Sequence):
@@ -169,7 +184,51 @@ class AutoencoderGenerator(tf.keras.utils.Sequence):
             token = input_df["bck_flux"][previous_jump_index:jumpIndex].to_numpy()
             input_df["bck_flux"][previous_jump_index:jumpIndex] = np.tanh(token - np.nanmedian(token))
             previous_jump_index = jumpIndex
-        return input_df
+        return input_df.fillna(0)
+
+
+class BatchAwareCsvLogger(CSVLogger):
+
+    def __init__(self, filename, separator=',', append=False):
+        super().__init__(filename, separator, append)
+
+    def on_batch_end(self, batch, logs=None):
+        logs = logs or {}
+
+        def handle_value(k):
+            is_zero_dim_ndarray = isinstance(k, np.ndarray) and k.ndim == 0
+            if isinstance(k, str):
+                return k
+            elif isinstance(k, collections.abc.Iterable) and not is_zero_dim_ndarray:
+                return '"[%s]"' % (', '.join(map(str, k)))
+            else:
+                return k
+
+        if self.keys is None:
+            self.keys = sorted(logs.keys())
+
+        if self.model.stop_training:
+            # We set NA so that csv parsers do not fail for this last epoch.
+            logs = dict((k, logs[k]) if k in logs else (k, 'NA') for k in self.keys)
+
+        if not self.writer:
+
+            class CustomDialect(csv.excel):
+                delimiter = self.sep
+
+            fieldnames = ['epoch'] + self.keys
+
+            self.writer = csv.DictWriter(
+                self.csv_file,
+                fieldnames=fieldnames,
+                dialect=CustomDialect)
+            if self.append_header:
+                self.writer.writeheader()
+
+        row_dict = collections.OrderedDict({'batch': batch})
+        row_dict.update((key, handle_value(logs[key])) for key in self.keys)
+        self.writer.writerow(row_dict)
+        self.csv_file.flush()
 
 
 num_threads = 5
@@ -185,6 +244,6 @@ tf.config.threading.set_intra_op_parallelism_threads(
 )
 tf.config.set_soft_device_placement(True)
 auto_encoder = AutoEncoder().build().inform()
-auto_encoder.train("/mnt/DATA-2/ete6/lcs/", 20, 50)
+auto_encoder.train("/mnt/DATA-2/ete6/lcs/", 20, 50, training_set_limit=100)
 
 
