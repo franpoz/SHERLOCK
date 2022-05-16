@@ -172,7 +172,19 @@ class AutoencoderGenerator(tf.keras.utils.Sequence):
         return input_df
 
 
+num_threads = 5
+num_threads_str = str(num_threads)
+os.environ["OMP_NUM_THREADS"] = num_threads_str
+os.environ["TF_NUM_INTRAOP_THREADS"] = num_threads_str
+os.environ["TF_NUM_INTEROP_THREADS"] = num_threads_str
+tf.config.threading.set_inter_op_parallelism_threads(
+    num_threads
+)
+tf.config.threading.set_intra_op_parallelism_threads(
+    num_threads
+)
+tf.config.set_soft_device_placement(True)
 auto_encoder = AutoEncoder().build().inform()
-auto_encoder.train("/mnt/DATA-2/ete6/lcs/", 200, 50)
+auto_encoder.train("/mnt/DATA-2/ete6/lcs/", 20, 50)
 
 
