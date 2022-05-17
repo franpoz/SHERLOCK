@@ -29,16 +29,16 @@ class SANTO:
         checkpoint_path = "/mnt/DATA-2/training_data/SANTEX/checkpoint"
         # Create the Transformer model
         transformer = Transformer(num_heads=4, key_dim=input_dim, output_dim=output_dim, stack_depth=2, dropout_rate=0.1)
-
+        # TODO this loss function is probably not well suited for our purpose as we don't want an exclusive output, but
+        #  a linear one
         # Define a categorical cross entropy loss
         loss_holder = tf.keras.losses.SparseCategoricalCrossentropy(from_logits=True, reduction="none")
         # Define a metric to store the mean loss of every epoch
         train_loss = tf.keras.metrics.Mean(name="train_loss")
         # Define a metric to save the accuracy in every epoch
         train_accuracy = tf.keras.metrics.SparseCategoricalAccuracy(name="train_accuracy")
-        # Create the scheduler for learning rate decay
+        # Create the Adam optimizer (Vaswani et al., 2017) with learning rate decay from Schedule
         leaning_rate = CustomSchedule(input_dim)
-        # Create the Adam optimizer (Vaswani et al., 2017)
         optimizer = tf.keras.optimizers.Adam(leaning_rate, beta_1=0.9, beta_2=0.98, epsilon=1e-9)
         # Create the Checkpoint
         ckpt = tf.train.Checkpoint(transformer=transformer, optimizer=optimizer)
