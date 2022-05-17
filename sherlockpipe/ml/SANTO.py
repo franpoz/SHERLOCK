@@ -1,9 +1,10 @@
 import time
-
+import pandas as pd
 import keras
 import numpy as np
 from keras import layers
 import tensorflow as tf
+from sklearn.utils import shuffle
 
 
 class SANTO:
@@ -22,9 +23,8 @@ class SANTO:
 
         return tf.reduce_mean(loss_)
 
-    def main_train(self, dataset, n_epochs, print_every=50):
+    def train(self, dataset, n_epochs, input_dim=20610, print_every=50):
         tf.keras.backend.clear_session()
-        input_dim = 15000
         output_dim = input_dim
         checkpoint_path = "/mnt/DATA-2/training_data/SANTEX/checkpoint"
         # Create the Transformer model
@@ -195,6 +195,67 @@ class Transformer(layers.Layer):
         linear_proj_output = self.pooling_dense_dropout(linear_proj_output, training=training)
         linear_proj_output = self.output_dense(linear_proj_output, training=training)
         return linear_proj_output
+
+
+class AutoencoderGenerator(tf.keras.utils.Sequence):
+    def __init__(self, lc_filenames, batch_size, input_size):
+        self.lc_filenames = lc_filenames
+        self.batch_size = batch_size
+        self.input_size = input_size
+
+    def __len__(self):
+        return (np.ceil(len(self.lc_filenames) / float(self.batch_size))).astype(int)
+
+    def __getitem__(self, idx):
+        batch_filenames = self.lc_filenames[idx * self.batch_size: (idx + 1) * self.batch_size]
+        filenames_shuffled = shuffle(batch_filenames)
+        batch_data_array = np.empty((len(filenames_shuffled), self.input_size[0], self.input_size[1]))
+        batch_data_values = np.empty((len(filenames_shuffled), (self.input_size, 4)))
+        i = 0
+        for file in filenames_shuffled:
+            input_df = pd.read_csv(file, usecols=['flux', 'flux_err'], low_memory=True)
+            values_df = pd.read_csv(file, usecols=['eb_model', 'bckeb_model', 'planet_model'],
+                                    low_memory=True)
+            batch_data_array[i] = input_df.to_numpy()
+            eb_arr = values_df['eb_model'].to_numpy()
+            bckeb_arr = values_df['bckeb_model'].to_numpy()
+            planet_arr = values_df['planet_model'].to_numpy()
+            eb_labels_args = np.argwhere(eb_arr < 1).flatten()
+            bckeb_labels_args = np.argwhere(bckeb_arr < 1).flatten()
+            planet_labels_args = np.argwhere(planet_arr < 1).flatten()
+            nothing_labels_args = np.argwhere((eb_arr == 1) & (bckeb_arr == 1) & (planet_arr == 1)).flatten()
+            eb_label = np.zeros(self.input_size[0])
+            eb_label[eb_labels_args] = 1
+            bckeb_label = np.zeros(self.input_size[0])
+            bckeb_label[bckeb_labels_args] = 1
+            planet_label = np.zeros(self.input_size[0])
+            planet_label[planet_labels_args] = 1
+            nothing_label = np.zeros(self.input_size[0])
+            nothing_label[nothing_labels_args] = 1
+            batch_data_values[i] = np.transpose([nothing_label, eb_label, bckeb_label, planet_label])
+            batch_data_values[i] = values_df['model'].to_numpy()
+            i = i + 1
+        return batch_data_array, batch_data_values
+
+    def __prepare_input_data(self, input_df):
+        time = input_df["#time"].to_numpy()
+        dif = time[1:] - time[:-1]
+        jumps = np.where(np.abs(dif) > 0.25)[0]
+        jumps = np.append(jumps, len(input_df))
+        previous_jump_index = 0
+        for jumpIndex in jumps:
+            token = input_df["centroid_x"][previous_jump_index:jumpIndex].to_numpy()
+            input_df["centroid_x"][previous_jump_index:jumpIndex] = np.tanh(token - np.nanmedian(token))
+            token = input_df["centroid_y"][previous_jump_index:jumpIndex].to_numpy()
+            input_df["centroid_y"][previous_jump_index:jumpIndex] = np.tanh(token - np.nanmedian(token))
+            token = input_df["motion_x"][previous_jump_index:jumpIndex].to_numpy()
+            input_df["motion_x"][previous_jump_index:jumpIndex] = np.tanh(token - np.nanmedian(token))
+            token = input_df["motion_y"][previous_jump_index:jumpIndex].to_numpy()
+            input_df["motion_y"][previous_jump_index:jumpIndex] = np.tanh(token - np.nanmedian(token))
+            token = input_df["bck_flux"][previous_jump_index:jumpIndex].to_numpy()
+            input_df["bck_flux"][previous_jump_index:jumpIndex] = np.tanh(token - np.nanmedian(token))
+            previous_jump_index = jumpIndex
+        return input_df.fillna(0)
 
 
 class CustomSchedule(tf.keras.optimizers.schedules.LearningRateSchedule):
