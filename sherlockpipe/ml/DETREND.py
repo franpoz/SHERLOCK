@@ -9,6 +9,8 @@ import tensorflow as tf
 import pandas as pd
 from keras import Model
 from keras.callbacks import CSVLogger
+from keras.optimizer_v2.learning_rate_schedule import ExponentialDecay
+from keras.utils import losses_utils
 from sklearn.utils import shuffle
 
 
@@ -88,9 +90,8 @@ class AutoEncoder():
         self.linear_proj = keras.layers.GlobalAveragePooling1D()(self.dec_layer1)
         self.linear_proj = keras.layers.Dense(self.input_size[0], activation="relu")(self.linear_proj)
         self.linear_proj = keras.layers.Dropout(rate=0.1)(self.linear_proj)
-        self.linear_proj = keras.layers.Dense(self.input_size[0], activation="softmax")(self.linear_proj)
+        self.linear_proj = keras.layers.Dense(self.input_size[0], activation="linear")(self.linear_proj)
         self.model = Model(inputs=input, outputs=self.linear_proj)
-        self.compile("adam", "binary_crossentropy")
         return self
 
     def inform(self):
@@ -114,28 +115,40 @@ class AutoEncoder():
         return lc_filenames[0:train_last_index], lc_filenames[train_last_index:test_last_index]
 
     def train(self, training_dir, batch_size, epochs, dataset_iterations_per_epoch=1, train_percent=0.8,
-              test_percent=0.2, training_set_limit=None):
+              test_percent=0.2, training_set_limit=None, inform=False, dry_run=True):
         train_filenames, test_filenames = self.prepare_training_data(training_dir, train_percent, test_percent,
                                                                      training_set_limit)
-        training_batch_generator = AutoencoderGenerator(train_filenames, batch_size, self.input_size)
-        validation_batch_generator = AutoencoderGenerator(test_filenames, batch_size, self.input_size)
+        # The optimizer is executed once for every batch, hence optimizer steps per epoch are
         train_dataset_size = len(train_filenames)
         test_dataset_size = len(test_filenames)
-        csv_logger = CSVLogger('training_log.csv')
-        model_path = training_dir + '/DETREND'
         steps_per_epoch = int(dataset_iterations_per_epoch * train_dataset_size // batch_size)
-        cp_callback = tf.keras.callbacks.ModelCheckpoint(
-            filepath=model_path,
-            verbose=1,
-            save_weights_only=True,
-            save_freq=steps_per_epoch)
-        self.model.fit(x=training_batch_generator,
-                       steps_per_epoch=steps_per_epoch,
-                       epochs=epochs, verbose=1,
-                       validation_data=validation_batch_generator,
-                       validation_steps=int(test_dataset_size // batch_size),
-                       callbacks=[csv_logger, cp_callback])
-        self.model.save(model_path)
+        total_steps = steps_per_epoch * epochs
+        learning_rate_decay_steps = total_steps // 1000
+        leaning_rate_schedule = ExponentialDecay(0.001, decay_steps=learning_rate_decay_steps, decay_rate=0.95)
+        optimizer = tf.keras.optimizers.Adam(leaning_rate_schedule, beta_1=0.9, beta_2=0.98, epsilon=1e-9)
+        # Autoencoders have a linear output layer and hence, cross entropy is not good (better for softmax
+        # classification tasks
+        loss = tf.keras.losses.MeanSquaredError(reduction=losses_utils.ReductionV2.AUTO, name='mean_squared_error')
+        self.compile(optimizer, loss)
+        if inform:
+            self.inform()
+        if not dry_run:
+            training_batch_generator = AutoencoderGenerator(train_filenames, batch_size, self.input_size)
+            validation_batch_generator = AutoencoderGenerator(test_filenames, batch_size, self.input_size)
+            csv_logger = CSVLogger('training_log.csv')
+            model_path = training_dir + '/DETREND'
+            cp_callback = tf.keras.callbacks.ModelCheckpoint(
+                filepath=model_path,
+                verbose=1,
+                save_weights_only=True,
+                save_freq=steps_per_epoch)
+            self.model.fit(x=training_batch_generator,
+                           steps_per_epoch=steps_per_epoch,
+                           epochs=epochs, verbose=1,
+                           validation_data=validation_batch_generator,
+                           validation_steps=int(test_dataset_size // batch_size),
+                           callbacks=[csv_logger, cp_callback])
+            self.model.save(model_path)
 
 
 class AutoencoderGenerator(tf.keras.utils.Sequence):
@@ -243,7 +256,7 @@ tf.config.threading.set_intra_op_parallelism_threads(
     num_threads
 )
 tf.config.set_soft_device_placement(True)
-auto_encoder = AutoEncoder().build().inform()
+auto_encoder = AutoEncoder().build()
 auto_encoder.train("/mnt/DATA-2/ete6/lcs/", 20, 50, training_set_limit=100)
 
 
