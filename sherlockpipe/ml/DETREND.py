@@ -12,6 +12,7 @@ from keras.callbacks import CSVLogger
 from keras.optimizer_v2.learning_rate_schedule import ExponentialDecay
 from keras.utils import losses_utils
 from sklearn.utils import shuffle
+from tensorflow.python.keras.utils.vis_utils import plot_model
 
 
 class AutoEncoder():
@@ -95,7 +96,7 @@ class AutoEncoder():
         return self
 
     def inform(self):
-        keras.utils.vis_utils.plot_model(self.model, "detrend_autoencoder_resnet.png", show_shapes=True)
+        plot_model(self.model, "detrend_autoencoder_resnet.png", show_shapes=True)
         self.model.summary()
         return self
 
@@ -114,7 +115,7 @@ class AutoEncoder():
         test_last_index = test_last_index if test_last_index < dataset_length else dataset_length
         return lc_filenames[0:train_last_index], lc_filenames[train_last_index:test_last_index]
 
-    def train(self, training_dir, batch_size, epochs, dataset_iterations_per_epoch=1, train_percent=0.8,
+    def train(self, training_dir, output_dir, batch_size, epochs, dataset_iterations_per_epoch=1, train_percent=0.8,
               test_percent=0.2, training_set_limit=None, inform=False, dry_run=True):
         train_filenames, test_filenames = self.prepare_training_data(training_dir, train_percent, test_percent,
                                                                      training_set_limit)
@@ -135,8 +136,8 @@ class AutoEncoder():
         if not dry_run:
             training_batch_generator = AutoencoderGenerator(train_filenames, batch_size, self.input_size)
             validation_batch_generator = AutoencoderGenerator(test_filenames, batch_size, self.input_size)
-            csv_logger = CSVLogger('training_log.csv')
-            model_path = training_dir + '/DETREND'
+            csv_logger = CSVLogger(output_dir + '/training_log.csv')
+            model_path = output_dir + '/DETREND'
             cp_callback = tf.keras.callbacks.ModelCheckpoint(
                 filepath=model_path,
                 verbose=1,
@@ -257,6 +258,6 @@ tf.config.threading.set_intra_op_parallelism_threads(
 )
 tf.config.set_soft_device_placement(True)
 auto_encoder = AutoEncoder().build()
-auto_encoder.train("/mnt/DATA-2/ete6/lcs/", 20, 50, training_set_limit=100)
+auto_encoder.train("/mnt/DATA-2/ete6/lcs/", os.getcwd(), 20, 50, inform=True, training_set_limit=100)
 
 
