@@ -29,26 +29,26 @@ def create_injection_dataframe(injections_dir, lcs_dir):
                        'epoch': target_row['Epoch [BTJD]'],
                        'Rsec/Rpri': target_row['Secondary Rstar'] / target_row['Primary Rstar'],
                        'b': target_row['Impact Parameter'],
-                       'a/Rstar': np.nan, 'duration(h)': np.nan,
+                       'a/Rstar': 0, 'duration(h)': 0,
                        'depth_primary': target_row['Primary Star Depth'],
                        'depth_secondary': target_row['Primary Star Depth'],
-                       'insolation': np.nan, 'Rstar_primary': target_row['Primary Rstar'],
+                       'insolation': 0, 'Rstar_primary': target_row['Primary Rstar'],
                        'Rstar_secondary': target_row['Secondary Rstar'],
                        'contact_amplitude': target_row['Contact Binary Amplitude'],
-                       'Mstar': np.nan})
+                       'Mstar': 0})
         target_rows = eb_df[eb_df['TIC ID'] == object_id]
         for index, target_row in target_rows.iterrows():
             df.append({'TIC ID': target_row['TIC ID'], 'type': 'EB', 'period': target_row['Orbital Period'],
                        'epoch': target_row['Epoch [BTJD]'],
                        'Rsec/Rpri': target_row['Secondary Rstar'] / target_row['Primary Rstar'],
                        'b': target_row['Impact Parameter'],
-                       'a/Rstar': np.nan, 'duration(h)': np.nan,
+                       'a/Rstar': 0, 'duration(h)': 0,
                        'depth_primary': target_row['Primary Star Depth'],
                        'depth_secondary': target_row['Primary Star Depth'],
-                       'insolation': np.nan, 'Rstar_primary': target_row['Primary Rstar'],
+                       'insolation': 0, 'Rstar_primary': target_row['Primary Rstar'],
                        'Rstar_secondary': target_row['Secondary Rstar'],
                        'contact_amplitude': target_row['Contact Binary Amplitude'],
-                       'Mstar': np.nan})
+                       'Mstar': 0})
         target_rows = planet_df[planet_df['TIC ID'] == object_id]
         for index, target_row in target_rows.iterrows():
             df.append({'TIC ID': target_row['TIC ID'], 'type': 'planet', 'period': target_row['Orbital Period'],
@@ -57,11 +57,11 @@ def create_injection_dataframe(injections_dir, lcs_dir):
                        'b': target_row['Impact Parameter'],
                        'a/Rstar': target_row['a/Rstar'], 'duration(h)': target_row['duration[h]'],
                        'depth_primary': target_row['depth'],
-                       'depth_secondary': np.nan,
+                       'depth_secondary': 0,
                        'insolation': target_row['Insolation Flux'],
                        'Rstar_primary': target_row['Rstar'],
                        'Rstar_secondary': target_row['Rstar'] * target_row['Rp/Rstar'],
-                       'contact_amplitude': np.nan,
+                       'contact_amplitude': 0,
                        'Mstar': target_row['Mstar']})
         df = df.sort_values(["TIC ID", "type"], ascending=True)
         df.to_csv(injections_dir + '/injected_objects.csv')
@@ -117,9 +117,17 @@ def create_target_csvs(lcs_dir, models_dir, max_lc_length=20610):
         padding_zeros_right = np.zeros(padding_zeros_count_right)
         padding_ones_left = np.zeros(padding_zeros_count_left)
         padding_ones_right = np.zeros(padding_zeros_count_right)
+        flux_values = np.array(lc.pdcsap_flux.value)
+        median_flux = np.median(flux_values)
+        flux_values = flux_values / median_flux
+        if len(np.argwhere(flux_values < 0).flatten()) > 0:
+            flux_values = np.array(lc.pdcsap_flux.value) + 2 * np.abs(np.nanmin(lc.pdcsap_flux.value))
+            median_flux = np.median(flux_values)
+            flux_values = flux_values / median_flux
+        flux_err_values = np.array(lc.flux_err.value) / median_flux
         lc_df['#time'] = np.concatenate((padding_zeros_left, np.array(lc.time.value), padding_zeros_right))
-        lc_df['flux'] = np.concatenate((padding_ones_left, np.array(lc.pdcsap_flux.value), padding_ones_right))
-        lc_df['flux_err'] = np.concatenate((padding_zeros_left, np.array(lc.time.value), padding_zeros_right))
+        lc_df['flux'] = np.concatenate((padding_ones_left, flux_values, padding_ones_right))
+        lc_df['flux_err'] = np.concatenate((padding_zeros_left, flux_err_values, padding_zeros_right))
         lc_df['centroid_x'] = np.concatenate((padding_zeros_left, np.array(lc.centroid_col.value), padding_zeros_right))
         lc_df['centroid_y'] = np.concatenate((padding_zeros_left, np.array(lc.centroid_row.value), padding_zeros_right))
         lc_df['motion_x'] = np.concatenate((padding_zeros_left, np.array(lc.mom_centr1.value), padding_zeros_right))
@@ -128,6 +136,7 @@ def create_target_csvs(lcs_dir, models_dir, max_lc_length=20610):
         lc_df['eb_model'] = np.concatenate((padding_ones_left, np.array(eb_model_flux), padding_ones_right))
         lc_df['bckeb_model'] = np.concatenate((padding_ones_left, np.array(backeb_model_flux), padding_ones_right))
         lc_df['planet_model'] = np.concatenate((padding_ones_left, np.array(planet_model_flux), padding_ones_right))
+        lc_df = lc_df.fillna(0)
         lc_df.to_csv(lcs_dir + '/' + leading_zeros_object_id + '_lc.csv')
         star_info = TicStarCatalog().catalog_info(object_id)
         star_df = pd.DataFrame(columns=['ld_a', 'ld_b', 'Teff', 'lum', 'logg', 'radius', 'mass', 'v', 'j', 'h', 'k'])
