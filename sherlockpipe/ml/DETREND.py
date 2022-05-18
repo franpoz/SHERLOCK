@@ -100,8 +100,8 @@ class AutoEncoder():
         self.model.summary()
         return self
 
-    def compile(self, optimizer, loss):
-        self.model.compile(optimizer=optimizer, loss=loss)
+    def compile(self, optimizer, loss, metrics=['accuracy']):
+        self.model.compile(optimizer=optimizer, loss=loss, metrics=metrics)
 
     def prepare_training_data(self, training_dir, train_percent=0.8, test_percent=0.2, training_set_limit=None):
         lc_filenames = [str(file) for file in list(pathlib.Path(training_dir).glob('*_lc.csv'))]
@@ -116,7 +116,7 @@ class AutoEncoder():
         return lc_filenames[0:train_last_index], lc_filenames[train_last_index:test_last_index]
 
     def train(self, training_dir, output_dir, batch_size, epochs, dataset_iterations_per_epoch=1, train_percent=0.8,
-              test_percent=0.2, training_set_limit=None, inform=False, dry_run=True):
+              test_percent=0.2, training_set_limit=None, inform=False, dry_run=True, zero_epsilon=1e-5):
         train_filenames, test_filenames = self.prepare_training_data(training_dir, train_percent, test_percent,
                                                                      training_set_limit)
         # The optimizer is executed once for every batch, hence optimizer steps per epoch are
@@ -134,8 +134,8 @@ class AutoEncoder():
         if inform:
             self.inform()
         if not dry_run:
-            training_batch_generator = AutoencoderGenerator(train_filenames, batch_size, self.input_size)
-            validation_batch_generator = AutoencoderGenerator(test_filenames, batch_size, self.input_size)
+            training_batch_generator = AutoencoderGenerator(train_filenames, batch_size, self.input_size, zero_epsilon)
+            validation_batch_generator = AutoencoderGenerator(test_filenames, batch_size, self.input_size, zero_epsilon)
             csv_logger = CSVLogger(output_dir + '/training_log.csv')
             model_path = output_dir + '/DETREND'
             cp_callback = tf.keras.callbacks.ModelCheckpoint(
@@ -153,10 +153,11 @@ class AutoEncoder():
 
 
 class AutoencoderGenerator(tf.keras.utils.Sequence):
-    def __init__(self, lc_filenames, batch_size, input_size):
+    def __init__(self, lc_filenames, batch_size, input_size, zero_epsilon):
         self.lc_filenames = lc_filenames
         self.batch_size = batch_size
         self.input_size = input_size
+        self.zero_epsilon = zero_epsilon
 
     def __len__(self):
         return (np.ceil(len(self.lc_filenames) / float(self.batch_size))).astype(int)
@@ -175,8 +176,11 @@ class AutoencoderGenerator(tf.keras.utils.Sequence):
             input_df = self.__prepare_input_data(input_df)
             input_df = input_df.drop('#time', axis=1)
             batch_data_array[i] = input_df.to_numpy()
+            assert not np.isnan(batch_data_array[i]).any()
             values_df['model'] = 1 - ((1 - values_df['eb_model']) + (1 - values_df['bckeb_model']) + (1 - values_df['planet_model']))
             batch_data_values[i] = values_df['model'].to_numpy()
+            batch_data_values[i] = np.nan_to_num(batch_data_values[i], nan=self.zero_epsilon)
+            assert not np.isnan(batch_data_values[i]).any()
             i = i + 1
         return batch_data_array, batch_data_values
 
@@ -188,17 +192,20 @@ class AutoencoderGenerator(tf.keras.utils.Sequence):
         previous_jump_index = 0
         for jumpIndex in jumps:
             token = input_df["centroid_x"][previous_jump_index:jumpIndex].to_numpy()
-            input_df["centroid_x"][previous_jump_index:jumpIndex] = np.tanh(token - np.nanmedian(token))
+            input_df["centroid_x"][previous_jump_index:jumpIndex] = np.tanh(token - np.nanmedian(token)) + 1
             token = input_df["centroid_y"][previous_jump_index:jumpIndex].to_numpy()
-            input_df["centroid_y"][previous_jump_index:jumpIndex] = np.tanh(token - np.nanmedian(token))
+            input_df["centroid_y"][previous_jump_index:jumpIndex] = np.tanh(token - np.nanmedian(token)) + 1
             token = input_df["motion_x"][previous_jump_index:jumpIndex].to_numpy()
-            input_df["motion_x"][previous_jump_index:jumpIndex] = np.tanh(token - np.nanmedian(token))
+            input_df["motion_x"][previous_jump_index:jumpIndex] = np.tanh(token - np.nanmedian(token)) + 1
             token = input_df["motion_y"][previous_jump_index:jumpIndex].to_numpy()
-            input_df["motion_y"][previous_jump_index:jumpIndex] = np.tanh(token - np.nanmedian(token))
+            input_df["motion_y"][previous_jump_index:jumpIndex] = np.tanh(token - np.nanmedian(token)) + 1
             token = input_df["bck_flux"][previous_jump_index:jumpIndex].to_numpy()
-            input_df["bck_flux"][previous_jump_index:jumpIndex] = np.tanh(token - np.nanmedian(token))
+            input_df["bck_flux"][previous_jump_index:jumpIndex] = np.tanh(token - np.nanmedian(token)) + 1
             previous_jump_index = jumpIndex
-        return input_df.fillna(0)
+        input_df = input_df.fillna(self.zero_epsilon)
+        input_df = input_df.replace(0.0, self.zero_epsilon)
+        input_df = input_df.replace(0, self.zero_epsilon)
+        return input_df
 
 
 class BatchAwareCsvLogger(CSVLogger):
@@ -258,6 +265,5 @@ tf.config.threading.set_intra_op_parallelism_threads(
 )
 tf.config.set_soft_device_placement(True)
 auto_encoder = AutoEncoder().build()
-auto_encoder.train("/mnt/DATA-2/ete6/lcs/", os.getcwd(), 20, 50, inform=True, training_set_limit=100)
-
+auto_encoder.train("/data/scratch/mdevora/ml/ete6/lcs/", os.getcwd(), 20, 50, inform=False, dry_run=False, training_set_limit=100)
 
