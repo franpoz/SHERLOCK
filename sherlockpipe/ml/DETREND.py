@@ -136,7 +136,7 @@ class AutoEncoder():
         if not dry_run:
             training_batch_generator = AutoencoderGenerator(train_filenames, batch_size, self.input_size, zero_epsilon)
             validation_batch_generator = AutoencoderGenerator(test_filenames, batch_size, self.input_size, zero_epsilon)
-            csv_logger = CSVLogger(output_dir + '/training_log.csv')
+            csv_logger = BatchAwareCsvLogger(output_dir + '/training_log.csv')
             model_path = output_dir + '/DETREND'
             cp_callback = tf.keras.callbacks.ModelCheckpoint(
                 filepath=model_path,
@@ -237,7 +237,7 @@ class BatchAwareCsvLogger(CSVLogger):
             class CustomDialect(csv.excel):
                 delimiter = self.sep
 
-            fieldnames = ['epoch'] + self.keys
+            fieldnames = ['batch'] + self.keys
 
             self.writer = csv.DictWriter(
                 self.csv_file,
