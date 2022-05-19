@@ -131,9 +131,10 @@ class AutoEncoder():
         test_last_index = test_last_index if test_last_index < dataset_length else dataset_length
         return lc_filenames[0:train_last_index], lc_filenames[train_last_index:test_last_index]
 
-    def train(self, training_dir, output_dir, batch_size, epochs, initial_learning_rate=0.0001,
+    def train(self, training_dir, output_dir, batch_size=20, epochs=20, initial_learning_rate=0.0001,
               dataset_iterations_per_epoch=1, train_percent=0.8,
-              test_percent=0.2, training_set_limit=None, inform=False, dry_run=True, zero_epsilon=1e-5):
+              test_percent=0.2, training_set_limit=None, inform=False, dry_run=True, zero_epsilon=1e-7,
+              gradient_clip_norm=1.0):
         train_filenames, test_filenames = self.prepare_training_data(training_dir, train_percent, test_percent,
                                                                      training_set_limit)
         # The optimizer is executed once for every batch, hence optimizer steps per epoch are
@@ -143,7 +144,8 @@ class AutoEncoder():
         total_steps = steps_per_epoch * epochs
         learning_rate_decay_steps = total_steps // 1000
         leaning_rate_schedule = ExponentialDecay(initial_learning_rate, decay_steps=learning_rate_decay_steps, decay_rate=0.95)
-        optimizer = tf.keras.optimizers.Adam(leaning_rate_schedule, beta_1=0.9, beta_2=0.98, epsilon=1e-9)
+        optimizer = tf.keras.optimizers.Adam(leaning_rate_schedule, beta_1=0.9, beta_2=0.98, epsilon=1e-9,
+                                             clipnorm=gradient_clip_norm)
         # Autoencoders have a linear output layer and hence, cross entropy is not good (better for softmax
         # classification tasks
         loss = tf.keras.losses.MeanSquaredError(reduction=losses_utils.ReductionV2.AUTO, name='mean_squared_error')
@@ -197,7 +199,7 @@ class AutoencoderGenerator(tf.keras.utils.Sequence):
             values_df['model'] = 1 - ((1 - values_df['eb_model']) + (1 - values_df['bckeb_model']) + (1 - values_df['planet_model']))
             batch_data_values[i] = values_df['model'].to_numpy()
             batch_data_values[i] = np.nan_to_num(batch_data_values[i], nan=self.zero_epsilon)
-            negative_values_args = np.argwhere(batch_data_values <= 0).flatten()
+            negative_values_args = np.argwhere(batch_data_values[i] <= 0).flatten()
             batch_data_values[i][negative_values_args] = self.zero_epsilon
             assert not np.isnan(batch_data_values[i]).any() and not np.isinf(batch_data_values[i]).any()
             print("Inputs max " + str(np.max(batch_data_array[i])) + " and min " + str(np.min(batch_data_array[i])))
@@ -292,3 +294,9 @@ tf.config.set_soft_device_placement(True)
 auto_encoder = AutoEncoder().build()
 auto_encoder.train("/mnt/DATA-2/ml/ete6/lcs/", os.getcwd(), 20, 50, inform=False, dry_run=True,
                    training_set_limit=100)
+# lc_filenames = [str(file) for file in list(pathlib.Path("/mnt/DATA-2/ete6/lcs/").glob('*_lc.csv'))]
+# lc_filenames.sort()
+# lc_filenames = shuffle(lc_filenames)
+# dataset_length = len(lc_filenames)
+# acg = AutoencoderGenerator(lc_filenames, 20, (20610, 7), 1e-7)
+# acg.__getitem__(20)
