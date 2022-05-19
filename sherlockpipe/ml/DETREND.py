@@ -115,7 +115,8 @@ class AutoEncoder():
         test_last_index = test_last_index if test_last_index < dataset_length else dataset_length
         return lc_filenames[0:train_last_index], lc_filenames[train_last_index:test_last_index]
 
-    def train(self, training_dir, output_dir, batch_size, epochs, dataset_iterations_per_epoch=1, train_percent=0.8,
+    def train(self, training_dir, output_dir, batch_size, epochs, initial_learning_rate=0.0001,
+              dataset_iterations_per_epoch=1, train_percent=0.8,
               test_percent=0.2, training_set_limit=None, inform=False, dry_run=True, zero_epsilon=1e-5):
         train_filenames, test_filenames = self.prepare_training_data(training_dir, train_percent, test_percent,
                                                                      training_set_limit)
@@ -125,7 +126,7 @@ class AutoEncoder():
         steps_per_epoch = int(dataset_iterations_per_epoch * train_dataset_size // batch_size)
         total_steps = steps_per_epoch * epochs
         learning_rate_decay_steps = total_steps // 1000
-        leaning_rate_schedule = ExponentialDecay(0.001, decay_steps=learning_rate_decay_steps, decay_rate=0.95)
+        leaning_rate_schedule = ExponentialDecay(initial_learning_rate, decay_steps=learning_rate_decay_steps, decay_rate=0.95)
         optimizer = tf.keras.optimizers.Adam(leaning_rate_schedule, beta_1=0.9, beta_2=0.98, epsilon=1e-9)
         # Autoencoders have a linear output layer and hence, cross entropy is not good (better for softmax
         # classification tasks
@@ -136,7 +137,7 @@ class AutoEncoder():
         if not dry_run:
             training_batch_generator = AutoencoderGenerator(train_filenames, batch_size, self.input_size, zero_epsilon)
             validation_batch_generator = AutoencoderGenerator(test_filenames, batch_size, self.input_size, zero_epsilon)
-            csv_logger = BatchAwareCsvLogger(output_dir + '/training_log.csv')
+            csv_logger = BatchAwareCsvLogger(output_dir + '/training_log.csv', steps_per_epoch)
             model_path = output_dir + '/DETREND'
             cp_callback = tf.keras.callbacks.ModelCheckpoint(
                 filepath=model_path,
@@ -176,11 +177,15 @@ class AutoencoderGenerator(tf.keras.utils.Sequence):
             input_df = self.__prepare_input_data(input_df)
             input_df = input_df.drop('#time', axis=1)
             batch_data_array[i] = input_df.to_numpy()
-            assert not np.isnan(batch_data_array[i]).any()
+            assert not np.isnan(batch_data_array[i]).any() and not np.isinf(batch_data_array[i]).any()
             values_df['model'] = 1 - ((1 - values_df['eb_model']) + (1 - values_df['bckeb_model']) + (1 - values_df['planet_model']))
             batch_data_values[i] = values_df['model'].to_numpy()
             batch_data_values[i] = np.nan_to_num(batch_data_values[i], nan=self.zero_epsilon)
-            assert not np.isnan(batch_data_values[i]).any()
+            negative_values_args = np.argwhere(batch_data_values <= 0).flatten()
+            batch_data_values[i][negative_values_args] = self.zero_epsilon
+            assert not np.isnan(batch_data_values[i]).any() and not np.isinf(batch_data_values[i]).any()
+            print("Inputs max " + str(np.max(batch_data_array[i])) + " and min " + str(np.min(batch_data_array[i])))
+            print("Values max " + str(np.max(batch_data_values[i])) + " and min " + str(np.min(batch_data_values[i])))
             i = i + 1
         return batch_data_array, batch_data_values
 
@@ -192,15 +197,15 @@ class AutoencoderGenerator(tf.keras.utils.Sequence):
         previous_jump_index = 0
         for jumpIndex in jumps:
             token = input_df["centroid_x"][previous_jump_index:jumpIndex].to_numpy()
-            input_df["centroid_x"][previous_jump_index:jumpIndex] = np.tanh(token - np.nanmedian(token)) + 1
+            input_df["centroid_x"][previous_jump_index:jumpIndex] = (np.tanh(token - np.nanmedian(token)) + 1) / 2
             token = input_df["centroid_y"][previous_jump_index:jumpIndex].to_numpy()
-            input_df["centroid_y"][previous_jump_index:jumpIndex] = np.tanh(token - np.nanmedian(token)) + 1
+            input_df["centroid_y"][previous_jump_index:jumpIndex] = (np.tanh(token - np.nanmedian(token)) + 1) / 2
             token = input_df["motion_x"][previous_jump_index:jumpIndex].to_numpy()
-            input_df["motion_x"][previous_jump_index:jumpIndex] = np.tanh(token - np.nanmedian(token)) + 1
+            input_df["motion_x"][previous_jump_index:jumpIndex] = (np.tanh(token - np.nanmedian(token)) + 1) / 2
             token = input_df["motion_y"][previous_jump_index:jumpIndex].to_numpy()
-            input_df["motion_y"][previous_jump_index:jumpIndex] = np.tanh(token - np.nanmedian(token)) + 1
+            input_df["motion_y"][previous_jump_index:jumpIndex] = (np.tanh(token - np.nanmedian(token)) + 1) / 2
             token = input_df["bck_flux"][previous_jump_index:jumpIndex].to_numpy()
-            input_df["bck_flux"][previous_jump_index:jumpIndex] = np.tanh(token - np.nanmedian(token)) + 1
+            input_df["bck_flux"][previous_jump_index:jumpIndex] = (np.tanh(token - np.nanmedian(token)) + 1) / 3
             previous_jump_index = jumpIndex
         input_df = input_df.fillna(self.zero_epsilon)
         input_df = input_df.replace(0.0, self.zero_epsilon)
@@ -210,8 +215,12 @@ class AutoencoderGenerator(tf.keras.utils.Sequence):
 
 class BatchAwareCsvLogger(CSVLogger):
 
-    def __init__(self, filename, separator=',', append=False):
+    def __init__(self, filename, steps_per_epoch, separator=',', append=False):
         super().__init__(filename, separator, append)
+        self.steps_per_epoch = steps_per_epoch
+
+    def on_epoch_end(self, epoch, logs=None):
+        pass
 
     def on_batch_end(self, batch, logs=None):
         logs = logs or {}
@@ -237,7 +246,7 @@ class BatchAwareCsvLogger(CSVLogger):
             class CustomDialect(csv.excel):
                 delimiter = self.sep
 
-            fieldnames = ['batch'] + self.keys
+            fieldnames = ['epoch', 'batch'] + self.keys
 
             self.writer = csv.DictWriter(
                 self.csv_file,
@@ -246,7 +255,7 @@ class BatchAwareCsvLogger(CSVLogger):
             if self.append_header:
                 self.writer.writeheader()
 
-        row_dict = collections.OrderedDict({'batch': batch})
+        row_dict = collections.OrderedDict({'epoch': batch // self.steps_per_epoch, 'batch': batch})
         row_dict.update((key, handle_value(logs[key])) for key in self.keys)
         self.writer.writerow(row_dict)
         self.csv_file.flush()
@@ -265,5 +274,5 @@ tf.config.threading.set_intra_op_parallelism_threads(
 )
 tf.config.set_soft_device_placement(True)
 auto_encoder = AutoEncoder().build()
-auto_encoder.train("/data/scratch/mdevora/ml/ete6/lcs/", os.getcwd(), 20, 50, inform=False, dry_run=False, training_set_limit=100)
-
+auto_encoder.train("/data/scratch/mdevora/ml/ete6/lcs/", os.getcwd(), 20, 50, inform=False, dry_run=False,
+                   training_set_limit=100)
