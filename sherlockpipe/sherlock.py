@@ -375,7 +375,7 @@ class Sherlock:
         return dir + "/"
 
     def __setup_logging(self):
-        formatter = logging.Formatter(fmt='%(message)s', datefmt='%Y-%m-%d %H:%M:%S')
+        formatter = logging.Formatter(fmt='%(asctime)s %(levelname)-8s %(message)s', datefmt='%Y-%m-%d %H:%M:%S')
         logger = logging.getLogger()
         while len(logger.handlers) > 0:
             logger.handlers.pop()
@@ -390,7 +390,7 @@ class Sherlock:
         logger = logging.getLogger()
         while len(logger.handlers) > 1:
             logger.handlers.pop()
-        formatter = logging.Formatter(fmt='%(asctime)s %(levelname)-8s %(message)s', datefmt='%Y-%m-%d %H:%M:%S')
+        formatter = logging.Formatter(fmt='%(message)s', datefmt='%Y-%m-%d %H:%M:%S')
         handler = logging.FileHandler(object_dir + str(object_id) + "_report.log")
         handler.setLevel(logging.INFO)
         handler.setFormatter(formatter)
@@ -401,7 +401,7 @@ class Sherlock:
         object_dir = self.__setup_object_logging(object_id, False)
         logger = logging.getLogger()
         logger.handlers.pop()
-        formatter = logging.Formatter(fmt='%(asctime)s %(levelname)-8s %(message)s', datefmt='%Y-%m-%d %H:%M:%S')
+        formatter = logging.Formatter(datefmt='%Y-%m-%d %H:%M:%S')
         file = object_dir + str(object_id) + "_candidates.log"
         if clean and os.path.exists(file):
             os.remove(file)
