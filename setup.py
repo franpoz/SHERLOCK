@@ -35,6 +35,7 @@ setuptools.setup(
                         "emcee==3.0.2", # Allesfitter dependency
                         "mock==4.0.3",
                         'numba==0.53.1', # foldedleastsquares dependency
+                        'pytransit==2.5.21', #Validation
                         'pytz', # Observation plan: Not using version because it gets the DB updated with each release
                         "requests==2.25.1", # OIs management
                         "rebound==3.17.3", # Stability
