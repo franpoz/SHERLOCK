@@ -70,10 +70,9 @@ class Validator(ToolWithCandidate):
                 sectors = list(sectors_in)
         except:
             sectors = [0]
-        self.data_dir = validation_dir
         object_id = object_id.iloc[0]
         try:
-            self.execute_triceratops(cpus, validation_dir, object_id, sectors, lc_file, transit_depth,
+            self.execute_triceratops(cpus, self.data_dir, object_id, sectors, lc_file, transit_depth,
                                           period, t0, duration, rp_rstar, a_rstar, bins, scenarios, sigma_mode,
                                           contrast_curve_file, run)
         except Exception as e:
@@ -157,7 +156,7 @@ class Validator(ToolWithCandidate):
         target = tr.target(ID=id_int, mission=mission, sectors=sectors)
         # TODO allow user input apertures
         logging.info("Reading apertures from directory")
-        apertures = yaml.load(open(object_dir + "/apertures.yaml"), yaml.SafeLoader)
+        apertures = yaml.load(open(self.object_dir + "/apertures.yaml"), yaml.SafeLoader)
         apertures = apertures["sectors"]
         valid_apertures = {}
         for sector, aperture in apertures.items():
@@ -191,7 +190,7 @@ class Validator(ToolWithCandidate):
         lc.extra_columns = []
         fig, axs = plt.subplots(1, 1, figsize=(8, 4), constrained_layout=True)
         axs, bin_centers, bin_means, bin_errs = Watson.compute_phased_values_and_fill_plot(object_id, axs, lc, period,
-                                                                                           t0 + period / 2, depth,
+                                                                                           t0, depth,
                                                                                            duration, rp_rstar, a_rstar,
                                                                                            bins=bins)
         plt.savefig(save_dir + "/folded_curve.png")
