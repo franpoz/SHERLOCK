@@ -2,12 +2,14 @@ import os
 import shutil
 import unittest
 import pandas as pd
+import pkg_resources
+
 from sherlockpipe.validate import Validator
 
 
 class TestsValidation(unittest.TestCase):
     def test_validation(self):
-        object_dir = './test_validation_data/'
+        object_dir = TestsValidation.get_path('test_validation_data/')
         validation_dir = object_dir + '/validation_0'
         star_df = pd.read_csv(object_dir + "/params_star.csv")
         candidates = pd.read_csv(object_dir + "/candidates.csv")
@@ -21,6 +23,15 @@ class TestsValidation(unittest.TestCase):
             self.assertEquals(8, len(os.listdir(validation_dir + '/triceratops')))
         finally:
             shutil.rmtree(validation_dir + '/triceratops', ignore_errors=True)
+
+    @staticmethod
+    def get_path(path):
+        """
+        Gets right path for tests environment
+        :param path:
+        :return: the real path of the test resource
+        """
+        return pkg_resources.resource_filename(__name__, path)
 
 
 if __name__ == '__main__':
