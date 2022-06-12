@@ -3,7 +3,7 @@ import setuptools
 with open("README.md", "r") as fh:
     long_description = fh.read()
 
-version = "0.29.3"
+version = "0.29.4"
 setuptools.setup(
     name="sherlockpipe", # Replace with your own username
     version=version,
