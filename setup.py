@@ -21,7 +21,8 @@ setuptools.setup(
         "Operating System :: OS Independent",
     ],
     python_requires='>=3.8',
-    install_requires=['astroplan==0.7',
+    install_requires=['arviz==0.12.1', # Validation required (pytransit, from triceratops)
+                        'astroplan==0.7',
                         "astroquery==0.4.6",
                         "allesfitter==1.2.9", # Fit
                         'argparse==1.4.0', # All modules
