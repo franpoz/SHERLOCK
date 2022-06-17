@@ -846,24 +846,25 @@ class Sherlock:
         ax2.set(xlabel='Phase', ylabel='Relative flux')
         folded_phase_zoom_mask = np.argwhere((tls_results.folded_phase > lower_x_limit) &
                                              (tls_results.folded_phase < upper_x_limit)).flatten()
-        folded_phase = tls_results.folded_phase[folded_phase_zoom_mask]
-        folded_y = tls_results.folded_y[folded_phase_zoom_mask]
-        ax2.set_ylim(np.min([np.min(folded_y), np.min(tls_results.model_folded_model)]),
-                     np.max([np.max(folded_y), np.max(tls_results.model_folded_model)]))
-        plt.ticklabel_format(useOffset=False)
-        bins = 80
-        if binning_enabled and tls_results.SDE != 0:
-            bin_means, bin_edges, binnumber = stats.binned_statistic(folded_phase, folded_y, statistic='mean',
-                                                                     bins=bins)
-            bin_stds, _, _ = stats.binned_statistic(folded_phase, folded_y, statistic='std', bins=bins)
-            bin_width = (bin_edges[1] - bin_edges[0])
-            bin_centers = bin_edges[1:] - bin_width / 2
-            bin_size = int(folded_plot_range * 2 / bins * transit_result.period * 24 * 60)
-            bin_means_data_mask = np.isnan(bin_means)
-            ax2.errorbar(bin_centers[~bin_means_data_mask], bin_means[~bin_means_data_mask],
-                         yerr=bin_stds[~bin_means_data_mask] / 2, xerr=bin_width / 2, marker='o', markersize=4,
-                         color='darkorange', alpha=1, linestyle='none', label='Bin size: ' + str(bin_size) + "m")
-            ax2.legend(loc="upper right")
+        if not np.isnan(tls_results.folded_phase):
+            folded_phase = tls_results.folded_phase[folded_phase_zoom_mask]
+            folded_y = tls_results.folded_y[folded_phase_zoom_mask]
+            ax2.set_ylim(np.min([np.min(folded_y), np.min(tls_results.model_folded_model)]),
+                         np.max([np.max(folded_y), np.max(tls_results.model_folded_model)]))
+            plt.ticklabel_format(useOffset=False)
+            bins = 80
+            if binning_enabled and tls_results.SDE != 0:
+                bin_means, bin_edges, binnumber = stats.binned_statistic(folded_phase, folded_y, statistic='mean',
+                                                                         bins=bins)
+                bin_stds, _, _ = stats.binned_statistic(folded_phase, folded_y, statistic='std', bins=bins)
+                bin_width = (bin_edges[1] - bin_edges[0])
+                bin_centers = bin_edges[1:] - bin_width / 2
+                bin_size = int(folded_plot_range * 2 / bins * transit_result.period * 24 * 60)
+                bin_means_data_mask = np.isnan(bin_means)
+                ax2.errorbar(bin_centers[~bin_means_data_mask], bin_means[~bin_means_data_mask],
+                             yerr=bin_stds[~bin_means_data_mask] / 2, xerr=bin_width / 2, marker='o', markersize=4,
+                             color='darkorange', alpha=1, linestyle='none', label='Bin size: ' + str(bin_size) + "m")
+                ax2.legend(loc="upper right")
         ax3 = plt.gca()
         ax3.axvline(transit_result.period, alpha=0.4, lw=3)
         plt.xlim(np.min(tls_results.periods), np.max(tls_results.periods))
