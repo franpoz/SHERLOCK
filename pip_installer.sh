@@ -6,7 +6,7 @@ rm -r .tox
 rm -r .pytest_cache
 rm -r build
 set -e
-tox -r > tests.log
+tox -r -e py3{8,9}-local > tests.log
 tests_results=$(cat tests.log | grep "congratulations")
 if ! [[ -z ${tests_results} ]]; then
   git_tag=$1
