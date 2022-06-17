@@ -1,4 +1,4 @@
-name: WATSON tests
+name: SHERLOCK tests
 
 on:
   push:
