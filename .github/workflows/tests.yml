@@ -20,13 +20,13 @@ jobs:
           - "3.8"
           - "3.9"
         toxenv:
-          - "py38"
-          - "py39"
+          - "py38-gha"
+          - "py39-gha"
         exclude:
           - py: "3.8"
-            toxenv: "py39"
+            toxenv: "py39-gha"
           - py: "3.9"
-            toxenv: "py38"
+            toxenv: "py38-gha"
     steps:
       - name: Setup python for test ${{ matrix.py }}
         uses: actions/setup-python@v2
