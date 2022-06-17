@@ -840,15 +840,19 @@ class Sherlock:
         scatter_measurements_alpha = 0.05 if binning_enabled else 0.8
         ax2.scatter(tls_results.folded_phase, tls_results.folded_y, color='black', s=10,
                     alpha=scatter_measurements_alpha, zorder=2)
-        ax2.set_xlim(0.5 - folded_plot_range, 0.5 + folded_plot_range)
+        lower_x_limit = 0.5 - folded_plot_range
+        upper_x_limit = 0.5 + folded_plot_range
+        ax2.set_xlim(lower_x_limit, upper_x_limit)
         ax2.set(xlabel='Phase', ylabel='Relative flux')
+        folded_phase_zoom_mask = np.argwhere((tls_results.folded_phase > lower_x_limit) &
+                                             (tls_results.folded_phase < upper_x_limit)).flatten()
+        folded_phase = tls_results.folded_phase[folded_phase_zoom_mask]
+        folded_y = tls_results.folded_y[folded_phase_zoom_mask]
+        ax2.set_ylim(np.min([np.min(folded_y), np.min(tls_results.model_folded_model)]),
+                     np.max([np.max(folded_y), np.max(tls_results.model_folded_model)]))
         plt.ticklabel_format(useOffset=False)
         bins = 80
         if binning_enabled and tls_results.SDE != 0:
-            folded_phase_zoom_mask = np.where((tls_results.folded_phase > 0.5 - folded_plot_range) &
-                                              (tls_results.folded_phase < 0.5 + folded_plot_range))
-            folded_phase = tls_results.folded_phase[folded_phase_zoom_mask]
-            folded_y = tls_results.folded_y[folded_phase_zoom_mask]
             bin_means, bin_edges, binnumber = stats.binned_statistic(folded_phase, folded_y, statistic='mean',
                                                                      bins=bins)
             bin_stds, _, _ = stats.binned_statistic(folded_phase, folded_y, statistic='std', bins=bins)
