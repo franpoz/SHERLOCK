@@ -846,7 +846,7 @@ class Sherlock:
         ax2.set(xlabel='Phase', ylabel='Relative flux')
         folded_phase_zoom_mask = np.argwhere((tls_results.folded_phase > lower_x_limit) &
                                              (tls_results.folded_phase < upper_x_limit)).flatten()
-        if not np.isnan(tls_results.folded_phase):
+        if isinstance(tls_results.folded_phase, (list, np.ndarray)):
             folded_phase = tls_results.folded_phase[folded_phase_zoom_mask]
             folded_y = tls_results.folded_y[folded_phase_zoom_mask]
             ax2.set_ylim(np.min([np.min(folded_y), np.min(tls_results.model_folded_model)]),
