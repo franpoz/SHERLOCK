@@ -6,7 +6,7 @@
 In most of cases the user only needs to provide with a KIC-ID, EPIC-ID, TIC-ID or coordinates of the host star where wants to search for exoplanets.
 
 ## Citation
-We are currently working in a specific article for SHERLOCK. In addition, the best curent way to cite SHERLOCK is by referencing the first paper where it was firstly used (Pozuelos et al. 2020):
+We are currently working on a specific paper for SHERLOCK. In the meantime, the best way to cite SHERLOCK is by referencing the first paper where it was used (Pozuelos et al. 2020):
 
 ```
 @ARTICLE{2020A&A...641A..23P,
