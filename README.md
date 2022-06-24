@@ -2,11 +2,13 @@
   <img width="350" src="https://github.com/franpoz/SHERLOCK/blob/master/images/sherlock3.png?raw=true">
 </p>
 
-<b>SHERLOCK</b> (Searching for Hints of Exoplanets fRom Lightcurves Of spaCe-based seeKers; Pozuelos et al. 2020) is a friendly-user open-source package that has five different modules that allow to: (1) search for planetary candidates; (2) perform vetting of the most promising signals; (3) compute a statistical validation; (4) model the signals to refine the ephemerids; and (5) compute the observational windows from ground-based observatories. SHERLOCK has direct access to short- and long-cadence data observed by Kepler/K2 and TESS. Hence, SHERLOCK is a fully operational powerful tool that allows the user to perform planet searches in space-based data robustly.
-In most of cases the user only needs to provide with a KIC-ID, EPIC-ID, TIC-ID or coordinates of the host star where wants to search for exoplanets.
+<b>SHERLOCK</b> is an end-to-end pipeline that allows the users to explore the data from space-based missions to search for planetary candidates. It can be used to recover alerted candidates by the automatic pipelines such as SPOC and the QLP, the so-called Kepler objects of interest (KOIs) and TESS objects of interest (TOIs), and to search for candidates that remain unnoticed due to detection thresholds, lack of data exploration or poor photometric quality. To this end, SHERLOCK has six different modules to (1) acquire and prepare the light curves from their repositories, (2) search for planetary candidates, (3) vet the interesting signals, (4) perform a statistical validation, (5) model the signals to refine their ephemerides, and (6) compute the observational windows from ground-based observatories to trigger a follow-up campaign. To execute all these modules, the user only needs to fill in an initial YAML file with some basic information such as the star ID (KIC-ID, EPIC-ID, TIC-ID), the cadence to be used, etc., and use sequentially a few lines of code to pass from one step to the next. Alternatively, the user may provide with the light curve in a csv file, where the time, the normalized flux, and the flux error need to be given in columns comma-separated format. 
+
+
+
 
 ## Citation
-We are currently working in a specific article for SHERLOCK. In addition, the best curent way to cite SHERLOCK is by referencing the first paper where it was firstly used (Pozuelos et al. 2020):
+We are currently working on a specific paper for SHERLOCK. In the meantime, the best way to cite SHERLOCK is by referencing the first paper where it was used [Pozuelos et al. (2020)](https://ui.adsabs.harvard.edu/abs/2020A%26A...641A..23P/abstract):
 
 ```
 @ARTICLE{2020A&A...641A..23P,
@@ -28,6 +30,16 @@ archivePrefix = {arXiv},
 }
 
 ```
+
+Also, you may be interested in having a look at recent papers that used SHERLOCK: \
+[Dransfield et al. (2022)](https://ui.adsabs.harvard.edu/abs/2022MNRAS.tmp.1364D/abstract) \
+[Luque et al. (2022)](https://ui.adsabs.harvard.edu/abs/2022arXiv220410261L/abstract) \
+[Schanche et al. (2022)](https://ui.adsabs.harvard.edu/abs/2022A%26A...657A..45S/abstract) \
+[Wells et al. (2021)](https://ui.adsabs.harvard.edu/abs/2021A%26A...653A..97W/abstract) \
+[Benni et al. (2021)](https://ui.adsabs.harvard.edu/abs/2021MNRAS.505.4956B/abstract)  
+[Van Grootel et al. (2021)](https://ui.adsabs.harvard.edu/abs/2021A%26A...650A.205V/abstract) \
+[Demory et al. (2021)](https://ui.adsabs.harvard.edu/abs/2020A%26A...642A..49D/abstract)
+
 
 ## Main Developers
 Active: <i>[F.J. Pozuelos](https://github.com/franpoz), 
