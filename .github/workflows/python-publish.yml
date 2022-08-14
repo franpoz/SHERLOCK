@@ -35,8 +35,8 @@ jobs:
         allowed-conclusions: success
     - name: Build and publish
       env:
-        TWINE_USERNAME: ${{ secrets.PYPI_USERNAME }}   __token__
-        TWINE_PASSWORD: ${{ secrets.PYPI_PASSWORD }}   pypi-AgEIcHlwaS5vcmcCJGYwNTc5NzhmLWRkN2ItNDViNS1hM2VkLTljZjNkNzIyYTBhYwACPXsicGVybWlzc2lvbnMiOiB7InByb2plY3RzIjogWyJzaGVybG9ja3BpcGUiXX0sICJ2ZXJzaW9uIjogMX0AAjl7InByb2plY3RfaWRzIjogWyJiMmIxODhjMi0zZjFjLTQ0NDgtYjI2Mi02N2ZjNTY3MGY5NTciXX0AAAYg9u-HXzeSWyulZ-r9el5u3jYjaPfWLOiV0NCVNS6Hzls
+        TWINE_USERNAME: ${{ secrets.PYPI_USERNAME }}
+        TWINE_PASSWORD: ${{ secrets.PYPI_PASSWORD }}
       run: |
         python setup.py sdist bdist_wheel
         twine upload dist/*
