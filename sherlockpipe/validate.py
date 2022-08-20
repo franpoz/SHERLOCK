@@ -152,6 +152,18 @@ class Validator(ToolWithCandidate):
         lc = pd.read_csv(lc_file, header=0)
         time, flux, flux_err = lc["#time"].values, lc["flux"].values, lc["flux_err"].values
         time, flux, flux_err = self.mask_previous_candidates(time, flux, flux_err, run)
+        if contrast_curve_file is not None:
+            logging.info("Reading contrast curve %s", contrast_curve_file)
+            plt.clf()
+            cc = pd.read_csv(contrast_curve_file, header=None)
+            sep, dmag = cc[0].values, cc[1].values
+            plt.plot(sep, dmag, 'k-')
+            plt.ylim(9, 0)
+            plt.ylabel("$\\Delta K_s$", fontsize=20)
+            plt.xlabel("separation ('')", fontsize=20)
+            plt.savefig(save_dir + "/contrast_curve.png")
+            plt.clf()
+            shutil.copy(contrast_curve_file, save_dir + "/cc_" + os.path.basename(contrast_curve_file))
         logging.info("Acquiring triceratops target")
         target = tr.target(ID=id_int, mission=mission, sectors=sectors)
         # TODO allow user input apertures
@@ -166,17 +178,6 @@ class Validator(ToolWithCandidate):
                                   ap_pixels=aperture)
         valid_apertures = np.array([aperture for sector, aperture in valid_apertures.items()], dtype=object)
         depth = transit_depth / 1000
-        if contrast_curve_file is not None:
-            logging.info("Reading contrast curve %s", contrast_curve_file)
-            plt.clf()
-            cc = pd.read_csv(contrast_curve_file, header=None)
-            sep, dmag = cc[0].values, cc[1].values
-            plt.plot(sep, dmag, 'k-')
-            plt.ylim(9, 0)
-            plt.ylabel("$\\Delta K_s$", fontsize=20)
-            plt.xlabel("separation ('')", fontsize=20)
-            plt.savefig(save_dir + "/contrast_curve.png")
-            plt.clf()
         logging.info("Calculating validation closest stars depths")
         target.calc_depths(depth, valid_apertures)
         target.stars.to_csv(save_dir + "/stars.csv", index=False)
