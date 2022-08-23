@@ -99,9 +99,8 @@ YAML file the next line:
 
 ### Vetting
 SHERLOCK PIPEline comes with a submodule to examine the most promising transit candidates
-found by any of its executions. This is done via [LATTE](https://github.com/noraeisner/LATTE) and 
-[TPFPlotter](https://github.com/jlillo/tpfplotter).
-Please note that this feature is only enabled for TESS candidates.
+found by any of its executions. This is done via [WATSON](https://github.com/PlanetHunters/watson), capable of vetting
+TESS and Kepler targets.
 You should be able to execute the vetting by calling:
 
 ```python3 -m sherlockpipe.vet --properties my_properties.yaml```
