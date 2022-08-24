@@ -1,2 +1,2 @@
-include tox.ini properties.yaml
+include tox.ini sherlockpipe/properties.yaml sherlockpipe/maxsector.py
 graft sherlockpipe/resources
