@@ -1,2 +1,2 @@
-include tox.ini
+include tox.ini properties.yaml
 graft sherlockpipe/resources
