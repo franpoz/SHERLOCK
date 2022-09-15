@@ -252,7 +252,7 @@ class Sherlock:
                 args = np.argwhere(~np.isnan(lc)).flatten()
                 lc_df['#time'] = time[args]
                 lc_df['flux'] = lc[args]
-                lc_df['flux_err'] = flux_err[args]
+                lc_df['flux_err'] = np.array(flux_err[args])
                 lc_df.to_csv(object_dir + "/lc_" + str(i) + ".csv", index=False)
                 i = i + 1
             wl = np.concatenate(([0], wl), axis=0)
