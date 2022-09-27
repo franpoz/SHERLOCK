@@ -67,16 +67,19 @@ class StabilityCalculator(ABC):
         @return: the rebound initialized simulation scenario
         """
         sim = rebound.Simulation()
+        sim.units = ('yr', 'AU', 'Msun')
         sim.integrator = "whfast"
         sim.ri_whfast.safe_mode = 0
-        sim.dt = 1e-2
         sim.add(m=simulation_input.star_mass)
+        min_period = 100
         for planet_key, mass in enumerate(simulation_input.mass_arr):
             period = simulation_input.planet_periods[planet_key]
+            min_period = min_period if period > min_period else period
             ecc = simulation_input.ecc_arr[planet_key]
             inc = np.deg2rad(simulation_input.inc_arr[planet_key])
             omega = np.deg2rad(simulation_input.omega_arr[planet_key])
             sim.add(m=mass * self.EARTH_TO_SUN_MASS / simulation_input.star_mass, P=period, e=ecc, omega=omega, inc=inc)
+        sim.dt = min_period / 365.25 / 100
         # sim.status()
         sim.move_to_com()
         return sim
