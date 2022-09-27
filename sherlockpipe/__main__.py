@@ -9,8 +9,6 @@ from lcbuilder.objectinfo.preparer.MissionLightcurveBuilder import MissionLightc
 
 from lcbuilder.star.starinfo import StarInfo
 from sherlockpipe import sherlock
-from lcbuilder.objectinfo.MissionFfiIdObjectInfo import MissionFfiIdObjectInfo
-from lcbuilder.objectinfo.MissionFfiCoordsObjectInfo import MissionFfiCoordsObjectInfo
 from lcbuilder.objectinfo.MissionObjectInfo import MissionObjectInfo
 from argparse import ArgumentParser
 from os import path
@@ -245,8 +243,7 @@ if __name__ == '__main__':
                                        min_quorum, fit_method, oversampling,
                                        t0_fit_margin, duration_grid_step, args.properties, cache_dir, ignore_original)
                         sherlock_targets.append(sherlock_target)
-                if mode == "SECTOR" or mode == "BOTH" and isinstance(built_object_info, (
-                        MissionObjectInfo, MissionFfiCoordsObjectInfo, MissionFfiIdObjectInfo)):
+                if mode == "SECTOR" or mode == "BOTH" and isinstance(built_object_info, MissionObjectInfo):
                     if sectors == 'all':
                         sectors = extract_sectors(built_object_info, cache_dir)
                     sectors_unique = np.unique(np.array(sectors).flatten())
@@ -305,8 +302,7 @@ if __name__ == '__main__':
                                                  ignore_original)
                 if mode == "GLOBAL" or mode == "BOTH":
                     sherlock_targets.append(sherlock_target)
-                if mode == "SECTOR" or mode == "BOTH" and isinstance(built_object_info, (
-                        MissionObjectInfo, MissionFfiCoordsObjectInfo, MissionFfiIdObjectInfo)):
+                if mode == "SECTOR" or mode == "BOTH" and isinstance(built_object_info, MissionObjectInfo):
                     if sectors == 'all':
                         sectors = extract_sectors(built_object_info, cache_dir)
                     for sector in sectors:
@@ -333,8 +329,8 @@ if __name__ == '__main__':
                                        min_quorum, fit_method, oversampling,
                                        t0_fit_margin, duration_grid_step, args.properties, cache_dir, ignore_original)
                         sherlock_targets.append(sherlock_target)
-                if mode != "GLOBAL" and mode != "BOTH" and not (mode == "SECTOR" or mode == "BOTH" and isinstance(built_object_info, (
-                        MissionObjectInfo, MissionFfiCoordsObjectInfo, MissionFfiIdObjectInfo))):
+                if mode != "GLOBAL" and mode != "BOTH" and not (mode == "SECTOR" or mode == "BOTH" and
+                                                                isinstance(built_object_info, MissionObjectInfo)):
                     raise ValueError("Not a valid run mode: " + str(mode) + " for target: " + str(target))
         except Exception as e:
             print("Error found for target " + target)

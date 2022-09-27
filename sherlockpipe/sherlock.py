@@ -15,8 +15,6 @@ from lcbuilder.lcbuilder_class import LcBuilder
 from lcbuilder.curve_preparer.Flattener import Flattener
 from lcbuilder.curve_preparer.Flattener import FlattenInput
 from lcbuilder.objectinfo.MissionObjectInfo import MissionObjectInfo
-from lcbuilder.objectinfo.MissionFfiIdObjectInfo import MissionFfiIdObjectInfo
-from lcbuilder.objectinfo.MissionFfiCoordsObjectInfo import MissionFfiCoordsObjectInfo
 from lcbuilder.objectinfo.InvalidNumberOfSectorsError import InvalidNumberOfSectorsError
 from watson.watson import Watson
 
@@ -209,7 +207,7 @@ class Sherlock:
         logging.info('Version %s', sys.modules["sherlockpipe"].__version__)
         logging.info('MODE: %s', "ANALYSE" if not self.explore else "EXPLORE")
         if len(self.sherlock_targets) == 0 and self.use_ois:
-            self.sherlock_targets = [MissionObjectInfo(object_id, 'all')
+            self.sherlock_targets = [MissionObjectInfo('all', object_id)
                                      for object_id in self.ois["Object Id"].astype('string').unique()]
         for sherlock_target in self.sherlock_targets:
             self.__run_object(sherlock_target)
@@ -300,8 +298,7 @@ class Sherlock:
                     object_report["transits"] = ""
                 object_report["sectors"] = ','.join(map(str, lc_build.sectors)) \
                     if lc_build.sectors is not None and len(lc_build.sectors) > 0 else None
-                object_report["ffi"] = isinstance(sherlock_target, MissionFfiIdObjectInfo) or \
-                                       isinstance(sherlock_target, MissionFfiCoordsObjectInfo)
+                object_report["ffi"] = sherlock_target.object_info.cadence >= 600
 
                 object_report["oi"] = self.__find_matching_oi(sherlock_target.object_info, object_report["period"])
                 if best_signal_score == 1:
@@ -835,7 +832,7 @@ class Sherlock:
         else:
             bins = transit_result.period / transit_result.duration * bins_per_transit
             folded_plot_range = half_duration_phase * 10
-        binning_enabled = round(cadence) <= 300
+        binning_enabled = True
         ax2.plot(tls_results.model_folded_phase, tls_results.model_folded_model, color='red')
         scatter_measurements_alpha = 0.05 if binning_enabled else 0.8
         ax2.scatter(tls_results.folded_phase, tls_results.folded_y, color='black', s=10,
@@ -853,7 +850,7 @@ class Sherlock:
                          np.max([np.max(folded_y), np.max(tls_results.model_folded_model)]))
             plt.ticklabel_format(useOffset=False)
             bins = 80
-            if binning_enabled and tls_results.SDE != 0:
+            if binning_enabled and tls_results.SDE != 0 and bins < len(folded_phase):
                 bin_means, bin_edges, binnumber = stats.binned_statistic(folded_phase, folded_y, statistic='mean',
                                                                          bins=bins)
                 bin_stds, _, _ = stats.binned_statistic(folded_phase, folded_y, statistic='std', bins=bins)
