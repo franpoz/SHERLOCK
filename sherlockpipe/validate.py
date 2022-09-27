@@ -164,6 +164,26 @@ class Validator(ToolWithCandidate):
             plt.savefig(save_dir + "/contrast_curve.png")
             plt.clf()
             shutil.copy(contrast_curve_file, save_dir + "/cc_" + os.path.basename(contrast_curve_file))
+        logging.info("Preparing validation light curve for target")
+        lc_len = len(time)
+        zeros_lc = np.zeros(lc_len)
+        depth = transit_depth / 1000
+        if mission == "TESS":
+            lc = TessLightCurve(time=time, flux=flux, flux_err=flux_err, quality=zeros_lc)
+        else:
+            lc = KeplerLightCurve(time=time, flux=flux, flux_err=flux_err, quality=zeros_lc)
+        lc.extra_columns = []
+        fig, axs = plt.subplots(1, 1, figsize=(8, 4), constrained_layout=True)
+        axs, bin_centers, bin_means, bin_stds = \
+            Watson.compute_phased_values_and_fill_plot(object_id, axs, lc, period, t0, depth, duration, rp_rstar,
+                                                       a_rstar, bins=bins,
+                                                       bin_err_mode='bin' if sigma_mode == 'binning' else 'flux_err')
+        bin_centers = (bin_centers - 0.5) * period
+        plt.savefig(save_dir + "/folded_curve.png")
+        plt.clf()
+        logging.info("Sigma mode is %s", sigma_mode)
+        sigma = np.nanmean(bin_stds)
+        logging.info("Flux err (ppm) = %s", sigma * 1000000)
         logging.info("Acquiring triceratops target")
         target = tr.target(ID=id_int, mission=mission, sectors=sectors)
         # TODO allow user input apertures
@@ -177,29 +197,9 @@ class Validator(ToolWithCandidate):
                 target.plot_field(save=True, fname=save_dir + "/field_S" + str(sector), sector=sector,
                                   ap_pixels=aperture)
         valid_apertures = np.array([aperture for sector, aperture in valid_apertures.items()], dtype=object)
-        depth = transit_depth / 1000
         logging.info("Calculating validation closest stars depths")
         target.calc_depths(depth, valid_apertures)
         target.stars.to_csv(save_dir + "/stars.csv", index=False)
-        lc_len = len(time)
-        zeros_lc = np.zeros(lc_len)
-        logging.info("Preparing validation light curve for target")
-        if mission == "TESS":
-            lc = TessLightCurve(time=time, flux=flux, flux_err=flux_err, quality=zeros_lc)
-        else:
-            lc = KeplerLightCurve(time=time, flux=flux, flux_err=flux_err, quality=zeros_lc)
-        lc.extra_columns = []
-        fig, axs = plt.subplots(1, 1, figsize=(8, 4), constrained_layout=True)
-        axs, bin_centers, bin_means, bin_errs = Watson.compute_phased_values_and_fill_plot(object_id, axs, lc, period,
-                                                                                           t0, depth,
-                                                                                           duration, rp_rstar, a_rstar,
-                                                                                           bins=bins)
-        plt.savefig(save_dir + "/folded_curve.png")
-        plt.clf()
-        bin_centers = (bin_centers - 0.5) * period
-        logging.info("Sigma mode is %s", sigma_mode)
-        sigma = np.nanmean(bin_errs) if sigma_mode == 'binning' else np.nanmean(flux_err)
-        logging.info("Computed folded curve sigma = %s", sigma)
         logging.info("Preparing validation processes inputs")
         input_n_times = [ValidatorInput(save_dir, copy.deepcopy(target), bin_centers, bin_means, sigma, period, depth,
                                         valid_apertures, value, contrast_curve_file)
@@ -263,6 +263,18 @@ class Validator(ToolWithCandidate):
             fpp3_sum = fpp3_sum / scenarios
             the_file.write("MEAN" + "," + str(fpp_sum) + "," + str(nfpp_sum) + "," + str(fpp2_sum) + "," +
                            str(fpp3_sum))
+        logging.info("Plotting mean scenario outputs")
+        Validator.plot_triceratops_output(fpp_sum, nfpp_sum, fpp_err, nfpp_err, save_dir)
+        probs_total_df = probs_total_df.groupby(["ID", "scenario"], as_index=False).mean()
+        target.probs = probs_total_df
+        target.plot_fits(save=True, fname=save_dir + "/scenario_fits", time=bin_centers, flux_0=bin_means,
+                         flux_err_0=sigma)
+        probs_total_df["scenario"] = pd.Categorical(probs_total_df["scenario"], ["TP", "EB", "EBx2P", "PTP", "PEB",
+                                                                                 "PEBx2P", "STP", "SEB", "SEBx2P",
+                                                                                 "DTP", "DEB", "DEBx2P", "BTP", "BEB",
+                                                                                 "BEBx2P", "NTP", "NEB", "NEBx2P"])
+        probs_total_df = probs_total_df.sort_values("scenario")
+        probs_total_df.to_csv(save_dir + "/validation_scenarios.csv", index=False)
         logging.info("---------------------------------")
         logging.info("Final probabilities computed")
         logging.info("---------------------------------")
@@ -270,17 +282,6 @@ class Validator(ToolWithCandidate):
         logging.info("NFPP=%s", nfpp_sum)
         logging.info("FPP2(Lissauer et al, 2012)=%s", fpp2_sum)
         logging.info("FPP3+(Lissauer et al, 2012)=%s", fpp3_sum)
-        Validator.plot_triceratops_output(fpp_sum, nfpp_sum, fpp_err, nfpp_err, save_dir)
-        probs_total_df = probs_total_df.groupby("scenario", as_index=False).mean()
-        probs_total_df["scenario"] = pd.Categorical(probs_total_df["scenario"], ["TP", "EB", "EBx2P", "PTP", "PEB",
-                                                                                 "PEBx2P", "STP", "SEB", "SEBx2P",
-                                                                                 "DTP", "DEB", "DEBx2P", "BTP", "BEB",
-                                                                                 "BEBx2P", "NTP", "NEB", "NEBx2P"])
-        probs_total_df = probs_total_df.sort_values("scenario")
-        probs_total_df.to_csv(save_dir + "/validation_scenarios.csv", index=False)
-        target.probs = probs_total_df
-        # target.plot_fits(save=True, fname=save_dir + "/scenario_fits", time=lc.time.value, flux_0=lc.flux.value,
-        #                  flux_err_0=sigma)
         return save_dir
 
     def is_candidate_aware(self):
@@ -310,6 +311,23 @@ class Validator(ToolWithCandidate):
         axs.set_xlim([0, 1])
         fig.savefig(target_dir + "/triceratops_map.png")
         fig.clf()
+
+    @staticmethod
+    def probs_without_scenarios(csv_file, no_scenarios):
+        scenarios_df = pd.read_csv(csv_file)
+        scenarios_prob = scenarios_df['prob'].sum()
+        filtered_scenarios_df = scenarios_df.loc[~scenarios_df['scenario'].isin(no_scenarios)]
+        filtered_prob = filtered_scenarios_df['prob'].sum()
+        filtered_scenarios_df['prob'] = filtered_scenarios_df['prob'] * scenarios_prob / filtered_prob
+        filtered_prob_sum = filtered_scenarios_df['prob'].sum()
+        filtered_scenarios_df['prob'] = filtered_scenarios_df['prob'] / filtered_prob_sum
+        fpp = 1 - filtered_scenarios_df[filtered_scenarios_df['scenario'].isin(['TP', 'PTP', 'DTP'])]['prob'].sum()
+        fpp2 = 1 - 25 * (1 - fpp) / (25 * (1 - fpp) + fpp)
+        fpp3 = 1 - 50 * (1 - fpp) / (50 * (1 - fpp) + fpp)
+        nfpp = filtered_scenarios_df[filtered_scenarios_df['scenario'].isin(['NTP', 'NEB', 'NEBx2P'])]['prob'].sum()
+        print("Filtered scenarios " + str(no_scenarios) + " for file " + csv_file)
+        print("FPP: " + str(fpp) + "   FPP2: " + str(fpp2) + "   FPP3+: " + str(fpp3) + "   NFPP: " + str(nfpp))
+        return fpp, nfpp, fpp2, fpp3, filtered_scenarios_df
 
 
     # def execute_vespa(self, cpus, indir, object_id, sectors, lc_file, transit_depth, period, epoch, duration, rprs):
