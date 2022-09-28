@@ -20,7 +20,7 @@ class TestsValidation(unittest.TestCase):
         validator = Validator(object_dir, validation_dir, True, candidates)
         validator.validate(candidate, star_df.iloc[0], 1, None, 200, 1, 'flux_err')
         try:
-            self.assertEquals(8, len(os.listdir(validation_dir + '/triceratops')))
+            self.assertEquals(9, len(os.listdir(validation_dir + '/triceratops')))
         finally:
             shutil.rmtree(validation_dir + '/triceratops', ignore_errors=True)
 
