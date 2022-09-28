@@ -1,10 +1,15 @@
-# Thise YAML file illustrates how to provide data for the vetting process. Comma separated sectors and transit times
-# together to the mission id.
+# Thise YAML file illustrates how to provide data for the vetting process.
+# Use it by calling SHERLOCK's vetting module :
+# python3 -m sherlockpipe.vet --properties vetting.yaml
+
 sectors: 2,13,27,28,29
-period: 0.59925
+period: 0.59925 # in days
 t0: 1354.5807
-duration: 200
-depth: 25
+duration: 200 # minutes
+depth: 25 # ppth
+rp_rs: 0.0961 # fraction [0, 1]
+a: 0.017 # AU
+
 # The run where the lightcurve is loaded
 number: 1
 # The light curve number to load
