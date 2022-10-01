@@ -78,12 +78,6 @@ class Sherlock:
         self.setup_files(update_ois, update_force, update_clean)
         self.sherlock_targets = sherlock_targets
         self.habitability_calculator = HabitabilityCalculator()
-        self.detrend_plot_axis = [[1, 1], [2, 1], [3, 1], [2, 2], [3, 2], [3, 2], [3, 3], [3, 3], [3, 3], [4, 3],
-                                  [4, 3], [4, 3], [4, 4], [4, 4], [4, 4], [4, 4], [5, 4], [5, 4], [5, 4], [5, 4],
-                                  [6, 4], [6, 4], [6, 4], [6, 4]]
-        self.detrend_plot_axis.append([1, 1])
-        self.detrend_plot_axis.append([2, 1])
-        self.detrend_plot_axis.append([3, 1])
         self.lcbuilder = LcBuilder()
 
     def setup_files(self, refresh_ois, refresh_force, refresh_clean, results_dir=RESULTS_DIR):
@@ -599,9 +593,10 @@ class Sherlock:
         plot_dir = self.__init_object_dir(object_id) + "/detrends/"
         if not os.path.exists(plot_dir):
             os.mkdir(plot_dir)
-        figsize = (8, 8)  # x,y
-        rows = self.detrend_plot_axis[detrends_number - 1][0]
-        cols = self.detrend_plot_axis[detrends_number - 1][1]
+        figsize = (12, 4 * detrends_number)  # x,y
+        rows = detrends_number
+        cols = 1
+        min_original = np.min(original_lc[low_index:high_index])
         shift = 2 * (1.0 - (np.min(original_lc)))  # shift in the between the raw and detrended data
         fig, axs = plt.subplots(rows, cols, figsize=figsize, constrained_layout=True)
         if detrends_number > 1:
@@ -612,15 +607,16 @@ class Sherlock:
         original_lc_partial = original_lc[low_index:high_index]
         for flatten_lc_detrended, lc_trend, bin_centers, bin_means, flatten_wl in flatten_results:
             lc_trend_partial = lc_trend[low_index:high_index]
+            dist = 1.3 * ((1 - min_original) + (np.max(flatten_lc_detrended) - 1))
             if detrends_number > 1:
                 plot_axs = axs[i]
             if detrend_method == 'gp':
                 plot_axs.set_title('ks=%s' % str(np.around(flatten_wl, decimals=4)))
             else:
                 plot_axs.set_title('ws=%s d' % str(np.around(flatten_wl, decimals=4)))
-            plot_axs.plot(time_partial[1:], original_lc_partial[1:], linewidth=0.05, color='black', alpha=0.75,
-                          rasterized=True)
-            plot_axs.plot(time_partial[1:], lc_trend_partial[1:], linewidth=1, color='orange', alpha=1.0)
+            plot_axs.scatter(time_partial[1:], original_lc_partial[1:], color='black', s=1, alpha=0.25, rasterized=True)
+            plot_axs.plot(time_partial[1:], lc_trend_partial[1:], linewidth=2, color='firebrick', alpha=1.)
+            plot_axs.scatter(time_partial[1:], flatten_lc_detrended[low_index:high_index][1:] - dist, color='black', s=1, alpha=0.75, rasterized=True)
             plot_axs.set_ylabel("Flux norm.")
             plot_axs.set_xlabel("Time (d)")
             i = i + 1
