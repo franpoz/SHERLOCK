@@ -1,0 +1,18 @@
+Error :
+
+ - obj_id unknown :
+      The fit used to create the observation plan has been done with an older version of SHERLOCK, in order to solve this issue, you must manually add several items to the file params_star.csv.
+      Before the change, your file should look like this :
+        """
+        ra,dec,R_star,R_star_lerr,R_star_uerr,M_star,M_star_lerr,M_star_uerr,Teff_star,Teff_star_lerr,Teff_star_uerr,ld_a,ld_b
+        123.464997786828,11.0267405124604,0.638,0.11199999999999999,0.11199999999999999,0.47,0.030000000000000027,0.030000000000000027,20120.0,200,200,0.1262,0.2536
+        """
+      You must add "obj_id," at the begining of the first line and its id in the second line.
+      Then, you also have to add ",feh,feh_err,h,h_err,j,j_err,k,k_err,kp,logg,logg_err,v,v_err" at the end of the first line and fill the corresponding values in the second one.
+         feh is the metalicity (optional)
+         h, j, k and v are the magnitudes in different wavelengths (values can be found on ExoFOP : https://exofop.ipac.caltech.edu/ )
+         kp is the magnitude from Kepler (optional)
+         logg is the surface gravity
+
+ - The program did not crash, but the plan is empty :
+      The error bars were too large to allow for an estimation of the future transits with a reasonable error margin. You need to refine the fit to solve this issue.
