@@ -44,6 +44,8 @@ AUTO_DETREND_RATIO: 0.25
 PREPARE_ALGORITHM:
 # User defined sigma threshold for outliers clipping
 OUTLIERS_SIGMA: 3
+# The lightkurve 'author' to be used for the download. ELEANOR is also supported for long cadence TESS data.
+AUTHOR:
 # Cadence of data to be retrieved
 EXPTIME:
 # Number of cadences to be binned together (e.g. EXPTIME_BINNING: 4 for EXPTIME: 120 will mean a binned curve with 500
