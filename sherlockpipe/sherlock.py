@@ -245,6 +245,8 @@ class Sherlock:
                 lc_df['#time'] = time[args]
                 lc_df['flux'] = lc[args]
                 lc_df['flux_err'] = np.array(flux_err[args])
+                flux_err_mean = np.nanmean(lc_df['flux_err'])
+                lc_df.loc[(lc_df['flux_err'] == 0) | np.isnan(lc_df['flux_err']), 'flux_err'] = flux_err_mean
                 lc_df.to_csv(object_dir + "/lc_" + str(i) + ".csv", index=False)
                 i = i + 1
             wl = np.concatenate(([0], wl), axis=0)
