@@ -1,5 +1,5 @@
 <p align="center">
-  <img width="350" src="https://github.com/franpoz/SHERLOCK/blob/master/images/sherlock3.png?raw=true">
+  <img width="350" src="https://github.com/PlanetHunters/SHERLOCK/blob/master/images/sherlock3.png?raw=true">
 </p>
 
 <b>SHERLOCK</b> is an end-to-end pipeline that allows the users to explore the data from space-based missions to search for planetary candidates. It can be used to recover alerted candidates by the automatic pipelines such as SPOC and the QLP, the so-called Kepler objects of interest (KOIs) and TESS objects of interest (TOIs), and to search for candidates that remain unnoticed due to detection thresholds, lack of data exploration or poor photometric quality. To this end, SHERLOCK has six different modules to (1) acquire and prepare the light curves from their repositories, (2) search for planetary candidates, (3) vet the interesting signals, (4) perform a statistical validation, (5) model the signals to refine their ephemerides, and (6) compute the observational windows from ground-based observatories to trigger a follow-up campaign. To execute all these modules, the user only needs to fill in an initial YAML file with some basic information such as the star ID (KIC-ID, EPIC-ID, TIC-ID), the cadence to be used, etc., and use sequentially a few lines of code to pass from one step to the next. Alternatively, the user may provide with the light curve in a csv file, where the time, the normalized flux, and the flux error need to be given in columns comma-separated format. 
@@ -43,7 +43,7 @@ Also, you may be interested in having a look at recent papers that used SHERLOCK
 
 
 ## Main Developers
-Active: <i>[F.J. Pozuelos](https://github.com/franpoz), 
+Active: <i>[F.J. Pozuelos](https://github.com/PlanetHunters), 
 [M. Dévora](https://github.com/martindevora) </i> 
 
 ## Additional contributors 
@@ -58,12 +58,12 @@ You can run SHERLOCK PIPEline as a standalone package by using:
 ```python3 -m sherlockpipe --properties my_properties.yaml```
 
 You only need to provide a YAML file with any of the properties contained in the internal 
-[properties.yaml](https://github.com/franpoz/SHERLOCK/blob/master/sherlockpipe/properties.yaml)
+[properties.yaml](https://github.com/PlanetHunters/SHERLOCK/blob/master/sherlockpipe/properties.yaml)
 provided by the pipeline. The most important keys to be defined in your YAML file are those under
 the `GLOBAL OBJECTS RUN SETUP` and `SECTOR OBJECTS RUN SETUP` sections because they contain the object ids
 or files to be analysed in the execution. You'd need to fill at least one of those keys for the
 pipeline to do anything. If you still have any doubts please refer to the 
-[examples/properties](https://github.com/franpoz/SHERLOCK/tree/master/examples/properties) directory 
+[examples/properties](https://github.com/PlanetHunters/SHERLOCK/tree/master/examples/properties) directory 
 
 Additionally, you could only want to inspect the preparation stage of SHERLOCK and therefore, you can execute it without
 running the analyse phase so you can watch the light curve, the periodogram and the initial report to take better
@@ -109,7 +109,7 @@ You should be able to execute the vetting by calling:
 Through that command you will run the vetting process for the given parameters within your provided YAML file. 
 You could watch the generated results under `$your_sherlock_object_results_dir/vetting` directory.
 Please go to 
-[examples/vetting/](https://github.com/franpoz/SHERLOCK/tree/master/examples/vetting.)
+[examples/vetting/](https://github.com/PlanetHunters/SHERLOCK/tree/master/examples/vetting.)
 to learn how to inject the proper properties for the vetting process.
 
 There is an additional simplified option which can be used to run the vetting. In case you are sure
@@ -130,7 +130,7 @@ found by any of its executions. This fit is done via
 you will run the fitting process for the given parameters within your provided YAML file. 
 You could watch the generated results under `$your_sherlock_object_results_dir/fit` directory.
 Please go to 
-[examples/fitting/](https://github.com/franpoz/SHERLOCK/tree/master/examples/fitting)
+[examples/fitting/](https://github.com/PlanetHunters/SHERLOCK/tree/master/examples/fitting)
 to learn how to inject the proper properties for the fitting process.
 
 There is an additional simplified option which can be used to run the fit. In case you are sure
@@ -159,7 +159,7 @@ of
 
 where the `--bodies` parameter is the set of the SHERLOCK accepted signals as CSV to be used in the scenarios 
 simulation. You can also provide a 
-[stability properties file](https://github.com/franpoz/SHERLOCK/tree/master/examples/properties/stability.yaml))
+[stability properties file](https://github.com/PlanetHunters/SHERLOCK/tree/master/examples/properties/stability.yaml))
 to run a custom stability simulation:
 
 ```python3 -m sherlockpipe.stability --properties stability.yaml```
@@ -180,7 +180,7 @@ SHERLOCK PIPEline also adds now a tool to plan your observations from ground-bas
 on the resulting `sherlockpipe.fit` directory, where the precise candidate ephemeris are placed. 
 The `observatories.csv` file should contain the list of available observatories for your candidate follow-up. 
 As an example, you can look at 
-[this file](https://github.com/franpoz/SHERLOCK/blob/master/examples/observatories.csv).
+[this file](https://github.com/PlanetHunters/SHERLOCK/blob/master/examples/observatories.csv).
 
 ## SHERLOCK PIPEline Workflow
 It is important to note that SHERLOCK PIPEline uses some csv files with TOIs, KOIs and EPIC IDs
@@ -214,7 +214,7 @@ This feature can be disabled with a flag.
 
 #### Input time ranges masking
 If enabled, this feature automatically disables 
-[High RMS areas masking](https://github.com/franpoz/SHERLOCK#high-rms-areas-masking) 
+[High RMS areas masking](https://github.com/PlanetHunters/SHERLOCK#high-rms-areas-masking) 
 for the assigned object. The user can input an array of time ranges to be masked into the 
 original signal.
 
@@ -225,27 +225,27 @@ detection and detrending during its preparation stage. This feature can be disab
 
 #### Input period detrend
 If enabled, this feature automatically disables 
-[Detrend of high-amplitude periodicities](https://github.com/franpoz/SHERLOCK#detrend-of-high-amplitude-periodicities) 
+[Detrend of high-amplitude periodicities](https://github.com/PlanetHunters/SHERLOCK#detrend-of-high-amplitude-periodicities) 
 for the assigned object. The user can input a period to be used for an initial detrend of the 
 original signal. 
 
 #### Custom user code
 You can even inject your own python code to perform:
 * A custom signal preparation task by implementing the
-[CurvePreparer](https://github.com/franpoz/SHERLOCK/tree/master/sherlockpipe/sherlockpipe/curve_preparer/CurvePreparer.py)
+[CurvePreparer](https://github.com/PlanetHunters/SHERLOCK/tree/master/sherlockpipe/sherlockpipe/curve_preparer/CurvePreparer.py)
 class that we provide. Then, inject your python file into the `CUSTOM_PREPARER` property and let SHERLOCK
 use your code.
 * A custom best signal selection algorithm by implementing the 
-[SignalSelector](https://github.com/franpoz/SHERLOCK/tree/master/sherlockpipe/sherlockpipe/scoring/SignalSelector.py). 
+[SignalSelector](https://github.com/PlanetHunters/SHERLOCK/tree/master/sherlockpipe/sherlockpipe/scoring/SignalSelector.py). 
 class that we provide. Then, inject your python file into the `CUSTOM_ALGORITHM` property and let SHERLOCK use your code.
 * A custom search zone definition by implementing the
-[SearchZone](https://github.com/franpoz/SHERLOCK/tree/master/sherlockpipe/sherlockpipe/search_zones/SearchZone.py).
+[SearchZone](https://github.com/PlanetHunters/SHERLOCK/tree/master/sherlockpipe/sherlockpipe/search_zones/SearchZone.py).
 class that we provide. Then, inject your python file into the `CUSTOM_SEARCH_ZONE` property and let SHERLOCK use your code. 
 * Custom search modes: 'tls', 'bls', 'grazing', 'comet' or 'custom'. You can search for transits by using TLS, BLS,
 TLS for a grazing template, TLS for a comet template or even inject your custom transit template (this is currently
 included as an experimental feature).
 
 For better understanding of usage please see the
-[examples](https://github.com/franpoz/SHERLOCK/tree/master/examples/properties/custom_algorithms.yaml),
+[examples](https://github.com/PlanetHunters/SHERLOCK/tree/master/examples/properties/custom_algorithms.yaml),
 which references custom implementations that you can inspect in our 
-[custom algorithms directory](https://github.com/franpoz/SHERLOCK/tree/master/examples/custom_algorithms)
+[custom algorithms directory](https://github.com/PlanetHunters/SHERLOCK/tree/master/examples/custom_algorithms)

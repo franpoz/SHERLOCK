@@ -14,10 +14,10 @@ way to perform a search process is by running:
 ``python3 -m sherlockpipe --properties yourPropertiesFile.yaml``
 
 You only need to provide a YAML file with any of the properties contained in the internal
-`properties.yaml <https://github.com/franpoz/SHERLOCK/blob/master/sherlockpipe/properties.yaml>`_
+`properties.yaml <https://github.com/PlanetHunters/SHERLOCK/blob/master/sherlockpipe/properties.yaml>`_
 provided by the pipeline. You'd need to fill at least one object under the ``TARGETS`` section for the
 pipeline to do something. If you still have any doubts please refer to the
-`examples/properties <https://github.com/franpoz/SHERLOCK/tree/master/examples/properties>`_ directory
+`examples/properties <https://github.com/PlanetHunters/SHERLOCK/tree/master/examples/properties>`_ directory
 
 Additionally, you could only want to inspect the preparation stage of **SHERLOCK** and therefore, you can execute it without
 running the analyse phase so you can watch the light curve, the periodogram and the initial report to take better
@@ -84,7 +84,7 @@ The easiest way to depict the process is by following the next diagram:
 
 In the preparation stage the user also would be able to select some pre-settings that would modify the search
 pre-conditions. One of them is the *Search Zone Selector* which will allow you to tell *SHERLOCK* to only search for candidates around the optimistic habitable zone or the
-restricted habitable zone of the star. In addition, you could give your own `SearchZone <https://github.com/franpoz/SHERLOCK/tree/master/sherlockpipe/sherlockpipe/search_zones/SearchZone.py>`_ implementation based
+restricted habitable zone of the star. In addition, you could give your own `SearchZone <https://github.com/PlanetHunters/SHERLOCK/tree/master/sherlockpipe/sherlockpipe/search_zones/SearchZone.py>`_ implementation based
 on the star properties.
 
 For a complete custom *SHERLOCK* pre-processing we added the *User clean Algorithm* that you can provide with an implementation
@@ -136,7 +136,7 @@ The injected *Selection Algorithms* is the selection of the user of the way to d
 * **Basic**: SHERLOCK will select the signal with highest SNR from all the detrended lightcurves for the current run.
 * **Border correct**: SHERLOCK will perform a correction on the SNR values of the selected signals from each detrended lightcurve depending on how many of their transits take place besides empty-data measurement gaps. This was developed because the quantity of false positives is highly increased when there are events close to those gaps affecting the folded lightcurve detected signal.
 * **Quorum algorithm**: Built on top of the ``Border correct`` algorithm, this one will correct the SNR of the selected signal for each detrended lightcurve also by counting the number of detrends that selected the same signal.
-* **Custom algorithm**: The user can also inject his own signal selection algorithm by implementing the `SignalSelector <https://github.com/franpoz/SHERLOCK/tree/master/sherlockpipe/scoring/SignalSelector.py>`_ class. See the `example <https://github.com/franpoz/SHERLOCK/tree/master/examples/properties/custom_algorithms.yaml>`_.
+* **Custom algorithm**: The user can also inject his own signal selection algorithm by implementing the `SignalSelector <https://github.com/PlanetHunters/SHERLOCK/tree/master/sherlockpipe/scoring/SignalSelector.py>`_ class. See the `example <https://github.com/PlanetHunters/SHERLOCK/tree/master/examples/properties/custom_algorithms.yaml>`_.
 
 ---------------
 Reporting

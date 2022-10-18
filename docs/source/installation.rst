@@ -7,7 +7,10 @@
 Installation
 =============================================
 
-Firstly, you must know that *SHERLOCK* is a package that lies on many different depencies whose versions are fixed. Hence, we strongly encourage all the users to use a *Python* `virtual environment <https://docs.python.org/3/library/venv.html>`_ to install *SHERLOCK* to avoid versions collisions with your typical host installation.
+Firstly, you must know that *SHERLOCK* is a package that lies on many different depencies whose versions are fixed.
+Hence, we strongly encourage all the users to use a *Python*
+`virtual environment <https://docs.python.org/3/library/venv.html>`_ to install *SHERLOCK* to avoid
+versions collisions with your typical host installation.
 
 Some of the *SHERLOCK* dependencies need ``numpy`` and ``Cython``  before being installed and therefore you should install them before trying the SHERLOCK installation. Take also into account that the dependencies brought by SHERLOCK also need additional operating system tools that need to be installed separately (C++ compiler, Fortran compiler, etc). So, be aware of counting with the next OS packages installed in your environment (e.g. for Python3.8 in a Linux distribution):
 
@@ -35,7 +38,14 @@ Some of the *SHERLOCK* dependencies need ``numpy`` and ``Cython``  before being 
 
 In case you are running a non-Linux distribution you will need to guess your OS packages matching the ones we mention for Linux.
 
-Therefore, once you have got the OS tools, the *SHERLOCK* package can be installed from the PyPi repositories (after installing `numpy` and `Cython`):
+Therefore, once you have got the OS tools, the *SHERLOCK* package can be installed in several ways. The cleanest one is by running:
+
+``python3 -m pip install -r requirements.txt``
+
+Where the ``requirements.txt`` file should contain the same than
+`requirements.txt <https://github.com/PlanetHunters/SHERLOCK/blob/master/requirements.txt>`_.
+
+An additional installation method is running the next commands:
 
 ``python3 -m pip install numpy``
 
@@ -44,7 +54,7 @@ Therefore, once you have got the OS tools, the *SHERLOCK* package can be install
 ``python3 -m pip install sherlockpipe``
 
 You can also use our Docker image from `DockerHub <https://hub.docker.com/repository/docker/sherlockpipe/sherlockpipe>`_
-or build it from our `Dockerfile <https://github.com/franpoz/SHERLOCK/blob/master/docker/Dockerfile>`_. Therefore, you
+or build it from our `Dockerfile <https://github.com/PlanetHunters/SHERLOCK/blob/master/docker/Dockerfile>`_. Therefore, you
 can also use as a Singularity container meanwhile they support Docker.
 
 -------------
@@ -53,7 +63,7 @@ Dependencies
 
 All the needed dependencies should be included by your `pip` installation of *SHERLOCK*. If you are
 interested you can inspect the requirements list under
-`setup.py <https://github.com/franpoz/SHERLOCK/blob/master/setup.py>`_.
+`setup.py <https://github.com/PlanetHunters/SHERLOCK/blob/master/setup.py>`_.
 
 -----------
 Integration
@@ -76,12 +86,12 @@ Testing
 
 This suite tests several points from the pipeline for the supported *Python* versions:
 
-* The construction of the ``Sherlock`` *Python* object.
-* The parameters setup of the ``Sherlock`` *Python* object.
+* The construction of the ``SHERLOCK`` *Python* object.
+* The parameters setup of the ``SHERLOCK`` *Python* object.
 * The provisioning of objects of interest files.
 * Load and filtering of objects of interest.
 * Different kind of short **SHERLOCK** executions.
 
 In case you want to test the entire *SHERLOCK* functionality we encourage you to
-run some (or all) the `manual examples <https://github.com/franpoz/SHERLOCK/tree/master/examples>`_.
+run some (or all) the `manual examples <https://github.com/PlanetHunters/SHERLOCK/tree/master/examples>`_.
 If so, please read the instructions provided there to execute them.
