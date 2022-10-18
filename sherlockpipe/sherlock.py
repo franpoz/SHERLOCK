@@ -294,8 +294,6 @@ class Sherlock:
                     object_report["transits"] = ""
                 object_report["sectors"] = ','.join(map(str, lc_build.sectors)) \
                     if lc_build.sectors is not None and len(lc_build.sectors) > 0 else None
-                object_report["ffi"] = sherlock_target.object_info.cadence >= 600
-
                 object_report["oi"] = self.__find_matching_oi(sherlock_target.object_info, object_report["period"])
                 if best_signal_score == 1:
                     logging.info('New best signal is good enough to keep searching. Going to the next run.')
@@ -368,6 +366,7 @@ class Sherlock:
         return dir + "/"
 
     def __setup_logging(self):
+        logging.captureWarnings(True)
         formatter = logging.Formatter(fmt='%(asctime)s %(levelname)-8s %(message)s', datefmt='%Y-%m-%d %H:%M:%S')
         logger = logging.getLogger()
         while len(logger.handlers) > 0:
