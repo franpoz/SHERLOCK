@@ -39,7 +39,7 @@ Also, you may be interested in having a look at recent papers that used SHERLOCK
 [Wells et al. (2021)](https://ui.adsabs.harvard.edu/abs/2021A%26A...653A..97W/abstract) \
 [Benni et al. (2021)](https://ui.adsabs.harvard.edu/abs/2021MNRAS.505.4956B/abstract)  
 [Van Grootel et al. (2021)](https://ui.adsabs.harvard.edu/abs/2021A%26A...650A.205V/abstract) \
-[Demory et al. (2021)](https://ui.adsabs.harvard.edu/abs/2020A%26A...642A..49D/abstract)
+[Demory et al. (2020)](https://ui.adsabs.harvard.edu/abs/2020A%26A...642A..49D/abstract)
 
 
 ## Main Developers
