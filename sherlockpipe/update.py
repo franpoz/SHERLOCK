@@ -1,15 +1,11 @@
 import logging
 import os
 import shutil
-import sys
 import time
 import traceback
 from argparse import ArgumentParser
-import lcbuilder.eleanor
 from lcbuilder.constants import USER_HOME_ELEANOR_CACHE
-
-sys.modules['eleanor'] = sys.modules['lcbuilder.eleanor']
-import eleanor
+from lcbuilder.eleanor_manager import EleanorManager
 from sherlockpipe.ois.OisManager import OisManager
 from eleanor.maxsector import maxsector
 
@@ -62,17 +58,7 @@ class Updater:
                 os.mkdir(eleanorpath)
             if not os.path.exists(eleanormetadata):
                 os.mkdir(eleanormetadata)
-            for sector in range(1, 52):
-                sectorpath = eleanorpath + '/metadata/s{:04d}'.format(sector)
-                if os.path.exists(sectorpath) and os.path.isdir(sectorpath) and not os.listdir(sectorpath):
-                    os.rmdir(sectorpath)
-                if (not os.path.exists(sectorpath) or not os.path.isdir(sectorpath) or not os.listdir(sectorpath)) and sector <= maxsector:
-                    try:
-                        eleanor.Update(sector)
-                    except Exception as e:
-                        traceback.print_exc()
-                        shutil.rmtree(sectorpath)
-                        break
+            EleanorManager.update()
             with open(os.path.join(os.path.expanduser('~'), '.sherlockpipe/timestamp_eleanor.txt'), 'w+') as f:
                 f.write(str(time.time()))
         print("DONE")
