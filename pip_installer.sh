@@ -13,7 +13,7 @@ if ! [[ -z ${tests_results} ]]; then
   source sherlockpipe-reqs/bin/activate
   python3.8 -m pip install pip -U
   python3.8 -m pip install numpy
-  python3.8 -m pip install sherlockpipe
+  python3.8 setup.py install
   python3.8 -m pip list --format=freeze > requirements.txt
   deactivate
   git_tag=$1
