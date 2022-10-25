@@ -67,8 +67,10 @@ if __name__ == '__main__':
         candidates = candidates.rename(columns={'Object Id': 'id'})
         candidate = candidates.iloc[[candidate_selection - 1]]
         candidate['number'] = [candidate_selection]
-        transits_df = pd.read_csv(vetter.object_dir() + "/transits_stats.csv")
-        transits_df = transits_df[transits_df["candidate"] == candidate_selection - 1]
+        transits_df_file = vetter.object_dir() + "/transits_stats.csv"
+        if os.path.exists(transits_df_file):
+            transits_df = pd.read_csv(vetter.object_dir() + "/transits_stats.csv")
+            transits_df = transits_df[transits_df["candidate"] == candidate_selection - 1]
         #watson.data_dir = watson.object_dir
         logging.info("Selected signal number " + str(candidate_selection))
     if args.cpus is None:
