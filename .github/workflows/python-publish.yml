@@ -22,16 +22,16 @@ jobs:
       run: |
         python -m pip install --upgrade pip
         pip install setuptools wheel twine
-    - name: Wait for build to succeed
-      timeout-minutes: 90
-      uses: lewagon/wait-on-check-action@v1.0.0
-      id: wait-for-build
-      with:
-        ref: ${{ github.ref }}
-        check-regexp: "test .*"
-        repo-token: ${{ secrets.GITHUB_TOKEN }}
-        wait-interval: 20
-        allowed-conclusions: success
+#    - name: Wait for build to succeed
+#      timeout-minutes: 90
+#      uses: lewagon/wait-on-check-action@v1.0.0
+#      id: wait-for-build
+#      with:
+#        ref: ${{ github.ref }}
+#        check-regexp: "test .*"
+#        repo-token: ${{ secrets.GITHUB_TOKEN }}
+#        wait-interval: 20
+#        allowed-conclusions: success
     - name: Build and publish
       env:
         TWINE_USERNAME: ${{ secrets.PYPI_USERNAME }}
