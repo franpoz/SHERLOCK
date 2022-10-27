@@ -5,20 +5,30 @@ rm dist* -r
 rm -r .tox
 rm -r .pytest_cache
 rm -r build
+rm -r sherlockpipe-reqs
 set -e
+
+git_tag=$1
+echo "GIT TAG IS " ${git_tag}
 tox -r -e py3{8,9}-local > tests.log
+tests_results=$(cat tests.log | grep "congratulations")
+if ! [[ -z ${tests_results} ]]; then
+  tox -r -e py3{8,9}-gha > tests.log
+else
+  echo "TESTS FAILED. See tests.log"
+  exit 1
+fi
 tests_results=$(cat tests.log | grep "congratulations")
 if ! [[ -z ${tests_results} ]]; then
   python3.8 -m venv sherlockpipe-reqs
   source sherlockpipe-reqs/bin/activate
   python3.8 -m pip install pip -U
-  python3.8 -m pip install numpy
-  python3.8 setup.py install
-  python3.8 -m pip list --format=freeze > requirements.txt
-  deactivate
-  git_tag=$1
+  python3.8 -m pip install numpy==1.22.3
   sed -i '6s/.*/version = "'${git_tag}'"/' setup.py
   sed -i '1s/.*/__version__ = "'${git_tag}'"/' sherlockpipe/__init__.py
+  python3.8 -m pip install -e .
+  python3.8 -m pip list --format=freeze > requirements.txt
+  deactivate
   git add requirements.txt
   git add setup.py
   git add sherlockpipe/__init__.py
