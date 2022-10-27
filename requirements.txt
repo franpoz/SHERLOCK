@@ -104,7 +104,7 @@ SecretStorage==3.3.3
 semantic-version==2.10.0
 setuptools==56.0.0
 setuptools-scm==7.0.5
-sherlockpipe==0.31.0
+sherlockpipe==0.31.1
 six==1.16.0
 sklearn==0.0
 soupsieve==2.3.2.post1
