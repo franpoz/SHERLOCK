@@ -2,6 +2,7 @@ import logging
 
 import foldedleastsquares
 import numpy as np
+from lcbuilder.helper import LcbuilderHelper
 
 
 class ToolWithCandidate:
@@ -20,11 +21,7 @@ class ToolWithCandidate:
                 t0 = candidate_row["t0"]
                 logging.info("Masking candidate number %.0f with P=%.3fd, T0=%.2f and D=%.2fd", index + 1, period, t0,
                              duration)
-                mask = foldedleastsquares.transit_mask(time, period, duration * 2, t0)
-                time = time[~mask]
-                flux = flux[~mask]
-                if flux_err is not None:
-                    flux_err = flux_err[~mask]
+                time, flux, flux_err = LcbuilderHelper.mask_transits(time, flux, period, duration * 2, t0, flux_err)
         return time, flux, flux_err
 
 
