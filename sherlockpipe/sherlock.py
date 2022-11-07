@@ -1,6 +1,7 @@
 import logging
 import math
 import multiprocessing
+import pickle
 import shutil
 import pandas
 import wotan
@@ -531,6 +532,9 @@ class Sherlock:
         logging.info('=================================')
         transit_results = self.__identify_signals(sherlock_target, time, lcs, flux_err, star_info, transits_min_count,
                                                   wl, id_run, cadence, report, period_grid, detrend_source_period)
+        run_dir = self.__init_object_dir(star_info.object_id) + '/' + str(id_run) + '/'
+        with open(run_dir + 'search_results.pickle', 'wb') as search_results_file:
+            pickle.dump(transit_results, search_results_file, protocol=pickle.HIGHEST_PROTOCOL)
         signal_selection = sherlock_target.signal_score_selectors[sherlock_target.best_signal_algorithm]\
             .select(transit_results, sherlock_target.snr_min, sherlock_target.sde_min, sherlock_target.detrend_method, wl)
         logging.info(signal_selection.get_message())
@@ -660,7 +664,7 @@ class Sherlock:
             self.__save_transit_plot(star_info.object_id, plot_title, plot_file, time, lcs[0], transit_result, cadence,
                                      id_run)
         else:
-            transit_result = TransitResult(None, 0, 0, 0, 0, [], [], 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, [], False)
+            transit_result = TransitResult(None, None, 0, 0, 0, 0, [], [], 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, [], False)
         transit_results[0] = transit_result
         for i in range(1, len(wl)):
             transit_result = self.__adjust_transit(sherlock_target, time, lcs[i], star_info, transits_min_count,
@@ -743,7 +747,7 @@ class Sherlock:
         else:
             duration = results['duration']
         harmonic = self.__is_harmonic(results, run_results, report, detrend_source_period)
-        return TransitResult(results, results.period, results.period_uncertainty, duration,
+        return TransitResult(power_args, results, results.period, results.period_uncertainty, duration,
                              results.T0, t0s, depths, depths_err, depth, results.odd_even_mismatch,
                              (1 - results.depth_mean_even[0]) * 1000, (1 - results.depth_mean_odd[0]) * 1000, transit_count,
                              results.snr, results.SDE, results.FAP, border_score, in_transit, harmonic)
