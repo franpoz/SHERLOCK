@@ -174,7 +174,7 @@ class Validator(ToolWithCandidate):
             lc = KeplerLightCurve(time=time, flux=flux, flux_err=flux_err, quality=zeros_lc)
         lc.extra_columns = []
         fig, axs = plt.subplots(1, 1, figsize=(8, 4), constrained_layout=True)
-        axs, bin_centers, bin_means, bin_stds = \
+        axs, bin_centers, bin_means, bin_stds, snr = \
             Watson.compute_phased_values_and_fill_plot(object_id, axs, lc, period, t0, depth, duration, rp_rstar,
                                                        a_rstar, bins=bins,
                                                        bin_err_mode='bin' if sigma_mode == 'binning' else 'flux_err')
