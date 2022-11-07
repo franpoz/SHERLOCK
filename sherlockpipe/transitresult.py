@@ -1,7 +1,8 @@
 class TransitResult:
-    def __init__(self, results, period, per_err, duration,
+    def __init__(self, power_args, results, period, per_err, duration,
                  t0, t0s, depths, depths_err, depth, odd_even_mismatch, depth_mean_even, depth_mean_odd, count, snr,
                  sde, fap, border_score, in_transit, harmonic=None):
+        self.power_args = power_args
         self.results = results
         self.period = period
         self.per_err = per_err
