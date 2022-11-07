@@ -57,7 +57,7 @@ if __name__ == '__main__':
     transits_df = None
     if args.candidate is None:
         user_properties = yaml.load(open(args.properties), yaml.SafeLoader)
-        candidate = pd.DataFrame(columns=['id', 'period', 'depth', 't0', 'sectors', 'ffi', 'number', 'lc'])
+        candidate = pd.DataFrame(columns=['id', 'period', 'depth', 't0', 'sectors', 'number', 'lc'])
         candidate = candidate.append(user_properties, ignore_index=True)
         candidate['id'] = star_df.iloc[0]["obj_id"]
     else:
