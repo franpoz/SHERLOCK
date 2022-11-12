@@ -1,2 +1,2 @@
 sphinxcontrib-mermaid
-nbsphinx
+myst-nb

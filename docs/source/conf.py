@@ -24,10 +24,12 @@ author = 'Francisco J. Pozuelos & Martín Dévora-Pajares'
 # The full version, including alpha/beta/rc tags
 release = '0.26.0'
 extensions = [
+    "sphinxcontrib.mermaid",
     "sphinx_rtd_theme",
-    "nbsphinx",
-    "sphinxcontrib.mermaid"
+    "myst_nb"
 ]
+
+nb_execution_mode = "off"
 
 # Add any paths that contain templates here, relative to this directory.
 templates_path = ['_templates']
