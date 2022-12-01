@@ -109,7 +109,7 @@ You should be able to execute the vetting by calling:
 Through that command you will run the vetting process for the given parameters within your provided YAML file. 
 You could watch the generated results under `$your_sherlock_object_results_dir/vetting` directory.
 Please go to 
-[examples/vetting/](https://github.com/franpoz/SHERLOCK/tree/master/examples/vetting.)
+[examples/vetting/](https://github.com/franpoz/SHERLOCK/tree/master/examples/vetting)
 to learn how to inject the proper properties for the vetting process.
 
 There is an additional simplified option which can be used to run the vetting. In case you are sure
