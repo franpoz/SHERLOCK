@@ -533,10 +533,15 @@ class Sherlock:
         transit_results = self.__identify_signals(sherlock_target, time, lcs, flux_err, star_info, transits_min_count,
                                                   wl, id_run, cadence, report, period_grid, detrend_source_period)
         run_dir = self.__init_object_dir(star_info.object_id) + '/' + str(id_run) + '/'
-        with open(run_dir + 'search_results.pickle', 'wb') as search_results_file:
-            pickle.dump(transit_results, search_results_file, protocol=pickle.HIGHEST_PROTOCOL)
         signal_selection = sherlock_target.signal_score_selectors[sherlock_target.best_signal_algorithm]\
             .select(transit_results, sherlock_target.snr_min, sherlock_target.sde_min, sherlock_target.detrend_method, wl)
+        if sherlock_target.pickle_mode == 'all':
+            with open(run_dir + 'search_results.pickle', 'wb') as search_results_file:
+                pickle.dump(transit_results, search_results_file, protocol=pickle.HIGHEST_PROTOCOL)
+        elif sherlock_target.pickle_mode == 'selected':
+            with open(run_dir + 'search_results.pickle', 'wb') as search_results_file:
+                pickle.dump(transit_results[signal_selection.curve_index], search_results_file,
+                            protocol=pickle.HIGHEST_PROTOCOL)
         logging.info(signal_selection.get_message())
         return transit_results, signal_selection
 

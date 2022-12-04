@@ -172,3 +172,5 @@ UPDATE_FORCE: False
 UPDATE_CLEAN: False
 # Root directory to store sherlock, LATTE, lightkurve and eleanor metadatas. Defaults to home of running user.
 CACHE_DIR:
+# Whether transit search data should be pickled (none|selected|all).
+PICKLE_MODE: 'none'

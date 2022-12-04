@@ -214,6 +214,7 @@ if __name__ == '__main__':
                                                              "OSCILLATIONS_MAX_PERIOD")
             exptime_binning = get_from_user_or_config(target_configs, sherlock_user_properties, "EXPTIME_BINNING")
             ignore_original = get_from_user_or_config(target_configs, sherlock_user_properties, "IGNORE_ORIGINAL")
+            pickle_mode = get_from_user_or_config(target_configs, sherlock_user_properties, "PICKLE_MODE")
             mission = None
             mode = get_from_user_or_config_or_default(target_configs, sherlock_user_properties, "MODE", "GLOBAL")
             sectors = get_from_user_or_config_or_default(target_configs, sherlock_user_properties, "SECTORS", "all")
@@ -241,7 +242,8 @@ if __name__ == '__main__':
                                        cpu_cores, max_runs, period_min,
                                        period_max, period_protect, best_signal_algorithm, quorum_strength,
                                        min_quorum, fit_method, oversampling,
-                                       t0_fit_margin, duration_grid_step, args.properties, cache_dir, ignore_original)
+                                       t0_fit_margin, duration_grid_step, args.properties, cache_dir, ignore_original,
+                                       pickle_mode)
                         sherlock_targets.append(sherlock_target)
                 if mode == "SECTOR" or mode == "BOTH" and isinstance(built_object_info, MissionObjectInfo):
                     if sectors == 'all':
@@ -269,7 +271,8 @@ if __name__ == '__main__':
                                        cpu_cores, max_runs, period_min,
                                        period_max, period_protect, best_signal_algorithm, quorum_strength,
                                        min_quorum, fit_method, oversampling,
-                                       t0_fit_margin, duration_grid_step, args.properties, cache_dir, ignore_original)
+                                       t0_fit_margin, duration_grid_step, args.properties, cache_dir, ignore_original,
+                                       pickle_mode)
                         sherlock_targets.append(sherlock_target)
             else:
                 built_object_info = lcbuilder.build_object_info(target, author, sectors, file, exptime,
@@ -299,7 +302,7 @@ if __name__ == '__main__':
                                                  period_max, period_protect, best_signal_algorithm, quorum_strength,
                                                  min_quorum, fit_method, oversampling,
                                                  t0_fit_margin, duration_grid_step, args.properties, cache_dir,
-                                                 ignore_original)
+                                                 ignore_original, pickle_mode)
                 if mode == "GLOBAL" or mode == "BOTH":
                     sherlock_targets.append(sherlock_target)
                 if mode == "SECTOR" or mode == "BOTH" and isinstance(built_object_info, MissionObjectInfo):
@@ -327,7 +330,8 @@ if __name__ == '__main__':
                                        cpu_cores, max_runs, period_min,
                                        period_max, period_protect, best_signal_algorithm, quorum_strength,
                                        min_quorum, fit_method, oversampling,
-                                       t0_fit_margin, duration_grid_step, args.properties, cache_dir, ignore_original)
+                                       t0_fit_margin, duration_grid_step, args.properties, cache_dir, ignore_original,
+                                       pickle_mode)
                         sherlock_targets.append(sherlock_target)
                 if mode != "GLOBAL" and mode != "BOTH" and not (mode == "SECTOR" or mode == "BOTH" and
                                                                 isinstance(built_object_info, MissionObjectInfo)):
