@@ -289,9 +289,12 @@ class Validator(ToolWithCandidate):
 
     @staticmethod
     def plot_triceratops_output(fpp, nfpp, fpp_err, nfpp_err, target_dir):
+        min_fpp = 0.000001
         likely = (0.5, 0.001)
         likely_nfpp = 0.1
         fig, axs = plt.subplots(1, 1, figsize=(8, 8), constrained_layout=True)
+        nfpp = nfpp if nfpp > min_fpp else min_fpp
+        fpp = fpp if fpp > min_fpp else min_fpp
         #axs.set_xlim([0, 1])
         #axs.set_ylim([0, 1])
         axs.set_yscale('log', base=10)
@@ -303,7 +306,7 @@ class Validator(ToolWithCandidate):
         axs.axhspan(likely_nfpp, 1, color="gainsboro", label="Likely NFP")
         axs.errorbar(fpp, nfpp, xerr=fpp_err, yerr=nfpp_err, marker="o", markersize=15, markerfacecolor="blue",
                      ecolor="cyan")
-        axs.plot(0.000001, 0.000001, markersize=0)
+        axs.plot(min_fpp, min_fpp, markersize=0)
         #axs.legend(loc='upper right', fontsize=25)
         axs.text(0.77, 0.115, "Likely NFP", fontsize=20)
         axs.text(0.23, 0.00057, "Likely Planet", fontsize=20)
