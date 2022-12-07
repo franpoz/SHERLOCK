@@ -3,6 +3,7 @@ import os
 
 from lcbuilder.objectinfo.ObjectInfo import ObjectInfo
 
+from sherlockpipe.scoring.AverageSpectrumSignalSelector import AverageSpectrumSignalSelector
 from sherlockpipe.scoring.BasicSdeSignalSelector import BasicSdeSignalSelector
 from sherlockpipe.scoring.BasicSignalSelector import BasicSignalSelector
 from sherlockpipe.scoring.QuorumSdeBorderCorrectedSignalSelector import QuorumSdeBorderCorrectedSignalSelector
@@ -15,7 +16,8 @@ from sherlockpipe.search_zones.OptimisticHabitableSearchZone import OptimisticHa
 
 class SherlockTarget:
     MASK_MODES = ['mask', 'subtract']
-    VALID_SIGNAL_SELECTORS = ["basic", "border-correct", "quorum", "basic-snr", "border-correct-snr", "quorum-snr"]
+    VALID_SIGNAL_SELECTORS = ["basic", "border-correct", "quorum", "basic-snr", "border-correct-snr", "quorum-snr",
+                              'average-spectrum']
 
     def __init__(self, object_info,
                  detrend_method='biweight', detrend_l_min=None, detrend_l_max=None, detrends_number=10,
@@ -32,7 +34,7 @@ class SherlockTarget:
                  t0_fit_margin=0.05, duration_grid_step=1.1,
                  source_properties_file=None,
                  cache_dir=os.path.expanduser('~') + "/",
-                 ignore_original=False):
+                 ignore_original=False, pickle_mode='none'):
         self.min_sectors = min_sectors
         self.max_sectors = max_sectors
         self.bin_minutes = bin_minutes
@@ -60,6 +62,7 @@ class SherlockTarget:
         self.detrend_l_max = detrend_l_max
         self.detrend_l_min = detrend_l_min
         self.detrend_method = detrend_method
+        self.pickle_mode = pickle_mode
         if mask_mode not in self.MASK_MODES:
             raise ValueError("Provided mask mode '" + mask_mode + "' is not allowed.")
         if best_signal_algorithm not in self.VALID_SIGNAL_SELECTORS:
@@ -77,6 +80,7 @@ class SherlockTarget:
                                        self.VALID_SIGNAL_SELECTORS[4]: SnrBorderCorrectedSignalSelector(),
                                        self.VALID_SIGNAL_SELECTORS[5]: QuorumSnrBorderCorrectedSignalSelector(
                                            quorum_strength, min_quorum),
+                                       self.VALID_SIGNAL_SELECTORS[6]: AverageSpectrumSignalSelector(),
                                        "user": custom_selection_algorithm}
         self.best_signal_algorithm = best_signal_algorithm if custom_selection_algorithm is None else "user"
         self.fit_method = "default"
