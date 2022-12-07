@@ -18,8 +18,9 @@ class QuorumSnrBorderCorrectedSignalSelector(BasicSignalSelector):
         self.strength = strength
         self.min_quorum = min_quorum
 
-    def select(self, transit_results, snr_min, sde_min, detrend_method, wl):
-        basic_signal_selection = super().select(transit_results, snr_min, sde_min, detrend_method, wl)
+    def select(self, id_run, sherlock_target, star_info, transits_min_count, time, lcs, transit_results, wl, cadence):
+        basic_signal_selection = super().select(id_run, sherlock_target, star_info, transits_min_count, time, lcs,
+                                                transit_results, wl, cadence)
         index_snr_period_t0_array = [[key, transit_result.snr * transit_result.border_score,
                                         transit_result.period, transit_result.t0]
                                         for key, transit_result in transit_results.items()]
@@ -56,7 +57,8 @@ class QuorumSnrBorderCorrectedSignalSelector(BasicSignalSelector):
             selected_signal = transit_results[best_signal_snr_index]
             selected_signal_sde = selected_signal.sde
             max_votes_rate = max(votes_counts) / len(votes)
-            if best_signal_snr > snr_min and selected_signal_sde > sde_min and max_votes_rate >= self.min_quorum:
+            if best_signal_snr > sherlock_target.snr_min and selected_signal_sde > sherlock_target.sde_min and \
+                    max_votes_rate >= self.min_quorum:
                 best_signal_score = 1
             else:
                 best_signal_score = 0

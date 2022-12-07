@@ -21,9 +21,11 @@ from watson.watson import Watson
 
 from sherlockpipe.ois.OisManager import OisManager
 from lcbuilder.star.HabitabilityCalculator import HabitabilityCalculator
+
+from sherlockpipe.plot.plotting import save_transit_plot
+from sherlockpipe.scoring.helper import compute_border_score
 from sherlockpipe.transitresult import TransitResult
 from multiprocessing import Pool
-from scipy.ndimage.interpolation import shift
 from scipy import stats
 
 from sherlockpipe.update import Updater
@@ -260,11 +262,11 @@ class Sherlock:
                     self.__analyse(sherlock_target, time, lcs, flux_err, lc_build.star_info, id_run,
                                    lc_build.transits_min_count, lc_build.cadence, self.report[sherlock_id], wl,
                                    period_grid, lc_build.detrend_period)
-                for index in np.arange(len(transit_results[signal_selection.curve_index].t0s)):
+                for index in np.arange(len(signal_selection.transit_result.t0s)):
                     transits_stats_df = transits_stats_df.append({'candidate': str(int(id_run - 1)),
-                                              't0': transit_results[signal_selection.curve_index].t0s[index],
-                                              'depth': transit_results[signal_selection.curve_index].depths[index],
-                                              'depth_err': transit_results[signal_selection.curve_index].depths_err[index]},
+                                              't0': signal_selection.transit_result.t0s[index],
+                                              'depth': signal_selection.transit_result.depths[index],
+                                              'depth_err': signal_selection.transit_result.depths_err[index]},
                                              ignore_index=True)
                 transits_stats_df = transits_stats_df.sort_values(by=['candidate', 't0'], ascending=True)
                 transits_stats_df.to_csv(object_dir + "transits_stats.csv", index=False)
@@ -273,21 +275,21 @@ class Sherlock:
                 object_report["run"] = id_run
                 object_report["score"] = best_signal_score
                 object_report["curve"] = str(signal_selection.curve_index)
-                object_report["snr"] = transit_results[signal_selection.curve_index].snr
-                object_report["sde"] = transit_results[signal_selection.curve_index].sde
-                object_report["fap"] = transit_results[signal_selection.curve_index].fap
-                object_report["border_score"] = transit_results[signal_selection.curve_index].border_score
-                object_report["harmonic"] = transit_results[signal_selection.curve_index].harmonic
-                object_report["period"] = transit_results[signal_selection.curve_index].period
-                object_report["per_err"] = transit_results[signal_selection.curve_index].per_err
-                object_report["duration"] = transit_results[signal_selection.curve_index].duration * 60 * 24
-                object_report["t0"] = transit_results[signal_selection.curve_index].t0
-                object_report["depth"] = transit_results[signal_selection.curve_index].depth
-                if transit_results[signal_selection.curve_index].results is not None:
-                    object_report['rp_rs'] = transit_results[signal_selection.curve_index].results.rp_rs
-                    real_transit_args = np.argwhere(~np.isnan(transit_results[signal_selection.curve_index]
+                object_report["snr"] = signal_selection.transit_result.snr
+                object_report["sde"] = signal_selection.transit_result.sde
+                object_report["fap"] = signal_selection.transit_result.fap
+                object_report["border_score"] = signal_selection.transit_result.border_score
+                object_report["harmonic"] = signal_selection.transit_result.harmonic
+                object_report["period"] = signal_selection.transit_result.period
+                object_report["per_err"] = signal_selection.transit_result.per_err
+                object_report["duration"] = signal_selection.transit_result.duration * 60 * 24
+                object_report["t0"] = signal_selection.transit_result.t0
+                object_report["depth"] = signal_selection.transit_result.depth
+                if transit_results[signal_selection.curve_index].result is not None:
+                    object_report['rp_rs'] = signal_selection.transit_result.results.rp_rs
+                    real_transit_args = np.argwhere(~np.isnan(signal_selection.transit_result
                                                               .results.transit_depths))
-                    object_report["transits"] = np.array(transit_results[signal_selection.curve_index]
+                    object_report["transits"] = np.array(signal_selection.transit_result
                                                          .results.transit_times)[real_transit_args.flatten()]
                     object_report["transits"] = ','.join(map(str, object_report["transits"]))
                 else:
@@ -341,6 +343,16 @@ class Sherlock:
         except Exception as e:
             logging.exception(str(e))
             print(e)
+
+    def noise(self, time, flux, signal_power):
+        from scipy.signal import periodogram, welch
+        f_p, psd_p = periodogram(flux)
+        f_w, psd_w = welch(flux)
+        power_p = np.trapz(psd_p, f_p)
+        power_w = np.trapz(psd_w, f_w)
+        snr_p = signal_power / power_p
+        snr_w = signal_power / power_w
+        return snr_p
 
     def __init_object_dir(self, object_id, clean_dir=False):
         dir = self.results_dir + str(object_id)
@@ -534,7 +546,17 @@ class Sherlock:
                                                   wl, id_run, cadence, report, period_grid, detrend_source_period)
         run_dir = self.__init_object_dir(star_info.object_id) + '/' + str(id_run) + '/'
         signal_selection = sherlock_target.signal_score_selectors[sherlock_target.best_signal_algorithm]\
-            .select(transit_results, sherlock_target.snr_min, sherlock_target.sde_min, sherlock_target.detrend_method, wl)
+            .select(id_run, sherlock_target, star_info, transits_min_count, time, lcs, transit_results, wl, cadence)
+        title = 'Run ' + str(id_run) + '# PDCSAP_Flux:' + \
+                ' # P=' + format(signal_selection.transit_result.period, '.2f') + 'd # T0=' + \
+                format(signal_selection.transit_result.t0, '.2f') + ' # Depth=' + \
+                format(signal_selection.transit_result.depth, '.4f') + "ppt # Dur=" + \
+                format(signal_selection.transit_result.duration * 24 * 60, '.0f') + 'm # SNR:' + \
+                str(format(signal_selection.transit_result.snr, '.2f')) + ' # SDE:' + \
+                str(format(signal_selection.transit_result.sde, '.2f'))
+        file = 'Run_' + str(id_run) + '_SELECTED_' + str(star_info.object_id) + '.png'
+        save_transit_plot(star_info.object_id, title, run_dir, file, time, lcs[signal_selection.curve_index],
+                          signal_selection.transit_result, cadence, id_run)
         if sherlock_target.pickle_mode == 'all':
             with open(run_dir + 'search_results.pickle', 'wb') as search_results_file:
                 pickle.dump(transit_results, search_results_file, protocol=pickle.HIGHEST_PROTOCOL)
@@ -645,6 +667,7 @@ class Sherlock:
                      "SNR", "SDE", "FAP", "Border_score", "Matching OI", "Harmonic", "Planet radius (R_Earth)", "Rp/Rs",
                      "Semi-major axis", "Habitability Zone")
         transit_results = {}
+        plot_dir = self.__init_object_run_dir(star_info.object_id, id_run)
         if not sherlock_target.ignore_original:
             transit_result = self.__adjust_transit(sherlock_target, time, lcs[0], star_info, transits_min_count,
                                                    transit_results, report, cadence, period_grid, detrend_source_period)
@@ -663,11 +686,10 @@ class Sherlock:
                          format(transit_result.period, '.2f') + 'd # T0=' + format(transit_result.t0, '.2f') + \
                          ' # Depth=' + format(transit_result.depth, '.4f') + 'ppt # Dur=' + \
                          format(transit_result.duration * 24 * 60, '.0f') + 'm # SNR:' + \
-                         str(format(transit_result.snr, '.2f')) + ' # SDE:' + str(format(transit_result.sde, '.2f')) + \
-                         ' # FAP:' + format(transit_result.fap, '.6f')
+                         str(format(transit_result.snr, '.2f')) + ' # SDE:' + str(format(transit_result.sde, '.2f'))
             plot_file = 'Run_' + str(id_run) + '_PDCSAP-FLUX_' + str(star_info.object_id) + '.png'
-            self.__save_transit_plot(star_info.object_id, plot_title, plot_file, time, lcs[0], transit_result, cadence,
-                                     id_run)
+            save_transit_plot(star_info.object_id, plot_title, plot_dir, plot_file, time, lcs[0], transit_result,
+                              cadence, id_run)
         else:
             transit_result = TransitResult(None, None, 0, 0, 0, 0, [], [], 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, [], False)
         transit_results[0] = transit_result
@@ -692,11 +714,10 @@ class Sherlock:
                     ' # P=' + format(transit_result.period, '.2f') + 'd # T0=' + \
                     format(transit_result.t0, '.2f') + ' # Depth=' + format(transit_result.depth, '.4f') + "ppt # Dur=" + \
                     format(transit_result.duration * 24 * 60, '.0f') + 'm # SNR:' + \
-                    str(format(transit_result.snr, '.2f')) + ' # SDE:' + str(format(transit_result.sde, '.2f')) + \
-                    ' # FAP:' + format(transit_result.fap, '.6f')
+                    str(format(transit_result.snr, '.2f')) + ' # SDE:' + str(format(transit_result.sde, '.2f'))
             file = 'Run_' + str(id_run) + '_' + detrend_file_name_customs + '=' + str(format(wl[i], '.4f')) + '_' + \
                    str(star_info.object_id) + '.png'
-            self.__save_transit_plot(star_info.object_id, title, file, time, lcs[i], transit_result, cadence, id_run)
+            save_transit_plot(star_info.object_id, title, plot_dir, file, time, lcs[i], transit_result, cadence, id_run)
         return transit_results
 
     def __find_matching_oi(self, object_info, period):
@@ -743,7 +764,7 @@ class Sherlock:
         t0s = np.array(results.transit_times)
         in_transit = tls.transit_mask(time, results.period, results.duration, results.T0)
         transit_count = results.distinct_transit_count
-        border_score = self.__compute_border_score(time, results, in_transit, cadence)
+        border_score = compute_border_score(time, results, in_transit, cadence)
         # Recalculating duration because of tls issue https://github.com/hippke/tls/issues/83
         intransit_folded_model = np.where(results['model_folded_model'] < 1.)[0]
         if len(intransit_folded_model) > 0:
@@ -766,28 +787,6 @@ class Sherlock:
             logging.exception(str(e))
             print(e)
         return rp
-
-    def __compute_border_score(self, time, result, intransit, cadence):
-        shift_cadences = 3600 / cadence
-        edge_limit_days = 0.05
-        transit_depths = np.nan_to_num(result.transit_depths)
-        transit_depths = np.zeros(1) if type(transit_depths) is not np.ndarray else transit_depths
-        transit_depths = transit_depths[transit_depths > 0] if len(transit_depths) > 0 else []
-        # a=a[np.where([i for i, j in groupby(intransit)])]
-        border_score = 0
-        if len(transit_depths) > 0:
-            shifted_transit_points = shift(intransit, shift_cadences, cval=np.nan)
-            inverse_shifted_transit_points = shift(intransit, -shift_cadences, cval=np.nan)
-            intransit_shifted = intransit | shifted_transit_points | inverse_shifted_transit_points
-            time_edge_indexes = np.where(abs(time[:-1] - time[1:]) > edge_limit_days)[0]
-            time_edge = np.full(len(time), False)
-            time_edge[time_edge_indexes] = True
-            time_edge[0] = True
-            time_edge[len(time_edge) - 1] = True
-            transits_in_edge = intransit_shifted & time_edge
-            transits_in_edge_count = len(transits_in_edge[transits_in_edge])
-            border_score = 1 - transits_in_edge_count / len(transit_depths)
-        return border_score if border_score >= 0 else 0
 
     def __is_harmonic(self, tls_results, run_results, report, detrend_source_period):
         scales = [0.25, 0.5, 1, 2, 4]
@@ -814,73 +813,6 @@ class Sherlock:
     def __trim_axs(self, axs, N):
         [axis.remove() for axis in axs.flat[N:]]
         return axs.flat[:N]
-
-    def __save_transit_plot(self, object_id, title, file, time, lc, transit_result, cadence, run_no):
-        # start the plotting
-        fig, (ax1, ax2, ax3) = plt.subplots(nrows=3, ncols=1, figsize=(10, 10), constrained_layout=True)
-        fig.suptitle(title)
-        # 1-Plot all the transits
-        in_transit = transit_result.in_transit
-        tls_results = transit_result.results
-        ax1.scatter(time[in_transit], lc[in_transit], color='red', s=2, zorder=0)
-        ax1.scatter(time[~in_transit], lc[~in_transit], color='black', alpha=0.05, s=2, zorder=0)
-        ax1.plot(tls_results.model_lightcurve_time, tls_results.model_lightcurve_model, alpha=1, color='red', zorder=1)
-        # plt.scatter(time_n, flux_new_n, color='orange', alpha=0.3, s=20, zorder=3)
-        plt.xlim(time.min(), time.max())
-        # plt.xlim(1362.0,1364.0)
-        ax1.set(xlabel='Time (days)', ylabel='Relative flux')
-        # phase folded plus binning
-        bins_per_transit = 8
-        half_duration_phase = transit_result.duration / 2 / transit_result.period
-        if np.isnan(transit_result.period) or np.isnan(transit_result.duration):
-            bins = 200
-            folded_plot_range = 0.05
-        else:
-            bins = transit_result.period / transit_result.duration * bins_per_transit
-            folded_plot_range = half_duration_phase * 10
-        binning_enabled = True
-        ax2.plot(tls_results.model_folded_phase, tls_results.model_folded_model, color='red')
-        scatter_measurements_alpha = 0.05 if binning_enabled else 0.8
-        ax2.scatter(tls_results.folded_phase, tls_results.folded_y, color='black', s=10,
-                    alpha=scatter_measurements_alpha, zorder=2)
-        lower_x_limit = 0.5 - folded_plot_range
-        upper_x_limit = 0.5 + folded_plot_range
-        ax2.set_xlim(lower_x_limit, upper_x_limit)
-        ax2.set(xlabel='Phase', ylabel='Relative flux')
-        folded_phase_zoom_mask = np.argwhere((tls_results.folded_phase > lower_x_limit) &
-                                             (tls_results.folded_phase < upper_x_limit)).flatten()
-        if isinstance(tls_results.folded_phase, (list, np.ndarray)):
-            folded_phase = tls_results.folded_phase[folded_phase_zoom_mask]
-            folded_y = tls_results.folded_y[folded_phase_zoom_mask]
-            ax2.set_ylim(np.min([np.min(folded_y), np.min(tls_results.model_folded_model)]),
-                         np.max([np.max(folded_y), np.max(tls_results.model_folded_model)]))
-            plt.ticklabel_format(useOffset=False)
-            bins = 80
-            if binning_enabled and tls_results.SDE != 0 and bins < len(folded_phase):
-                bin_means, bin_edges, binnumber = stats.binned_statistic(folded_phase, folded_y, statistic='mean',
-                                                                         bins=bins)
-                bin_stds, _, _ = stats.binned_statistic(folded_phase, folded_y, statistic='std', bins=bins)
-                bin_width = (bin_edges[1] - bin_edges[0])
-                bin_centers = bin_edges[1:] - bin_width / 2
-                bin_size = int(folded_plot_range * 2 / bins * transit_result.period * 24 * 60)
-                bin_means_data_mask = np.isnan(bin_means)
-                ax2.errorbar(bin_centers[~bin_means_data_mask], bin_means[~bin_means_data_mask],
-                             yerr=bin_stds[~bin_means_data_mask] / 2, xerr=bin_width / 2, marker='o', markersize=4,
-                             color='darkorange', alpha=1, linestyle='none', label='Bin size: ' + str(bin_size) + "m")
-                ax2.legend(loc="upper right")
-        ax3 = plt.gca()
-        ax3.axvline(transit_result.period, alpha=0.4, lw=3)
-        plt.xlim(np.min(tls_results.periods), np.max(tls_results.periods))
-        for n in range(2, 10):
-            ax3.axvline(n * tls_results.period, alpha=0.4, lw=1, linestyle="dashed")
-            ax3.axvline(tls_results.period / n, alpha=0.4, lw=1, linestyle="dashed")
-        ax3.set(xlabel='Period (days)', ylabel='SDE')
-        ax3.plot(tls_results.periods, tls_results.power, color='black', lw=0.5)
-        ax3.set_xlim(0., max(tls_results.periods))
-        plot_dir = self.__init_object_run_dir(object_id, run_no)
-        plt.savefig(plot_dir + file, bbox_inches='tight', dpi=200)
-        fig.clf()
-        plt.close(fig)
 
     def __apply_mask_from_transit_results(self, sherlock_target, time, lcs, transit_results, best_signal_index):
         intransit = tls.transit_mask(time, transit_results[best_signal_index].period,

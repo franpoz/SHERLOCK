@@ -9,7 +9,7 @@ class SignalSelector(ABC):
         pass
 
     @abstractmethod
-    def select(self, transit_result_detrends, snr_min, sde_min, detrend_method, wl):
+    def select(self, id_run, sherlock_target, star_info, transits_min_count, time, lcs, transit_results, wl, cadence):
         """
         @param transit_result_detrends: a list of transit results to be explored.
         @param snr_min: the minimum snr to allow a signal to be considered good enough.
