@@ -141,6 +141,9 @@ dmypy.json
 **/EPIC*
 **/mastDownload*
 **/user-properties.yaml
+service_input
+service_output
+service_work
 /*.simg
 /.pypirc
 **/P*_R*_*.csv
