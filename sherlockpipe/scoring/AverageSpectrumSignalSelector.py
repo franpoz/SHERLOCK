@@ -55,4 +55,19 @@ class AverageSpectrumSignalSelector(SignalSelector):
             best_signal_score = 1
         else:
             best_signal_score = 0
-        return SignalSelection(best_signal_score, 0, result)
+        return AvgSpectrumSignalSelection(best_signal_score, 0, result)
+
+class AvgSpectrumSignalSelection:
+    def __init__(self, score, curve_index, transit_result):
+        self.score = score
+        self.curve_index = curve_index
+        self.transit_result = transit_result
+
+    def get_message(self):
+        curve_name = "PDCSAP_FLUX" if self.curve_index == 0 else str(self.curve_index - 1)
+        return "Chosen signal with AVERAGE-SPECTRUM algorithm --> NAME: " + curve_name + \
+               "\tPeriod:" + str(self.transit_result.period) + \
+               "\tSNR: " + str(self.transit_result.snr) + \
+               "\tSDE: " + str(self.transit_result.sde) + \
+               "\tFAP: " + str(self.transit_result.fap) + \
+               "\tBORDER_SCORE: " + str(self.transit_result.border_score)
