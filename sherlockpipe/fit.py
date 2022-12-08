@@ -308,7 +308,7 @@ ${sherlock:baseline_params}
         return instrument_params
 
 
-if __name__ == '__main__':
+def fit_parse_args(args=None):
     ap = ArgumentParser(description='Fitting of Sherlock objects of interest')
     ap.add_argument('--object_dir',
                     help="If the object directory is not your current one you need to provide the ABSOLUTE path",
@@ -326,7 +326,10 @@ if __name__ == '__main__':
     ap.add_argument('--fit_orbit', dest='fit_orbit', action='store_true', help="Whether to fit eccentricity and "
                                                                                "argument of periastron")
     ap.add_argument('--properties', help="The YAML file to be used as input.", required=False)
-    args = ap.parse_args()
+    return ap.parse_args(args)
+
+
+def run_fit(args):
     index = 0
     object_dir = os.getcwd() if args.object_dir is None else args.object_dir
     candidates_df = pd.read_csv(object_dir + "/candidates.csv")
@@ -359,8 +362,9 @@ if __name__ == '__main__':
     star_df = pd.read_csv(object_dir + "/params_star.csv")
     if args.candidate is None:
         user_properties = yaml.load(open(args.properties), yaml.SafeLoader)
-        selected_candidates_df = pd.DataFrame(columns=['id', 'period', 't0', 'duration', 'cpus', 'rp_rs', 'a', 'number', 'name',
-                                              'lc'])
+        selected_candidates_df = pd.DataFrame(
+            columns=['id', 'period', 't0', 'duration', 'cpus', 'rp_rs', 'a', 'number', 'name',
+                     'lc'])
         selected_candidates_df = selected_candidates_df.append(user_properties["planets"], ignore_index=True)
         user_star_df = pd.DataFrame(columns=['R_star', 'M_star'])
         if "star" in user_properties and user_properties["star"] is not None:
@@ -373,12 +377,12 @@ if __name__ == '__main__':
                 star_df.at[0, "ld_a"] = user_star_df.iloc[0]["ld_a"]
             if user_star_df.iloc[0]["ld_b"] is not None:
                 star_df.at[0, "ld_b"] = user_star_df.iloc[0]["ld_b"]
-            if ("a" not in user_properties["planet"] or user_properties["planet"]["a"] is None)\
+            if ("a" not in user_properties["planet"] or user_properties["planet"]["a"] is None) \
                     and star_df.iloc[0]["M_star"] is not None and not np.isnan(star_df.iloc[0]["M_star"]):
                 selected_candidates_df.at[0, "a"] = HabitabilityCalculator() \
                     .calculate_semi_major_axis(user_properties["planet"]["period"],
                                                user_properties["star"]["M_star"])
-            elif ("a" not in user_properties["planet"] or user_properties["planet"]["a"] is None)\
+            elif ("a" not in user_properties["planet"] or user_properties["planet"]["a"] is None) \
                     and (star_df.iloc[0]["M_star"] is None or np.isnan(star_df.iloc[0]["M_star"])):
                 raise ValueError("Cannot guess semi-major axis without star mass.")
         selected_candidates_df['number'] = user_properties["number"]
@@ -397,7 +401,8 @@ if __name__ == '__main__':
         for candidate_selection in candidate_selections:
             selected_candidates_df['number'][candidate_selection - 1] = candidate_selection
             selected_candidates_df['name'][candidate_selection - 1] = 'SOI_' + \
-                        str(selected_candidates_df['number'][candidate_selection - 1])
+                                                                      str(selected_candidates_df['number'][
+                                                                              candidate_selection - 1])
         selected_candidates_df = selected_candidates_df.iloc[
             [candidate_selection - 1 for candidate_selection in candidate_selections]]
         logging.info("Selected signal numbers " + str(candidate_selections))
@@ -408,3 +413,8 @@ if __name__ == '__main__':
     fitter = Fitter(object_dir, fitting_dir, args.only_initial, len(selected_candidates_df) == 1, candidates_df,
                     args.mcmc, args.detrend)
     fitter.fit(selected_candidates_df, star_df, cpus, fitting_dir, args.tolerance, args.fit_orbit)
+
+
+if __name__ == '__main__':
+    args = fit_parse_args()
+    run_fit(args)

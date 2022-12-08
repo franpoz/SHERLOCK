@@ -535,22 +535,7 @@ class ValidatorInput:
         self.contrast_curve = contrast_curve
 
 
-if __name__ == '__main__':
-    ap = ArgumentParser(description='Validation of Sherlock objects of interest')
-    ap.add_argument('--object_dir', help="If the object directory is not your current one you need to provide the "
-                                         "ABSOLUTE path", required=False)
-    ap.add_argument('--candidate', type=int, default=None, help="The candidate signal to be used.", required=False)
-    ap.add_argument('--properties', help="The YAML file to be used as input.", required=False)
-    ap.add_argument('--cpus', type=int, default=None, help="The number of CPU cores to be used.", required=False)
-    ap.add_argument('--bins', type=int, default=100, help="The number of bins to be used for the folded curve "
-                                                          "validation.", required=False)
-    ap.add_argument('--sigma_mode', type=str, default='flux_err', help="The way to calculate the sigma value for the "
-                                                                       "validation. [flux_err|binning]", required=False)
-    ap.add_argument('--scenarios', type=int, default=5, help="The number of scenarios to be used for the validation",
-                    required=False)
-    ap.add_argument('--contrast_curve', type=str, default=None, help="The contrast curve in csv format.",
-                    required=False)
-    args = ap.parse_args()
+def run_validate(args):
     index = 0
     object_dir = os.getcwd() if args.object_dir is None else args.object_dir
     candidates = pd.read_csv(object_dir + "/candidates.csv")
@@ -591,10 +576,29 @@ if __name__ == '__main__':
         candidate = candidates.iloc[[candidate_selection - 1]]
         candidate['number'] = [candidate_selection]
         logging.info("Selected signal number " + str(candidate_selection))
-    if args.cpus is None:
-        cpus = multiprocessing.cpu_count() - 1
-    else:
-        cpus = args.cpus
     validator = Validator(object_dir, validation_dir, len(candidate) == 1, candidates)
-    validator.validate(candidate, star_df.iloc[0], cpus, args.contrast_curve, args.bins, args.scenarios,
+    validator.validate(candidate, star_df.iloc[0], args.cpus, args.contrast_curve, args.bins, args.scenarios,
                        args.sigma_mode)
+
+
+def validation_args_parse(arguments=None):
+    ap = ArgumentParser(description='Validation of Sherlock objects of interest')
+    ap.add_argument('--object_dir', help="If the object directory is not your current one you need to provide the "
+                                         "ABSOLUTE path", required=False)
+    ap.add_argument('--candidate', type=int, default=None, help="The candidate signal to be used.", required=False)
+    ap.add_argument('--properties', help="The YAML file to be used as input.", required=False)
+    ap.add_argument('--cpus', type=int, default=None, help="The number of CPU cores to be used.", required=False)
+    ap.add_argument('--bins', type=int, default=100, help="The number of bins to be used for the folded curve "
+                                                          "validation.", required=False)
+    ap.add_argument('--sigma_mode', type=str, default='flux_err', help="The way to calculate the sigma value for the "
+                                                                       "validation. [flux_err|binning]", required=False)
+    ap.add_argument('--scenarios', type=int, default=5, help="The number of scenarios to be used for the validation",
+                    required=False)
+    ap.add_argument('--contrast_curve', type=str, default=None, help="The contrast curve in csv format.",
+                    required=False)
+    return ap.parse_args(arguments)
+
+
+if __name__ == '__main__':
+    args = validation_args_parse()
+    run_validate(args)

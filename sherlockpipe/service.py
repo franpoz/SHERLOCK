@@ -8,7 +8,11 @@ from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
 from pathlib import Path
 
-from sherlockpipe.loading.run import run
+from sherlockpipe.fit import run_fit
+from sherlockpipe.loading.run import run, load_from_yaml
+from sherlockpipe.stability import stability_args_parse, run_stability
+from sherlockpipe.validate import validation_args_parse, run_validate
+from sherlockpipe.vet import run_vet
 
 file_in_working = ''
 
@@ -20,8 +24,9 @@ def run_script(input_dir, output_dir, working_dir, cpus, pa):
     try:
         paths = sorted(Path(input_dir).iterdir(), key=os.path.getmtime)
         for index, path in enumerate(paths):
-            if str(path).endswith(".yaml") or str(path).endswith('.yml'):
-                running_file = str(path)
+            path_str = str(path)
+            if path_str.endswith(".yaml") or path_str.endswith('.yml'):
+                running_file = running_file
                 filename = os.path.basename(running_file)
                 working_file = working_dir + '/' + filename
                 shutil.move(running_file, working_file)
@@ -29,13 +34,69 @@ def run_script(input_dir, output_dir, working_dir, cpus, pa):
                 os.mkdir(working_target_dir)
                 os.chdir(working_target_dir)
                 user_properties = run(working_file, False, cpus)
+            elif os.path.isdir(path_str):
+                vet_file = path_str + '/vet.yaml'
+                validate_file = path_str + '/validate.yaml'
+                fit_file = path_str + '/fit.yaml'
+                plan_file = path_str + '/plan.yaml'
+                stability_file = path_str + '/stability.yaml'
+                if os.path.exists(vet_file):
+                    properties = load_from_yaml(vet_file)
+                    candidate = None if 'CANDIDATE' not in properties else properties['CANDIDATE']
+                    run_vet(path_str, candidate, properties, cpus)
+                if os.path.exists(validate_file):
+                    properties = load_from_yaml(validate_file)
+                    candidate = None if 'CANDIDATE' not in properties else properties['CANDIDATE']
+                    contrast_curve = None if 'CONTRAST_CURVE' not in properties else properties['CONTRAST_CURVE']
+                    bins = None if 'BINS' not in properties else properties['BINS']
+                    scenarios = None if 'SCENARIOS' not in properties else properties['SCENARIOS']
+                    sigma_mode = None if 'SIGMA_MODE' not in properties else properties['SIGMA_MODE']
+                    args = validation_args_parse({'object_dir': path_str, 'candidate': candidate,
+                                                  'properties': properties, 'contrast_curve': contrast_curve,
+                                                  'bins': bins, 'scenarios': scenarios, 'sigma_mode': sigma_mode})
+                    run_validate(args)
+                if os.path.exists(fit_file):
+                    properties = load_from_yaml(fit_file)
+                    candidate = None if 'CANDIDATE' not in properties else properties['CANDIDATE']
+                    only_initial = None if 'ONLY_INITIAL' not in properties else properties['ONLY_INITIAL']
+                    tolerance = None if 'TOLERANCE' not in properties else properties['TOLERANCE']
+                    mcmc = None if 'MCMC' not in properties else properties['MCMC']
+                    detrend = None if 'DETREND' not in properties else properties['DETREND']
+                    fit_orbit = None if 'FIT_ORBIT' not in properties else properties['FIT_ORBIT']
+                    args = validation_args_parse({'object_dir': path_str, 'candidate': candidate,
+                                                  'properties': properties, 'only_initial': only_initial,
+                                                  'tolerance': tolerance, 'mcmc': mcmc, 'detrend': detrend,
+                                                  'fit_orbit': fit_orbit})
+                    run_fit(args)
+                if os.path.exists(plan_file):
+                    properties = load_from_yaml(vet_file)
+                if os.path.exists(stability_file):
+                    properties = load_from_yaml(vet_file)
+                    max_ecc = None if 'MAX_ECC' not in properties else properties['MAX_ECC']
+                    period_bins = None if 'PERIOD_BINS' not in properties else properties['PERIOD_BINS']
+                    ecc_bins = None if 'ECC_BINS' not in properties else properties['ECC_BINS']
+                    inc_bins = None if 'INC_BINS' not in properties else properties['INC_BINS']
+                    omega_bins = None if 'OMEGA_BINS' not in properties else properties['OMEGA_BINS']
+                    mass_bins = None if 'MASS_BINS' not in properties else properties['MASS_BINS']
+                    star_mass_bins = None if 'STAR_MASS_BINS' not in properties else properties['STAR_MASS_BINS']
+                    years = None if 'YEARS' not in properties else properties['YEARS']
+                    spock = None if 'SPOCK' not in properties else properties['SPOCK']
+                    free_params = None if 'CANDIDATE' not in properties else properties['CANDIDATE']
+                    args = stability_args_parse({'object_dir': path_str, 'max_ecc': max_ecc,
+                                                  'period_bins': period_bins, 'ecc_bins': ecc_bins,
+                                                  'inc_bins': inc_bins, 'omega_bins': omega_bins,
+                                                  'mass_bins': mass_bins, 'star_mass_bins': star_mass_bins,
+                                                  'years': years, 'spock': spock,
+                                                  'free_params': free_params})
+                    run_stability(args)
+                    return ap.parse_args(args)
     finally:
         os.chdir(working_dir)
         if running_file is not None and os.path.exists(running_file):
             os.remove(running_file)
         if working_file is not None and os.path.exists(working_file):
             os.remove(working_file)
-        if working_target_dir is not None and os.path.exists(working_file):
+        if working_target_dir is not None and os.path.exists(working_target_dir):
             logging.info("Finished file %s", running_file)
             output_file = output_dir + Path(working_target_dir).stem
             shutil.move(working_target_dir, output_file)
@@ -103,7 +164,6 @@ if __name__ == '__main__':
                     help="",
                     required=True, type=str)
     args = ap.parse_args()
-    send_email("/home/blabla", 'martin.devora.pajares@gmail.com')
     paths = sorted(Path(args.working_dir).iterdir(), key=os.path.getmtime)
     for index, path in enumerate(paths):
         file_in_working = str(path)
@@ -113,6 +173,7 @@ if __name__ == '__main__':
         else:
             shutil.rmtree(file_in_working, ignore_errors=True)
     from apscheduler.schedulers.blocking import BlockingScheduler
+    logging.getLogger('apscheduler.executors.default').setLevel(logging.ERROR)
     scheduler = BlockingScheduler()
     scheduler.add_job(run_script, 'interval', minutes=1, max_instances=1, misfire_grace_time=600000,
                       kwargs={"input_dir": args.input_dir, "output_dir": args.output_dir,

@@ -115,12 +115,17 @@ def get_from_user_or_config_or_default(target, user_properties, key, default):
         value = target[key]
     return value if value is not None else default
 
+
+def load_from_yaml(file):
+    return yaml.load(open(file), yaml.SafeLoader)
+
+
 def run(properties, explore, cpus=None):
     resources_dir = os.path.dirname(path.join(path.dirname(__file__)))
     file_dir = resources_dir + "/" + 'properties.yaml' if resources_dir != "" and resources_dir is not None \
         else 'properties.yaml'
-    sherlock_user_properties = yaml.load(open(file_dir), yaml.SafeLoader)
-    user_properties = yaml.load(open(properties), yaml.SafeLoader)
+    sherlock_user_properties = load_from_yaml(file_dir)
+    user_properties = load_from_yaml(properties)
     sherlock_user_properties.update(user_properties)
     sherlock.Sherlock([], explore, sherlock_user_properties["UPDATE_OIS"],
                       sherlock_user_properties["UPDATE_FORCE"], sherlock_user_properties["UPDATE_CLEAN"]).run()

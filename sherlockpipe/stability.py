@@ -22,7 +22,7 @@ def get_from_user(target, key):
     return value
 
 
-if __name__ == '__main__':
+def stability_args_parse(args=None):
     ap = ArgumentParser(description='Validation of system stability')
     ap.add_argument('--object_dir', help="If the object directory is not your current one you need to provide the "
                                          "ABSOLUTE path", required=False)
@@ -44,8 +44,11 @@ if __name__ == '__main__':
     ap.add_argument('--spock', dest='use_spock', action='store_true',
                     help="Whether to force the usage of megno even for multiplanetary systems.")
     ap.add_argument('--free_params', type=str, default=None, help="The parameters to be entirely sampled, separated by "
-                                                                "commas. E.g. 'eccentricity,omega'", required=False)
-    args = ap.parse_args()
+                                                                  "commas. E.g. 'eccentricity,omega'", required=False)
+    return ap.parse_args(args)
+
+
+def run_stability(args):
     object_dir = os.getcwd() if args.object_dir is None else args.object_dir
     index = 0
     stability_dir = object_dir + "/stability_" + str(index)
@@ -89,7 +92,8 @@ if __name__ == '__main__':
         fit_results = pd.read_csv(object_dir + "/results/ns_table.csv")
         candidates_count = len(fit_results[fit_results["#name"].str.contains("_period")])
         ecc_rows = fit_derived_results[fit_derived_results["#property"].str.contains("Eccentricity")]
-        arg_periastron_rows = fit_derived_results[fit_derived_results["#property"].str.contains("Argument of periastron")]
+        arg_periastron_rows = fit_derived_results[
+            fit_derived_results["#property"].str.contains("Argument of periastron")]
         for i in arange(0, candidates_count):
             period_row = fit_results[fit_results["#name"].str.contains("_period")].iloc[i]
             period = float(period_row["median"])
@@ -99,7 +103,8 @@ if __name__ == '__main__':
             inclination = float(inc_row["value"])
             inc_low_err = float(inc_row["lower_error"])
             inc_up_err = float(inc_row["upper_error"])
-            duration_row = fit_derived_results[fit_derived_results["#property"].str.contains("Total transit duration")].iloc[i]
+            duration_row = \
+            fit_derived_results[fit_derived_results["#property"].str.contains("Total transit duration")].iloc[i]
             duration = float(duration_row["value"])
             duration_low_err = float(duration_row["lower_error"])
             duration_up_err = float(duration_row["upper_error"])
@@ -165,11 +170,15 @@ if __name__ == '__main__':
         planets_params = planets_params + user_planet_params
         if "STAR" in user_properties:
             star_mass = star_mass_low if "M" not in user_properties["STAR"] else user_properties["STAR"]["M"]
-            star_mass_low = star_mass_low if "M_LOW" not in user_properties["STAR"] else star_mass - user_properties["STAR"]["M_LOW"]
-            star_mass_up = star_mass_up if "M_UP" not in user_properties["STAR"] else star_mass + user_properties["STAR"]["M_UP"]
-            star_mass_bins = args.star_mass_bins if "M_BINS" not in user_properties["STAR"] else user_properties["STAR"]["M_BINS"]
+            star_mass_low = star_mass_low if "M_LOW" not in user_properties["STAR"] else star_mass - \
+                                                                                         user_properties["STAR"][
+                                                                                             "M_LOW"]
+            star_mass_up = star_mass_up if "M_UP" not in user_properties["STAR"] else star_mass + \
+                                                                                      user_properties["STAR"]["M_UP"]
+            star_mass_bins = args.star_mass_bins if "M_BINS" not in user_properties["STAR"] else \
+            user_properties["STAR"]["M_BINS"]
     stability_calculator = SpockStabilityCalculator() if len(planets_params) >= 3 and args.use_spock \
-                           else MegnoStabilityCalculator(args.years) #TODO add check of periods ratio less than 2 for spock
+        else MegnoStabilityCalculator(args.years)  # TODO add check of periods ratio less than 2 for spock
     logger.info("%.0f planets to be simulated. %s will be used", len(planets_params),
                 type(stability_calculator).__name__)
     logger.info("Lowest star mass: %.2f", star_mass_low)
@@ -179,3 +188,8 @@ if __name__ == '__main__':
         logger.info("Body %.0f: %s", key, json.dumps(body.__dict__))
     stability_calculator.run(stability_dir, star_mass_low, star_mass_up, star_mass_bins, planets_params, args.cpus,
                              free_params)
+
+
+if __name__ == '__main__':
+    args = stability_args_parse()
+    run_stability()
