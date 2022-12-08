@@ -6,20 +6,28 @@ rm -r .tox
 rm -r .pytest_cache
 rm -r build
 rm -r sherlockpipe-reqs
+rm -R *egg-info
 set -e
 
 git_tag=$1
 echo "GIT TAG IS " ${git_tag}
-tox -r -e py3{8,9}-local > tests.log
+tox -r -e py38-local,py39-local > tests.log
 tests_results=$(cat tests.log | grep "congratulations")
 if ! [[ -z ${tests_results} ]]; then
-  tox -r -e py3{8,9}-gha > tests.log
+  tox -r -e py38-gha,py39-gha > tests.log
 else
   echo "TESTS FAILED. See tests.log"
   exit 1
 fi
 tests_results=$(cat tests.log | grep "congratulations")
 if ! [[ -z ${tests_results} ]]; then
+  rm tests.log
+  rm dist* -r
+  rm -r .tox
+  rm -r .pytest_cache
+  rm -r build
+  rm -r sherlockpipe-reqs
+  rm -R *egg-info
   python3.8 -m venv sherlockpipe-reqs
   source sherlockpipe-reqs/bin/activate
   python3.8 -m pip install pip -U
@@ -57,3 +65,4 @@ rm dist* -r
 rm -r .tox
 rm -r .pytest_cache
 rm -r build
+rm -R *egg-info
