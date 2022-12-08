@@ -1,0 +1,15 @@
+[Unit]
+Description=SherlockPipe Service
+After=network.target
+
+[Service]
+Type=simple
+User=sherlock
+WorkingDirectory=/etc/sherlockpipe
+ExecStart=/usr/bin/python3.8 -m sherlockpipe.service --input_dir "/etc/serlockpipe/input" --working_dir "/etc/sherlockpipe/working" --output_dir "/etc/sherlockpipe/output" --cpus 10
+Restart=always
+OnFailure=3
+RestartSec=3
+
+[Install]
+WantedBy=multi-user.target
