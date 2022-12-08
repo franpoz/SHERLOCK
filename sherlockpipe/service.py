@@ -16,34 +16,41 @@ from sherlockpipe.vet import run_vet
 
 file_in_working = ''
 
+
+def move_input_to_working(running_file, working_dir):
+    filename = os.path.basename(running_file)
+    working_file = working_dir + '/' + filename
+    shutil.move(running_file, working_file)
+    return working_file
+
 def run_script(input_dir, output_dir, working_dir, cpus, pa):
     running_file = None
     working_file = None
     working_target_dir = None
-    user_properties = None
+    properties = None
     try:
         paths = sorted(Path(input_dir).iterdir(), key=os.path.getmtime)
         for index, path in enumerate(paths):
             path_str = str(path)
             if path_str.endswith(".yaml") or path_str.endswith('.yml'):
-                running_file = running_file
-                filename = os.path.basename(running_file)
-                working_file = working_dir + '/' + filename
-                shutil.move(running_file, working_file)
+                running_file = path_str
+                working_file = move_input_to_working(running_file, working_dir)
                 working_target_dir = working_dir + '/' + Path(working_file).stem
                 os.mkdir(working_target_dir)
                 os.chdir(working_target_dir)
-                user_properties = run(working_file, False, cpus)
+                properties = run(working_file, False, cpus)
             elif os.path.isdir(path_str):
-                vet_file = path_str + '/vet.yaml'
-                validate_file = path_str + '/validate.yaml'
-                fit_file = path_str + '/fit.yaml'
-                plan_file = path_str + '/plan.yaml'
-                stability_file = path_str + '/stability.yaml'
+                running_file = path_str
+                working_target_dir = move_input_to_working(path_str, working_dir)
+                vet_file = working_target_dir + '/vet.yaml'
+                validate_file = working_target_dir + '/validate.yaml'
+                fit_file = working_target_dir + '/fit.yaml'
+                plan_file = working_target_dir + '/plan.yaml'
+                stability_file = working_target_dir + '/stability.yaml'
                 if os.path.exists(vet_file):
                     properties = load_from_yaml(vet_file)
                     candidate = None if 'CANDIDATE' not in properties else properties['CANDIDATE']
-                    run_vet(path_str, candidate, properties, cpus)
+                    run_vet(working_file, candidate, properties, cpus)
                 if os.path.exists(validate_file):
                     properties = load_from_yaml(validate_file)
                     candidate = None if 'CANDIDATE' not in properties else properties['CANDIDATE']
@@ -100,8 +107,8 @@ def run_script(input_dir, output_dir, working_dir, cpus, pa):
             logging.info("Finished file %s", running_file)
             output_file = output_dir + Path(working_target_dir).stem
             shutil.move(working_target_dir, output_file)
-            if user_properties is not None and 'EMAIL' in user_properties:
-                receiver_address = user_properties['EMAIL']
+            if properties is not None and 'EMAIL' in properties:
+                receiver_address = properties['EMAIL']
                 send_email(output_file, receiver_address, pa)
             else:
                 logging.warning('Cannot send an email because the receiver email was not provided.')
