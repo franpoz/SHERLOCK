@@ -285,7 +285,7 @@ class Sherlock:
                 object_report["duration"] = signal_selection.transit_result.duration * 60 * 24
                 object_report["t0"] = signal_selection.transit_result.t0
                 object_report["depth"] = signal_selection.transit_result.depth
-                if transit_results[signal_selection.curve_index].result is not None:
+                if signal_selection.transit_result is not None and signal_selection.transit_result.results is not None:
                     object_report['rp_rs'] = signal_selection.transit_result.results.rp_rs
                     real_transit_args = np.argwhere(~np.isnan(signal_selection.transit_result
                                                               .results.transit_depths))
