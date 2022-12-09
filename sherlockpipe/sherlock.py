@@ -310,12 +310,12 @@ class Sherlock:
                 self.report[sherlock_id].append(object_report)
                 self.__setup_object_report_logging(sherlock_id, True)
                 logging.info("Listing most promising candidates for ID %s:", sherlock_id)
-                logging.info("%-12s%-10s%-10s%-10s%-8s%-8s%-8s%-8s%-10s%-14s%-14s%-12s%-25s%-10s%-18s%-20s", "Detrend no.", "Period",
-                             "Per_err", "Duration", "T0", "Depth", "SNR", "SDE", "FAP", "Border_score", "Matching OI", "Harmonic",
+                logging.info("%-12s%-10s%-10s%-10s%-8s%-8s%-8s%-8s%-14s%-14s%-12s%-25s%-10s%-18s%-20s", "Detrend no.", "Period",
+                             "Per_err", "Duration", "T0", "Depth", "SNR", "SDE", "Border_score", "Matching OI", "Harmonic",
                              "Planet radius (R_Earth)", "Rp/Rs", "Semi-major axis", "Habitability Zone")
                 if sherlock_id in self.report:
                     candidates_df = pandas.DataFrame(columns=['curve', 'period', 'per_err', 'duration', 't0', 'depth',
-                                                              'snr', 'sde', 'fap', 'border_score', 'oi', 'rad_p', 'rp_rs',
+                                                              'snr', 'sde', 'border_score', 'oi', 'rad_p', 'rp_rs',
                                                               'a', 'hz'])
                     i = 1
                     for report in self.report[sherlock_id]:
@@ -328,10 +328,10 @@ class Sherlock:
                             report['rad_p'] = np.nan
                         else:
                             report['rad_p'] = self.__calculate_planet_radius(lc_build.star_info, report["depth"])
-                        logging.info("%-12s%-10.4f%-10.5f%-10.2f%-8.2f%-8.3f%-8.2f%-8.2f%-10.6f%-14.2f%-14s%-12s%-25.5f%-10.5f%-18.5f%-20s",
+                        logging.info("%-12s%-10.4f%-10.5f%-10.2f%-8.2f%-8.3f%-8.2f%-8.2f%-14.2f%-14s%-12s%-25.5f%-10.5f%-18.5f%-20s",
                                      report["curve"], report["period"], report["per_err"],
                                      report["duration"], report["t0"], report["depth"], report["snr"], report["sde"],
-                                     report["fap"], report["border_score"], report["oi"], report["harmonic"],
+                                     report["border_score"], report["oi"], report["harmonic"],
                                      report['rad_p'], report['rp_rs'], a, habitability_zone)
                         candidates_df = candidates_df.append(report, ignore_index=True)
                         i = i + 1
