@@ -3,10 +3,13 @@ import os
 import shutil
 import smtplib
 import time
+import socket
 from argparse import ArgumentParser
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
 from pathlib import Path
+
+import requests
 
 from sherlockpipe.fit import run_fit
 from sherlockpipe.loading.run import run, load_from_yaml
@@ -105,7 +108,7 @@ def run_script(input_dir, output_dir, working_dir, cpus, pa):
             os.remove(working_file)
         if working_target_dir is not None and os.path.exists(working_target_dir):
             logging.info("Finished file %s", running_file)
-            output_file = output_dir + Path(working_target_dir).stem
+            output_file = output_dir + '/' + Path(working_target_dir).stem
             shutil.move(working_target_dir, output_file)
             if properties is not None and 'EMAIL' in properties:
                 receiver_address = properties['EMAIL']
@@ -124,7 +127,12 @@ def send_email(filename, receiver_address, pa):
         message = MIMEMultipart()
         message['From'] = sender_address
         message['To'] = receiver_address
-        message['Subject'] = 'SHERLOCK: Job with filename ' + os.path.basename(filename) + ' finished'
+        host = socket.gethostname()
+        try:
+            host = host if host != 'localhost' else requests.get('https://api.ipify.org').content.decode('utf8')
+        except:
+            print('Cant identify host in the internet')
+        message['Subject'] = 'SHERLOCK [' + host + ']: Job with filename ' + os.path.basename(filename) + ' finished'
         # The body and the attachments for the mail
         message.attach(MIMEText('You can check all the target directories under the directory: ' + filename +
                                 '. Keep in mind that these files will be kept only for two weeks and then will be '
