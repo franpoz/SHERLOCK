@@ -662,9 +662,9 @@ class Sherlock:
                            cadence, report, period_grid, detrend_source_period):
         object_info = sherlock_target.object_info
         detrend_logging_customs = 'ker_size' if sherlock_target.detrend_method == 'gp' else "win_size"
-        logging.info("%-12s%-12s%-10s%-8s%-18s%-14s%-14s%-12s%-12s%-14s%-16s%-14s%-12s%-25s%-10s%-18s%-20s",
+        logging.info("%-12s%-12s%-10s%-8s%-18s%-14s%-14s%-12s%-12s%-16s%-14s%-12s%-25s%-10s%-18s%-20s",
                      detrend_logging_customs, "Period", "Per_err", "N.Tran", "Mean Depth (ppt)", "T. dur (min)", "T0",
-                     "SNR", "SDE", "FAP", "Border_score", "Matching OI", "Harmonic", "Planet radius (R_Earth)", "Rp/Rs",
+                     "SNR", "SDE", "Border_score", "Matching OI", "Harmonic", "Planet radius (R_Earth)", "Rp/Rs",
                      "Semi-major axis", "Habitability Zone")
         transit_results = {}
         plot_dir = self.__init_object_run_dir(star_info.object_id, id_run)
@@ -676,11 +676,11 @@ class Sherlock:
             a, habitability_zone = self.habitability_calculator \
                 .calculate_hz_score(star_info.teff, star_info.mass, star_info.lum, transit_result.period)
             oi = self.__find_matching_oi(object_info, transit_result.period)
-            logging.info('%-12s%-12.5f%-10.6f%-8s%-18.3f%-14.1f%-14.4f%-12.3f%-12.3f%-14s%-16.2f%-14s%-12s%-25.5f%-10.5f%-18.5f%-20s',
+            logging.info('%-12s%-12.5f%-10.6f%-8s%-18.3f%-14.1f%-14.4f%-12.3f%-12.3f%-16.2f%-14s%-12s%-25.5f%-10.5f%-18.5f%-20s',
                          "PDCSAP_FLUX", transit_result.period,
                          transit_result.per_err, transit_result.count, transit_result.depth,
                          transit_result.duration * 24 * 60, transit_result.t0, transit_result.snr, transit_result.sde,
-                         transit_result.fap, transit_result.border_score, oi, transit_result.harmonic, r_planet, rp_rs, a,
+                         transit_result.border_score, oi, transit_result.harmonic, r_planet, rp_rs, a,
                          habitability_zone)
             plot_title = 'Run ' + str(id_run) + 'PDCSAP_FLUX # P=' + \
                          format(transit_result.period, '.2f') + 'd # T0=' + format(transit_result.t0, '.2f') + \
@@ -706,7 +706,7 @@ class Sherlock:
                          wl[i], transit_result.period,
                      transit_result.per_err, transit_result.count, transit_result.depth,
                      transit_result.duration * 24 * 60, transit_result.t0, transit_result.snr, transit_result.sde,
-                     transit_result.fap, transit_result.border_score, oi, transit_result.harmonic, r_planet, rp_rs, a,
+                         transit_result.border_score, oi, transit_result.harmonic, r_planet, rp_rs, a,
                      habitability_zone)
             detrend_file_title_customs = 'ker_size' if sherlock_target.detrend_method == 'gp' else 'win_size'
             detrend_file_name_customs = 'ks' if sherlock_target.detrend_method == 'gp' else 'ws'
