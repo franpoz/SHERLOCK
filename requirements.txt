@@ -25,7 +25,7 @@ corner==2.1.0
 cryptography==38.0.4
 cycler==0.11.0
 Cython==0.29.21
-dearwatson==0.4.2
+dearwatson==0.4.4
 Deprecated==1.2.13
 dynesty==1.0.1
 einops==0.6.0
@@ -51,7 +51,7 @@ Jinja2==3.1.2
 joblib==1.2.0
 keyring==23.11.0
 kiwisolver==1.4.4
-lcbuilder==0.9.9
+lcbuilder==0.9.11
 lightkurve==2.2.0
 llvmlite==0.36.0
 lxml==4.9.1
@@ -67,7 +67,7 @@ multipledispatch==0.6.0
 netCDF4==1.6.2
 numba==0.53.1
 numexpr==2.8.4
-numpy==1.22.3
+numpy==1.22.4
 oauthlib==3.2.2
 oktopus==0.1.2
 packaging==22.0
@@ -104,7 +104,7 @@ SecretStorage==3.3.3
 semantic-version==2.10.0
 setuptools==56.0.0
 setuptools-scm==7.0.5
-sherlockpipe==0.32.0
+sherlockpipe==0.32.2
 six==1.16.0
 sklearn==0.0
 soupsieve==2.3.2.post1
@@ -133,7 +133,7 @@ wheel==0.38.4
 wotan==1.9
 wrapt==1.14.1
 xarray==2022.12.0
-xarray-einstats==0.3.0
+xarray-einstats==0.4.0
 xgboost==1.7.2
 yarl==1.8.2
 zipp==3.11.0
