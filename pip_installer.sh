@@ -32,7 +32,7 @@ if ! [[ -z ${tests_results} ]]; then
   python3.8 -m venv sherlockpipe-reqs
   source sherlockpipe-reqs/bin/activate
   python3.8 -m pip install pip -U
-  python3.8 -m pip install numpy==1.23.5
+  python3.8 -m pip install numpy==1.22.4
   sed -i '6s/.*/version = "'${git_tag}'"/' setup.py
   sed -i '1s/.*/__version__ = "'${git_tag}'"/' sherlockpipe/__init__.py
   python3.8 -m pip install -e .
