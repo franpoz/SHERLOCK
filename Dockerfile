@@ -14,6 +14,6 @@ RUN python3.8 -m pip install setuptools -U
 RUN python3.8 -m pip install extension-helpers -U
 RUN python3.8 -m pip install wheel -U
 RUN python3.8 -m pip install Cython
-RUN python3.8 -m pip install numpy==1.23.5
+RUN python3.8 -m pip install numpy==1.22.4
 RUN python3.8 -m pip install sherlockpipe --pre --ignore-installed PyYAML
 CMD ["/bin/bash"]
