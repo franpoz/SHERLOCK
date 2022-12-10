@@ -172,7 +172,8 @@ def run(properties, explore, cpus=None):
                                         "CUSTOM_SELECTION_ALGORITHM"))
             prepare_algorithm = extract_custom_class(get_from_user_or_config(target_configs, sherlock_user_properties,
                                                                              "PREPARE_ALGORITHM"))
-            detrend_cores = get_from_user_or_config(target_configs, sherlock_user_properties, "DETREND_CORES")
+            detrend_cores = get_from_user_or_config(target_configs, sherlock_user_properties, "DETREND_CORES") \
+                if cpus is None else cpus
             detrends_number = get_from_user_or_config(target_configs, sherlock_user_properties, "DETRENDS_NUMBER")
             detrend_l_max = get_from_user_or_config(target_configs, sherlock_user_properties, "DETREND_L_MAX")
             detrend_l_min = get_from_user_or_config(target_configs, sherlock_user_properties, "DETREND_L_MIN")
