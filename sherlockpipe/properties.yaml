@@ -86,7 +86,7 @@ MASK_MODE: 'mask'
 # agreement-based on every valid signal best fit), basic-snr (best SDE), border-correct-snr (best SNR*border_score),
 # quorum-snr (border-corrected SNR agreement-based on every valid signal best fit) and average-spectrum (computes the
 # average of residuals among all the detrends and selects the highest SDE from the average spectrum).
-BEST_SIGNAL_ALGORITHM: 'average-spectrum'
+BEST_SIGNAL_ALGORITHM: 'quorum'
 # If BEST_SIGNAL_ALGORITHM is set to 'quorum', this value is used as a scale factor for the quorum votes.
 QUORUM_STRENGTH: 1.2
 # If QUORUM is used as BEST_SIGNAL_ALGORITHM, this variable is used to decide when SHERLOCK should be stopped because of
