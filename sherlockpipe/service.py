@@ -99,7 +99,6 @@ def run_script(input_dir, output_dir, working_dir, cpus, pa):
                                                   'years': years, 'spock': spock,
                                                   'free_params': free_params})
                     run_stability(args)
-                    return ap.parse_args(args)
     finally:
         os.chdir(working_dir)
         if running_file is not None and os.path.exists(running_file):
@@ -115,8 +114,6 @@ def run_script(input_dir, output_dir, working_dir, cpus, pa):
                 send_email(output_file, receiver_address, pa)
             else:
                 logging.warning('Cannot send an email because the receiver email was not provided.')
-        else:
-            logging.info("No pending tasks found")
 
 
 def send_email(filename, receiver_address, pa):
