@@ -15,11 +15,17 @@ class AverageSpectrumSignalSelector(SignalSelector):
         super().__init__()
 
     def select(self, id_run, sherlock_target, star_info, transits_min_count, time, lcs, transit_results, wl, cadence):
-        chi2_sum = np.sum([result.results['chi2'] for result in transit_results.values()], axis=0) / len(
-            transit_results)
+        non_nan_result_args = np.argwhere(np.array([1 if result.results is not None else 0 for result in transit_results.values()]) == 1).flatten()
+        non_nan_results_count = len(non_nan_result_args)
+        if non_nan_results_count == 0:
+            return AvgSpectrumSignalSelection(0, 0, TransitResult(None, None, 0, 0, 0, 0, [], [], 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, [], False))
+        chi2_sum = np.nansum([result.results['chi2'] if result.results is not None else np.zeros(len(transit_results[non_nan_result_args[0]].results.chi2)) for result in transit_results.values()], axis=0) / non_nan_results_count
         SR, power_raw, power, SDE_raw, SDE = spectra(chi2_sum, sherlock_target.oversampling, len(time))
-        index_highest_power = np.argmax(power)
-        period = transit_results[0].results['periods'][index_highest_power]
+        index_highest_power = np.nanargmax(power)
+        signals_powers_for_period = [result.results['power'][index_highest_power] if result.results is not None else np.nan for result in
+                                     transit_results.values()]
+        best_curve_for_signal = np.nanargmax(signals_powers_for_period)
+        period = transit_results[non_nan_result_args[0]].results['periods'][index_highest_power]
         oversampling = sherlock_target.oversampling
         model = tls.transitleastsquares(time, lcs[0])
         power_args = {"transit_template": sherlock_target.fit_method, "n_transits_min": transits_min_count,
@@ -44,7 +50,7 @@ class AverageSpectrumSignalSelector(SignalSelector):
         in_transit = tls.transit_mask(time, period, results.duration, results.T0)
         transit_count = results.distinct_transit_count
         border_score = compute_border_score(time, results, in_transit, cadence)
-        results.periods = transit_results[0].results['periods']
+        results.periods = transit_results[best_curve_for_signal].results['periods']
         results.power = power
         result = TransitResult(power_args, results, period, period / 100, results['duration'],
                                results['T0'], t0s, depths,
@@ -55,7 +61,7 @@ class AverageSpectrumSignalSelector(SignalSelector):
             best_signal_score = 1
         else:
             best_signal_score = 0
-        return AvgSpectrumSignalSelection(best_signal_score, 0, result)
+        return AvgSpectrumSignalSelection(best_signal_score, best_curve_for_signal, result)
 
 class AvgSpectrumSignalSelection:
     def __init__(self, score, curve_index, transit_result):

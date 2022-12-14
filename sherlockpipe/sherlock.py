@@ -702,7 +702,7 @@ class Sherlock:
             a, habitability_zone = self.habitability_calculator \
                 .calculate_hz_score(star_info.teff, star_info.mass, star_info.lum, transit_result.period)
             oi = self.__find_matching_oi(object_info, transit_result.period)
-            logging.info('%-12s%-12.5f%-10.6f%-8s%-18.3f%-14.1f%-14.4f%-12.3f%-12.3f%-16.2f%-14s%-12s%-25.5f%-10.5f%-18.5f%-20s',
+            logging.info('%-12.4f%-12.5f%-10.6f%-8s%-18.3f%-14.1f%-14.4f%-12.3f%-12.3f%-16.2f%-14s%-12s%-25.5f%-10.5f%-18.5f%-20s',
                          wl[i], transit_result.period,
                      transit_result.per_err, transit_result.count, transit_result.depth,
                      transit_result.duration * 24 * 60, transit_result.t0, transit_result.snr, transit_result.sde,
