@@ -27,7 +27,7 @@ class AverageSpectrumSignalSelector(SignalSelector):
         best_curve_for_signal = np.nanargmax(signals_powers_for_period)
         period = transit_results[non_nan_result_args[0]].results['periods'][index_highest_power]
         oversampling = sherlock_target.oversampling
-        model = tls.transitleastsquares(time, lcs[0])
+        model = tls.transitleastsquares(time, lcs[best_curve_for_signal])
         power_args = {"transit_template": sherlock_target.fit_method, "n_transits_min": transits_min_count,
                       "T0_fit_margin": sherlock_target.t0_fit_margin, "show_progress_bar": False,
                       "use_threads": 1, "oversampling_factor": oversampling,

@@ -395,7 +395,7 @@ class Sherlock:
         logger = logging.getLogger()
         while len(logger.handlers) > 1:
             logger.handlers.pop()
-        formatter = logging.Formatter(fmt='%(message)s', datefmt='%Y-%m-%d %H:%M:%S')
+        formatter = logging.Formatter()
         handler = logging.FileHandler(object_dir + str(object_id) + "_report.log")
         handler.setLevel(logging.INFO)
         handler.setFormatter(formatter)
@@ -406,7 +406,7 @@ class Sherlock:
         object_dir = self.__setup_object_logging(object_id, False)
         logger = logging.getLogger()
         logger.handlers.pop()
-        formatter = logging.Formatter(datefmt='%Y-%m-%d %H:%M:%S')
+        formatter = logging.Formatter()
         file = object_dir + str(object_id) + "_candidates.log"
         if clean and os.path.exists(file):
             os.remove(file)
@@ -554,7 +554,7 @@ class Sherlock:
                 format(signal_selection.transit_result.duration * 24 * 60, '.0f') + 'm # SNR:' + \
                 str(format(signal_selection.transit_result.snr, '.2f')) + ' # SDE:' + \
                 str(format(signal_selection.transit_result.sde, '.2f'))
-        file = 'Run_' + str(id_run) + '_SELECTED_' + str(star_info.object_id) + '.png'
+        file = 'Run_' + str(id_run) + '_SELECTED_' + str(signal_selection.curve_index) + '_' + str(star_info.object_id) + '.png'
         save_transit_plot(star_info.object_id, title, run_dir, file, time, lcs[signal_selection.curve_index],
                           signal_selection.transit_result, cadence, id_run)
         if sherlock_target.pickle_mode == 'all':
