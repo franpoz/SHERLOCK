@@ -17,8 +17,6 @@ from sherlockpipe.stability import stability_args_parse, run_stability
 from sherlockpipe.validate import validation_args_parse, run_validate
 from sherlockpipe.vet import run_vet
 
-file_in_working = ''
-
 
 def move_input_to_working(running_file, working_dir):
     filename = os.path.basename(running_file)
