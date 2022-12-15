@@ -25,7 +25,7 @@ corner==2.1.0
 cryptography==38.0.4
 cycler==0.11.0
 Cython==0.29.21
-dearwatson==0.4.5
+dearwatson==0.4.6
 Deprecated==1.2.13
 dynesty==1.0.1
 einops==0.6.0
@@ -54,7 +54,7 @@ joblib==1.2.0
 k2plr==0.2.9
 keyring==23.11.0
 kiwisolver==1.4.4
-lcbuilder==0.10.0
+lcbuilder==0.10.1
 lightkurve==2.2.0
 llvmlite==0.36.0
 lxml==4.9.2
@@ -109,7 +109,7 @@ SecretStorage==3.3.3
 semantic-version==2.10.0
 setuptools==56.0.0
 setuptools-scm==7.0.5
-sherlockpipe==0.33.0
+sherlockpipe==0.33.1
 six==1.16.0
 sklearn==0.0
 soupsieve==2.3.2.post1
