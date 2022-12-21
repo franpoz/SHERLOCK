@@ -547,13 +547,14 @@ class Sherlock:
         run_dir = self.__init_object_dir(star_info.object_id) + '/' + str(id_run) + '/'
         signal_selection = sherlock_target.signal_score_selectors[sherlock_target.best_signal_algorithm]\
             .select(id_run, sherlock_target, star_info, transits_min_count, time, lcs, transit_results, wl, cadence)
-        title = 'Run ' + str(id_run) + '# PDCSAP_Flux:' + \
+        title = 'Run ' + str(id_run) + '# curve: ' + str(signal_selection.curve_index) + \
                 ' # P=' + format(signal_selection.transit_result.period, '.2f') + 'd # T0=' + \
                 format(signal_selection.transit_result.t0, '.2f') + ' # Depth=' + \
                 format(signal_selection.transit_result.depth, '.4f') + "ppt # Dur=" + \
                 format(signal_selection.transit_result.duration * 24 * 60, '.0f') + 'm # SNR:' + \
                 str(format(signal_selection.transit_result.snr, '.2f')) + ' # SDE:' + \
-                str(format(signal_selection.transit_result.sde, '.2f'))
+                str(format(signal_selection.transit_result.sde, '.2f')) + ' # BS:' + \
+                str(format(signal_selection.transit_result.border_score, '.2f'))
         file = 'Run_' + str(id_run) + '_SELECTED_' + str(signal_selection.curve_index) + '_' + str(star_info.object_id) + '.png'
         save_transit_plot(star_info.object_id, title, run_dir, file, time, lcs[signal_selection.curve_index],
                           signal_selection.transit_result, cadence, id_run)
@@ -686,7 +687,8 @@ class Sherlock:
                          format(transit_result.period, '.2f') + 'd # T0=' + format(transit_result.t0, '.2f') + \
                          ' # Depth=' + format(transit_result.depth, '.4f') + 'ppt # Dur=' + \
                          format(transit_result.duration * 24 * 60, '.0f') + 'm # SNR:' + \
-                         str(format(transit_result.snr, '.2f')) + ' # SDE:' + str(format(transit_result.sde, '.2f'))
+                         str(format(transit_result.snr, '.2f')) + ' # SDE:' + str(format(transit_result.sde, '.2f')) + \
+                         ' # BS:' + str(format(transit_result.border_score, '.2f'))
             plot_file = 'Run_' + str(id_run) + '_PDCSAP-FLUX_' + str(star_info.object_id) + '.png'
             save_transit_plot(star_info.object_id, plot_title, plot_dir, plot_file, time, lcs[0], transit_result,
                               cadence, id_run)
@@ -714,7 +716,8 @@ class Sherlock:
                     ' # P=' + format(transit_result.period, '.2f') + 'd # T0=' + \
                     format(transit_result.t0, '.2f') + ' # Depth=' + format(transit_result.depth, '.4f') + "ppt # Dur=" + \
                     format(transit_result.duration * 24 * 60, '.0f') + 'm # SNR:' + \
-                    str(format(transit_result.snr, '.2f')) + ' # SDE:' + str(format(transit_result.sde, '.2f'))
+                    str(format(transit_result.snr, '.2f')) + ' # SDE:' + str(format(transit_result.sde, '.2f')) + \
+                    ' # BS:' + str(format(transit_result.border_score, '.2f'))
             file = 'Run_' + str(id_run) + '_' + detrend_file_name_customs + '=' + str(format(wl[i], '.4f')) + '_' + \
                    str(star_info.object_id) + '.png'
             save_transit_plot(star_info.object_id, title, plot_dir, file, time, lcs[i], transit_result, cadence, id_run)
