@@ -8,7 +8,7 @@ astropy==5.0.4
 astropy-healpix==0.7
 astroquery==0.4.6
 async-timeout==4.0.2
-attrs==22.1.0
+attrs==22.2.0
 autograd==1.5
 batman-package==2.4.9
 beautifulsoup4==4.9.3
@@ -46,13 +46,14 @@ grpcio==1.51.1
 html5lib==1.1
 idna==2.10
 imageio==2.9.0
-importlib-metadata==5.1.0
+importlib-metadata==5.2.0
+importlib-resources==5.10.1
 jaraco.classes==3.2.3
 jeepney==0.8.0
 Jinja2==3.1.2
 joblib==1.2.0
 k2plr==0.2.9
-keyring==23.11.0
+keyring==23.13.1
 kiwisolver==1.4.4
 lcbuilder==0.10.1
 lightkurve==2.2.0
@@ -82,7 +83,7 @@ pip==22.3.1
 protobuf==3.20.3
 pyasn1==0.4.8
 pyasn1-modules==0.2.8
-pybind11==2.10.1
+pybind11==2.10.2
 pycparser==2.21
 pyDeprecate==0.3.2
 pyerfa==2.0.0.1
@@ -93,7 +94,7 @@ pysyzygy==0.0.2
 python-dateutil==2.8.2
 pytorch-lightning==1.6.2
 PyTransit==2.5.21
-pytz==2022.6
+pytz==2022.7
 pyvo==1.4
 PyYAML==5.4.1
 rebound==3.17.3
@@ -108,8 +109,8 @@ seaborn==0.11.1
 SecretStorage==3.3.3
 semantic-version==2.10.0
 setuptools==56.0.0
-setuptools-scm==7.0.5
-sherlockpipe==0.33.1
+setuptools-scm==7.1.0
+sherlockpipe==0.33.2
 six==1.16.0
 sklearn==0.0
 soupsieve==2.3.2.post1
