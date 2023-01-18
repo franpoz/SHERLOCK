@@ -1,6 +1,5 @@
 import copy
 import logging
-import multiprocessing
 import shutil
 from multiprocessing import Pool
 import traceback
@@ -18,6 +17,7 @@ import ast
 import triceratops.triceratops as tr
 from watson.watson import Watson
 
+from sherlockpipe.validation_report import ValidationReport
 from sherlockpipe.tool_with_candidate import ToolWithCandidate
 
 
@@ -75,6 +75,13 @@ class Validator(ToolWithCandidate):
             self.execute_triceratops(cpus, self.data_dir, object_id, sectors, lc_file, transit_depth,
                                           period, t0, duration, rp_rstar, a_rstar, bins, scenarios, sigma_mode,
                                           contrast_curve_file, run)
+            report = ValidationReport(self.data_dir + '/triceratops', "statistical_validation_report.pdf", object_id, star['ra'], star['dec'],
+                                       t0, period, duration, transit_depth, star["v"], star["j"], star["h"],
+                                       star["k"])
+            report.create_report()
+            for file in os.listdir(self.data_dir + '/triceratops'):
+                if "validation" not in file and (".pdf" in file or ".png" in file):
+                    os.remove(self.data_dir + '/triceratops/' + file)
         except Exception as e:
             traceback.print_exc()
         # try:
