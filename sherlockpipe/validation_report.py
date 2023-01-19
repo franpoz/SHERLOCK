@@ -122,6 +122,12 @@ class ValidationReport:
                                   ('BOX', (0, 0), (-1, -1), 0.25, colors.black),
                                   ('FONTSIZE', (0, 0), (-1, -1), 10),
                                   ])
+        table_style_small = TableStyle([('VALIGN', (0, 0), (-1, -1), 'MIDDLE'),
+                                  ('ALIGN', (0, 0), (-1, -1), 'CENTER'),
+                                  ('INNERGRID', (0, 0), (-1, -1), 0.25, colors.black),
+                                  ('BOX', (0, 0), (-1, -1), 0.25, colors.black),
+                                  ('FONTSIZE', (0, 0), (-1, -1), 8),
+                                  ])
         # Content:
         story = [Spacer(1, 75)]
         introduction = '<font name="HELVETICA" size="9">This document is created by the SHERLOCK statistical validtion report generator (' \
@@ -223,11 +229,12 @@ class ValidationReport:
                                    round(metric_row['R_p'], 2),
                                    round(metric_row['M_EB'], 2),
                                    round(metric_row['R_EB'], 2),
-                                   str(metric_row['prob'])])
-            table_colwidth = [4 * cm, 4 * cm, 3.5 * cm]
+                                   round(metric_row['prob'], 6)])
+            table_colwidth = [2.3 * cm, 2 * cm, 1 * cm, 1 * cm, 1 * cm, 1 * cm, 1 * cm, 1 * cm, 1 * cm, 1 * cm,
+                              1 * cm, 1 * cm, 2.5 * cm]
             table_number_rows = len(table_data)
             table = Table(table_data, table_colwidth, table_number_rows * [0.5 * cm])
-            table.setStyle(table_style)
+            table.setStyle(table_style_small)
             ValidationReport.row_colors(metrics_df, table)
             story.append(table)
             story.append(Spacer(1, 5))
