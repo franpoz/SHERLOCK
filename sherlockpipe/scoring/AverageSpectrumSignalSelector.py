@@ -2,7 +2,7 @@ import numpy as np
 
 from foldedleastsquares.stats import spectra
 from sherlockpipe.scoring.SignalSelector import SignalSelector, SignalSelection
-from sherlockpipe.scoring.helper import compute_border_score
+from sherlockpipe.scoring.helper import compute_border_score, harmonic_spectrum
 from sherlockpipe.transitresult import TransitResult
 import foldedleastsquares as tls
 
@@ -52,11 +52,13 @@ class AverageSpectrumSignalSelector(SignalSelector):
         border_score = compute_border_score(time, results, in_transit, cadence)
         results.periods = transit_results[best_curve_for_signal].results['periods']
         results.power = power
+        harmonic_power = harmonic_spectrum(results.periods, power)
         result = TransitResult(power_args, results, period, period / 100, results['duration'],
                                results['T0'], t0s, depths,
                                depths_err, results['depth'], results['odd_even_mismatch'],
                                (1 - results.depth_mean_even[0]) * 1000, (1 - results.depth_mean_odd[0]) * 1000,
-                               transit_count, results.snr, SDE, None, border_score, in_transit, False)
+                               transit_count, results.snr, SDE, None, border_score, in_transit, False,
+                               harmonic_power)
         if result.snr > sherlock_target.snr_min and result.sde > sherlock_target.sde_min:  # and SDE[a] > SDE_min and FAP[a] < FAP_max):
             best_signal_score = 1
         else:
