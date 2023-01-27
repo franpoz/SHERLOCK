@@ -34,7 +34,7 @@ class SherlockTarget:
                  t0_fit_margin=0.05, duration_grid_step=1.1,
                  source_properties_file=None,
                  cache_dir=os.path.expanduser('~') + "/",
-                 ignore_original=False, pickle_mode='none'):
+                 ignore_original=False, pickle_mode='none', use_harmonics_spectra=False):
         self.min_sectors = min_sectors
         self.max_sectors = max_sectors
         self.bin_minutes = bin_minutes
@@ -100,3 +100,4 @@ class SherlockTarget:
         self.source_properties_file = source_properties_file
         self.cache_dir = cache_dir
         self.ignore_original = ignore_original
+        self.use_harmonics_spectra = use_harmonics_spectra
