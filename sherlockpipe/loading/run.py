@@ -214,6 +214,7 @@ def run(properties, explore, cpus=None):
             mission = None
             mode = get_from_user_or_config_or_default(target_configs, sherlock_user_properties, "MODE", "GLOBAL")
             sectors = get_from_user_or_config_or_default(target_configs, sherlock_user_properties, "SECTORS", "all")
+            use_harmonics_spectra = get_from_user_or_config_or_default(target_configs, sherlock_user_properties, "USE_HARMONICS_SPECTRA")
             if sectors != "all" and len(np.array(sectors).shape) > 1:
                 if mode == "GLOBAL" or mode == "BOTH":
                     for sectors_subset in sectors:
@@ -249,7 +250,7 @@ def run(properties, explore, cpus=None):
                                                          min_quorum, fit_method, oversampling,
                                                          t0_fit_margin, duration_grid_step, properties, cache_dir,
                                                          ignore_original,
-                                                         pickle_mode)
+                                                         pickle_mode, use_harmonics_spectra)
                         sherlock_targets.append(sherlock_target)
                 if mode == "SECTOR" or mode == "BOTH" and isinstance(built_object_info, MissionObjectInfo):
                     if sectors == 'all':
@@ -286,7 +287,7 @@ def run(properties, explore, cpus=None):
                                                          min_quorum, fit_method, oversampling,
                                                          t0_fit_margin, duration_grid_step, properties, cache_dir,
                                                          ignore_original,
-                                                         pickle_mode)
+                                                         pickle_mode, use_harmonics_spectra)
                         sherlock_targets.append(sherlock_target)
             else:
                 built_object_info = lcbuilder.build_object_info(target, author, sectors, file, exptime,
@@ -316,7 +317,7 @@ def run(properties, explore, cpus=None):
                                                  period_max, period_protect, best_signal_algorithm, quorum_strength,
                                                  min_quorum, fit_method, oversampling,
                                                  t0_fit_margin, duration_grid_step, properties, cache_dir,
-                                                 ignore_original, pickle_mode)
+                                                 ignore_original, pickle_mode, use_harmonics_spectra)
                 if mode == "GLOBAL" or mode == "BOTH":
                     sherlock_targets.append(sherlock_target)
                 if mode == "SECTOR" or mode == "BOTH" and isinstance(built_object_info, MissionObjectInfo):
@@ -353,7 +354,7 @@ def run(properties, explore, cpus=None):
                                                          min_quorum, fit_method, oversampling,
                                                          t0_fit_margin, duration_grid_step, properties, cache_dir,
                                                          ignore_original,
-                                                         pickle_mode)
+                                                         pickle_mode, use_harmonics_spectra)
                         sherlock_targets.append(sherlock_target)
                 if mode != "GLOBAL" and mode != "BOTH" and not (mode == "SECTOR" or mode == "BOTH" and
                                                                 isinstance(built_object_info, MissionObjectInfo)):
