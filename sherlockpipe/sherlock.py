@@ -23,7 +23,7 @@ from sherlockpipe.ois.OisManager import OisManager
 from lcbuilder.star.HabitabilityCalculator import HabitabilityCalculator
 
 from sherlockpipe.plot.plotting import save_transit_plot
-from sherlockpipe.scoring.helper import compute_border_score
+from sherlockpipe.scoring.helper import compute_border_score, harmonic_spectrum
 from sherlockpipe.transitresult import TransitResult
 from multiprocessing import Pool
 from scipy import stats
@@ -557,7 +557,7 @@ class Sherlock:
                 str(format(signal_selection.transit_result.border_score, '.2f'))
         file = 'Run_' + str(id_run) + '_SELECTED_' + str(signal_selection.curve_index) + '_' + str(star_info.object_id) + '.png'
         save_transit_plot(star_info.object_id, title, run_dir, file, time, lcs[signal_selection.curve_index],
-                          signal_selection.transit_result, cadence, id_run)
+                          signal_selection.transit_result, cadence, id_run, sherlock_target.use_harmonics_spectra)
         if sherlock_target.pickle_mode == 'all':
             with open(run_dir + 'search_results.pickle', 'wb') as search_results_file:
                 pickle.dump(transit_results, search_results_file, protocol=pickle.HIGHEST_PROTOCOL)
@@ -691,7 +691,7 @@ class Sherlock:
                          ' # BS:' + str(format(transit_result.border_score, '.2f'))
             plot_file = 'Run_' + str(id_run) + '_PDCSAP-FLUX_' + str(star_info.object_id) + '.png'
             save_transit_plot(star_info.object_id, plot_title, plot_dir, plot_file, time, lcs[0], transit_result,
-                              cadence, id_run)
+                              cadence, id_run, sherlock_target.use_harmonics_spectra)
         else:
             transit_result = TransitResult(None, None, 0, 0, 0, 0, [], [], 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, [], False)
         transit_results[0] = transit_result
@@ -720,7 +720,8 @@ class Sherlock:
                     ' # BS:' + str(format(transit_result.border_score, '.2f'))
             file = 'Run_' + str(id_run) + '_' + detrend_file_name_customs + '=' + str(format(wl[i], '.4f')) + '_' + \
                    str(star_info.object_id) + '.png'
-            save_transit_plot(star_info.object_id, title, plot_dir, file, time, lcs[i], transit_result, cadence, id_run)
+            save_transit_plot(star_info.object_id, title, plot_dir, file, time, lcs[i], transit_result, cadence,
+                              id_run, sherlock_target.use_harmonics_spectra)
         return transit_results
 
     def __find_matching_oi(self, object_info, period):
@@ -776,10 +777,12 @@ class Sherlock:
         else:
             duration = results['duration']
         harmonic = self.__is_harmonic(results, run_results, report, detrend_source_period)
+        harmonic_power = harmonic_spectrum(results['periods'], results.power)
         return TransitResult(power_args, results, results.period, results.period_uncertainty, duration,
                              results.T0, t0s, depths, depths_err, depth, results.odd_even_mismatch,
                              (1 - results.depth_mean_even[0]) * 1000, (1 - results.depth_mean_odd[0]) * 1000, transit_count,
-                             results.snr, results.SDE, results.FAP, border_score, in_transit, harmonic)
+                             results.snr, results.SDE, results.FAP, border_score, in_transit, harmonic,
+                             harmonic_power)
 
     def __calculate_planet_radius(self, star_info, depth):
         rp = np.nan
