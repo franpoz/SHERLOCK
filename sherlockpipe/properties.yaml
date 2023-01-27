@@ -175,3 +175,5 @@ UPDATE_CLEAN: False
 CACHE_DIR:
 # Whether transit search data should be pickled (none|selected|all).
 PICKLE_MODE: 'none'
+# Whether subharmonics spectrum should be plotted
+USE_HARMONICS_SPECTRA: False
