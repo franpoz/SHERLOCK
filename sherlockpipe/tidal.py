@@ -62,8 +62,10 @@ def run_tidal(object_dir, candidate, properties):
     Q = 100  # planet's tidal dissipation function
     semimajor_axis = candidate.iloc[0]['a']
     rp = candidate.iloc[0]["rad_p"]
-    planet_mean_motion = math.sqrt((G * (star_mass + 1)) / (semimajor_axis ** 3))
+    planet_mean_motion = math.sqrt((G * (star_mass + 1)) / (semimajor_axis ** 3)) #angular velocity of the planet in radians per second
     T_rot_planet = (2 * math.pi) / planet_mean_motion
+    # "Tidal Evolution of Close-in Planets" by Matthew J. Holman and Scott J. Tremaine, The Astrophysical Journal, vol. 552, pp. 693–718 (2001)
+    # This paper provides a detailed derivation of the tidal evolution equations, including the time scale for a planet to become tidally locked.
     T_lock = (3 * math.sqrt(T_rot_planet) * semimajor_axis ** 6) / (Q * G * star_mass * rp ** 5)
     print("Tidal Locking Time: {:.2e} years".format(T_lock))
 
