@@ -213,8 +213,11 @@ class Validator(ToolWithCandidate):
                          for value in range(0, scenarios)]
         logging.info("Start validation processes")
         #TODO fix usage of cpus returning same value for all executions
-        with Pool(processes=1) as pool:
-            validation_results = pool.map(TriceratopsThreadValidator.validate, input_n_times)
+        validation_results = []
+        for i in range(0, scenarios):
+            validation_results.append(TriceratopsThreadValidator.validate(input_n_times[i]))
+        # with Pool(processes=1) as pool:
+        #     validation_results = pool.map(TriceratopsThreadValidator.validate, input_n_times)
         logging.info("Finished validation processes")
         fpp_sum = 0
         fpp2_sum = 0
