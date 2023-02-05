@@ -11,9 +11,11 @@ set -e
 
 git_tag=$1
 echo "GIT TAG IS " ${git_tag}
+echo "Run regression tests"
 tox -r -e py38-local,py39-local > tests.log
 tests_results=$(cat tests.log | grep "congratulations")
 if ! [[ -z ${tests_results} ]]; then
+  echo "Run all tests"
   tox -r -e py38-gha,py39-gha > tests.log
 else
   echo "TESTS FAILED. See tests.log"
