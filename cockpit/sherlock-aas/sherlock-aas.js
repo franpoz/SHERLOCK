@@ -28,6 +28,10 @@ function listDir() {
         .stream(outputSuccess)
     //    .then(outputSuccess)
         .catch(outputFail);
+    cockpit.spawn(["journalctl", "-u", "sherlock-aas", "-n", "10"], {"superuser": "try"})
+        .stream(statusSuccess)
+    //    .then(statusSuccess)
+        .catch(statusFail);
 }
 
 refresh_button.addEventListener("click", listDir);

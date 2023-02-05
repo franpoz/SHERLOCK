@@ -1,0 +1,17 @@
+.title {
+    color: blue;
+    border-bottom: dotted;
+    border-top: dotted;
+    margin-bottom: 5px;
+    display: block;
+    text-align: center;
+}
+.codediv {
+    background-color: lightgray;
+    font-family: monospace;
+}
+.sherlockbutton{
+    color: white;
+    background-color: blue;
+    border: none;
+}

@@ -1,41 +1,44 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>Pinger</title>
+    <title>SHERLOCK-AAS</title>
     <meta charset="utf-8">
     <script src="../base1/cockpit.js"></script>
+    <script src="../base1/jquery.js"></script>
+    <link href="../base1/cockpit.css" type="text/css" rel="stylesheet">
+    <link href="sherlock-aas.css" type="text/css" rel="stylesheet">
+
 </head>
 <body>
     <main tabindex="-1">
         <section>
             <div>
                 <div>
-                    <label for="statusContainer">Service status</label>
+                    <label class="title" for="statusContainer">Service status</label>
                     <br>
-                    <span id="statusContainer"></span>
+                    <pre class="codediv" id="statusContainer"></pre>
                 </div>
                 <div>
-                    <label for="inputContainer">Input Dir</label>
+                    <label class="title" for="inputContainer">Input Dir</label>
                     <br>
-                    <span id="inputContainer"></span>
+                    <pre class="codediv" id="inputContainer"></pre>
                 </div>
                 <div>
-                    <label for="workingContainer">Working Dir</label>
+                    <label class="title" for="workingContainer">Working Dir</label>
                     <br>
-                    <span id="workingContainer"></span>
+                    <pre class="codediv" id="workingContainer"></pre>
                 </div>
                 <div>
-                    <label for="outputContainer">Output Dir</label>
+                    <label class="title" for="outputContainer">Output Dir</label>
                     <br>
-                    <span id="outputContainer"></span>
+                    <pre class="codediv" id="outputContainer"></pre>
                 </div>
                 <div>
-                    <button id="refresh">Refresh</button>
+                    <button class="btn btn-primary sherlockbutton" id="refresh">Refresh</button>
                 </div>
             </div>
         </section>
     </main>
-
     <script src="sherlock-aas.js"></script>
 </body>
 </html>
