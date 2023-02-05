@@ -16,9 +16,24 @@ tox -r -e py38-local,py39-local > tests.log
 tests_results=$(cat tests.log | grep "congratulations")
 if ! [[ -z ${tests_results} ]]; then
   echo "Run all tests"
+  set +e
+  rm tests.log
+  rm -r .tox
+  rm -r .pytest_cache
+  rm -r build
+  rm -r sherlockpipe-reqs
+  rm -R *egg-info
+  set -e
   tox -r -e py38-gha,py39-gha > tests.log
 else
   echo "TESTS FAILED. See tests.log"
+  set +e
+  rm -r .tox
+  rm -r .pytest_cache
+  rm -r build
+  rm -r sherlockpipe-reqs
+  rm -R *egg-info
+  set -e
   exit 1
 fi
 tests_results=$(cat tests.log | grep "congratulations")
