@@ -1,0 +1,9 @@
+{
+    "version": 0,
+    "tools": {
+        "pinger": {
+            "label": "SHERLOCK-AAS",
+            "path": "sherlock-aas.html"
+        }
+    }
+}
