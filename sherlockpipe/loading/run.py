@@ -215,6 +215,7 @@ def run(properties, explore, cpus=None):
             mode = get_from_user_or_config_or_default(target_configs, sherlock_user_properties, "MODE", "GLOBAL")
             sectors = get_from_user_or_config_or_default(target_configs, sherlock_user_properties, "SECTORS", "all")
             use_harmonics_spectra = get_from_user_or_config_or_default(target_configs, sherlock_user_properties, "USE_HARMONICS_SPECTRA")
+            truncate_border = get_from_user_or_config_or_default(target_configs, sherlock_user_properties, "TRUNCATE_BORDERS_DAYS")
             if sectors != "all" and len(np.array(sectors).shape) > 1:
                 if mode == "GLOBAL" or mode == "BOTH":
                     for sectors_subset in sectors:
@@ -233,7 +234,7 @@ def run(properties, explore, cpus=None):
                                                                         oscillation_amplitude_threshold,
                                                                         oscillation_ws_scale,
                                                                         oscillation_min_period, oscillation_max_period,
-                                                                        exptime_binning)
+                                                                        exptime_binning, truncate_border)
                         sherlock_target = SherlockTarget(built_object_info,
                                                          detrend_method, detrend_l_min, detrend_l_max, detrends_number,
                                                          detrend_cores,
@@ -270,7 +271,7 @@ def run(properties, explore, cpus=None):
                                                                   reduce_simple_oscillations, oscillation_snr_threshold,
                                                                   oscillation_amplitude_threshold, oscillation_ws_scale,
                                                                   oscillation_min_period, oscillation_max_period,
-                                                                  exptime_binning)
+                                                                  exptime_binning, truncate_border)
                         sherlock_target = SherlockTarget(object_info,
                                                          detrend_method, detrend_l_min, detrend_l_max, detrends_number,
                                                          detrend_cores,
@@ -302,7 +303,7 @@ def run(properties, explore, cpus=None):
                                                                 reduce_simple_oscillations, oscillation_snr_threshold,
                                                                 oscillation_amplitude_threshold, oscillation_ws_scale,
                                                                 oscillation_min_period, oscillation_max_period,
-                                                                exptime_binning)
+                                                                exptime_binning, truncate_border)
                 sherlock_target = SherlockTarget(built_object_info,
                                                  detrend_method, detrend_l_min, detrend_l_max, detrends_number,
                                                  detrend_cores,
@@ -337,7 +338,7 @@ def run(properties, explore, cpus=None):
                                                                   reduce_simple_oscillations, oscillation_snr_threshold,
                                                                   oscillation_amplitude_threshold, oscillation_ws_scale,
                                                                   oscillation_min_period, oscillation_max_period,
-                                                                  exptime_binning)
+                                                                  exptime_binning, truncate_border)
                         sherlock_target = SherlockTarget(object_info,
                                                          detrend_method, detrend_l_min, detrend_l_max, detrends_number,
                                                          detrend_cores,

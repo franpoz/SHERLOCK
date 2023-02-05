@@ -138,6 +138,9 @@ INITIAL_MASK:
 #     D: 136.9
 INITIAL_TRANSIT_MASK:
 
+# Number of days to be truncated at the beginning and at the end of each data gaps greater than the number specified
+TRUNCATE_BORDERS_DAYS: 0
+
 # The aperture file to be used to create the light curve
 APERTURE:
 
