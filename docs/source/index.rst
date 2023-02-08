@@ -23,6 +23,7 @@ In most of cases the user only needs to provide with a ``KIC-ID``, ``EPIC-ID``, 
 
    installation
    the-pipeline
+   tutorials
    about-us
 
 

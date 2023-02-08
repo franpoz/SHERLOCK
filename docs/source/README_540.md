@@ -57,8 +57,6 @@ Here you can see that SHERLOCK has detected a prominent period of ~0.73 days (in
   <img width="80%" src="_static/540-periodogram.png">
 </p>
 
-#
-
 <p align="center">
   <img width="80%" src="_static/540-detrend.png">
 </p>
