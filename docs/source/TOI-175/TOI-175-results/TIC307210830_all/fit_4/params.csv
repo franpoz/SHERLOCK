@@ -1,0 +1,26 @@
+#name,value,fit,bounds,label,unit
+#companion b astrophysical params,,,,,
+SOI_4_rr,0.0106542994033318,1,uniform 0.008377489682863337 0.012931109123800261,$R_b / R_\star$,
+SOI_4_rsuma,0.10990800496825706,1,uniform 0.08643107258501537 0.13338493735149876,$(R_\star + R_b) / a_b$,
+SOI_4_cosi,0.0,1,uniform 0.0 0.06,$\cos{i_b}$,
+SOI_4_epoch,1354.721286112799,1,uniform 1354.701286112799 1354.741286112799,$T_{0;b}$,$\mathrm{BJD}$
+SOI_4_period,1.0491677917596298,1,uniform 1.049112551973286 1.0492230315459736,$P_b$,$\mathrm{d}$
+SOI_4_f_c,0.0,0,uniform -1.0 1.0,$\sqrt{e_b} \cos{\omega_b}$,
+SOI_4_f_s,0.0,0,uniform -1.0 1.0,$\sqrt{e_b} \sin{\omega_b}$,
+#dilution per instrument,,,,,
+dil_lc,0.0,0,trunc_normal 0 1 0.0 0.0,$D_\mathrm{0; lc}$,
+#limb darkening coefficients per instrument,,,,,
+host_ldc_q1_lc,0.1555,1,uniform 0.0 1.0,$q_{1; \mathrm{lc}}$,
+host_ldc_q2_lc,0.4459,1,uniform 0.0 1.0,$q_{2; \mathrm{lc}}$,
+#surface brightness per instrument and companion,,,,,
+host_sbratio_lc,0.0,0,trunc_normal 0 1 0.0 0.0,$J_{b; \mathrm{lc}}$,
+#albedo per instrument and companion,,,,,
+host_geom_albedo_lc,0.0,0,trunc_normal 0 1 0.0 0.0,$A_{\mathrm{geom}; host; \mathrm{lc}}$,
+${sherlock:name}_geom_albedo_lc,0.0,0,trunc_normal 0 1 0.0 0.0,$A_{\mathrm{geom}; b; \mathrm{lc}}$,
+#gravity darkening per instrument and companion,,,,,
+host_gdc_lc,0.0,0,trunc_normal 0 1 0.0 0.0,$Grav. dark._{b; \mathrm{lc}}$,
+#spots per instrument and companion,,,,,
+#errors per instrument,
+ln_err_flux_lc,-7.0,1,uniform -15.0 0.0,$\log{\sigma_\mathrm{lc}}$,$\log{ \mathrm{rel. flux.} }$
+#baseline per instrument,
+

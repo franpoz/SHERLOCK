@@ -1,0 +1,267 @@
+ID: TIC307210830_all
+Storing properties file pdie.yaml
+================================================
+USER DEFINITIONS
+================================================
+Detrend method: Bi-Weight
+No of detrend models applied: 10
+Period planet protected: 10.0
+Minimum Period (d): 0.4
+Maximum Period (d): 150.0
+Binning size (min): 10.0
+Mask: no
+Transit Mask: no
+Threshold limit for SNR: 7.0
+Threshold limit for SDE: 5.0
+Sigma threshold for outliers clipping: 3.0
+Fit method: default
+Oversampling: 3.000
+Duration step: 1.100
+T0 Fit Margin: 0.050
+Signal scoring algorithm: quorum
+Quorum algorithm vote strength: 1.20
+Retrieving star catalog info...
+Downloading lightcurve files...
+There is data for Mission: TESS Sector 02, Year 2018, Author: SPOC, ExpTime: 120
+There is data for Mission: TESS Sector 02, Year 2018, Author: TESS-SPOC, ExpTime: 1800
+There is data for Mission: TESS Sector 05, Year 2018, Author: SPOC, ExpTime: 120
+There is data for Mission: TESS Sector 05, Year 2018, Author: TESS-SPOC, ExpTime: 1800
+There is data for Mission: TESS Sector 08, Year 2019, Author: SPOC, ExpTime: 120
+There is data for Mission: TESS Sector 08, Year 2019, Author: TESS-SPOC, ExpTime: 1800
+There is data for Mission: TESS Sector 09, Year 2019, Author: SPOC, ExpTime: 120
+There is data for Mission: TESS Sector 09, Year 2019, Author: TESS-SPOC, ExpTime: 1800
+There is data for Mission: TESS Sector 10, Year 2019, Author: SPOC, ExpTime: 120
+There is data for Mission: TESS Sector 10, Year 2019, Author: TESS-SPOC, ExpTime: 1800
+There is data for Mission: TESS Sector 11, Year 2019, Author: SPOC, ExpTime: 120
+There is data for Mission: TESS Sector 11, Year 2019, Author: TESS-SPOC, ExpTime: 1800
+There is data for Mission: TESS Sector 12, Year 2019, Author: SPOC, ExpTime: 120
+There is data for Mission: TESS Sector 12, Year 2019, Author: TESS-SPOC, ExpTime: 1800
+There is data for Mission: TESS Sector 28, Year 2020, Author: SPOC, ExpTime: 20
+There is data for Mission: TESS Sector 28, Year 2020, Author: SPOC, ExpTime: 120
+There is data for Mission: TESS Sector 28, Year 2020, Author: TESS-SPOC, ExpTime: 600
+There is data for Mission: TESS Sector 29, Year 2020, Author: SPOC, ExpTime: 20
+There is data for Mission: TESS Sector 29, Year 2020, Author: SPOC, ExpTime: 120
+There is data for Mission: TESS Sector 29, Year 2020, Author: TESS-SPOC, ExpTime: 600
+There is data for Mission: TESS Sector 32, Year 2020, Author: SPOC, ExpTime: 20
+There is data for Mission: TESS Sector 32, Year 2020, Author: SPOC, ExpTime: 120
+There is data for Mission: TESS Sector 32, Year 2020, Author: TESS-SPOC, ExpTime: 600
+There is data for Mission: TESS Sector 35, Year 2021, Author: SPOC, ExpTime: 20
+There is data for Mission: TESS Sector 35, Year 2021, Author: SPOC, ExpTime: 120
+There is data for Mission: TESS Sector 35, Year 2021, Author: TESS-SPOC, ExpTime: 600
+There is data for Mission: TESS Sector 36, Year 2021, Author: SPOC, ExpTime: 20
+There is data for Mission: TESS Sector 36, Year 2021, Author: SPOC, ExpTime: 120
+There is data for Mission: TESS Sector 36, Year 2021, Author: TESS-SPOC, ExpTime: 600
+There is data for Mission: TESS Sector 37, Year 2021, Author: SPOC, ExpTime: 20
+There is data for Mission: TESS Sector 37, Year 2021, Author: SPOC, ExpTime: 120
+There is data for Mission: TESS Sector 37, Year 2021, Author: TESS-SPOC, ExpTime: 600
+There is data for Mission: TESS Sector 38, Year 2021, Author: SPOC, ExpTime: 20
+There is data for Mission: TESS Sector 38, Year 2021, Author: SPOC, ExpTime: 120
+There is data for Mission: TESS Sector 38, Year 2021, Author: TESS-SPOC, ExpTime: 600
+There is data for Mission: TESS Sector 39, Year 2021, Author: SPOC, ExpTime: 20
+There is data for Mission: TESS Sector 39, Year 2021, Author: SPOC, ExpTime: 120
+There is data for Mission: TESS Sector 39, Year 2021, Author: TESS-SPOC, ExpTime: 600
+2% (399/18699) of the cadences will be ignored due to the quality mask (quality_bitmask=175).
+1% (252/17971) of the cadences will be ignored due to the quality mask (quality_bitmask=175).
+8% (1183/14555) of the cadences will be ignored due to the quality mask (quality_bitmask=175).
+1% (197/17337) of the cadences will be ignored due to the quality mask (quality_bitmask=175).
+3% (505/18197) of the cadences will be ignored due to the quality mask (quality_bitmask=175).
+3% (562/18749) of the cadences will be ignored due to the quality mask (quality_bitmask=175).
+3% (498/19373) of the cadences will be ignored due to the quality mask (quality_bitmask=175).
+0% (41/17326) of the cadences will be ignored due to the quality mask (quality_bitmask=175).
+1% (254/18183) of the cadences will be ignored due to the quality mask (quality_bitmask=175).
+0% (34/18011) of the cadences will be ignored due to the quality mask (quality_bitmask=175).
+16% (2634/16780) of the cadences will be ignored due to the quality mask (quality_bitmask=175).
+0% (52/17395) of the cadences will be ignored due to the quality mask (quality_bitmask=175).
+0% (53/17391) of the cadences will be ignored due to the quality mask (quality_bitmask=175).
+0% (41/18535) of the cadences will be ignored due to the quality mask (quality_bitmask=175).
+0% (70/19407) of the cadences will be ignored due to the quality mask (quality_bitmask=175).
+7% (1437/19737) of the cadences will be ignored due to the quality mask (quality_bitmask=175).
+6% (1225/18944) of the cadences will be ignored due to the quality mask (quality_bitmask=175).
+12% (2042/17755) of the cadences will be ignored due to the quality mask (quality_bitmask=175).
+6% (1047/18187) of the cadences will be ignored due to the quality mask (quality_bitmask=175).
+6% (1208/18900) of the cadences will be ignored due to the quality mask (quality_bitmask=175).
+7% (1340/19527) of the cadences will be ignored due to the quality mask (quality_bitmask=175).
+6% (1244/20119) of the cadences will be ignored due to the quality mask (quality_bitmask=175).
+5% (897/18182) of the cadences will be ignored due to the quality mask (quality_bitmask=175).
+5% (935/18864) of the cadences will be ignored due to the quality mask (quality_bitmask=175).
+4% (753/18730) of the cadences will be ignored due to the quality mask (quality_bitmask=175).
+Warning: 20% (3663/17997) of the cadences will be ignored due to the quality mask (quality_bitmask=175).
+4% (723/18066) of the cadences will be ignored due to the quality mask (quality_bitmask=175).
+5% (911/18249) of the cadences will be ignored due to the quality mask (quality_bitmask=175).
+4% (732/19226) of the cadences will be ignored due to the quality mask (quality_bitmask=175).
+4% (789/20126) of the cadences will be ignored due to the quality mask (quality_bitmask=175).
+Star info prepared.
+================================================
+STELLAR PROPERTIES
+================================================
+limb-darkening estimates using quadratic LD (a,b)= (0.1555, 0.4459)
+mass = 0.292836
+mass_min = 0.272688
+mass_max = 0.312984
+radius = 0.314160
+radius_min = 0.304836
+radius_max = 0.323484
+teff = 3429.000000
+lum = 0.012293
+logg = 4.910390
+================================================
+INITIAL FLUX CLEANING
+================================================
+Applying Smooth phase (savgol)
+Minimum number of transits: 2
+================================================
+SECTORS/QUARTERS/CAMPAIGNS INFO
+================================================
+Sectors/Quarters/Campaigns : [2, 5, 8, 9, 10, 11, 12, 28, 29, 32, 35, 36, 37, 38, 39]
+================================================
+Detrend Window length / Kernel size
+================================================
+Using transit duration based WL or fixed KS
+wl/ks_min: 0.23
+wl/ks_max: 1.54
+================================================
+======================================
+Field Of View Plots
+======================================
+Preparing target pixel files for field of view plots
+7% (1437/19737) of the cadences will be ignored due to the quality mask (quality_bitmask=175).
+Plotting FOV curves for sector 2
+    --> Using SHERLOCK aperture for sector 2...
+6% (1225/18944) of the cadences will be ignored due to the quality mask (quality_bitmask=175).
+Plotting FOV curves for sector 5
+    --> Using SHERLOCK aperture for sector 5...
+12% (2042/17755) of the cadences will be ignored due to the quality mask (quality_bitmask=175).
+Plotting FOV curves for sector 8
+Exception found when generating Field Of View plots
+Traceback (most recent call last):
+  File "/home/mdevora/.local/lib/python3.8/site-packages/sherlockpipe/vet.py", line 608, in vetting_field_of_view
+    Vetter.plot_tpf(tpf, tpf.sector, aperture_boolean, indir)
+  File "/home/mdevora/.local/lib/python3.8/site-packages/sherlockpipe/vet.py", line 532, in plot_tpf
+    tpf.plot_pixels(aperture_mask=aperture)
+  File "/home/mdevora/.local/lib/python3.8/site-packages/lightkurve/targetpixelfile.py", line 1853, in plot_pixels
+    mask = self._parse_aperture_mask(aperture_mask)
+  File "/home/mdevora/.local/lib/python3.8/site-packages/lightkurve/targetpixelfile.py", line 614, in _parse_aperture_mask
+    raise ValueError(
+ValueError: `aperture_mask` has shape (11, 11), but the flux data has shape (15, 15)
+================================================
+SEARCH RUNS with period grid: [0.40 - 150.00] and length 304579
+================================================
+=================================
+MODELS IN THE DETRENDING
+=================================
+light_curve              Detrend_method   win/ker_size   RMS (ppm)  RMS_10min (ppm)
+PDCSAP_FLUX              ---              ---            441.72     318.82         
+flatten_lc & trend_lc 0  biweight         0.2312         411.57     277.31         
+flatten_lc & trend_lc 1  biweight         0.3622         416.98     285.39         
+flatten_lc & trend_lc 2  biweight         0.4932         419.19     288.72         
+flatten_lc & trend_lc 3  biweight         0.6242         421.00     291.30         
+flatten_lc & trend_lc 4  biweight         0.7553         421.77     292.54         
+flatten_lc & trend_lc 5  biweight         0.8863         422.54     293.70         
+flatten_lc & trend_lc 6  biweight         1.0173         423.12     294.58         
+flatten_lc & trend_lc 7  biweight         1.1483         423.72     295.42         
+flatten_lc & trend_lc 8  biweight         1.2793         424.50     296.55         
+flatten_lc & trend_lc 9  biweight         1.4103         425.19     297.59         
+________________________________ run 1________________________________
+=================================
+SEARCH OF SIGNALS - Run 1
+=================================
+win_size    Period      Per_err   N.Tran  Mean Depth (ppt)  T. dur (min)  T0            SNR         SDE         FAP           Border_score    Matching OI   Harmonic    Planet radius (R_Earth)  Rp/Rs     Semi-major axis   Habitability Zone   
+PDCSAP_FLUX 3.69067     0.000197  92      1.678             55.4          1356.2030     204.322     182.443     8.0032e-05    0.98            TOI 175.01    -           1.40526                  0.03673   0.03110           I                   
+0.2312      3.69067     0.000197  92      1.619             55.4          1356.2030     211.520     194.415     8.0032e-05    0.98            TOI 175.01    -           1.38017                  0.03592   0.03110           I                   
+0.3622      3.69067     0.000197  92      1.669             55.4          1356.2030     215.814     192.098     8.0032e-05    0.98            TOI 175.01    -           1.40153                  0.03661   0.03110           I                   
+0.4932      3.69067     0.000197  92      1.679             55.4          1356.2030     215.934     191.393     8.0032e-05    0.98            TOI 175.01    -           1.40572                  0.03674   0.03110           I                   
+0.6242      3.69067     0.000197  92      1.686             55.4          1356.2030     215.948     191.114     8.0032e-05    0.98            TOI 175.01    -           1.40868                  0.03683   0.03110           I                   
+0.7553      3.69067     0.000197  92      1.688             55.4          1356.2030     215.728     190.823     8.0032e-05    0.98            TOI 175.01    -           1.40953                  0.03686   0.03110           I                   
+0.8863      3.69067     0.000197  92      1.689             55.4          1356.2030     215.446     190.580     8.0032e-05    0.98            TOI 175.01    -           1.41000                  0.03688   0.03110           I                   
+1.0173      3.69067     0.000197  92      1.688             55.4          1356.2030     214.863     190.582     8.0032e-05    0.98            TOI 175.01    -           1.40933                  0.03686   0.03110           I                   
+1.1483      3.69067     0.000197  92      1.688             55.4          1356.2030     214.532     190.588     8.0032e-05    0.98            TOI 175.01    -           1.40930                  0.03686   0.03110           I                   
+1.2793      3.69067     0.000197  92      1.688             55.4          1356.2030     214.192     190.370     8.0032e-05    0.98            TOI 175.01    -           1.40957                  0.03687   0.03110           I                   
+1.4103      3.69067     0.000197  92      1.689             55.4          1356.2030     213.925     190.190     8.0032e-05    0.98            TOI 175.01    -           1.40998                  0.03689   0.03110           I                   
+Elected signal with QUORUM algorithm from 11 VOTES --> NAME: 3	Period:3.6906682312153136	CORR_SNR: 441.7127405866279	SNR: 215.94845095346253	SDE: 191.11425762589872	FAP: 8.0032e-05	BORDER_SCORE: 0.9782608695652174
+Proposed selection with BASIC algorithm was --> NAME: 3	Period:3.6906682312153136	SNR: 215.94845095346253
+New best signal is good enough to keep searching. Going to the next run.
+________________________________ run 2________________________________
+=================================
+SEARCH OF SIGNALS - Run 2
+=================================
+win_size    Period      Per_err   N.Tran  Mean Depth (ppt)  T. dur (min)  T0            SNR         SDE         FAP           Border_score    Matching OI   Harmonic    Planet radius (R_Earth)  Rp/Rs     Semi-major axis   Habitability Zone   
+PDCSAP_FLUX 2.25313     0.000119  149     0.619             44.8          1354.9021     90.661      134.458     8.0032e-05    0.99            TOI 175.03    -           0.85328                  0.02224   0.02238           I                   
+0.2312      2.25313     0.000085  149     0.563             44.8          1354.9021     88.493      119.047     8.0032e-05    0.99            TOI 175.03    -           0.81378                  0.02095   0.02238           I                   
+0.3622      2.25313     0.000102  149     0.597             44.8          1354.9021     93.068      120.798     8.0032e-05    0.99            TOI 175.03    -           0.83804                  0.02174   0.02238           I                   
+0.4932      2.25313     0.000119  149     0.609             44.8          1354.9021     94.507      121.825     8.0032e-05    0.99            TOI 175.03    -           0.84664                  0.02202   0.02238           I                   
+0.6242      2.25313     0.000119  149     0.618             44.8          1354.9021     95.535      123.225     8.0032e-05    0.99            TOI 175.03    -           0.85283                  0.02221   0.02238           I                   
+0.7553      2.25313     0.000119  149     0.621             44.8          1354.9021     95.730      123.239     8.0032e-05    0.99            TOI 175.03    -           0.85469                  0.02227   0.02238           I                   
+0.8863      2.25313     0.000119  149     0.622             44.8          1354.9021     95.778      123.068     8.0032e-05    0.99            TOI 175.03    -           0.85571                  0.02231   0.02238           I                   
+1.0173      2.25313     0.000119  149     0.622             44.8          1354.9021     95.617      122.732     8.0032e-05    0.99            TOI 175.03    -           0.85582                  0.02232   0.02238           I                   
+1.1483      2.25313     0.000119  149     0.625             44.8          1354.9021     95.860      123.397     8.0032e-05    0.99            TOI 175.03    -           0.85765                  0.02237   0.02238           I                   
+1.2793      2.25313     0.000119  149     0.627             44.8          1354.9021     95.931      123.062     8.0032e-05    0.99            TOI 175.03    -           0.85893                  0.02241   0.02238           I                   
+1.4103      2.25313     0.000119  149     0.627             44.8          1354.9021     95.690      122.047     8.0032e-05    0.99            TOI 175.03    -           0.85870                  0.02241   0.02238           I                   
+Elected signal with QUORUM algorithm from 11 VOTES --> NAME: 8	Period:2.2531273092040185	CORR_SNR: 199.23748254258948	SNR: 95.93132605384963	SDE: 123.06157997632506	FAP: 8.0032e-05	BORDER_SCORE: 0.9932885906040269
+Proposed selection with BASIC algorithm was --> NAME: 8	Period:2.2531273092040185	SNR: 95.93132605384963
+New best signal is good enough to keep searching. Going to the next run.
+________________________________ run 3________________________________
+=================================
+SEARCH OF SIGNALS - Run 3
+=================================
+win_size    Period      Per_err   N.Tran  Mean Depth (ppt)  T. dur (min)  T0            SNR         SDE         FAP           Border_score    Matching OI   Harmonic    Planet radius (R_Earth)  Rp/Rs     Semi-major axis   Habitability Zone   
+PDCSAP_FLUX 7.45069     0.000586  46      0.879             68.7          1355.2917     90.322      191.562     8.0032e-05    1.00            TOI 175.02    2*SOI1      1.01683                  0.02458   0.04967           I                   
+0.2312      7.45069     0.000586  46      0.850             68.7          1355.2881     94.459      136.869     8.0032e-05    1.00            TOI 175.02    2*SOI1      1.00025                  0.02401   0.04967           I                   
+0.3622      7.45069     0.000670  46      0.869             68.7          1355.2917     95.522      132.286     8.0032e-05    1.00            TOI 175.02    2*SOI1      1.01125                  0.02439   0.04967           I                   
+0.4932      7.45069     0.000586  46      0.876             68.7          1355.2917     95.881      130.227     8.0032e-05    1.00            TOI 175.02    2*SOI1      1.01554                  0.02454   0.04967           I                   
+0.6242      7.45069     0.000586  46      0.880             68.7          1355.2917     95.878      129.576     8.0032e-05    1.00            TOI 175.02    2*SOI1      1.01749                  0.02462   0.04967           I                   
+0.7553      7.45069     0.000670  46      0.880             68.7          1355.2917     95.629      129.107     8.0032e-05    1.00            TOI 175.02    2*SOI1      1.01740                  0.02462   0.04967           I                   
+0.8863      7.45069     0.000670  46      0.880             68.7          1355.2917     95.481      128.841     8.0032e-05    1.00            TOI 175.02    2*SOI1      1.01772                  0.02463   0.04967           I                   
+1.0173      7.45069     0.000670  46      0.884             68.7          1355.2917     95.696      129.377     8.0032e-05    1.00            TOI 175.02    2*SOI1      1.01999                  0.02471   0.04967           I                   
+1.1483      7.45069     0.000670  46      0.885             68.7          1355.2917     95.643      130.019     8.0032e-05    1.00            TOI 175.02    2*SOI1      1.02065                  0.02473   0.04967           I                   
+1.2793      7.45069     0.000670  46      0.886             68.7          1355.2917     95.460      129.592     8.0032e-05    1.00            TOI 175.02    2*SOI1      1.02096                  0.02473   0.04967           I                   
+1.4103      7.45069     0.000670  46      0.888             68.7          1355.2917     95.523      129.123     8.0032e-05    1.00            TOI 175.02    2*SOI1      1.02254                  0.02478   0.04967           I                   
+Elected signal with QUORUM algorithm from 11 VOTES --> NAME: 2	Period:7.450690528437917	CORR_SNR: 200.47765339156336	SNR: 95.88061683944335	SDE: 130.2267469591724	FAP: 8.0032e-05	BORDER_SCORE: 1.0
+Proposed selection with BASIC algorithm was --> NAME: 2	Period:7.450690528437917	SNR: 95.88061683944335
+New best signal is good enough to keep searching. Going to the next run.
+________________________________ run 4________________________________
+=================================
+SEARCH OF SIGNALS - Run 4
+=================================
+win_size    Period      Per_err   N.Tran  Mean Depth (ppt)  T. dur (min)  T0            SNR         SDE         FAP           Border_score    Matching OI   Harmonic    Planet radius (R_Earth)  Rp/Rs     Semi-major axis   Habitability Zone   
+PDCSAP_FLUX 1.04918     0.000012  312     0.138             53.7          1354.7156     33.801      492.032     8.0032e-05    0.99            nan           -           0.40311                  0.01119   0.01344           I                   
+0.2312      1.04918     0.000049  312     0.132             53.7          1354.7156     35.335      175.587     8.0032e-05    0.99            nan           -           0.39379                  0.01100   0.01344           I                   
+0.3622      1.04918     0.000055  312     0.151             53.7          1354.7156     39.415      160.499     8.0032e-05    0.99            nan           -           0.42108                  0.01174   0.01344           I                   
+0.4932      1.04918     0.000061  312     0.157             53.7          1354.7156     40.765      155.488     8.0032e-05    0.99            nan           -           0.42993                  0.01199   0.01344           I                   
+0.6242      1.04918     0.000061  312     0.158             53.7          1354.7156     40.947      152.974     8.0032e-05    0.99            nan           -           0.43172                  0.01205   0.01344           I                   
+0.7553      1.04918     0.000061  312     0.158             53.7          1354.7156     40.611      149.753     8.0032e-05    0.99            nan           -           0.43090                  0.01201   0.01344           I                   
+0.8863      1.04918     0.000061  312     0.157             53.7          1354.7156     40.423      147.568     8.0032e-05    0.99            nan           -           0.43034                  0.01200   0.01344           I                   
+1.0173      1.04918     0.000055  312     0.156             53.7          1354.7156     39.959      150.808     8.0032e-05    0.99            nan           -           0.42799                  0.01193   0.01344           I                   
+1.1483      1.04918     0.000055  312     0.151             53.7          1354.7156     38.744      159.950     8.0032e-05    0.99            nan           -           0.42179                  0.01176   0.01344           I                   
+1.2793      1.04918     0.000055  312     0.152             53.7          1354.7156     38.797      157.554     8.0032e-05    0.99            nan           -           0.42250                  0.01178   0.01344           I                   
+1.4103      1.04918     0.000055  312     0.152             53.7          1354.7156     38.759      154.801     8.0032e-05    0.99            nan           -           0.42272                  0.01178   0.01344           I                   
+Elected signal with QUORUM algorithm from 11 VOTES --> NAME: 3	Period:1.0491800670761966	CORR_SNR: 84.7942337578555	SNR: 40.947489834945834	SDE: 152.97402070027985	FAP: 8.0032e-05	BORDER_SCORE: 0.9903846153846154
+Proposed selection with BASIC algorithm was --> NAME: 3	Period:1.0491800670761966	SNR: 40.947489834945834
+New best signal is good enough to keep searching. Going to the next run.
+________________________________ run 5________________________________
+=================================
+SEARCH OF SIGNALS - Run 5
+=================================
+win_size    Period      Per_err   N.Tran  Mean Depth (ppt)  T. dur (min)  T0            SNR         SDE         FAP           Border_score    Matching OI   Harmonic    Planet radius (R_Earth)  Rp/Rs     Semi-major axis   Habitability Zone   
+PDCSAP_FLUX nan         -74.798087nan     nan               nan           0.0000        nan         0.000       nan           0.00            nan           -           nan                      nan       nan               -                   
+0.2312      nan         -74.798087nan     nan               nan           0.0000        nan         0.000       nan           0.00            nan           -           nan                      nan       nan               -                   
+0.3622      nan         -74.798087nan     nan               nan           0.0000        nan         0.000       nan           0.00            nan           -           nan                      nan       nan               -                   
+0.4932      nan         -74.798087nan     nan               nan           0.0000        nan         0.000       nan           0.00            nan           -           nan                      nan       nan               -                   
+0.6242      nan         -74.798087nan     nan               nan           0.0000        nan         0.000       nan           0.00            nan           -           nan                      nan       nan               -                   
+0.7553      nan         -74.798087nan     nan               nan           0.0000        nan         0.000       nan           0.00            nan           -           nan                      nan       nan               -                   
+0.8863      nan         -74.798087nan     nan               nan           0.0000        nan         0.000       nan           0.00            nan           -           nan                      nan       nan               -                   
+1.0173      nan         -74.798087nan     nan               nan           0.0000        nan         0.000       nan           0.00            nan           -           nan                      nan       nan               -                   
+1.1483      nan         -74.798087nan     nan               nan           0.0000        nan         0.000       nan           0.00            nan           -           nan                      nan       nan               -                   
+1.2793      nan         -74.798087nan     nan               nan           0.0000        nan         0.000       nan           0.00            nan           -           nan                      nan       nan               -                   
+1.4103      nan         -74.798087nan     nan               nan           0.0000        nan         0.000       nan           0.00            nan           -           nan                      nan       nan               -                   
+All-NaN slice encountered
+Traceback (most recent call last):
+  File "/home/mdevora/.local/lib/python3.8/site-packages/sherlockpipe/sherlock.py", line 249, in __run_object
+    self.__analyse(sherlock_target, time, lcs, flux_err, lc_build.star_info, id_run,
+  File "/home/mdevora/.local/lib/python3.8/site-packages/sherlockpipe/sherlock.py", line 512, in __analyse
+    signal_selection = sherlock_target.signal_score_selectors[sherlock_target.best_signal_algorithm]\
+  File "/home/mdevora/.local/lib/python3.8/site-packages/sherlockpipe/scoring/QuorumSnrBorderCorrectedSignalSelector.py", line 54, in select
+    best_signal_snr_index = np.nanargmax(corrected_snrs)
+  File "<__array_function__ internals>", line 5, in nanargmax
+  File "/usr/local/lib64/python3.8/site-packages/numpy/lib/nanfunctions.py", line 549, in nanargmax
+    raise ValueError("All-NaN slice encountered")
+ValueError: All-NaN slice encountered

@@ -1,0 +1,6 @@
+Listing most promising candidates for ID TIC307210830_all:
+Detrend no. Period    Per_err   Duration  T0      Depth   SNR     SDE     FAP       Border_score  Matching OI   Harmonic    Planet radius (R_Earth)  Rp/Rs     Semi-major axis   Habitability Zone   
+4           3.6907    0.00020   55.41     1356.20 1.686   215.95  191.11  0.000080  0.98          TOI 175.01    -           1.40868                  0.03683   0.03110           I                   
+9           2.2531    0.00012   44.83     1354.90 0.627   95.93   123.06  0.000080  0.99          TOI 175.03    -           0.85893                  0.02241   0.02238           I                   
+3           7.4507    0.00059   68.70     1355.29 0.876   95.88   130.23  0.000080  1.00          TOI 175.02    2*SOI1      1.01554                  0.02454   0.04967           I                   
+4           1.0492    0.00006   53.67     1354.72 0.158   40.95   152.97  0.000080  0.99          nan           -           0.43172                  0.01205   0.01344           I                   
