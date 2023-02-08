@@ -9,7 +9,7 @@ import foldedleastsquares as tls
 
 class AverageSpectrumSignalSelector(SignalSelector):
     """
-    Selects the signal with best SNR
+    Selects the signal with best SNR by summing all the residuals from each detrend search and then computing the SDE.
     """
     def __init__(self):
         super().__init__()

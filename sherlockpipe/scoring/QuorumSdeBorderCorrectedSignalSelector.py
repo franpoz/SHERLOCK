@@ -10,7 +10,7 @@ from sherlockpipe.scoring.SdeBorderCorrectedSignalSelector import CorrectedBorde
 class QuorumSdeBorderCorrectedSignalSelector(BasicSdeSignalSelector):
     """
     Given the same correction applied in SnrBorderCorrectedSignalSelector, the best signal is selected by a voting
-    mechanism. Those signals with same epoch and period vote for the same signal, whose SNR gets proportionally
+    mechanism. Those signals with same epoch and period vote for the same signal, whose SDE gets proportionally
     increased by the number of votes.
     """
     def __init__(self, strength=1, min_quorum=0):

@@ -5,7 +5,7 @@ from sherlockpipe.scoring.SignalSelector import SignalSelector, SignalSelection
 
 class BasicSdeSignalSelector(SignalSelector):
     """
-    Selects the signal with best SNR
+    Selects the signal with best SDE
     """
     def __init__(self):
         super().__init__()
