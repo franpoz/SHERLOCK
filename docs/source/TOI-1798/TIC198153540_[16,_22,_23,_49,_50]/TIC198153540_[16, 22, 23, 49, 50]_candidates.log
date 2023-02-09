@@ -1,0 +1,6 @@
+Listing most promising candidates for ID TIC198153540_[16, 22, 23, 49, 50]:
+Detrend no. Period    Per_err   Duration  T0      Depth   SNR     SDE     FAP       Border_score  Matching OI   Harmonic    Planet radius (R_Earth)  Rp/Rs     Semi-major axis   Habitability Zone   
+11          8.0217    0.00087   101.82    1741.59 0.867   35.52   56.19   0.000080  1.00          TOI 1798.01   -           2.52338                  0.02685   0.07512           I                   
+1           0.8756    0.00005   51.16     1739.51 0.250   22.41   52.78   0.000080  0.99          nan           -           1.35574                  0.01357   0.01716           I                   
+1           0.8756    0.00005   50.76     1739.07 0.271   24.38   193.31  0.000080  0.98          nan           1*SOI2      1.41017                  0.01372   0.01716           I                   
+8           19.1234   0.00111   133.84    1747.01 0.415   13.36   351.01  0.000080  0.83          nan           -           1.74641                  0.02084   0.13406           I                   

@@ -1,0 +1,299 @@
+ID: TIC198153540_[16, 22, 23, 49, 50]
+Storing properties file input_Martin_stars.yaml
+================================================
+USER DEFINITIONS
+================================================
+Detrend method: Bi-Weight
+No of detrend models applied: 12
+Period planet protected: 10.0
+Minimum Period (d): 0.5
+Maximum Period (d): 20.0
+Binning size (min): 10.0
+Mask: no
+Transit Mask: no
+Threshold limit for SNR: 6.0
+Threshold limit for SDE: 7.0
+Sigma threshold for outliers clipping: 3.0
+Fit method: default
+Oversampling: 3.000
+Duration step: 1.100
+T0 Fit Margin: 0.050
+Signal scoring algorithm: quorum
+Quorum algorithm vote strength: 1.20
+Retrieving star catalog info...
+Downloading lightcurve files...
+There is data for Mission: TESS Sector 16, Year 2019, Author: SPOC, ExpTime: 120
+There is data for Mission: TESS Sector 16, Year 2019, Author: TESS-SPOC, ExpTime: 1800
+There is data for Mission: TESS Sector 22, Year 2020, Author: SPOC, ExpTime: 120
+There is data for Mission: TESS Sector 22, Year 2020, Author: TESS-SPOC, ExpTime: 1800
+There is data for Mission: TESS Sector 23, Year 2020, Author: SPOC, ExpTime: 120
+There is data for Mission: TESS Sector 23, Year 2020, Author: TESS-SPOC, ExpTime: 1800
+There is data for Mission: TESS Sector 49, Year 2022, Author: SPOC, ExpTime: 20
+There is data for Mission: TESS Sector 49, Year 2022, Author: SPOC, ExpTime: 120
+There is data for Mission: TESS Sector 50, Year 2022, Author: SPOC, ExpTime: 20
+There is data for Mission: TESS Sector 50, Year 2022, Author: SPOC, ExpTime: 120
+dropping mask in Quantity column 'flux': masked Quantity not supported
+dropping mask in Quantity column 'flux_err': masked Quantity not supported
+dropping mask in Quantity column 'centroid_col': masked Quantity not supported
+dropping mask in Quantity column 'centroid_row': masked Quantity not supported
+dropping mask in Quantity column 'sap_flux': masked Quantity not supported
+dropping mask in Quantity column 'sap_flux_err': masked Quantity not supported
+dropping mask in Quantity column 'sap_bkg': masked Quantity not supported
+dropping mask in Quantity column 'sap_bkg_err': masked Quantity not supported
+dropping mask in Quantity column 'pdcsap_flux': masked Quantity not supported
+dropping mask in Quantity column 'pdcsap_flux_err': masked Quantity not supported
+dropping mask in Quantity column 'psf_centr1': masked Quantity not supported
+dropping mask in Quantity column 'psf_centr1_err': masked Quantity not supported
+dropping mask in Quantity column 'psf_centr2': masked Quantity not supported
+dropping mask in Quantity column 'psf_centr2_err': masked Quantity not supported
+dropping mask in Quantity column 'mom_centr1': masked Quantity not supported
+dropping mask in Quantity column 'mom_centr1_err': masked Quantity not supported
+dropping mask in Quantity column 'mom_centr2': masked Quantity not supported
+dropping mask in Quantity column 'mom_centr2_err': masked Quantity not supported
+dropping mask in Quantity column 'pos_corr1': masked Quantity not supported
+dropping mask in Quantity column 'pos_corr2': masked Quantity not supported
+1% (115/16834) of the cadences will be ignored due to the quality mask (quality_bitmask=175).
+dropping mask in Quantity column 'flux': masked Quantity not supported
+dropping mask in Quantity column 'flux_err': masked Quantity not supported
+dropping mask in Quantity column 'centroid_col': masked Quantity not supported
+dropping mask in Quantity column 'centroid_row': masked Quantity not supported
+dropping mask in Quantity column 'sap_flux': masked Quantity not supported
+dropping mask in Quantity column 'sap_flux_err': masked Quantity not supported
+dropping mask in Quantity column 'sap_bkg': masked Quantity not supported
+dropping mask in Quantity column 'sap_bkg_err': masked Quantity not supported
+dropping mask in Quantity column 'pdcsap_flux': masked Quantity not supported
+dropping mask in Quantity column 'pdcsap_flux_err': masked Quantity not supported
+dropping mask in Quantity column 'psf_centr1': masked Quantity not supported
+dropping mask in Quantity column 'psf_centr1_err': masked Quantity not supported
+dropping mask in Quantity column 'psf_centr2': masked Quantity not supported
+dropping mask in Quantity column 'psf_centr2_err': masked Quantity not supported
+dropping mask in Quantity column 'mom_centr1': masked Quantity not supported
+dropping mask in Quantity column 'mom_centr1_err': masked Quantity not supported
+dropping mask in Quantity column 'mom_centr2': masked Quantity not supported
+dropping mask in Quantity column 'mom_centr2_err': masked Quantity not supported
+dropping mask in Quantity column 'pos_corr1': masked Quantity not supported
+dropping mask in Quantity column 'pos_corr2': masked Quantity not supported
+1% (188/18807) of the cadences will be ignored due to the quality mask (quality_bitmask=175).
+dropping mask in Quantity column 'flux': masked Quantity not supported
+dropping mask in Quantity column 'flux_err': masked Quantity not supported
+dropping mask in Quantity column 'centroid_col': masked Quantity not supported
+dropping mask in Quantity column 'centroid_row': masked Quantity not supported
+dropping mask in Quantity column 'sap_flux': masked Quantity not supported
+dropping mask in Quantity column 'sap_flux_err': masked Quantity not supported
+dropping mask in Quantity column 'sap_bkg': masked Quantity not supported
+dropping mask in Quantity column 'sap_bkg_err': masked Quantity not supported
+dropping mask in Quantity column 'pdcsap_flux': masked Quantity not supported
+dropping mask in Quantity column 'pdcsap_flux_err': masked Quantity not supported
+dropping mask in Quantity column 'psf_centr1': masked Quantity not supported
+dropping mask in Quantity column 'psf_centr1_err': masked Quantity not supported
+dropping mask in Quantity column 'psf_centr2': masked Quantity not supported
+dropping mask in Quantity column 'psf_centr2_err': masked Quantity not supported
+dropping mask in Quantity column 'mom_centr1': masked Quantity not supported
+dropping mask in Quantity column 'mom_centr1_err': masked Quantity not supported
+dropping mask in Quantity column 'mom_centr2': masked Quantity not supported
+dropping mask in Quantity column 'mom_centr2_err': masked Quantity not supported
+dropping mask in Quantity column 'pos_corr1': masked Quantity not supported
+dropping mask in Quantity column 'pos_corr2': masked Quantity not supported
+6% (1053/18588) of the cadences will be ignored due to the quality mask (quality_bitmask=175).
+dropping mask in Quantity column 'flux': masked Quantity not supported
+dropping mask in Quantity column 'flux_err': masked Quantity not supported
+dropping mask in Quantity column 'centroid_col': masked Quantity not supported
+dropping mask in Quantity column 'centroid_row': masked Quantity not supported
+dropping mask in Quantity column 'sap_flux': masked Quantity not supported
+dropping mask in Quantity column 'sap_flux_err': masked Quantity not supported
+dropping mask in Quantity column 'sap_bkg': masked Quantity not supported
+dropping mask in Quantity column 'sap_bkg_err': masked Quantity not supported
+dropping mask in Quantity column 'pdcsap_flux': masked Quantity not supported
+dropping mask in Quantity column 'pdcsap_flux_err': masked Quantity not supported
+dropping mask in Quantity column 'psf_centr1': masked Quantity not supported
+dropping mask in Quantity column 'psf_centr1_err': masked Quantity not supported
+dropping mask in Quantity column 'psf_centr2': masked Quantity not supported
+dropping mask in Quantity column 'psf_centr2_err': masked Quantity not supported
+dropping mask in Quantity column 'mom_centr1': masked Quantity not supported
+dropping mask in Quantity column 'mom_centr1_err': masked Quantity not supported
+dropping mask in Quantity column 'mom_centr2': masked Quantity not supported
+dropping mask in Quantity column 'mom_centr2_err': masked Quantity not supported
+dropping mask in Quantity column 'pos_corr1': masked Quantity not supported
+dropping mask in Quantity column 'pos_corr2': masked Quantity not supported
+4% (664/18635) of the cadences will be ignored due to the quality mask (quality_bitmask=175).
+dropping mask in Quantity column 'flux': masked Quantity not supported
+dropping mask in Quantity column 'flux_err': masked Quantity not supported
+dropping mask in Quantity column 'centroid_col': masked Quantity not supported
+dropping mask in Quantity column 'centroid_row': masked Quantity not supported
+dropping mask in Quantity column 'sap_flux': masked Quantity not supported
+dropping mask in Quantity column 'sap_flux_err': masked Quantity not supported
+dropping mask in Quantity column 'sap_bkg': masked Quantity not supported
+dropping mask in Quantity column 'sap_bkg_err': masked Quantity not supported
+dropping mask in Quantity column 'pdcsap_flux': masked Quantity not supported
+dropping mask in Quantity column 'pdcsap_flux_err': masked Quantity not supported
+dropping mask in Quantity column 'psf_centr1': masked Quantity not supported
+dropping mask in Quantity column 'psf_centr1_err': masked Quantity not supported
+dropping mask in Quantity column 'psf_centr2': masked Quantity not supported
+dropping mask in Quantity column 'psf_centr2_err': masked Quantity not supported
+dropping mask in Quantity column 'mom_centr1': masked Quantity not supported
+dropping mask in Quantity column 'mom_centr1_err': masked Quantity not supported
+dropping mask in Quantity column 'mom_centr2': masked Quantity not supported
+dropping mask in Quantity column 'mom_centr2_err': masked Quantity not supported
+dropping mask in Quantity column 'pos_corr1': masked Quantity not supported
+dropping mask in Quantity column 'pos_corr2': masked Quantity not supported
+5% (935/18126) of the cadences will be ignored due to the quality mask (quality_bitmask=175).
+6% (1046/17765) of the cadences will be ignored due to the quality mask (quality_bitmask=175).
+5% (954/19579) of the cadences will be ignored due to the quality mask (quality_bitmask=175).
+9% (1744/19279) of the cadences will be ignored due to the quality mask (quality_bitmask=175).
+7% (1360/19331) of the cadences will be ignored due to the quality mask (quality_bitmask=175).
+9% (1705/18896) of the cadences will be ignored due to the quality mask (quality_bitmask=175).
+Star info prepared.
+================================================
+STELLAR PROPERTIES
+================================================
+limb-darkening estimates using quadratic LD (a,b)= (0.4136, 0.1999)
+mass = 0.874000
+mass_min = 0.766329
+mass_max = 0.981671
+radius = 0.784618
+radius_min = 0.745322
+radius_max = 0.823914
+teff = 5165.240000
+lum = 0.394796
+logg = 4.590260
+================================================
+INITIAL FLUX CLEANING
+================================================
+Masking high RMS areas by a factor of 1.50 with 4.0 hours binning
+Applying Smooth phase (savgol)
+Minimum number of transits: 2
+================================================
+SECTORS/QUARTERS/CAMPAIGNS INFO
+================================================
+Sectors/Quarters/Campaigns : [16, 22, 23, 49, 50]
+================================================
+Detrend Window length / Kernel size
+================================================
+Using transit duration based WL or fixed KS
+wl/ks_min: 0.40
+wl/ks_max: 2.67
+================================================
+======================================
+Field Of View Plots
+======================================
+Preparing target pixel files for field of view plots
+9% (1705/18896) of the cadences will be ignored due to the quality mask (quality_bitmask=175).
+6% (1046/17765) of the cadences will be ignored due to the quality mask (quality_bitmask=175).
+9% (1744/19279) of the cadences will be ignored due to the quality mask (quality_bitmask=175).
+7% (1360/19331) of the cadences will be ignored due to the quality mask (quality_bitmask=175).
+5% (954/19579) of the cadences will be ignored due to the quality mask (quality_bitmask=175).
+Plotting FOV curves for sector 16
+Plotting FOV curves for sector 50
+Plotting FOV curves for sector 23
+Plotting FOV curves for sector 49
+Plotting FOV curves for sector 22
+    --> Using SHERLOCK aperture for sector 16...
+    --> Using SHERLOCK aperture for sector 50...
+    --> Using SHERLOCK aperture for sector 23...
+    --> Using SHERLOCK aperture for sector 49...
+    --> Using SHERLOCK aperture for sector 22...
+================================================
+SEARCH RUNS with period grid: [0.50 - 20.00] and length 123208
+================================================
+=================================
+MODELS IN THE DETRENDING
+=================================
+light_curve              Detrend_method   win/ker_size   RMS (ppm)  RMS_10min (ppm)
+PDCSAP_FLUX              ---              ---            639.29     282.06         
+flatten_lc & trend_lc 0  biweight         0.4011         607.29     218.05         
+flatten_lc & trend_lc 1  biweight         0.5904         611.58     228.66         
+flatten_lc & trend_lc 2  biweight         0.7798         613.84     234.17         
+flatten_lc & trend_lc 3  biweight         0.9692         614.35     235.38         
+flatten_lc & trend_lc 4  biweight         1.1586         616.31     239.96         
+flatten_lc & trend_lc 5  biweight         1.3480         617.75     243.45         
+flatten_lc & trend_lc 6  biweight         1.5374         618.99     246.74         
+flatten_lc & trend_lc 7  biweight         1.7268         619.77     247.91         
+flatten_lc & trend_lc 8  biweight         1.9161         620.01     248.47         
+flatten_lc & trend_lc 9  biweight         2.1055         620.64     250.27         
+flatten_lc & trend_lc 10 biweight         2.2949         621.24     251.68         
+flatten_lc & trend_lc 11 biweight         2.4843         621.71     252.94         
+________________________________ run 1________________________________
+=================================
+SEARCH OF SIGNALS - Run 1
+=================================
+win_size    Period      Per_err   N.Tran  Mean Depth (ppt)  T. dur (min)  T0            SNR         SDE         FAP           Border_score    Matching OI   Harmonic    Planet radius (R_Earth)  Rp/Rs     Semi-major axis   Habitability Zone   
+PDCSAP_FLUX 8.02168     0.000871  13      0.847             101.8         1741.5860     33.974      54.897      8.0032e-05    1.00            TOI 1798.01   -           2.49397                  0.02648   0.07512           I                   
+0.4011      8.02168     0.000871  13      0.625             101.8         1741.5860     26.046      46.416      8.0032e-05    1.00            TOI 1798.01   -           2.14238                  0.02200   0.07512           I                   
+0.5904      8.02168     0.000871  13      0.702             101.8         1741.5860     29.100      49.624      8.0032e-05    1.00            TOI 1798.01   -           2.26940                  0.02372   0.07512           I                   
+0.7798      8.02168     0.000871  13      0.736             101.8         1741.5860     30.405      50.236      8.0032e-05    1.00            TOI 1798.01   -           2.32385                  0.02446   0.07512           I                   
+0.9692      8.02168     0.000871  13      0.783             101.8         1741.5860     32.364      54.496      8.0032e-05    1.00            TOI 1798.01   -           2.39786                  0.02525   0.07512           I                   
+1.1586      8.02168     0.000871  13      0.809             101.8         1741.5860     33.343      54.641      8.0032e-05    1.00            TOI 1798.01   -           2.43687                  0.02578   0.07512           I                   
+1.3480      8.02168     0.000871  13      0.825             101.8         1741.5860     33.979      54.949      8.0032e-05    1.00            TOI 1798.01   -           2.46132                  0.02611   0.07512           I                   
+1.5374      8.02168     0.000871  13      0.838             101.8         1741.5860     34.430      54.711      8.0032e-05    1.00            TOI 1798.01   -           2.48082                  0.02634   0.07512           I                   
+1.7268      8.02168     0.001046  13      0.846             101.8         1741.5860     34.710      54.923      8.0032e-05    1.00            TOI 1798.01   -           2.49176                  0.02650   0.07512           I                   
+1.9161      8.02168     0.000871  13      0.856             101.8         1741.5860     35.131      56.044      8.0032e-05    1.00            TOI 1798.01   -           2.50721                  0.02666   0.07512           I                   
+2.1055      8.02168     0.000871  13      0.861             101.8         1741.5860     35.271      55.817      8.0032e-05    1.00            TOI 1798.01   -           2.51348                  0.02675   0.07512           I                   
+2.2949      8.02168     0.000871  13      0.867             101.8         1741.5860     35.522      56.190      8.0032e-05    1.00            TOI 1798.01   -           2.52338                  0.02685   0.07512           I                   
+2.4843      8.02168     0.001046  13      0.867             101.8         1741.5860     35.447      55.521      8.0032e-05    1.00            TOI 1798.01   -           2.52207                  0.02685   0.07512           I                   
+Elected signal with QUORUM algorithm from 13 VOTES --> NAME: 10	Period:8.021679912886635	CORR_SDE: 118.43171073589951	SNR: 35.52179679077901	SDE: 56.19022772141218	FAP: 8.0032e-05	BORDER_SCORE: 1.0
+Proposed selection with BASIC algorithm was --> NAME: 10	Period:8.021679912886635	SNR: 35.52179679077901
+New best signal is good enough to keep searching. Going to the next run.
+________________________________ run 2________________________________
+=================================
+SEARCH OF SIGNALS - Run 2
+=================================
+win_size    Period      Per_err   N.Tran  Mean Depth (ppt)  T. dur (min)  T0            SNR         SDE         FAP           Border_score    Matching OI   Harmonic    Planet radius (R_Earth)  Rp/Rs     Semi-major axis   Habitability Zone   
+PDCSAP_FLUX 0.87563     0.000055  118     0.246             51.2          1739.5119     20.948      34.557      8.0032e-05    0.99            nan           -           1.34309                  0.01332   0.01716           I                   
+0.4011      0.87563     0.000055  118     0.250             51.2          1739.5119     22.405      52.784      8.0032e-05    0.99            nan           -           1.35574                  0.01357   0.01716           I                   
+0.5904      0.87563     0.000055  118     0.259             51.2          1739.5119     22.983      47.121      8.0032e-05    0.99            nan           -           1.37895                  0.01387   0.01716           I                   
+0.7798      0.87563     0.000055  118     0.266             51.2          1739.5119     23.436      46.034      8.0032e-05    0.99            nan           -           1.39613                  0.01408   0.01716           I                   
+0.9692      0.87563     0.000055  118     0.245             51.2          1739.5119     21.590      39.714      8.0032e-05    0.99            nan           -           1.34058                  0.01335   0.01716           I                   
+1.1586      0.87563     0.000055  118     0.252             51.2          1739.5119     22.149      38.906      8.0032e-05    0.99            nan           -           1.36027                  0.01358   0.01716           I                   
+1.3480      0.87563     0.000055  118     0.255             51.2          1739.5119     22.374      36.892      8.0032e-05    0.99            nan           -           1.36851                  0.01370   0.01716           I                   
+1.5374      0.87563     0.000055  118     0.262             51.2          1739.5119     22.903      36.768      8.0032e-05    0.99            nan           -           1.38591                  0.01391   0.01716           I                   
+1.7268      0.87563     0.000055  118     0.259             51.2          1739.5119     22.631      34.401      8.0032e-05    0.99            nan           -           1.37845                  0.01378   0.01716           I                   
+1.9161      0.87563     0.000055  118     0.250             51.2          1739.5119     21.830      31.463      8.0032e-05    0.99            nan           -           1.35447                  0.01350   0.01716           I                   
+2.1055      0.87563     0.000055  118     0.254             51.2          1739.5119     22.199      31.491      8.0032e-05    0.99            nan           -           1.36673                  0.01365   0.01716           I                   
+2.2949      0.87563     0.000055  118     0.258             51.2          1739.5119     22.489      32.109      8.0032e-05    0.99            nan           -           1.37596                  0.01377   0.01716           I                   
+2.4843      0.87563     0.000055  118     0.261             51.2          1739.5119     22.751      32.259      8.0032e-05    0.99            nan           -           1.38496                  0.01388   0.01716           I                   
+Elected signal with QUORUM algorithm from 13 VOTES --> NAME: 0	Period:0.8756270836523702	CORR_SDE: 110.30955105676372	SNR: 22.405195372527107	SDE: 52.78397009204428	FAP: 8.0032e-05	BORDER_SCORE: 0.9915254237288136
+Proposed selection with BASIC algorithm was --> NAME: 0	Period:0.8756270836523702	SNR: 22.405195372527107
+New best signal is good enough to keep searching. Going to the next run.
+________________________________ run 3________________________________
+=================================
+SEARCH OF SIGNALS - Run 3
+=================================
+win_size    Period      Per_err   N.Tran  Mean Depth (ppt)  T. dur (min)  T0            SNR         SDE         FAP           Border_score    Matching OI   Harmonic    Planet radius (R_Earth)  Rp/Rs     Semi-major axis   Habitability Zone   
+PDCSAP_FLUX 14.79209    0.001971  3       0.088             862.6         1751.4453     3.532       158.143     8.0032e-05    0.00            nan           -           0.80427                  0.02012   0.11297           I                   
+0.4011      0.87563     0.000045  117     0.271             50.8          1739.0735     24.375      193.309     8.0032e-05    0.98            nan           1*SOI2      1.41017                  0.01372   0.01716           I                   
+0.5904      0.87563     0.000045  117     0.284             50.8          1739.0735     25.368      183.471     8.0032e-05    0.98            nan           1*SOI2      1.44307                  0.01415   0.01716           I                   
+0.7798      0.87563     0.000045  117     0.288             50.8          1739.0735     25.600      192.510     8.0032e-05    0.98            nan           1*SOI2      1.45277                  0.01427   0.01716           I                   
+0.9692      0.87563     0.000045  117     0.261             50.8          1739.0735     23.178      179.947     8.0032e-05    0.98            nan           1*SOI2      1.38345                  0.01332   0.01716           I                   
+1.1586      0.87563     0.000045  117     0.266             50.8          1739.0735     23.553      132.231     8.0032e-05    0.98            nan           1*SOI2      1.39756                  0.01350   0.01716           I                   
+1.3480      0.87563     0.000045  117     0.273             50.8          1739.0735     24.184      132.379     8.0032e-05    0.98            nan           1*SOI2      1.41688                  0.01376   0.01716           I                   
+1.5374      0.87563     0.000045  117     0.278             50.8          1739.0735     24.561      141.920     8.0032e-05    0.98            nan           1*SOI2      1.42865                  0.01391   0.01716           I                   
+1.7268      0.87563     0.000045  117     0.278             50.8          1739.0735     24.556      130.078     8.0032e-05    0.98            nan           1*SOI2      1.42890                  0.01390   0.01716           I                   
+1.9161      0.87563     0.000045  117     0.271             50.8          1739.0735     23.919      102.962     8.0032e-05    0.98            nan           1*SOI2      1.41093                  0.01368   0.01716           I                   
+2.1055      0.87563     0.000045  117     0.276             50.8          1739.0735     24.317      110.655     8.0032e-05    0.98            nan           1*SOI2      1.42297                  0.01384   0.01716           I                   
+2.2949      0.87563     0.000045  117     0.278             50.8          1739.0735     24.545      121.334     8.0032e-05    0.98            nan           1*SOI2      1.42975                  0.01393   0.01716           I                   
+2.4843      0.87563     0.000045  117     0.281             50.8          1739.0735     24.799      120.848     8.0032e-05    0.98            nan           1*SOI2      1.43750                  0.01404   0.01716           I                   
+Elected signal with QUORUM algorithm from 12 VOTES --> NAME: 0	Period:0.8756270836523702	CORR_SDE: 382.93150508637814	SNR: 24.375144253820455	SDE: 193.30860246809863	FAP: 8.0032e-05	BORDER_SCORE: 0.9829059829059829
+Proposed selection with BASIC algorithm was --> NAME: 0	Period:0.8756270836523702	SNR: 24.375144253820455
+New best signal is good enough to keep searching. Going to the next run.
+________________________________ run 4________________________________
+=================================
+SEARCH OF SIGNALS - Run 4
+=================================
+win_size    Period      Per_err   N.Tran  Mean Depth (ppt)  T. dur (min)  T0            SNR         SDE         FAP           Border_score    Matching OI   Harmonic    Planet radius (R_Earth)  Rp/Rs     Semi-major axis   Habitability Zone   
+PDCSAP_FLUX nan         -9.749788 nan     nan               nan           0.0000        nan         0.000       nan           0.00            nan           -           nan                      nan       nan               -                   
+0.4011      nan         -9.749788 nan     nan               nan           0.0000        nan         0.000       nan           0.00            nan           -           nan                      nan       nan               -                   
+0.5904      nan         -9.749788 nan     nan               nan           0.0000        nan         0.000       nan           0.00            nan           -           nan                      nan       nan               -                   
+0.7798      nan         -9.749788 nan     nan               nan           0.0000        nan         0.000       nan           0.00            nan           -           nan                      nan       nan               -                   
+0.9692      nan         -9.749788 nan     nan               nan           0.0000        nan         0.000       nan           0.00            nan           -           nan                      nan       nan               -                   
+1.1586      nan         -9.749788 nan     nan               nan           0.0000        nan         0.000       nan           0.00            nan           -           nan                      nan       nan               -                   
+1.3480      nan         -9.749788 nan     nan               nan           0.0000        nan         0.000       nan           0.00            nan           -           nan                      nan       nan               -                   
+1.5374      nan         -9.749788 nan     nan               nan           0.0000        nan         0.000       nan           0.00            nan           -           nan                      nan       nan               -                   
+1.7268      19.12339    0.001110  6       0.415             133.8         1747.0102     13.356      351.011     8.0032e-05    0.83            nan           -           1.74641                  0.02084   0.13406           I                   
+1.9161      19.12339    0.001110  6       0.412             133.8         1747.0102     13.287      285.781     8.0032e-05    0.83            nan           -           1.73820                  0.02083   0.13406           I                   
+2.1055      19.12339    0.001110  6       0.405             133.8         1747.0102     13.097      350.962     8.0032e-05    0.83            nan           -           1.72525                  0.02069   0.13406           I                   
+2.2949      19.12339    0.001110  6       0.401             133.8         1747.0102     12.931      351.011     8.0032e-05    0.83            nan           -           1.71523                  0.02056   0.13406           I                   
+2.4843      nan         -9.749788 nan     nan               nan           0.0000        nan         0.000       nan           0.00            nan           -           nan                      nan       nan               -                   
+Elected signal with QUORUM algorithm from 4 VOTES --> NAME: 7	Period:19.123394593311595	CORR_SDE: 373.51212301944247	SNR: 13.356395837142067	SDE: 351.0113927170664	FAP: 8.0032e-05	BORDER_SCORE: 0.8333333333333334
+Proposed selection with BASIC algorithm was --> NAME: 7	Period:19.123394593311595	SNR: 13.356395837142067
+New best signal is good enough to keep searching. Going to the next run.
+Max runs limit of 4 is reached. Stopping.
