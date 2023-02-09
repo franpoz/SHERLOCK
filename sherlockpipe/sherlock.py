@@ -297,7 +297,8 @@ class Sherlock:
                     object_report["transits"] = ""
                 object_report["sectors"] = ','.join(map(str, lc_build.sectors)) \
                     if lc_build.sectors is not None and len(lc_build.sectors) > 0 else None
-                object_report["oi"] = self.__find_matching_oi(sherlock_target.object_info, object_report["period"])
+                object_report["oi"] = self.__find_matching_oi(sherlock_target.object_info, object_report["period"],
+                                                              object_report['t0'])
                 if best_signal_score == 1:
                     logging.info('New best signal is good enough to keep searching. Going to the next run.')
                     time, lcs = self.__apply_mask_from_transit_results(sherlock_target, time, lcs, transit_results,
@@ -505,22 +506,16 @@ class Sherlock:
         logging.info('================================================')
         if sherlock_target.detrend_l_min is not None and sherlock_target.detrend_l_max is not None:
             logging.info("Using user input WL / KS")
-            if sherlock_target.detrend_method == 'gp':
-                self.wl_min[sherlock_id] = sherlock_target.detrend_l_min
-                self.wl_max[sherlock_id] = sherlock_target.detrend_l_max
-            else:
-                self.wl_min[sherlock_id] = sherlock_target.detrend_l_min
-                self.wl_max[sherlock_id] = sherlock_target.detrend_l_max
+            self.wl_min[sherlock_id] = sherlock_target.detrend_l_min
+            self.wl_max[sherlock_id] = sherlock_target.detrend_l_max
         else:
             logging.info("Using transit duration based WL or fixed KS")
-            transit_duration = wotan.t14(R_s=lc_build.star_info.radius, M_s=lc_build.star_info.mass,
-                                         P=sherlock_target.period_protect, small_planet=True)
-            if sherlock_target.detrend_method == 'gp':
-                self.wl_min[sherlock_id] = 3 * transit_duration
-                self.wl_max[sherlock_id] = 20 * transit_duration
-            else:
-                self.wl_min[sherlock_id] = 3 * transit_duration  # minimum transit duration
-                self.wl_max[sherlock_id] = 20 * transit_duration  # maximum transit duration
+            min_transit_duration = wotan.t14(R_s=lc_build.star_info.radius, M_s=lc_build.star_info.mass,
+                                             P=sherlock_target.period_min, small_planet=True)
+            max_transit_duration = wotan.t14(R_s=lc_build.star_info.radius, M_s=lc_build.star_info.mass,
+                                             P=sherlock_target.period_max, small_planet=False)
+            self.wl_min[sherlock_id] = 4 * min_transit_duration
+            self.wl_max[sherlock_id] = 8 * max_transit_duration
         logging.info("wl/ks_min: %.2f", self.wl_min[sherlock_id])
         logging.info("wl/ks_max: %.2f", self.wl_max[sherlock_id])
         logging.info('================================================')
@@ -676,7 +671,7 @@ class Sherlock:
             rp_rs = transit_result.results.rp_rs
             a, habitability_zone = self.habitability_calculator \
                 .calculate_hz_score(star_info.teff, star_info.mass, star_info.lum, transit_result.period)
-            oi = self.__find_matching_oi(object_info, transit_result.period)
+            oi = self.__find_matching_oi(object_info, transit_result.period, transit_result.t0)
             logging.info('%-12s%-12.5f%-10.6f%-8s%-18.3f%-14.1f%-14.4f%-12.3f%-12.3f%-16.2f%-14s%-12s%-25.5f%-10.5f%-18.5f%-20s',
                          "PDCSAP_FLUX", transit_result.period,
                          transit_result.per_err, transit_result.count, transit_result.depth,
@@ -703,7 +698,7 @@ class Sherlock:
             rp_rs = transit_result.results.rp_rs
             a, habitability_zone = self.habitability_calculator \
                 .calculate_hz_score(star_info.teff, star_info.mass, star_info.lum, transit_result.period)
-            oi = self.__find_matching_oi(object_info, transit_result.period)
+            oi = self.__find_matching_oi(object_info, transit_result.period, transit_result.t0)
             logging.info('%-12.4f%-12.5f%-10.6f%-8s%-18.3f%-14.1f%-14.4f%-12.3f%-12.3f%-16.2f%-14s%-12s%-25.5f%-10.5f%-18.5f%-20s',
                          wl[i], transit_result.period,
                      transit_result.per_err, transit_result.count, transit_result.depth,
@@ -724,11 +719,14 @@ class Sherlock:
                               id_run, sherlock_target.use_harmonics_spectra)
         return transit_results
 
-    def __find_matching_oi(self, object_info, period):
+    def __find_matching_oi(self, object_info, period, epoch):
         if self.ois is not None:
+            mission, mission_id, target_id = LcBuilder().parse_object_info(object_info.mission_id())
+            corrected_epoch = LcbuilderHelper.normalize_mission_epoch(mission, epoch)
             existing_period_in_object = self.ois[(self.ois["Object Id"] == object_info.mission_id()) &
-                                                 (0.95 < self.ois["Period (days)"] / period) &
-                                                 (self.ois["Period (days)"] / period < 1.05)]
+                                                 (0.99 < self.ois["Period (days)"] / period) &
+                                                 (self.ois["Period (days)"] / period < 1.01) &
+                                                 (np.abs(self.ois['Epoch (BJD)'] - corrected_epoch) / period < 0.02)]
             existing_period_in_oi = existing_period_in_object[existing_period_in_object["OI"].notnull()]
             oi = existing_period_in_oi["OI"].iloc[0] if len(
                 existing_period_in_oi.index) > 0 else np.nan
