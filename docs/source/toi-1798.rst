@@ -4,7 +4,7 @@
    contain the root `toctree` directive.
 
 =============================================
-TOI 175: Search & Vetting
+TOI 1798: Search & Vetting
 =============================================
 
 We will show the `sherlock` capabilities when searching for and vetting promising candidates in the next subsections.
