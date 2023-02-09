@@ -726,7 +726,7 @@ class Sherlock:
             existing_period_in_object = self.ois[(self.ois["Object Id"] == object_info.mission_id()) &
                                                  (0.99 < self.ois["Period (days)"] / period) &
                                                  (self.ois["Period (days)"] / period < 1.01) &
-                                                 (np.abs(self.ois['Epoch (BJD)'] - corrected_epoch) / period < 0.02)]
+                                                 (np.abs(self.ois['Epoch (BJD)'] - corrected_epoch) / period < 0.05)]
             existing_period_in_oi = existing_period_in_object[existing_period_in_object["OI"].notnull()]
             oi = existing_period_in_oi["OI"].iloc[0] if len(
                 existing_period_in_oi.index) > 0 else np.nan
