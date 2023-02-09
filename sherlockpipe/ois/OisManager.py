@@ -148,7 +148,6 @@ class OisManager:
         epic_csv.close()
         epic_data = pd.read_csv(self.epic_csv)
         epic_data['pl_trandep'] = epic_data['pl_trandep'].astype(float) * 1000000
-        epic_data['pl_tranmid'] = epic_data['pl_tranmid'].astype(float) - epic_data['pl_trandur'].astype(float) / 2
         epic_data['ra'] = epic_data['ra'].astype(str).replace("h", ":").replace("m", ":").replace("s", "")
         epic_data['dec'] = epic_data['dec'].astype(str).replace("d", ":").replace("m", ":").replace("s", "")
         epic_data[epic_data['disposition'] == "CANDIDATE"]['disposition'] = "PC"
