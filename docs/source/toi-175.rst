@@ -7,7 +7,7 @@
 TOI 175: Search & Vetting
 =============================================
 
-We will show the `sherlock` capabilities when searching for and vetting promising candidates in the next subsections.
+We will show the `sherlock` capabilities when searching for and vetting promising candidates for TOI 175.
 
 .. toctree::
    :maxdepth: 1

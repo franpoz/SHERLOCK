@@ -7,7 +7,7 @@
 TOI 1798: Search & Vetting
 =============================================
 
-We will show the `sherlock` capabilities when searching for and vetting promising candidates in the next subsections.
+We will show the `sherlock` capabilities when searching for, vetting and validating promising candidates for TOI 1798.
 
 .. toctree::
    :maxdepth: 1
