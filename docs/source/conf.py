@@ -3,6 +3,8 @@
 # This file only contains a selection of the most common options. For a full
 # list see the documentation:
 # https://www.sphinx-doc.org/en/master/usage/configuration.html
+import os
+import sys
 
 # -- Path setup --------------------------------------------------------------
 
@@ -18,16 +20,23 @@ import sphinx_rtd_theme
 # -- Project information -----------------------------------------------------
 
 project = 'SHERLOCK PIPEline'
-copyright = '2021, Francisco J. Pozuelos & Martín Dévora-Pajares'
-author = 'Francisco J. Pozuelos & Martín Dévora-Pajares'
+copyright = '2021, Martín Dévora-Pajares & Francisco J. Pozuelos'
+author = ' Martín Dévora-Pajares & Francisco J. Pozuelos'
+
+sys.path.insert(0, os.path.abspath('../../'))
 
 # The full version, including alpha/beta/rc tags
 release = '0.26.0'
 extensions = [
     "sphinxcontrib.mermaid",
     "sphinx_rtd_theme",
-    "myst_nb"
+    "myst_nb",
+    'sphinx.ext.autodoc',
+    'sphinx.ext.autosummary',
 ]
+
+autosummary_generate = True  # Turn on sphinx.ext.autosummary
+#autosummary_imported_members = True
 
 nb_execution_mode = "off"
 
