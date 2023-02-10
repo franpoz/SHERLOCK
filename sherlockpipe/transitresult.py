@@ -1,4 +1,7 @@
 class TransitResult:
+    """
+    Attributes-only class to store the results of transit search from :class:`sherlockpipe.sherlock.Sherlock`
+    """
     def __init__(self, power_args, results, period, per_err, duration,
                  t0, t0s, depths, depths_err, depth, odd_even_mismatch, depth_mean_even, depth_mean_odd, count, snr,
                  sde, fap, border_score, in_transit, harmonic=None, harmonic_spectrum=None):

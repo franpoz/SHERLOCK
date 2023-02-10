@@ -192,4 +192,4 @@ def run_stability(args):
 
 if __name__ == '__main__':
     args = stability_args_parse()
-    run_stability()
+    run_stability(args)

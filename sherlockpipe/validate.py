@@ -32,6 +32,8 @@ class Validator(ToolWithCandidate):
 
     def validate(self, candidate, star, cpus, contrast_curve_file, bins=100, scenarios=5, sigma_mode="flux_err"):
         """
+        Runs the validation storing a PDF report with the results together to some csvs for reproducibility.
+
         :param candidate: a candidate dataframe containing TICID, period, duration, t0, transits, depth, rp_rs, number,
         curve and sectors data.
         :param star: the star dataframe.
@@ -115,6 +117,7 @@ class Validator(ToolWithCandidate):
         NFPP = NTP + NEB + NEBx2P
         Giacalone & Dressing (2020) define validated planets as TOIs with NFPP < 10−3 and FPP < 0.015 (or FPP ≤ 0.01,
         when rounding to the nearest percent)
+
         :param cpus: number of cpus to be used
         :param indir: root directory to store the results
         :param id_int: the object id for which the analysis will be run
@@ -294,11 +297,18 @@ class Validator(ToolWithCandidate):
         logging.info("FPP3+(Lissauer et al, 2012)=%s", fpp3_sum)
         return save_dir
 
-    def is_candidate_aware(self):
-        return self.is_candidate_from_search
-
     @staticmethod
     def plot_triceratops_output(fpp, nfpp, fpp_err, nfpp_err, target_dir):
+        """
+        Given the TRICERATOPS informed FPP and NFPP, creates a plot with the information and the FP and Likely Planet
+        thresholds
+
+        :param fpp: the False Positive Probability
+        :param nfpp: the Nearby False Positive Probability
+        :param fpp_err: the False Positive Probability Error
+        :param nfpp_err: the Nearby False Positive Probability Error
+        :param target_dir: directory to store the plot
+        """
         min_fpp = 0.000001
         likely = (0.5, 0.001)
         likely_nfpp = 0.1
@@ -327,6 +337,13 @@ class Validator(ToolWithCandidate):
 
     @staticmethod
     def probs_without_scenarios(csv_file, no_scenarios):
+        """
+        Helper method to re-compute the probabilities removing the given scenarios.
+
+        :param csv_file: the csv file with all the scenarios probabilities
+        :param no_scenarios: the scenarios to be removed from the calculation of probabilities
+        :return: the new fpp, nfpp, fpp2, fpp3 and the filtered scenarios dataframe.
+        """
         scenarios_df = pd.read_csv(csv_file)
         scenarios_prob = scenarios_df['prob'].sum()
         filtered_scenarios_df = scenarios_df.loc[~scenarios_df['scenario'].isin(no_scenarios)]
@@ -513,6 +530,7 @@ class TriceratopsThreadValidator:
         Computes the input scenario FPP and NFPP. In addition, FPP2 and FPP3+, from the probability boost proposed in
         Lissauer et al. (2012) eq. 8 and 9 for systems where one or more planets have already been confirmed, are also
         provided just in case they are useful so they don't need to be manually calculated.
+
         :param input: ValidatorInput
         :return: the FPP values, the probabilities dataframe and additional target values.
         """

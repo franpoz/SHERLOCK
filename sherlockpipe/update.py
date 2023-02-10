@@ -22,6 +22,7 @@ class Updater:
     def update(self, clean, ois, force):
         """
         The main method of the update task. Reloads OIs, ELEANOR and LATTE metadata.
+
         :param clean: Specifies whether the ELEANOR data should be wiped and downloaded again.
         :param ois: Specifies whether the OIs metadata is the only one to be refreshed (ignoring ELEANOR and LATTE)
         :param force: Specifies whether the last download timestamp should be ignored and proceed as if a refresh was
