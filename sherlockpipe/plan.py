@@ -45,10 +45,10 @@ class MoonIlluminationSeparationConstraint(Constraint):
         Computes the observability of the moon given a minimum distance to the moon between self.min_dist (for
         illumination = 0) and self.max_dist (for illumination = 1) by interpolating an intermediate distance from those
         two values following a linear regression.
-        @param times: the times to compute the constraint for
-        @param observer: the observer to compute the constraint for
-        @param targets: the list of targets to compute the constraint for
-        @return: the positive mask for target being observable for the given times and observer given the constraint
+        :param times: the times to compute the constraint for
+        :param observer: the observer to compute the constraint for
+        :param targets: the list of targets to compute the constraint for
+        :return: the positive mask for target being observable for the given times and observer given the constraint
         is matched
         """
         # removed the location argument here, which causes small <1 deg
@@ -70,8 +70,8 @@ def get_twin(ax):
     """
     Retrieves a twin Y axis for a given matplotlib axis. This is useful when we have two axes one placed at each side
     of the plot.
-    @param ax: the known matplotlib axis.
-    @return: the twin axis.
+    :param ax: the known matplotlib axis.
+    :return: the twin axis.
     """
     for other_ax in ax.figure.axes:
         if other_ax is ax:
@@ -101,32 +101,32 @@ def create_observation_observables(object_id, object_dir, since, name, epoch, ep
                                    error_alert=True, time_unit='jd'):
     """
 
-    @param object_id: the candidate id
-    @param object_dir: the candidate directory
-    @param since: starting plan date
-    @param name: the name given to the candidate
-    @param epoch: the candidate epoch
-    @param epoch_low_err: the candidate epoch's lower error
-    @param epoch_up_err: the candidate epoch's upper error
-    @param period: the candidate period
-    @param period_low_err: the candidate period's lower error
-    @param period_up_err: the candidate period's upper error
-    @param duration: the candidate duration
-    @param observatories_file: the file containing the observatories file (csv format)
-    @param timezone: the timezone of the observatory (if observatories_file=None)
-    @param latitude: the latitude of the observatory (if observatories_file=None)
-    @param longitude: the longitude of the observatory (if observatories_file=None)
-    @param altitude: the altitude of the observatory (if observatories_file=None)
-    @param max_days: the maximum number of days to compute the observables
-    @param min_altitude: the minimum altitude of the target above the horizon
-    @param moon_min_dist: the minimum moon distance for moon illumination = 0
-    @param moon_max_dist: the minimum moon distance for moon illumination = 1
-    @param transit_fraction: the minimum transit observability (0.25 for at least ingress/egress, 0.5 for ingress/egress
+    :param object_id: the candidate id
+    :param object_dir: the candidate directory
+    :param since: starting plan date
+    :param name: the name given to the candidate
+    :param epoch: the candidate epoch
+    :param epoch_low_err: the candidate epoch's lower error
+    :param epoch_up_err: the candidate epoch's upper error
+    :param period: the candidate period
+    :param period_low_err: the candidate period's lower error
+    :param period_up_err: the candidate period's upper error
+    :param duration: the candidate duration
+    :param observatories_file: the file containing the observatories file (csv format)
+    :param timezone: the timezone of the observatory (if observatories_file=None)
+    :param latitude: the latitude of the observatory (if observatories_file=None)
+    :param longitude: the longitude of the observatory (if observatories_file=None)
+    :param altitude: the altitude of the observatory (if observatories_file=None)
+    :param max_days: the maximum number of days to compute the observables
+    :param min_altitude: the minimum altitude of the target above the horizon
+    :param moon_min_dist: the minimum moon distance for moon illumination = 0
+    :param moon_max_dist: the minimum moon distance for moon illumination = 1
+    :param transit_fraction: the minimum transit observability (0.25 for at least ingress/egress, 0.5 for ingress/egress
     + midtime, 1 for ingress, egress and midtime).
-    @param baseline: the required baseline in hours.
-    @param error_alert: whether to create the alert date to signal imprecise observations
-    @param time_unit: the unit of the light curve data
-    @return: the generated data and target folders
+    :param baseline: the required baseline in hours.
+    :param error_alert: whether to create the alert date to signal imprecise observations
+    :param time_unit: the unit of the light curve data
+    :return: the generated data and target folders
     """
     if observatories_file is not None:
         observatories_df = pd.read_csv(observatories_file, comment='#')

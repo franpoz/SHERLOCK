@@ -11,12 +11,12 @@ class SignalSelector(ABC):
     @abstractmethod
     def select(self, id_run, sherlock_target, star_info, transits_min_count, time, lcs, transit_results, wl, cadence):
         """
-        @param transit_result_detrends: a list of transit results to be explored.
-        @param snr_min: the minimum snr to allow a signal to be considered good enough.
-        @param sde_min: the minimum sde to allow a signal to be considered good enough.
-        @param detrend_method: the detrend method used to obtain the candidate transit results
-        @param wl: the window length used by the detrend method used.
-        @return a SignalSelection with the parameters that characterize the best selection.
+        :param transit_result_detrends: a list of transit results to be explored.
+        :param snr_min: the minimum snr to allow a signal to be considered good enough.
+        :param sde_min: the minimum sde to allow a signal to be considered good enough.
+        :param detrend_method: the detrend method used to obtain the candidate transit results
+        :param wl: the window length used by the detrend method used.
+        :return: a SignalSelection with the parameters that characterize the best selection.
         """
         pass
 

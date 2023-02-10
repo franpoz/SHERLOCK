@@ -58,7 +58,7 @@ class ObservationReport:
     def df_manipulations(self):
         """
         Performs changes of data from the initial dataframe for better formatting in the report.
-        @return: the final dataframe
+        :return: the final dataframe
         """
         self.df['Observatory'] = self.df['observatory'].str.replace("-", " ")
         self.df['TZ'] = self.df['timezone'].fillna(0).astype('int')
@@ -133,8 +133,8 @@ class ObservationReport:
     def create_header(self, canvas, doc):
         """
         Initializes the common header for all the pages.
-        @param canvas: the report canvas
-        @param doc: the report document
+        :param canvas: the report canvas
+        :param doc: the report document
         """
         canvas.saveState()
         canvas.drawImage(self.LOGO_IMAGE, x=0, y=26.8 * cm, height=2.7 * cm, width=2.7 * cm, preserveAspectRatio=True)
@@ -154,8 +154,8 @@ class ObservationReport:
     def create_footer(self, canvas, doc):
         """
         Initializes the common footer for all the pages
-        @param canvas: the report canvas
-        @param doc: the report document
+        :param canvas: the report canvas
+        :param doc: the report document
         """
         canvas.saveState()
         # if doc.page == 1:

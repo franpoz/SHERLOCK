@@ -26,8 +26,8 @@ class StabilityCalculator(ABC):
         """
         Computation of mass-radius relationship from
         Bashi D., Helled R., Zucker S., Mordasini C., 2017, A&A, 604, A83. doi:10.1051/0004-6361/201629922
-        @param radius: the radius value in earth radius
-        @return: the mass in earth masses
+        :param radius: the radius value in earth radius
+        :return: the mass in earth masses
         """
         return radius ** (1 / 0.55) if radius <= 12.1 else radius ** (1 / 0.01)
 
@@ -35,10 +35,10 @@ class StabilityCalculator(ABC):
     def prepare_star_masses(star_mass_low, star_mass_up, star_mass_bins):
         """
         Creates a star masses grid
-        @param star_mass_low: the lowest star mass value
-        @param star_mass_up: the highest star mass value
-        @param star_mass_bins: the number of star masses to sample. It will be ignored if star_mass_low == star_mass_up.
-        @return: the star masses grid
+        :param star_mass_low: the lowest star mass value
+        :param star_mass_up: the highest star mass value
+        :param star_mass_bins: the number of star masses to sample. It will be ignored if star_mass_low == star_mass_up.
+        :return: the star masses grid
         """
         return np.linspace(star_mass_low, star_mass_up, star_mass_bins) if star_mass_low != star_mass_up \
             else np.linspace(star_mass_low, star_mass_up, 1)
@@ -47,8 +47,8 @@ class StabilityCalculator(ABC):
     def prepare_planet_params(planet_params):
         """
         Fills the planet masses if missing
-        @param planet_params: the planet inputs
-        @return: the planet inputs with the filled masses
+        :param planet_params: the planet inputs
+        :return: the planet inputs with the filled masses
         """
         for planet_param in planet_params:
             if planet_param.radius is None and (planet_param.mass_low_err is None or planet_param.mass_low_err is None):
@@ -63,8 +63,8 @@ class StabilityCalculator(ABC):
     def init_rebound_simulation(self, simulation_input):
         """
         Initializes the simulation for rebound-based algorithms
-        @param simulation_input: the input data for the simulation scenario
-        @return: the rebound initialized simulation scenario
+        :param simulation_input: the input data for the simulation scenario
+        :return: the rebound initialized simulation scenario
         """
         sim = rebound.Simulation()
         sim.units = ('yr', 'AU', 'Msun')
@@ -89,13 +89,13 @@ class StabilityCalculator(ABC):
         """
         Creates possible scenarios of stellar masses, planet masses and planet eccentricities. Afterwards a stability
         analysis is run for each of the scenarios and the results are stored in a file.
-        @param results_dir: the directory where the results will be written into
-        @param star_mass_low: the lowest star mass
-        @param star_mass_up: the highest star mass
-        @param star_mass_bins: the number of star masses to sample
-        @param planet_params: the planet inputs containing the planets parameters
-        @param cpus: the number of cpus to be used
-        @param free_params: the parameters to be sampled entirely
+        :param results_dir: the directory where the results will be written into
+        :param star_mass_low: the lowest star mass
+        :param star_mass_up: the highest star mass
+        :param star_mass_bins: the number of star masses to sample
+        :param planet_params: the planet inputs containing the planets parameters
+        :param cpus: the number of cpus to be used
+        :param free_params: the parameters to be sampled entirely
         """
         if free_params is None:
             free_params = []
@@ -196,7 +196,7 @@ class StabilityCalculator(ABC):
     def run_simulation(self, simulation_input):
         """
         Runs one stability scenario
-        @param simulation_input: the simulation scenario parameters
+        :param simulation_input: the simulation scenario parameters
         """
         pass
 
@@ -204,8 +204,8 @@ class StabilityCalculator(ABC):
     def store_simulation_results(self, simulation_results, results_dir):
         """
         Writes into disk all the final simulation results
-        @param simulation_results: the results of the simulation for all the scenarios
-        @param results_dir: the output directory where results will be written into
+        :param simulation_results: the results of the simulation for all the scenarios
+        :param results_dir: the output directory where results will be written into
         """
         pass
 

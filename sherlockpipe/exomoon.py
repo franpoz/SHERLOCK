@@ -65,11 +65,11 @@ class ExoMoonLeastSquares:
     @staticmethod
     def compute_hill_radius(major_mass, minor_mass, semimajor_axis, eccentricity=0):
         """
-        @param major_mass: The main body mass
-        @param minor_mass: The minor body mass
-        @param semimajor_axis: The minor body semimajor axis in AU.
-        @param eccentricity: the planet eccentricity
-        @return: the hill radius of the minor body in the same units than the semimajor_axis
+        :param major_mass: The main body mass
+        :param minor_mass: The minor body mass
+        :param semimajor_axis: The minor body semimajor axis in AU.
+        :param eccentricity: the planet eccentricity
+        :return: the hill radius of the minor body in the same units than the semimajor_axis
         """
         return AU_TO_RSUN * semimajor_axis * (1 - eccentricity) * (minor_mass / (3 * major_mass) ** (1 / 3))
 
@@ -77,9 +77,9 @@ class ExoMoonLeastSquares:
     def au_to_period(mass, au):
         """
         Calculates the orbital period for the semi-major axis assuming a circular orbit.
-        @param mass: the stellar mass
-        @param au: the semi-major axis in astronomical units.
-        @return: the period in days
+        :param mass: the stellar mass
+        :param au: the semi-major axis in astronomical units.
+        :return: the period in days
         """
         mass_kg = mass * 2.e30
         a = au * 1.496e11
@@ -91,12 +91,12 @@ class ExoMoonLeastSquares:
                                  impact_parameter=0):
         """
 
-        @param star_radius: star radius
-        @param transiting_body_semimajor_axis: orbit semimajor axis
-        @param transit_period: in days
-        @param transiting_body_radius: transiting body radius
-        @param impact_parameter:
-        @return:
+        :param star_radius: star radius
+        :param transiting_body_semimajor_axis: orbit semimajor axis
+        :param transit_period: in days
+        :param transiting_body_radius: transiting body radius
+        :param impact_parameter:
+        :return:
         @rtype:
         """
         return transit_period / np.pi * np.arcsin(np.sqrt((star_radius + transiting_body_radius) ** 2 - (impact_parameter * star_radius) ** 2) / transiting_body_semimajor_axis)
