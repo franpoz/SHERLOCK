@@ -69,6 +69,7 @@ class Sherlock:
         Initializes a Sherlock object, loading the OIs from the csvs, setting up the detrend and transit configurations,
         storing the provided object_infos list and initializing the builders to be used to prepare the light curves for
         the provided object_infos.
+
         :param update_ois: Flag to signal SHERLOCK for updating the TOIs, KOIs and EPICs
         :param sherlock_targets: a list of objects information to be analysed
         :param explore: whether to only run the prepare stage for all objects
@@ -86,6 +87,7 @@ class Sherlock:
     def setup_files(self, refresh_ois, refresh_force, refresh_clean, results_dir=RESULTS_DIR):
         """
         Loads the objects of interest data from the downloaded CSVs.
+
         :param refresh_ois: Flag update the TOIs, KOIs and EPICs
         :param results_dir: Stores the directory to be used for the execution.
         :return: the Sherlock object itself
@@ -97,6 +99,7 @@ class Sherlock:
     def refresh_ois(self):
         """
         Downloads the TOIs, KOIs and EPIC OIs into csv files.
+
         :return: the Sherlock object itself
         """
         self.ois_manager.update_tic_csvs()
@@ -107,6 +110,7 @@ class Sherlock:
     def load_ois(self, refresh_ois, refresh_force, refresh_clean):
         """
         Loads the csv OIs files into memory
+
         :return: the Sherlock object itself
         """
         Updater(self.cache_dir).update(refresh_clean, refresh_ois, refresh_force)
@@ -117,6 +121,7 @@ class Sherlock:
         """
         Filters the in-memory OIs given some basic filters associated to hot jupiters properties. This method is added
         as an example
+
         :return: the Sherlock object itself
         """
         self.use_ois = True
@@ -136,6 +141,7 @@ class Sherlock:
         """
         Filters the in-memory OIs given some basic filters associated to multiplanet targets. This method is added
         as an example
+
         :return: the Sherlock object itself
         """
         self.use_ois = True
@@ -153,6 +159,7 @@ class Sherlock:
         """
         Filters the in-memory OIs given some basic filters associated to big and long-period targets. This method is added
         as an example
+
         :return: the Sherlock object itself
         """
         self.use_ois = True
@@ -180,8 +187,9 @@ class Sherlock:
     def limit_ois(self, offset=0, limit=0):
         """
         Limits the in-memory loaded OIs given an offset and a limit (like a pagination)
-        :param offset:
-        :param limit:
+
+        :param offset: the position where the subset must start
+        :param limit: maximum number of ois to be returned
         :return: the Sherlock object itself
         """
         if limit == 0:
@@ -205,6 +213,7 @@ class Sherlock:
     def __run_object(self, sherlock_target):
         """
         Performs the analysis for one object_info
+
         :param sherlock_target: The object to be analysed.
         """
         sherlock_id = sherlock_target.object_info.sherlock_id()

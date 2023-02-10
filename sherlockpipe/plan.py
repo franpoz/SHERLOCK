@@ -45,6 +45,7 @@ class MoonIlluminationSeparationConstraint(Constraint):
         Computes the observability of the moon given a minimum distance to the moon between self.min_dist (for
         illumination = 0) and self.max_dist (for illumination = 1) by interpolating an intermediate distance from those
         two values following a linear regression.
+
         :param times: the times to compute the constraint for
         :param observer: the observer to compute the constraint for
         :param targets: the list of targets to compute the constraint for
@@ -70,6 +71,7 @@ def get_twin(ax):
     """
     Retrieves a twin Y axis for a given matplotlib axis. This is useful when we have two axes one placed at each side
     of the plot.
+
     :param ax: the known matplotlib axis.
     :return: the twin axis.
     """
@@ -83,7 +85,11 @@ def get_twin(ax):
 
 def get_offset(lat, lng, datetime):
     """
-    returns a location's time zone offset from UTC in minutes.
+    Returns a location's time zone offset from UTC in minutes.
+
+    :param lat: geographical latitude
+    :param lng: geographical longitude
+    :param datetime: the UTC time
     """
     tf = TimezoneFinder()
     tz_target = timezone(tf.certain_timezone_at(lng=lng, lat=lat))
@@ -100,6 +106,7 @@ def create_observation_observables(object_id, object_dir, since, name, epoch, ep
                                    max_days, min_altitude, moon_min_dist, moon_max_dist, transit_fraction, baseline,
                                    error_alert=True, time_unit='jd'):
     """
+    Computes the observation windows for the given target parameters.
 
     :param object_id: the candidate id
     :param object_dir: the candidate directory
@@ -126,7 +133,11 @@ def create_observation_observables(object_id, object_dir, since, name, epoch, ep
     :param baseline: the required baseline in hours.
     :param error_alert: whether to create the alert date to signal imprecise observations
     :param time_unit: the unit of the light curve data
-    :return: the generated data and target folders
+    :return: the generated data and target folders observatories_df, observables_df, alert_date, plan_dir, images_dir
+    :return: observatories_df containing the observatories used for the computation
+    :return: observables_df containing all the observation windows that passed the plan
+    :return: alert_date in case the plan reached a date where the observation uncertainty was too high
+    :return: images_dir the directory where images are stored
     """
     if observatories_file is not None:
         observatories_df = pd.read_csv(observatories_file, comment='#')

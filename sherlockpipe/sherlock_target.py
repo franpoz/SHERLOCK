@@ -15,6 +15,9 @@ from sherlockpipe.search_zones.OptimisticHabitableSearchZone import OptimisticHa
 
 
 class SherlockTarget:
+    """
+    Used as input for :class:`sherlockpipe.sherlock.Sherlock`:
+    """
     MASK_MODES = ['mask', 'subtract']
     VALID_SIGNAL_SELECTORS = ["basic", "border-correct", "quorum", "basic-snr", "border-correct-snr", "quorum-snr",
                               'average-spectrum']

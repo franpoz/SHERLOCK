@@ -37,6 +37,7 @@ class Fitter(ToolWithCandidate):
     def fit(self, candidate_df, star_df, cpus, allesfit_dir, tolerance, fit_orbit):
         """
         Main method to run the allesfitter fit.
+
         :param candidate_df: the candidates dataframe.
         :param star_df: the star dataframe.
         :param cpus: the number of cpus to be used.
@@ -119,6 +120,7 @@ class Fitter(ToolWithCandidate):
         Chooses the lightcurve file to be used for the fit. If the number of candidates is greater than 1, it will use
         the PDCSAP_flux by default. If only one candidate is used, the candidate is fit against its better Sherlock
         detrend.
+
         :param candidate_df: the candidate dataframe
         :return: the lightcurve file path to be used.
         """
@@ -133,6 +135,7 @@ class Fitter(ToolWithCandidate):
     def select_fit_width(candidate_df):
         """
         Calculates the window to be used for the fit around the transits.
+
         :param candidate_df: the candidates dataframe
         :return: the maximum calculated fit_width
         """
@@ -147,6 +150,7 @@ class Fitter(ToolWithCandidate):
     def custom_plot(name, period, fit_width, allesfit_dir, mode="posterior"):
         """
         Creates a custom fit plot from the allesfitter data
+
         :param name: the candidate name
         :param period: the final period
         :param fit_width: the fit_width window
@@ -185,6 +189,7 @@ class Fitter(ToolWithCandidate):
     def fill_candidates_params(candidate_df, star_df, fit_orbit, detrend_mode):
         """
         Fills the candidate planets initial parameters and their distribution to be fit.
+
         :param candidate_df: the candidates dataframe
         :param star_df: the star dataframe
         :param fit_orbit: whether to fit eccentricity and arg. of periastron.
@@ -201,6 +206,7 @@ class Fitter(ToolWithCandidate):
     def fill_candidate_params(candidate_row, star_df, fit_orbit):
         """
         Fills the candidate planet initial parameters and their distribution to be fit.
+
         :param candidate_row: the candidate row from the dataframe
         :param star_df: the star dataframe
         :param fit_orbit: whether to fit eccentricity and arg. of periastron.
@@ -269,6 +275,7 @@ ${sherlock:name}_f_s,0.0,${sherlock:fit_orbit},uniform -1.0 1.0,$\sqrt{e_b} \sin
     def fill_instrument_params(star_df, detrend_mode):
         """
         Fills the star and systematics information for each instrument (so far only one)
+
         :param star_df: the star dataframe
         :param detrend_mode: type of detrend to be used
         :return: the allesfitter instrument params

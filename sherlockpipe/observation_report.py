@@ -58,6 +58,7 @@ class ObservationReport:
     def df_manipulations(self):
         """
         Performs changes of data from the initial dataframe for better formatting in the report.
+
         :return: the final dataframe
         """
         self.df['Observatory'] = self.df['observatory'].str.replace("-", " ")
@@ -133,6 +134,7 @@ class ObservationReport:
     def create_header(self, canvas, doc):
         """
         Initializes the common header for all the pages.
+
         :param canvas: the report canvas
         :param doc: the report document
         """
@@ -154,6 +156,7 @@ class ObservationReport:
     def create_footer(self, canvas, doc):
         """
         Initializes the common footer for all the pages
+
         :param canvas: the report canvas
         :param doc: the report document
         """
