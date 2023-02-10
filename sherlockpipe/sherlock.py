@@ -98,7 +98,6 @@ class Sherlock:
         """
         Downloads the TOIs, KOIs and EPIC OIs into csv files.
         :return: the Sherlock object itself
-        @rtype: Sherlock
         """
         self.ois_manager.update_tic_csvs()
         self.ois_manager.update_kic_csvs()
@@ -109,7 +108,6 @@ class Sherlock:
         """
         Loads the csv OIs files into memory
         :return: the Sherlock object itself
-        @rtype: Sherlock
         """
         Updater(self.cache_dir).update(refresh_clean, refresh_ois, refresh_force)
         self.ois = self.ois_manager.load_ois()
@@ -120,7 +118,6 @@ class Sherlock:
         Filters the in-memory OIs given some basic filters associated to hot jupiters properties. This method is added
         as an example
         :return: the Sherlock object itself
-        @rtype: Sherlock
         """
         self.use_ois = True
         self.ois = self.ois[self.ois["Disposition"].notnull()]
@@ -140,7 +137,6 @@ class Sherlock:
         Filters the in-memory OIs given some basic filters associated to multiplanet targets. This method is added
         as an example
         :return: the Sherlock object itself
-        @rtype: Sherlock
         """
         self.use_ois = True
         self.ois = self.ois[self.ois["Disposition"].notnull()]
@@ -158,7 +154,6 @@ class Sherlock:
         Filters the in-memory OIs given some basic filters associated to big and long-period targets. This method is added
         as an example
         :return: the Sherlock object itself
-        @rtype: Sherlock
         """
         self.use_ois = True
         self.ois = self.ois[self.ois["Disposition"].notnull()]

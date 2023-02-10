@@ -97,7 +97,6 @@ class ExoMoonLeastSquares:
         :param transiting_body_radius: transiting body radius
         :param impact_parameter:
         :return:
-        @rtype:
         """
         return transit_period / np.pi * np.arcsin(np.sqrt((star_radius + transiting_body_radius) ** 2 - (impact_parameter * star_radius) ** 2) / transiting_body_semimajor_axis)
         #return 2 * moon_semimajor_axis / (planet_semimajor_axis * 2 * np.pi) * planet_period
