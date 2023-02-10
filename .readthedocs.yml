@@ -15,10 +15,10 @@ build:
 
 # Build documentation in the docs/ directory with Sphinx
 sphinx:
-   configuration: docs/source/conf.py
+  configuration: docs/source/conf.py
 
 submodules:
-   exclude: all
+  exclude: all
 
 python:
   version: 3.8
