@@ -167,9 +167,9 @@ class Sherlock:
         return self
 
     def filter_ois(self, function):
-        """
-        Applies a function accepting the Sherlock objects of interests dataframe and stores the result into the
+        """Applies a function accepting the Sherlock objects of interests dataframe and stores the result into the
         Sherlock same ois dataframe.
+
         :param function: the function to be applied to filter the Sherlock OIs.
         :return: the Sherlock object itself
         """

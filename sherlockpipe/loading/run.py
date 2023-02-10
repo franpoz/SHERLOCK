@@ -5,7 +5,6 @@ import numpy as np
 import lightkurve
 from lcbuilder.lcbuilder_class import LcBuilder
 from lcbuilder.objectinfo import MissionObjectInfo
-from lcbuilder.objectinfo.preparer.MissionLightcurveBuilder import MissionLightcurveBuilder
 from lcbuilder.star.starinfo import StarInfo
 
 from sherlockpipe import sherlock
@@ -27,6 +26,15 @@ def load_module(module_path):
 
 
 def get_star_info(object_id, target):
+    """
+    Reads the properties for the target star and returns a StarInfo
+
+    :param object_id: the target object id
+    :type: string
+    :param target: the dictionary containing the target definition
+    :type: dict
+    :return: returns a StarInfo
+    """
     input_star_info = None
     if isinstance(target, dict) and "STAR" in target and target["STAR"] is not None:
         star_properties = target["STAR"]
