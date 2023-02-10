@@ -8,6 +8,7 @@ def save_transit_plot(object_id, title, plot_dir, file, time, lc, transit_result
     Stores the search results plot with: 1) The entire curve with the transit model 2)The folded curve and the transit
     model 3) The power spectrum of the TLS search 4) Only if the flag is enabled, the TLS search harmonics power
     spectrum.
+
     :param object_id: the target id
     :param title: title for the plot
     :param plot_dir: directory where the plot should be stored
