@@ -152,3 +152,5 @@ service_work
 /_build/
 /_static/
 /_templates/
+/docs/jupyter_execute/
+/docs/source/_autosummary/
