@@ -23,6 +23,9 @@ resources_dir = path.join(path.dirname(__file__))
 
 
 class ValidationReport:
+    """
+    This class creates a validation report for the validation module of SHERLOCK.
+    """
     LOGO_IMAGE = resources_dir + "/resources/images/sherlock3.png"
 
     def __init__(self, data_dir, file_name, object_id, ra, dec, t0, period, duration, depth, v, j, h, k):
