@@ -175,9 +175,8 @@ class Sherlock:
         """
         Applies a function accepting the Sherlock objects of interests dataframe and stores the result into the
         Sherlock same ois dataframe.
-        @param function: the function to be applied to filter the Sherlock OIs.
-        @return: the Sherlock object itself
-        @rtype: Sherlock
+        :param function: the function to be applied to filter the Sherlock OIs.
+        :return: the Sherlock object itself
         """
         self.use_ois = True
         self.ois = function(self.ois)
