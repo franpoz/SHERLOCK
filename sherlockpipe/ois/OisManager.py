@@ -37,6 +37,7 @@ class OisManager:
     def load_ois(self):
         """
         Loads all the ois in an in-memory dataframe.
+
         :return: the ois dataframe
         """
         if not os.path.isfile(self.tois_csv) or not os.path.isfile(self.ctois_csv):
@@ -64,6 +65,7 @@ class OisManager:
     def update_tic_csvs(self):
         """
         Reloads the TESS Objects of Interest.
+
         :return: the OisManager class to be used as a fluent API.
         """
         tic_csv = open(self.tois_csv, 'wb')
@@ -95,6 +97,7 @@ class OisManager:
     def update_kic_csvs(self):
         """
         Reloads the Kepler Objects of Interest.
+
         :return: the OisManager class to be used as a fluent API.
         """
         koi_csv = open(self.kois_csv, 'wb')
@@ -140,6 +143,7 @@ class OisManager:
     def update_epic_csvs(self):
         """
         Reloads the K2 Objects of Interest.
+
         :return: the OisManager class to be used as a fluent API.
         """
         epic_csv = open(self.epic_csv, 'wb')
