@@ -11,6 +11,8 @@ class SignalSelector(ABC):
     @abstractmethod
     def select(self, id_run, sherlock_target, star_info, transits_min_count, time, lcs, transit_results, wl, cadence):
         """
+        Selects the best signal given the implementation of this method.
+
         :param transit_result_detrends: a list of transit results to be explored.
         :param snr_min: the minimum snr to allow a signal to be considered good enough.
         :param sde_min: the minimum sde to allow a signal to be considered good enough.
