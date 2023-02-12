@@ -8,9 +8,9 @@ import pandas as pd
 from numpy import arange
 
 from sherlockpipe.loading.common import get_from_dict
-from sherlockpipe.nbodies.megno import MegnoStabilityCalculator
-from sherlockpipe.nbodies.stability_calculator import PlanetInput
-from sherlockpipe.nbodies.spock import SpockStabilityCalculator
+from sherlockpipe.system_stability.megno import MegnoStabilityCalculator
+from sherlockpipe.system_stability.stability_calculator import PlanetInput
+from sherlockpipe.system_stability.spock import SpockStabilityCalculator
 
 
 def run_stability(args):

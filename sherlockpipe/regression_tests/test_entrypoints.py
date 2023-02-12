@@ -24,7 +24,7 @@ class TestsEntrypoints(unittest.TestCase):
         validation_dir = object_dir + '/validation_0'
         try:
             run_validate(args)
-            self.assertEquals(5, len(os.listdir(validation_dir + '/triceratops')))
+            self.assertEquals(6, len(os.listdir(validation_dir + '/triceratops')))
         finally:
             shutil.rmtree(validation_dir, ignore_errors=True)
 

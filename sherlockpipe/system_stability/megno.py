@@ -2,7 +2,7 @@ from typing import Dict, List
 
 import rebound
 import numpy as np
-from sherlockpipe.nbodies.stability_calculator import StabilityCalculator, SimulationInput
+from sherlockpipe.system_stability.stability_calculator import StabilityCalculator, SimulationInput
 import pandas as pd
 
 
