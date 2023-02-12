@@ -4,6 +4,7 @@ import types
 import unittest
 import pkg_resources
 
+from sherlockpipe.search.run import run_search
 from sherlockpipe.system_stability.run import run_stability
 from sherlockpipe.validation.run import run_validate
 from sherlockpipe.vet import run_vet
@@ -53,6 +54,15 @@ class TestsEntrypoints(unittest.TestCase):
             self.assertEquals(2, len(os.listdir(object_dir + '/stability_0')))
         finally:
             shutil.rmtree(object_dir + '/stability_0', ignore_errors=True)
+
+    def test_search(self):
+        properties_dir = TestsEntrypoints.get_path("search.yaml")
+        search_dir = TestsEntrypoints.get_path("TIC305048087_[2]")
+        try:
+            run_search(properties_dir, False, 4)
+            self.assertEquals(20, len(os.listdir(search_dir)))
+        finally:
+            shutil.rmtree(search_dir, ignore_errors=True)
 
 
     @staticmethod
