@@ -1,7 +1,10 @@
 import os
 import traceback
+
+import lcbuilder.constants
 import numpy as np
 import lightkurve
+from lcbuilder.helper import LcbuilderHelper
 from lcbuilder.lcbuilder_class import LcBuilder
 from lcbuilder.objectinfo import MissionObjectInfo
 from lcbuilder.star.starinfo import StarInfo
@@ -13,13 +16,13 @@ from sherlockpipe.sherlock_target import SherlockTarget
 from os import path
 
 
-def get_star_info(object_id: str, target: dict):
+def get_star_info(object_id: str, target: dict) -> StarInfo:
     """
     Reads the properties for the target star and returns a StarInfo
 
-    :param object_id: the target object id
-    :param target: the dictionary containing the target definition
-    :return: returns a StarInfo
+    :param str object_id: the target object id
+    :param dict target: the dictionary containing the target definition
+    :return StarInfo: returns a StarInfo
     """
     input_star_info = None
     if isinstance(target, dict) and "STAR" in target and target["STAR"] is not None:
@@ -44,31 +47,32 @@ def get_star_info(object_id: str, target: dict):
     return input_star_info
 
 
-def get_aperture(properties, id):
-    input_aperture_file = None
-    if properties["APERTURE"] is not None and properties["APERTURE"][id] is not None:
-        input_aperture_file = properties["APERTURE"][id]
-    return input_aperture_file
+def extract_sectors(object_info: MissionObjectInfo, cache_dir: str) -> object:
+    """
+    Given the object info and the cache directory, it searches in `lightkurve` for the target pixel files and retrieves
+    the sectors, quarters or campaigns either as an integer (if only one) or as a list.
 
-
-def extract_sectors(object_info, cache_dir):
+    :param MissionObjectInfo object_info: the object info with the target information
+    :param str cache_dir: the lightkurve cache directory
+    :return object: either an integer or a list of integers
+    """
     mission, mission_prefix, id_int = LcBuilder().parse_object_info(object_info.mission_id())
-    object_sectors = None
-    if mission == "Kepler":
-        lcf_search_results = lightkurve.search_targetpixelfile(object_info.mission_id(), mission=object_info.mission_id(),
-                                                           cadence="long")
-        object_sectors = lcf_search_results.download_all(download_dir=cache_dir).quarter
-    elif mission == "K2":
-        lcf_search_results = lightkurve.search_targetpixelfile(object_info.mission_id(), mission=object_info.mission_id(),
-                                                           cadence="long")
-        object_sectors = lcf_search_results.download_all(download_dir=cache_dir).campaign
-    elif mission == "TESS":
-        lcf_search_results = lightkurve.search_tesscut(object_info.mission_id())
-        object_sectors = lcf_search_results.download_all(download_dir=cache_dir).sector
-    return object_sectors
+    lcf_search_results = lightkurve.search_targetpixelfile(object_info.mission_id(),
+                                                           mission=object_info.mission_id(), cadence="long")\
+        .download_all(download_dir=cache_dir)
+    sector_name, sectors = LcbuilderHelper.mission_lightkurve_sector_extraction(mission, lcf_search_results)
+    return sectors
 
 
-def run(properties, explore, cpus=None):
+def run(properties: str, explore: bool, cpus: int = None):
+    """
+    Executes the SHERLOCK search reading the given properties file.
+
+    :param properties: the properties directory
+    :param explore: whether SHERLOCK should run only the steps previous to the search.
+    :param cpus: the number of processes to be used
+    :return dict: the final used properties dictionary
+    """
     resources_dir = os.path.dirname(path.join(path.dirname(__file__)))
     file_dir = resources_dir + "/" + 'properties.yaml' if resources_dir != "" and resources_dir is not None \
         else 'properties.yaml'
