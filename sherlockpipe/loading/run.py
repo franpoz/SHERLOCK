@@ -1,5 +1,4 @@
 import os
-import sys
 import traceback
 import numpy as np
 import lightkurve
@@ -8,31 +7,18 @@ from lcbuilder.objectinfo import MissionObjectInfo
 from lcbuilder.star.starinfo import StarInfo
 
 from sherlockpipe import sherlock
+from sherlockpipe.loading.common import load_from_yaml, get_from_dict_or_default, get_from_user_or_config_or_default, \
+    get_from_dict, get_from_user_or_config, extract_custom_class
 from sherlockpipe.sherlock_target import SherlockTarget
-import yaml
-import importlib.util
 from os import path
-from pathlib import Path
-import pickle
 
 
-def load_module(module_path):
-    spec = importlib.util.spec_from_file_location("customs", module_path)
-    module = importlib.util.module_from_spec(spec)
-    spec.loader.exec_module(module)
-    sys.modules[spec.name] = module
-    spec.loader.exec_module(module)
-    return module
-
-
-def get_star_info(object_id, target):
+def get_star_info(object_id: str, target: dict):
     """
     Reads the properties for the target star and returns a StarInfo
 
     :param object_id: the target object id
-    :type: string
     :param target: the dictionary containing the target definition
-    :type: dict
     :return: returns a StarInfo
     """
     input_star_info = None
@@ -58,17 +44,6 @@ def get_star_info(object_id, target):
     return input_star_info
 
 
-def extract_custom_class(module_path):
-    class_module = None
-    if module_path is not None:
-        class_module = load_module(module_path)
-        class_name = Path(module_path.replace(".py", "")).name
-        class_module = getattr(class_module, class_name)
-        globals()[class_name] = class_module
-        pickle.dumps(class_module)
-        class_module = class_module()
-    return class_module
-
 def get_aperture(properties, id):
     input_aperture_file = None
     if properties["APERTURE"] is not None and properties["APERTURE"][id] is not None:
@@ -93,41 +68,6 @@ def extract_sectors(object_info, cache_dir):
     return object_sectors
 
 
-def get_from_user_or_config(target, user_properties, key):
-    value = None
-    if key in user_properties:
-        value = user_properties[key]
-    if isinstance(target, dict):
-        if key in target:
-            value = target[key]
-    return value
-
-def get_from_user(target, key):
-    value = None
-    if isinstance(target, dict) and key in target:
-        value = target[key]
-    return value
-
-def get_from_user_or_default(target, key, default):
-    value = None
-    if isinstance(target, dict) and key in target:
-        value = target[key]
-    return value if value is not None else default
-
-
-def get_from_user_or_config_or_default(target, user_properties, key, default):
-    value = None
-    if key in user_properties:
-        value = user_properties[key]
-    if isinstance(target, dict) and key in target:
-        value = target[key]
-    return value if value is not None else default
-
-
-def load_from_yaml(file):
-    return yaml.load(open(file), yaml.SafeLoader)
-
-
 def run(properties, explore, cpus=None):
     resources_dir = os.path.dirname(path.join(path.dirname(__file__)))
     file_dir = resources_dir + "/" + 'properties.yaml' if resources_dir != "" and resources_dir is not None \
@@ -139,10 +79,10 @@ def run(properties, explore, cpus=None):
                       sherlock_user_properties["UPDATE_FORCE"], sherlock_user_properties["UPDATE_CLEAN"]).run()
     sherlock_targets = []
     lcbuilder = LcBuilder()
-    cache_dir = get_from_user_or_default(sherlock_user_properties, "CACHE_DIR", os.path.expanduser('~') + "/")
+    cache_dir = get_from_dict_or_default(sherlock_user_properties, "CACHE_DIR", os.path.expanduser('~') + "/")
     for target, target_configs in sherlock_user_properties["TARGETS"].items():
         try:
-            aperture = get_from_user(target_configs, "APERTURE")
+            aperture = get_from_dict(target_configs, "APERTURE")
             file = get_from_user_or_config(target_configs, sherlock_user_properties, "FILE")
             author = get_from_user_or_config(target_configs, sherlock_user_properties, "AUTHOR")
             star_info = get_star_info(target, target_configs)
