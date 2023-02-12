@@ -16,6 +16,9 @@ from sherlockpipe.sherlock_target import SherlockTarget
 from os import path
 
 
+"""Used to launch the SHERLOCK search and also containing few helper methods"""
+
+
 def get_star_info(object_id: str, target: dict) -> StarInfo:
     """
     Reads the properties for the target star and returns a StarInfo
