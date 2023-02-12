@@ -2,11 +2,10 @@ import os
 import shutil
 import types
 import unittest
-import pandas as pd
 import pkg_resources
 
-from sherlockpipe.stability import run_stability
-from sherlockpipe.validate import Validator, run_validate
+from sherlockpipe.system_stability.run import run_stability
+from sherlockpipe.validation.run import run_validate
 from sherlockpipe.vet import run_vet
 
 
