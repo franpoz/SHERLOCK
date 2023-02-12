@@ -1,10 +1,11 @@
 import json
 import logging
 import multiprocessing
+from typing import List, Dict
+
 import matplotlib.pyplot as plt
 from abc import ABC, abstractmethod
 from multiprocessing import Pool
-
 import numpy as np
 import rebound
 
@@ -115,7 +116,7 @@ class StabilityCalculator(ABC):
             else np.linspace(star_mass_low, star_mass_up, 1)
 
     @staticmethod
-    def prepare_planet_params(planet_params: list[PlanetInput]):
+    def prepare_planet_params(planet_params: List[PlanetInput]):
         """
         Fills the planet masses if missing
 
@@ -158,7 +159,7 @@ class StabilityCalculator(ABC):
         sim.move_to_com()
         return sim
 
-    def run(self, results_dir, star_mass_low, star_mass_up, star_mass_bins, planet_params: list[PlanetInput],
+    def run(self, results_dir, star_mass_low, star_mass_up, star_mass_bins, planet_params: List[PlanetInput],
             cpus=multiprocessing.cpu_count() - 1, free_params=None):
         """
         Creates possible scenarios of stellar masses, planet masses and planet eccentricities. Afterwards a stability
@@ -168,7 +169,7 @@ class StabilityCalculator(ABC):
         :param star_mass_low: the lowest star mass
         :param star_mass_up: the highest star mass
         :param star_mass_bins: the number of star masses to sample
-        :param list[PlanetInput] planet_params: the planet inputs containing the planets parameters
+        :param List[PlanetInput] planet_params: the planet inputs containing the planets parameters
         :param cpus: the number of cpus to be used
         :param free_params: the parameters to be sampled entirely
         """
@@ -284,11 +285,11 @@ class StabilityCalculator(ABC):
         pass
 
     @abstractmethod
-    def store_simulation_results(self, simulation_results: list[dict], results_dir: str):
+    def store_simulation_results(self, simulation_results: List[Dict], results_dir: str):
         """
         Writes into disk all the final simulation results
 
-        :param list[dict] simulation_results: the results of the simulation for all the scenarios
+        :param List[Dict] simulation_results: the results of the simulation for all the scenarios
         :param str results_dir: the output directory where results will be written into
         """
         pass

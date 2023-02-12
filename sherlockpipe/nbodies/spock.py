@@ -1,3 +1,5 @@
+from typing import Dict, List
+
 from spock import FeatureClassifier, DeepRegressor
 from sherlockpipe.nbodies.stability_calculator import StabilityCalculator, SimulationInput
 import pandas as pd
@@ -29,11 +31,11 @@ class SpockStabilityCalculator(StabilityCalculator):
                 "arg_periastron": ",".join([str(ecc_value) for ecc_value in simulation_input.omega_arr]),
                 "stability_probability": stability_probability, "median_expected_instability_time": median}
 
-    def store_simulation_results(self, simulation_results: list[dict], results_dir: str):
+    def store_simulation_results(self, simulation_results: List[Dict], results_dir: str):
         """
         Stores the spock results in the given directory
 
-        :param list[dict] simulation_results: the list of results dictionaries
+        :param List[Dict] simulation_results: the list of results dictionaries
         :param str results_dir: directory to store the file
         """
         result_file = results_dir + "/stability_spock.csv"
