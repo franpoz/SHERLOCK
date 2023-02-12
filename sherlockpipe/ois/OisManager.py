@@ -9,19 +9,31 @@ class OisManager:
     Handles the tois, kois and epic ois for the different missions. Updates them from the proper web services.
     """
     TOIS_CSV_URL = 'https://exofop.ipac.caltech.edu/tess/download_toi.php?sort=toi&output=csv'
+    """Url to download the TOIs"""
     CTOIS_CSV_URL = 'https://exofop.ipac.caltech.edu/tess/download_ctoi.php?sort=ctoi&output=csv'
+    """Url to download the CTOIs"""
     KOIS_LIST_URL = 'https://exofop.ipac.caltech.edu/kepler/targets.php?sort=num-pc&page1=1&ipp1=100000&koi1=&koi2='
+    """Url to get the entire list of KOIs"""
     KIC_STAR_URL = 'https://exoplanetarchive.ipac.caltech.edu/cgi-bin/nstedAPI/nph-nstedAPI?table=keplerstellar&select=kepid,dist'
+    """Url to download the KICs"""
     KOI_CSV_URL = 'https://exoplanetarchive.ipac.caltech.edu/cgi-bin/nstedAPI/nph-nstedAPI?table=cumulative'
+    """Url to download the KOIs"""
     EPIC_CSV_URL = 'https://exoplanetarchive.ipac.caltech.edu/TAP/sync?query=select+epic_hostname,pl_name,' \
                    'disposition,pl_orbper,sy_dist,st_teff,st_logg,st_metratio,st_metratio,st_vsin,sy_kepmag,' \
                    'pl_trandep,pl_trandur,pl_rade,pl_eqt,pl_orbincl,ra,dec,pl_tranmid+from+k2pandc&format=csv'
+    """Url to download the EPICs"""
     TOIS_CSV = 'tois.csv'
+    """Final name of TOIs csv"""
     CTOIS_CSV = 'ctois.csv'
+    """Final name of CTOIs csv"""
     KOIS_CSV = 'kois.csv'
+    """Final name of KOIs csv"""
     EPIC_CSV = 'epic_ois.csv'
+    """Final name of EPIC OIs csv"""
     KIC_STAR_CSV = 'kic_star.csv'
+    """Final name of KICs csv"""
     ois = None
+    """OIS DataFrame"""
 
     def __init__(self, cache_dir):
         self.cache_dir = cache_dir
@@ -66,7 +78,7 @@ class OisManager:
         """
         Reloads the TESS Objects of Interest.
 
-        :return: the OisManager class to be used as a fluent API.
+        :return OisManager: the OisManager class to be used as a fluent API.
         """
         tic_csv = open(self.tois_csv, 'wb')
         request = requests.get(self.TOIS_CSV_URL)
@@ -98,7 +110,7 @@ class OisManager:
         """
         Reloads the Kepler Objects of Interest.
 
-        :return: the OisManager class to be used as a fluent API.
+        :return OisManager: the OisManager class to be used as a fluent API.
         """
         koi_csv = open(self.kois_csv, 'wb')
         request = requests.get(self.KOI_CSV_URL)
@@ -144,7 +156,7 @@ class OisManager:
         """
         Reloads the K2 Objects of Interest.
 
-        :return: the OisManager class to be used as a fluent API.
+        :return OisManager: the OisManager class to be used as a fluent API.
         """
         epic_csv = open(self.epic_csv, 'wb')
         request = requests.get(self.EPIC_CSV_URL)
