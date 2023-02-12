@@ -171,7 +171,7 @@ class TestsSherlock(unittest.TestCase):
         run_dir = None
         try:
             Sherlock([SherlockTarget(MissionObjectInfo('all', "EPIC 249631677", cadence=1800, high_rms_enabled=True,
-                                                            auto_detrend_enabled=False),
+                                                       auto_detrend_enabled=False),
                                      detrends_number=1, max_runs=1, oversampling=0.05)], False).run()
             run_dir = "EPIC249631677_all"
             self.assertTrue(os.path.exists(run_dir))

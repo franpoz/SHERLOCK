@@ -49,8 +49,7 @@ class MoonIlluminationSeparationConstraint(Constraint):
         :param times: the times to compute the constraint for
         :param observer: the observer to compute the constraint for
         :param targets: the list of targets to compute the constraint for
-        :return: the positive mask for target being observable for the given times and observer given the constraint
-        is matched
+        :return: the positive mask for target being observable for the given times and observer given the constraint is matched
         """
         # removed the location argument here, which causes small <1 deg
         # inaccuracies, but it is needed until astropy PR #5897 is released
@@ -128,8 +127,7 @@ def create_observation_observables(object_id, object_dir, since, name, epoch, ep
     :param min_altitude: the minimum altitude of the target above the horizon
     :param moon_min_dist: the minimum moon distance for moon illumination = 0
     :param moon_max_dist: the minimum moon distance for moon illumination = 1
-    :param transit_fraction: the minimum transit observability (0.25 for at least ingress/egress, 0.5 for ingress/egress
-    + midtime, 1 for ingress, egress and midtime).
+    :param transit_fraction: the minimum transit observability (0.25 for at least ingress/egress, 0.5 for ingress/egress + midtime, 1 for ingress, egress and midtime).
     :param baseline: the required baseline in hours.
     :param error_alert: whether to create the alert date to signal imprecise observations
     :param time_unit: the unit of the light curve data
