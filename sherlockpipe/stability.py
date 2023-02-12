@@ -1,4 +1,5 @@
 from argparse import ArgumentParser
+from sherlockpipe.system_stability.run import run_stability
 
 
 def stability_args_parse(args=None):
