@@ -1,6 +1,5 @@
 from argparse import ArgumentParser
-from os import path
-from sherlockpipe.loading.run import run_search
+from sherlockpipe.search.run import run_search
 
 
 if __name__ == '__main__':
