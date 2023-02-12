@@ -2,23 +2,26 @@ import matplotlib.pyplot as plt
 import numpy as np
 from scipy import stats
 
+from sherlockpipe.transitresult import TransitResult
 
-def save_transit_plot(object_id, title, plot_dir, file, time, lc, transit_result, cadence, run_no, plot_harmonics=False):
+
+def save_transit_plot(object_id: str, title: str, plot_dir: str, file: str, time, lc, transit_result: TransitResult,
+                      cadence, run_no: int, plot_harmonics: bool = False):
     """
     Stores the search results plot with: 1) The entire curve with the transit model 2)The folded curve and the transit
     model 3) The power spectrum of the TLS search 4) Only if the flag is enabled, the TLS search harmonics power
     spectrum.
 
-    :param object_id: the target id
-    :param title: title for the plot
-    :param plot_dir: directory where the plot should be stored
-    :param file: the file name of the plot
+    :param str object_id: the target id
+    :param str title: title for the plot
+    :param str plot_dir: directory where the plot should be stored
+    :param str file: the file name of the plot
     :param time: the time array of the light curve
     :param lc: the flux value of the light curve
-    :param transit_result: the TransitResult object containing the search results
+    :param TransitResult transit_result: the TransitResult object containing the search results
     :param cadence: the cadence of the curve in days
-    :param run_no: the SHERLOCK run of the results
-    :param plot_harmonics: whether the harmonics power spectrum should be plotted
+    :param int run_no: the SHERLOCK run of the results
+    :param bool plot_harmonics: whether the harmonics power spectrum should be plotted
     """
     # start the plotting
     rows = 3 if not plot_harmonics else 4
