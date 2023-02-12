@@ -1,9 +1,9 @@
 import numpy as np
 
 from foldedleastsquares.stats import spectra
-from sherlockpipe.scoring.SignalSelector import SignalSelector, SignalSelection
+from sherlockpipe.scoring.SignalSelector import SignalSelector
 from sherlockpipe.scoring.helper import compute_border_score, harmonic_spectrum
-from sherlockpipe.transitresult import TransitResult
+from sherlockpipe.search.transitresult import TransitResult
 import foldedleastsquares as tls
 
 

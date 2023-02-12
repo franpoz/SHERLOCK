@@ -24,7 +24,7 @@ from lcbuilder.star.HabitabilityCalculator import HabitabilityCalculator
 
 from sherlockpipe.plot.plotting import save_transit_plot
 from sherlockpipe.scoring.helper import compute_border_score, harmonic_spectrum
-from sherlockpipe.transitresult import TransitResult
+from sherlockpipe.search.transitresult import TransitResult
 from multiprocessing import Pool
 from scipy import stats
 

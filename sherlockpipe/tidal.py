@@ -3,16 +3,9 @@ import math
 import os
 import sys
 from argparse import ArgumentParser
-
-import yaml
 import pandas as pd
 
-
-def get_from_user(target, key):
-    value = None
-    if isinstance(target, dict) and key in target:
-        value = target[key]
-    return value
+from sherlockpipe.loading import common
 
 
 def tidal_args_parse(args=None):
@@ -39,7 +32,7 @@ def run_tidal(object_dir, candidate, properties):
     logging.info("Starting tidal locking time computation")
     star_df = pd.read_csv(object_dir + "/params_star.csv")
     if candidate is None:
-        user_properties = yaml.load(open(properties), yaml.SafeLoader)
+        user_properties = common.load_yaml(properties)
         candidate = pd.DataFrame(columns=['id', 'period', 'depth', 't0', 'sectors', 'number', 'lc'])
         candidate = candidate.append(user_properties, ignore_index=True)
         candidate['id'] = star_df.iloc[0]["obj_id"]

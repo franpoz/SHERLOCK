@@ -2,7 +2,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 from scipy import stats
 
-from sherlockpipe.transitresult import TransitResult
+from sherlockpipe.search.transitresult import TransitResult
 
 
 def save_transit_plot(object_id: str, title: str, plot_dir: str, file: str, time, lc, transit_result: TransitResult,
