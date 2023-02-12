@@ -1,9 +1,6 @@
 import json
 import logging
 import multiprocessing
-import os
-
-import imageio
 import matplotlib.pyplot as plt
 from abc import ABC, abstractmethod
 from multiprocessing import Pool
@@ -11,12 +8,84 @@ from multiprocessing import Pool
 import numpy as np
 import rebound
 
+from sherlockpipe import constants
+
+
+"""Includes classes to be used ase base for stability simulations"""
+
+
+class PlanetInput:
+    """
+    Defines the planet parameters for system stability calculations
+    """
+    def __init__(self, period, period_low_err, period_up_err,
+                 radius, radius_low_err, radius_up_err, eccentricity, ecc_low_err, ecc_up_err,
+                 inclination, inc_low_err, inc_up_err, omega, omega_low_err, omega_up_err,
+                 mass=None, mass_low_err=None, mass_up_err=None, period_bins=3,
+                 mass_bins=3, ecc_bins=3, inc_bins=3, omega_bins=3):
+        self.period = period
+        self.period_low_err = period_low_err
+        self.period_up_err = period_up_err
+        self.radius = radius
+        self.radius_low_err = radius_low_err
+        self.radius_up_err = radius_up_err
+        self.eccentricity = eccentricity
+        self.ecc_low_err = ecc_low_err
+        self.ecc_up_err = ecc_up_err
+        self.inclination = inclination
+        self.inc_low_err = inc_low_err
+        self.inc_up_err = inc_up_err
+        self.omega = omega
+        self.omega_low_err = omega_low_err
+        self.omega_up_err = omega_up_err
+        self.mass = mass
+        self.mass_low_err = mass_low_err
+        self.mass_up_err = mass_up_err
+        self.mass_bins = mass_bins if mass_bins is not None else 3
+        self.period_bins = period_bins if period_bins is not None else 3
+        self.ecc_bins = ecc_bins if ecc_bins is not None else 3
+        self.inc_bins = inc_bins if inc_bins is not None else 3
+        self.omega_bins = omega_bins if omega_bins is not None else 3
+
+
+class SimulationInput:
+    """
+    Used as input for the simulations done for each scenario
+    """
+
+    def __init__(self, star_mass, mass_arr, planet_periods, ecc_arr, inc_arr, omega_arr, index):
+        self.star_mass = star_mass
+        self.mass_arr = mass_arr
+        self.planet_periods = planet_periods
+        self.ecc_arr = ecc_arr
+        self.inc_arr = inc_arr
+        self.omega_arr = omega_arr
+        self.index = index
+
+
+class NumpyEncoder(json.JSONEncoder):
+    """ Special json encoder for numpy types. Got from https://stackoverflow.com/a/49677241/4198726"""
+
+    def default(self, obj):
+        """
+        Default method invoked to convert the object
+
+        :param obj: the input object
+        :return: the json encoded object
+        """
+        if isinstance(obj, np.integer):
+            return int(obj)
+        elif isinstance(obj, np.floating):
+            return float(obj)
+        elif isinstance(obj, np.ndarray):
+            return obj.tolist()
+        return json.JSONEncoder.default(self, obj)
+
 
 class StabilityCalculator(ABC):
     """
     Template class for system stability calculation algorithms
     """
-    EARTH_TO_SUN_MASS = 0.000003003
 
     def __init__(self):
         pass
@@ -46,7 +115,7 @@ class StabilityCalculator(ABC):
             else np.linspace(star_mass_low, star_mass_up, 1)
 
     @staticmethod
-    def prepare_planet_params(planet_params):
+    def prepare_planet_params(planet_params: list[PlanetInput]):
         """
         Fills the planet masses if missing
 
@@ -63,7 +132,8 @@ class StabilityCalculator(ABC):
                 planet_param.mass_up_err = (StabilityCalculator.mass_from_radius(planet_param.radius + planet_param.radius_up_err) - planet_param.mass) * 2
         return planet_params
 
-    def init_rebound_simulation(self, simulation_input):
+    @staticmethod
+    def init_rebound_simulation(simulation_input):
         """
         Initializes the simulation for rebound-based algorithms
 
@@ -82,13 +152,13 @@ class StabilityCalculator(ABC):
             ecc = simulation_input.ecc_arr[planet_key]
             inc = np.deg2rad(simulation_input.inc_arr[planet_key])
             omega = np.deg2rad(simulation_input.omega_arr[planet_key])
-            sim.add(m=mass * self.EARTH_TO_SUN_MASS / simulation_input.star_mass, P=period, e=ecc, omega=omega, inc=inc)
+            sim.add(m=mass * constants.EARTH_TO_SUN_MASS / simulation_input.star_mass, P=period, e=ecc, omega=omega, inc=inc)
         sim.dt = min_period / 365.25 / 100
         # sim.status()
         sim.move_to_com()
         return sim
 
-    def run(self, results_dir, star_mass_low, star_mass_up, star_mass_bins, planet_params,
+    def run(self, results_dir, star_mass_low, star_mass_up, star_mass_bins, planet_params: list[PlanetInput],
             cpus=multiprocessing.cpu_count() - 1, free_params=None):
         """
         Creates possible scenarios of stellar masses, planet masses and planet eccentricities. Afterwards a stability
@@ -98,7 +168,7 @@ class StabilityCalculator(ABC):
         :param star_mass_low: the lowest star mass
         :param star_mass_up: the highest star mass
         :param star_mass_bins: the number of star masses to sample
-        :param planet_params: the planet inputs containing the planets parameters
+        :param list[PlanetInput] planet_params: the planet inputs containing the planets parameters
         :param cpus: the number of cpus to be used
         :param free_params: the parameters to be sampled entirely
         """
@@ -192,27 +262,34 @@ class StabilityCalculator(ABC):
             simulation_results = pool.map(self.log_and_run_simulation, simulation_inputs)
         self.store_simulation_results(simulation_results, results_dir)
 
-    def log_and_run_simulation(self, simulation_input):
+    def log_and_run_simulation(self, simulation_input: SimulationInput) -> dict:
+        """
+        Logs the simulation input and launches the simulation for the given input.
+
+        :param SimulationInput simulation_input:
+        :return dict: the resulting dictionary from the simulation
+        """
         logging.info("Running scenario number %.0f: %s", simulation_input.index, json.dumps(simulation_input.__dict__,
                                                                                             cls=NumpyEncoder))
         return self.run_simulation(simulation_input)
 
     @abstractmethod
-    def run_simulation(self, simulation_input):
+    def run_simulation(self, simulation_input: SimulationInput) -> dict:
         """
         Runs one stability scenario
 
-        :param simulation_input: the simulation scenario parameters
+        :param SimulationInput simulation_input: the simulation scenario parameters
+        :return dict: the result of the scenario in a dictionary
         """
         pass
 
     @abstractmethod
-    def store_simulation_results(self, simulation_results, results_dir):
+    def store_simulation_results(self, simulation_results: list[dict], results_dir: str):
         """
         Writes into disk all the final simulation results
 
-        :param simulation_results: the results of the simulation for all the scenarios
-        :param results_dir: the output directory where results will be written into
+        :param list[dict] simulation_results: the results of the simulation for all the scenarios
+        :param str results_dir: the output directory where results will be written into
         """
         pass
 
@@ -228,7 +305,8 @@ class StabilityCalculator(ABC):
         masses = simulation_input_df["masses"].split(",")
         masses = [float(i) for i in masses]
         star_mass = simulation_input_df["star_mass"]
-        sim = self.init_rebound_simulation(SimulationInput(star_mass, masses, periods, eccs, incs, omegas, 1))
+        sim = StabilityCalculator.init_rebound_simulation(
+            SimulationInput(star_mass, masses, periods, eccs, incs, omegas, 1))
         filenames = []
         for i in range(1):
             sim.integrate(sim.t + i / 100 * 2 * np.pi)
@@ -244,28 +322,3 @@ class StabilityCalculator(ABC):
         # # Remove files
         # for filename in set(filenames):
         #     os.remove(filename)
-
-
-class SimulationInput:
-    """
-    Used as input for the simulations done for each scenario
-    """
-    def __init__(self, star_mass, mass_arr, planet_periods, ecc_arr, inc_arr, omega_arr, index):
-        self.star_mass = star_mass
-        self.mass_arr = mass_arr
-        self.planet_periods = planet_periods
-        self.ecc_arr = ecc_arr
-        self.inc_arr = inc_arr
-        self.omega_arr = omega_arr
-        self.index = index
-
-class NumpyEncoder(json.JSONEncoder):
-    """ Special json encoder for numpy types. Got from https://stackoverflow.com/a/49677241/4198726"""
-    def default(self, obj):
-        if isinstance(obj, np.integer):
-            return int(obj)
-        elif isinstance(obj, np.floating):
-            return float(obj)
-        elif isinstance(obj, np.ndarray):
-            return obj.tolist()
-        return json.JSONEncoder.default(self, obj)

@@ -7,19 +7,12 @@ from argparse import ArgumentParser
 import json
 import yaml
 import pandas as pd
-import numpy as np
 from numpy import arange
 
+from sherlockpipe.loading.common import get_from_dict
 from sherlockpipe.nbodies.megno import MegnoStabilityCalculator
-from sherlockpipe.nbodies.planet_input import PlanetInput
+from sherlockpipe.nbodies.stability_calculator import PlanetInput
 from sherlockpipe.nbodies.spock import SpockStabilityCalculator
-
-
-def get_from_user(target, key):
-    value = None
-    if isinstance(target, dict) and key in target:
-        value = target[key]
-    return value
 
 
 def stability_args_parse(args=None):
@@ -147,24 +140,24 @@ def run_stability(args):
             mass_bins = args.mass_bins if "M_BINS" not in planet else planet["M_BINS"]
             inc_bins = args.inc_bins if "I_BINS" not in planet else planet["I_BINS"]
             om_bins = args.omega_bins if "O_BINS" not in planet else planet["O_BINS"]
-            user_planet_params.append(PlanetInput(period=get_from_user(planet, "P"),
-                                                  period_low_err=get_from_user(planet, "P_LOW"),
-                                                  period_up_err=get_from_user(planet, "P_UP"),
-                                                  radius=get_from_user(planet, "R"),
-                                                  radius_low_err=get_from_user(planet, "R_LOW"),
-                                                  radius_up_err=get_from_user(planet, "R_UP"),
-                                                  mass=get_from_user(planet, "M"),
-                                                  mass_low_err=get_from_user(planet, "M_LOW"),
-                                                  mass_up_err=get_from_user(planet, "M_UP"),
-                                                  eccentricity=get_from_user(planet, "E_LOW"),
-                                                  ecc_low_err=get_from_user(planet, "E_LOW"),
-                                                  ecc_up_err=get_from_user(planet, "E_UP"),
-                                                  inclination=get_from_user(planet, "I"),
-                                                  inc_low_err=get_from_user(planet, "I_LOW"),
-                                                  inc_up_err=get_from_user(planet, "I_UP"),
-                                                  omega=get_from_user(planet, "O"),
-                                                  omega_low_err=get_from_user(planet, "O_LOW"),
-                                                  omega_up_err=get_from_user(planet, "O_UP"),
+            user_planet_params.append(PlanetInput(period=get_from_dict(planet, "P"),
+                                                  period_low_err=get_from_dict(planet, "P_LOW"),
+                                                  period_up_err=get_from_dict(planet, "P_UP"),
+                                                  radius=get_from_dict(planet, "R"),
+                                                  radius_low_err=get_from_dict(planet, "R_LOW"),
+                                                  radius_up_err=get_from_dict(planet, "R_UP"),
+                                                  mass=get_from_dict(planet, "M"),
+                                                  mass_low_err=get_from_dict(planet, "M_LOW"),
+                                                  mass_up_err=get_from_dict(planet, "M_UP"),
+                                                  eccentricity=get_from_dict(planet, "E_LOW"),
+                                                  ecc_low_err=get_from_dict(planet, "E_LOW"),
+                                                  ecc_up_err=get_from_dict(planet, "E_UP"),
+                                                  inclination=get_from_dict(planet, "I"),
+                                                  inc_low_err=get_from_dict(planet, "I_LOW"),
+                                                  inc_up_err=get_from_dict(planet, "I_UP"),
+                                                  omega=get_from_dict(planet, "O"),
+                                                  omega_low_err=get_from_dict(planet, "O_LOW"),
+                                                  omega_up_err=get_from_dict(planet, "O_UP"),
                                                   period_bins=period_bins, mass_bins=mass_bins, ecc_bins=ecc_bins,
                                                   inc_bins=inc_bins, omega_bins=om_bins))
         planets_params = planets_params + user_planet_params

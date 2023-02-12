@@ -1,6 +1,6 @@
 import rebound
 import numpy as np
-from sherlockpipe.nbodies.stability_calculator import StabilityCalculator
+from sherlockpipe.nbodies.stability_calculator import StabilityCalculator, SimulationInput
 import pandas as pd
 
 
@@ -13,7 +13,13 @@ class MegnoStabilityCalculator(StabilityCalculator):
         super().__init__()
         self.years = years
 
-    def run_simulation(self, simulation_input):
+    def run_simulation(self, simulation_input: SimulationInput) -> dict:
+        """
+        Runs one simulation scenario using the megno module of rebound.
+
+        :param SimulationInput simulation_input: the scenario parameters
+        :return dict: the results of the simulation with the rebound-specific megno metric.
+        """
         sim = self.init_rebound_simulation(simulation_input)
         sim.init_megno()
         sim.exit_max_distance = 20.
@@ -38,7 +44,13 @@ class MegnoStabilityCalculator(StabilityCalculator):
                 "arg_periastron": ",".join([str(ecc_value) for ecc_value in simulation_input.omega_arr]),
                 "megno": megno}
 
-    def store_simulation_results(self, simulation_results, results_dir):
+    def store_simulation_results(self, simulation_results: list[dict], results_dir: str):
+        """
+        Stores the megno results in the given directory
+
+        :param list[dict] simulation_results: the list of results dictionaries
+        :param str results_dir: directory to store the file
+        """
         result_file = results_dir + "/stability_megno.csv"
         results_df = pd.DataFrame(columns=['star_mass', 'periods', 'masses', 'inclinations', 'eccentricities',
                                            'arg_periastron', 'megno'])

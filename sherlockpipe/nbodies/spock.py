@@ -1,5 +1,5 @@
 from spock import FeatureClassifier, DeepRegressor
-from sherlockpipe.nbodies.stability_calculator import StabilityCalculator
+from sherlockpipe.nbodies.stability_calculator import StabilityCalculator, SimulationInput
 import pandas as pd
 
 
@@ -8,7 +8,14 @@ class SpockStabilityCalculator(StabilityCalculator):
     Runs the stability computation by computing the stability probability and the median expected instability time for
     each scenario
     """
-    def run_simulation(self, simulation_input):
+    def run_simulation(self, simulation_input: SimulationInput) -> dict:
+        """
+        Runs one stability scenario using Spock.
+
+        :param SimulationInput simulation_input:
+        :return dict: the result with the spock-specific metrics stability_probability and the
+        median_expected_instability_time
+        """
         sim = self.init_rebound_simulation(simulation_input)
         feature_classifier_model = FeatureClassifier()
         deep_regressor_model = DeepRegressor()
@@ -22,7 +29,13 @@ class SpockStabilityCalculator(StabilityCalculator):
                 "arg_periastron": ",".join([str(ecc_value) for ecc_value in simulation_input.omega_arr]),
                 "stability_probability": stability_probability, "median_expected_instability_time": median}
 
-    def store_simulation_results(self, simulation_results, results_dir):
+    def store_simulation_results(self, simulation_results: list[dict], results_dir: str):
+        """
+        Stores the spock results in the given directory
+
+        :param list[dict] simulation_results: the list of results dictionaries
+        :param str results_dir: directory to store the file
+        """
         result_file = results_dir + "/stability_spock.csv"
         results_df = pd.DataFrame(columns=['star_mass', 'periods', 'masses', 'inclinations', 'eccentricities',
                                            'arg_periastron', 'stability_probability',
