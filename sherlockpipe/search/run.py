@@ -1,7 +1,6 @@
 import os
 import traceback
 
-import lcbuilder.constants
 import numpy as np
 import lightkurve
 from lcbuilder.helper import LcbuilderHelper
@@ -9,10 +8,10 @@ from lcbuilder.lcbuilder_class import LcBuilder
 from lcbuilder.objectinfo import MissionObjectInfo
 from lcbuilder.star.starinfo import StarInfo
 
-from sherlockpipe import sherlock
+from sherlockpipe.search import sherlock
 from sherlockpipe.loading.common import load_from_yaml, get_from_dict_or_default, get_from_user_or_config_or_default, \
     get_from_dict, get_from_user_or_config, extract_custom_class
-from sherlockpipe.sherlock_target import SherlockTarget
+from sherlockpipe.search.sherlock_target import SherlockTarget
 from os import path
 
 

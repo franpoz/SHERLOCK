@@ -43,7 +43,7 @@ class Sherlock:
     KOI_TARGET_URL_NEW = 'https://exoplanetarchive.ipac.caltech.edu/cgi-bin/nstedAPI/nph-nstedAPI?table=cumulative'
     EPIC_TARGET_URL_NEW = 'https://exoplanetarchive.ipac.caltech.edu/cgi-bin/nstedAPI/nph-nstedAPI?table=k2candidates'
     MASK_MODES = ['mask', 'subtract']
-    RESULTS_DIR = './'
+    RESULTS_DIR = '../'
     VALID_DETREND_METHODS = ["biweight", "gp"]
     VALID_PERIODIC_DETREND_METHODS = ["biweight", "gp", "cosine", "cofiam"]
     NUM_CORES = multiprocessing.cpu_count() - 1

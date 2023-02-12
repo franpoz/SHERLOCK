@@ -4,10 +4,10 @@ from timeit import default_timer
 from examples.custom_algorithms.ButterworthCurvePreparer import ButterworthCurvePreparer
 from examples.custom_algorithms.NeptunianDesertSearchZone import NeptunianDesertSearchZone
 from examples.custom_algorithms.RandomSignalSelector import RandomSignalSelector
-from sherlockpipe.sherlock import Sherlock
+from sherlockpipe.search.sherlock import Sherlock
 from lcbuilder.objectinfo.MissionFfiIdObjectInfo import MissionFfiIdObjectInfo
 
-from sherlockpipe.sherlock_target import SherlockTarget
+from sherlockpipe.search.sherlock_target import SherlockTarget
 
 
 @contextmanager

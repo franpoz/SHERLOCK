@@ -10,8 +10,8 @@ from sherlockpipe.scoring.QuorumSdeBorderCorrectedSignalSelector import QuorumSd
 from sherlockpipe.scoring.QuorumSnrBorderCorrectedSignalSelector import QuorumSnrBorderCorrectedSignalSelector
 from sherlockpipe.scoring.SdeBorderCorrectedSignalSelector import SdeBorderCorrectedSignalSelector
 from sherlockpipe.scoring.SnrBorderCorrectedSignalSelector import SnrBorderCorrectedSignalSelector
-from sherlockpipe.sherlock import Sherlock
-from sherlockpipe.sherlock_target import SherlockTarget
+from sherlockpipe.search.sherlock import Sherlock
+from sherlockpipe.search.sherlock_target import SherlockTarget
 
 
 class TestsSherlock(unittest.TestCase):
