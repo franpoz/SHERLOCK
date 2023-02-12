@@ -1,6 +1,8 @@
+"""Constants used by SHERLOCK"""
+
+
 import os
 
-"""Constants used by SHERLOCK"""
 
 USER_HOME_ELEANOR_CACHE = os.path.join(os.path.expanduser('~'), '.eleanor/')
 """The directory where SHERLOCK will store the eleanor internal data"""
