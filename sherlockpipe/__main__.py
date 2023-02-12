@@ -1,6 +1,6 @@
 from argparse import ArgumentParser
 from os import path
-from sherlockpipe.loading.run import run
+from sherlockpipe.loading.run import run_search
 
 
 if __name__ == '__main__':
@@ -9,4 +9,4 @@ if __name__ == '__main__':
     ap.add_argument('--explore', dest='explore', action='store_true',
                     help="Whether to run using mcmc or ns. Default is ns.")
     args = ap.parse_args()
-    run(args.properties, args.explore)
+    run_search(args.properties, args.explore)

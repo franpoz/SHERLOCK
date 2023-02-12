@@ -67,7 +67,7 @@ def extract_sectors(object_info: MissionObjectInfo, cache_dir: str) -> object:
     return sectors
 
 
-def run(properties: str, explore: bool, cpus: int = None):
+def run_search(properties: str, explore: bool, cpus: int = None):
     """
     Executes the SHERLOCK search reading the given properties file.
 
