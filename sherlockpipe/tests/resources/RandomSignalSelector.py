@@ -3,6 +3,9 @@ from sherlockpipe.scoring.SignalSelector import SignalSelector, SignalSelection
 
 
 class RandomSignalSelector(SignalSelector):
+    """
+    Implements a random signal selection from a list of detrends. Only for testing.
+    """
     def __init__(self):
         super().__init__()
 
