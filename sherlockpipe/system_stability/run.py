@@ -3,10 +3,10 @@ import os
 import sys
 
 import json
-import yaml
 import pandas as pd
 from numpy import arange
 
+from sherlockpipe.loading import common
 from sherlockpipe.loading.common import get_from_dict
 from sherlockpipe.system_stability.megno import MegnoStabilityCalculator
 from sherlockpipe.system_stability.stability_calculator import PlanetInput
@@ -104,7 +104,7 @@ def run_stability(args):
                             omega_up_err=arg_periastron_up_err, mass_bins=args.mass_bins, period_bins=args.period_bins,
                             ecc_bins=args.ecc_bins, inc_bins=args.inc_bins, omega_bins=args.omega_bins))
     else:
-        user_properties = yaml.load(open(args.properties), yaml.SafeLoader)
+        user_properties = common.load_yaml(args.properties)
         user_planet_params = []
         for planet in user_properties["BODIES"]:
             period_bins = args.period_bins if "P_BINS" not in planet else planet["P_BINS"]
