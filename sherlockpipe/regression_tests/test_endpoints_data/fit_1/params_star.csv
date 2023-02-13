@@ -1,0 +1,2 @@
+obj_id,ra,dec,R_star,R_star_lerr,R_star_uerr,M_star,M_star_lerr,M_star_uerr,Teff_star,Teff_star_lerr,Teff_star_uerr,ld_a,ld_b,feh,feh_err,h,h_err,j,j_err,k,k_err,kp,logg,logg_err,v,v_err
+TIC 305048087,353.242791548842,-29.4150524465489,0.211299,0.006543500000000008,0.006543500000000008,0.180288,0.020140800000000014,0.020140800000000014,3210.0,200,200,0.1533,0.4776,,,11.19,0.022,11.74,0.021,10.896,0.025,,5.04424,0.0218134,16.37,0.2

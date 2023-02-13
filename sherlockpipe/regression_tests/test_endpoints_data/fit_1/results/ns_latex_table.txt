@@ -1,0 +1,19 @@
+parameter & value & unit & fit/fixed \\ 
+\hline 
+\multicolumn{4}{c}{\textit{Fitted parameters}} \\ 
+\hline 
+$R_b / R_\star$ & $0.0439\pm0.0027$ & & fit \\ 
+$(R_\star + R_b) / a_b$ & $0.0643_{-0.0028}^{+0.0037}$ & & fit \\ 
+$\cos{i_b}$ & $0.024_{-0.013}^{+0.010}$ & & fit \\ 
+$T_{0;b}$ & $1734.22443\pm0.00086$ & $\mathrm{BJD}$& fit \\ 
+$P_b$ & $1.7448649\pm0.0000040$ & $\mathrm{d}$& fit \\ 
+$\sqrt{e_b} \cos{\omega_b}$ & $0.0$ & & fixed \\ 
+$\sqrt{e_b} \sin{\omega_b}$ & $0.0$ & & fixed \\ 
+$D_\mathrm{0; lc}$ & $0.0$ & & fixed \\ 
+$q_{1; \mathrm{lc}}$ & $0.57_{-0.29}^{+0.26}$ & & fit \\ 
+$q_{2; \mathrm{lc}}$ & $0.46_{-0.28}^{+0.30}$ & & fit \\ 
+$J_{b; \mathrm{lc}}$ & $0.0$ & & fixed \\ 
+$A_{\mathrm{geom}; host; \mathrm{lc}}$ & $0.0$ & & fixed \\ 
+$A_{\mathrm{geom}; b; \mathrm{lc}}$ & $0.0$ & & fixed \\ 
+$Grav. dark._{b; \mathrm{lc}}$ & $0.0$ & & fixed \\ 
+$\log{\sigma_\mathrm{lc}}$ & $-5.643\pm0.018$ & $\log{ \mathrm{rel. flux.} }$& fit \\ 

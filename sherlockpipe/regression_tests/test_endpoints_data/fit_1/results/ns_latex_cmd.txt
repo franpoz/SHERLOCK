@@ -1,0 +1,15 @@
+\newcommand{\SOIonerr}{$0.0439\pm0.0027$} %$R_b / R_\star=0.0439\pm0.0027$ 
+\newcommand{\SOIonersuma}{$0.0643_{-0.0028}^{+0.0037}$} %$(R_\star + R_b) / a_b=0.0643_{-0.0028}^{+0.0037}$ 
+\newcommand{\SOIonecosi}{$0.024_{-0.013}^{+0.010}$} %$\cos{i_b}=0.024_{-0.013}^{+0.010}$ 
+\newcommand{\SOIoneepoch}{$1734.22443\pm0.00086$} %$T_{0;b}=1734.22443\pm0.00086$ $\mathrm{BJD}$
+\newcommand{\SOIoneperiod}{$1.7448649\pm0.0000040$} %$P_b=1.7448649\pm0.0000040$ $\mathrm{d}$
+\newcommand{\SOIonefc}{$0.0$} %$\sqrt{e_b} \cos{\omega_b}=0.0$ 
+\newcommand{\SOIonefs}{$0.0$} %$\sqrt{e_b} \sin{\omega_b}=0.0$ 
+\newcommand{\dillc}{$0.0$} %$D_\mathrm{0; lc}=0.0$ 
+\newcommand{\hostldcqonelc}{$0.57_{-0.29}^{+0.26}$} %$q_{1; \mathrm{lc}}=0.57_{-0.29}^{+0.26}$ 
+\newcommand{\hostldcqtwolc}{$0.46_{-0.28}^{+0.30}$} %$q_{2; \mathrm{lc}}=0.46_{-0.28}^{+0.30}$ 
+\newcommand{\hostsbratiolc}{$0.0$} %$J_{b; \mathrm{lc}}=0.0$ 
+\newcommand{\hostgeomalbedolc}{$0.0$} %$A_{\mathrm{geom}; host; \mathrm{lc}}=0.0$ 
+\newcommand{\${sherlock:name}geomalbedolc}{$0.0$} %$A_{\mathrm{geom}; b; \mathrm{lc}}=0.0$ 
+\newcommand{\hostgdclc}{$0.0$} %$Grav. dark._{b; \mathrm{lc}}=0.0$ 
+\newcommand{\lnerrfluxlc}{$-5.643\pm0.018$} %$\log{\sigma_\mathrm{lc}}=-5.643\pm0.018$ $\log{ \mathrm{rel. flux.} }$

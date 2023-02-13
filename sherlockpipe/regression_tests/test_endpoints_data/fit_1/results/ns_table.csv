@@ -1,0 +1,17 @@
+#name,median,lower_error,upper_error,label,unit
+#Fitted parameters,,,
+SOI_1_rr,0.04387761208241474,0.002741749308449039,0.002671860818624937,$R_b / R_\star$,
+SOI_1_rsuma,0.06429714563519931,0.0027664466149493958,0.003708150155730741,$(R_\star + R_b) / a_b$,
+SOI_1_cosi,0.02438707145366204,0.012833341619369464,0.01040947097953622,$\cos{i_b}$,
+SOI_1_epoch,1734.224431172337,0.0008275310369754152,0.0008631039925148798,$T_{0;b}$,$\mathrm{BJD}$
+SOI_1_period,1.7448649492184716,3.878122573963694e-06,3.953447783366926e-06,$P_b$,$\mathrm{d}$
+SOI_1_f_c,0.0,(fixed),(fixed),$\sqrt{e_b} \cos{\omega_b}$,
+SOI_1_f_s,0.0,(fixed),(fixed),$\sqrt{e_b} \sin{\omega_b}$,
+dil_lc,0.0,(fixed),(fixed),$D_\mathrm{0; lc}$,
+host_ldc_q1_lc,0.5669940086686723,0.28976148434852667,0.26266212814624657,$q_{1; \mathrm{lc}}$,
+host_ldc_q2_lc,0.45657021952336563,0.27674725529060656,0.2977237916347635,$q_{2; \mathrm{lc}}$,
+host_sbratio_lc,0.0,(fixed),(fixed),$J_{b; \mathrm{lc}}$,
+host_geom_albedo_lc,0.0,(fixed),(fixed),$A_{\mathrm{geom}; host; \mathrm{lc}}$,
+${sherlock:name}_geom_albedo_lc,0.0,(fixed),(fixed),$A_{\mathrm{geom}; b; \mathrm{lc}}$,
+host_gdc_lc,0.0,(fixed),(fixed),$Grav. dark._{b; \mathrm{lc}}$,
+ln_err_flux_lc,-5.643392237411579,0.018107479151501238,0.01823090234197089,$\log{\sigma_\mathrm{lc}}$,$\log{ \mathrm{rel. flux.} }$

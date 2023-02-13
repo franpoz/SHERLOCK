@@ -1,0 +1,19 @@
+#property,value,lower_error,upper_error,source
+Host radius over semi-major axis SOI_1; $R_\star/a_\mathrm{SOI_1}$,0.06160999216528399,0.0026531038348863653,0.003520148653593992,derived
+Semi-major axis SOI_1 over host radius; $a_\mathrm{SOI_1}/R_\star$,16.231133373905543,0.877259001333833,0.7304130772046129,derived
+Companion radius SOI_1 over semi-major axis SOI_1; $R_\mathrm{SOI_1}/a_\mathrm{SOI_1}$,0.0026991861265180093,0.00020891773685238323,0.0002523509273966193,derived
+Companion radius SOI_1; $R_\mathrm{SOI_1}$ ($\mathrm{R_{\oplus}}$),1.0103563110187972,0.06941328202677133,0.06937791054410058,derived
+Companion radius SOI_1; $R_\mathrm{SOI_1}$ ($\mathrm{R_{jup}}$),0.09013810758279235,0.00619264888511932,0.0061894932473749165,derived
+Semi-major axis SOI_1; $a_\mathrm{SOI_1}$ ($\mathrm{R_{\odot}}$),3.4221778727975916,0.20576173008786824,0.19599758404662104,derived
+Semi-major axis SOI_1; $a_\mathrm{SOI_1}$ (AU),0.015914726158634318,0.000956888189332563,0.0009114803478364915,derived
+Inclination SOI_1; $i_\mathrm{SOI_1}$ (deg),88.60258519376265,0.5994663380839285,0.7372238413529715,derived
+Impact parameter SOI_1; $b_\mathrm{tra;SOI_1}$,0.396527318302946,0.2063747099019515,0.15075626097780287,derived
+Total transit duration SOI_1; $T_\mathrm{tot;SOI_1}$ (h),0.7909885747143729,0.045679161520523204,0.042739445215496,derived
+Full-transit duration SOI_1; $T_\mathrm{full;SOI_1}$ (h),0.7120545351359129,0.05480011235671356,0.047871911032970615,derived
+Host density from orbit SOI_1; $\rho_\mathrm{\star;SOI_1}$ (cgs),26.569018015931825,4.079398917302839,3.750752367943605,derived
+Equilibrium temperature SOI_1; $T_\mathrm{eq;SOI_1}$ (K),516.592016487116,34.145690035220525,34.611227133798025,derived
+Transit depth (undil.) SOI_1; $\delta_\mathrm{tr; undil; SOI_1; lc}$ (ppt),0.002366971026862341,0.0002418478229475607,0.00022980515058479423,derived
+Transit depth (dil.) SOI_1; $\delta_\mathrm{tr; dil; SOI_1; lc}$ (ppt),0.002366971026862341,0.0002418478229475607,0.00022980515058479423,derived
+Limb darkening; $u_\mathrm{1; lc}$,0.6278943970320732,0.3900426616992325,0.45513444891788013,derived
+Limb darkening; $u_\mathrm{2; lc}$,0.05753740197211508,0.3957784949184455,0.40494583003610135,derived
+Combined host density from all orbits; $rho_\mathrm{\star; combined}$ (cgs),26.569018015931825,4.079398917302839,3.750752367943605,derived
