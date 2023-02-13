@@ -1,4 +1,3 @@
-import copy
 import os
 import shutil
 from argparse import ArgumentParser
@@ -20,7 +19,7 @@ from lcbuilder.lcbuilder_class import LcBuilder
 from pytz import timezone, utc
 from timezonefinder import TimezoneFinder
 
-from sherlockpipe.observation_report import ObservationReport
+from sherlockpipe.observation_plan.observation_report import ObservationReport
 
 
 class MoonIlluminationSeparationConstraint(Constraint):
