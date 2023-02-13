@@ -9,7 +9,7 @@ import os
 from os import path
 import matplotlib.pyplot as plt
 
-from sherlockpipe.tool_with_candidate import ToolWithCandidate
+from sherlockpipe.loading.tool_with_candidate import ToolWithCandidate
 
 resources_dir = path.join(path.dirname(__file__))
 

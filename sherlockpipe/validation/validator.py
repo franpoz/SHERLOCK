@@ -15,7 +15,7 @@ import triceratops.triceratops as tr
 from watson.watson import Watson
 
 from sherlockpipe.validation.validation_report import ValidationReport
-from sherlockpipe.tool_with_candidate import ToolWithCandidate
+from sherlockpipe.loading.tool_with_candidate import ToolWithCandidate
 
 
 class Validator(ToolWithCandidate):

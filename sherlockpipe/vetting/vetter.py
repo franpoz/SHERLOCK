@@ -1,6 +1,6 @@
 from watson.watson import Watson
 
-from sherlockpipe.tool_with_candidate import ToolWithCandidate
+from sherlockpipe.loading.tool_with_candidate import ToolWithCandidate
 
 
 class Vetter(ToolWithCandidate):
