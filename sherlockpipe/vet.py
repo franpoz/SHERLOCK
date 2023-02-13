@@ -1,12 +1,5 @@
-import logging
-import yaml
 from argparse import ArgumentParser
-import sys
-import pandas as pd
-import os
-from watson.watson import Watson
 
-from sherlockpipe.tool_with_candidate import ToolWithCandidate
 from sherlockpipe.vetting.run import run_vet
 
 if __name__ == '__main__':
