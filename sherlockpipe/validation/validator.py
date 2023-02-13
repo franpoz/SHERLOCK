@@ -14,7 +14,7 @@ import ast
 import triceratops.triceratops as tr
 from watson.watson import Watson
 
-from sherlockpipe.validation_report import ValidationReport
+from sherlockpipe.validation.validation_report import ValidationReport
 from sherlockpipe.tool_with_candidate import ToolWithCandidate
 
 
