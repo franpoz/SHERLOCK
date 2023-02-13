@@ -39,25 +39,13 @@ class Sherlock:
     Main SHERLOCK PIPEline class to be used for loading input, setting up the running parameters and launch the
     analysis of the desired TESS, Kepler, K2 or csv objects light curves.
     """
-    TOIS_CSV_URL = 'https://exofop.ipac.caltech.edu/tess/download_toi.php?sort=toi&output=csv'
-    CTOIS_CSV_URL = 'https://exofop.ipac.caltech.edu/tess/download_ctoi.php?sort=ctoi&output=csv'
-    KOIS_LIST_URL = 'https://exofop.ipac.caltech.edu/kepler/targets.php?sort=num-pc&page1=1&ipp1=100000&koi1=&koi2='
-    KOI_TARGET_URL = 'https://exofop.ipac.caltech.edu/kepler/edit_target.php?id={$id}'
-    KOI_TARGET_URL_NEW = 'https://exoplanetarchive.ipac.caltech.edu/cgi-bin/nstedAPI/nph-nstedAPI?table=cumulative'
-    EPIC_TARGET_URL_NEW = 'https://exoplanetarchive.ipac.caltech.edu/cgi-bin/nstedAPI/nph-nstedAPI?table=k2candidates'
     MASK_MODES = ['mask', 'subtract']
-    RESULTS_DIR = '../'
+    RESULTS_DIR = './'
     VALID_DETREND_METHODS = ["biweight", "gp"]
     VALID_PERIODIC_DETREND_METHODS = ["biweight", "gp", "cosine", "cofiam"]
     NUM_CORES = multiprocessing.cpu_count() - 1
-    TOIS_CSV = RESULTS_DIR + 'tois.csv'
-    CTOIS_CSV = RESULTS_DIR + 'ctois.csv'
-    KOIS_CSV = RESULTS_DIR + 'kois.csv'
     OBJECT_ID_REGEX = "^(KIC|TIC|EPIC)[-_ ]([0-9]+)$"
     NUMBERS_REGEX = "[0-9]+$"
-    MISSION_ID_KEPLER = "KIC"
-    MISSION_ID_KEPLER_2 = "EPIC"
-    MISSION_ID_TESS = "TIC"
     transits_min_count = {}
     wl_min = {}
     wl_max = {}
