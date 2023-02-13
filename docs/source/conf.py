@@ -36,6 +36,10 @@ extensions = [
 ]
 
 autosummary_generate = True  # Turn on sphinx.ext.autosummary
+autosummary_mock_imports = [
+    'sherlockpipe.tests',
+    'sherlockpipe.regression_tests',
+]
 #autosummary_imported_members = True
 
 nb_execution_mode = "off"
