@@ -66,13 +66,14 @@ def extract_sectors(object_info: MissionObjectInfo, cache_dir: str) -> object:
     return sectors
 
 
-def run_search(properties: str, explore: bool, cpus: int = None):
+def run_search(properties: str, explore: bool, results_dir: None, cpus: int = None):
     """
     Executes the SHERLOCK search reading the given properties file.
 
     :param properties: the properties directory
     :param explore: whether SHERLOCK should run only the steps previous to the search.
     :param cpus: the number of processes to be used
+    :param results_dir: the output directory to store the results
     :return dict: the final used properties dictionary
     """
     resources_dir = os.path.dirname(path.join(path.dirname(__file__)))
@@ -82,7 +83,8 @@ def run_search(properties: str, explore: bool, cpus: int = None):
     user_properties = load_from_yaml(properties)
     sherlock_user_properties.update(user_properties)
     sherlock.Sherlock([], explore, sherlock_user_properties["UPDATE_OIS"],
-                      sherlock_user_properties["UPDATE_FORCE"], sherlock_user_properties["UPDATE_CLEAN"]).run()
+                      sherlock_user_properties["UPDATE_FORCE"], sherlock_user_properties["UPDATE_CLEAN"],
+                      results_dir=results_dir).run()
     sherlock_targets = []
     lcbuilder = LcBuilder()
     cache_dir = get_from_dict_or_default(sherlock_user_properties, "CACHE_DIR", os.path.expanduser('~') + "/")
@@ -318,5 +320,5 @@ def run_search(properties: str, explore: bool, cpus: int = None):
             print("Error found for target " + target)
             traceback.print_exc()
             print("Continuing with the target list")
-    sherlock.Sherlock(sherlock_targets, explore, cache_dir).run()
+    sherlock.Sherlock(sherlock_targets, explore, cache_dir, results_dir=results_dir).run()
     return sherlock_user_properties

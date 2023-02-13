@@ -18,7 +18,7 @@ class ObservationReport:
     """
     Used to create a pdf file from the parameters and images generated in the plan stage.
     """
-    LOGO_IMAGE = resources_dir + "/resources/images/sherlock3.png"
+    LOGO_IMAGE = resources_dir + "/../resources/images/sherlock3.png"
     ALERT_IMAGE = resources_dir + "/resources/images/alert.png"
 
     def __init__(self, df_observatories, df, alert_date, object_id, name, working_path, ra, dec, t0, t0_low_err, t0_up_err, period,

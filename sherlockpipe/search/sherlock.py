@@ -3,6 +3,8 @@ import math
 import multiprocessing
 import pickle
 import shutil
+from typing import List
+
 import pandas
 import wotan
 import matplotlib.pyplot as plt
@@ -24,6 +26,7 @@ from lcbuilder.star.HabitabilityCalculator import HabitabilityCalculator
 
 from sherlockpipe.plot.plotting import save_transit_plot
 from sherlockpipe.scoring.helper import compute_border_score, harmonic_spectrum
+from sherlockpipe.search.sherlock_target import SherlockTarget
 from sherlockpipe.search.transitresult import TransitResult
 from multiprocessing import Pool
 from scipy import stats
@@ -63,28 +66,33 @@ class Sherlock:
     config_step = 0
     use_ois = False
 
-    def __init__(self, sherlock_targets: list, explore=False, update_ois=False, update_force=False, update_clean=False,
-                 cache_dir=os.path.expanduser('~') + "/"):
+    def __init__(self, sherlock_targets: List[SherlockTarget], explore: bool = False, update_ois: bool = False,
+                 update_force: bool = False, update_clean: bool = False, cache_dir: str = os.path.expanduser('~') + "/",
+                 results_dir: str = None):
         """
         Initializes a Sherlock object, loading the OIs from the csvs, setting up the detrend and transit configurations,
         storing the provided object_infos list and initializing the builders to be used to prepare the light curves for
         the provided object_infos.
 
-        :param update_ois: Flag to signal SHERLOCK for updating the TOIs, KOIs and EPICs
-        :param sherlock_targets: a list of objects information to be analysed
-        :param explore: whether to only run the prepare stage for all objects
-        :param cache_dir: directory to store caches for sherlock.
+        :param bool update_ois: Flag to signal SHERLOCK for updating the TOIs, KOIs and EPICs
+        :param List[SherlockTarget] sherlock_targets: a list of objects information to be analysed
+        :param bool explore: whether to only run the prepare stage for all objects
+        :param bool update_ois: whether ois files should be updated
+        :param bool update_force: whether a complete update of metadata should be done
+        :param bool update_clean: whether current metadata should be wiped-out before update
+        :param str cache_dir: directory to store caches for sherlock.
+        :param str results_dir: directory to store results
         """
         self.explore = explore
         self.cache_dir = cache_dir
         self.__setup_logging()
         self.ois_manager = OisManager(self.cache_dir)
-        self.setup_files(update_ois, update_force, update_clean)
+        self.setup_files(update_ois, update_force, update_clean, results_dir)
         self.sherlock_targets = sherlock_targets
         self.habitability_calculator = HabitabilityCalculator()
         self.lcbuilder = LcBuilder()
 
-    def setup_files(self, refresh_ois, refresh_force, refresh_clean, results_dir=RESULTS_DIR):
+    def setup_files(self, refresh_ois, refresh_force, refresh_clean, results_dir=None):
         """
         Loads the objects of interest data from the downloaded CSVs.
 
@@ -92,7 +100,7 @@ class Sherlock:
         :param results_dir: Stores the directory to be used for the execution.
         :return: the Sherlock object itself
         """
-        self.results_dir = results_dir
+        self.results_dir = results_dir if results_dir is not None else self.RESULTS_DIR
         self.load_ois(refresh_ois, refresh_force, refresh_clean)
         return self
 

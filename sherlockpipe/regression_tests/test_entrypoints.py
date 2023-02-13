@@ -3,7 +3,9 @@ import shutil
 import types
 import unittest
 import pkg_resources
+from astropy.time import Time
 
+from sherlockpipe.observation_plan.run import run_plan
 from sherlockpipe.search.run import run_search
 from sherlockpipe.system_stability.run import run_stability
 from sherlockpipe.validation.run import run_validate
@@ -57,12 +59,42 @@ class TestsEntrypoints(unittest.TestCase):
 
     def test_search(self):
         properties_dir = TestsEntrypoints.get_path("search.yaml")
-        search_dir = TestsEntrypoints.get_path("TIC305048087_[2]")
+        results_dir = TestsEntrypoints.get_path("/")
+        search_dir = results_dir + "TIC305048087_[2]"
         try:
-            run_search(properties_dir, False, 4)
+            run_search(properties_dir, False, results_dir, 4)
             self.assertEquals(20, len(os.listdir(search_dir)))
         finally:
             shutil.rmtree(search_dir, ignore_errors=True)
+
+    def test_plan(self):
+        object_dir = TestsEntrypoints.get_path('test_endpoints_data/fit_1/')
+        plan_dir = object_dir + 'plan/'
+        args = types.SimpleNamespace()
+        args.object_dir = object_dir
+        args.cpus = 4
+        args.observatories = object_dir + 'observatories.csv'
+        args.since = Time('2022-10-01', scale='utc')
+        args.error_sigma = 1
+        args.time_unit = None
+        args.tz = 0
+        args.lat = None
+        args.lon = None
+        args.alt = None
+        args.max_days = 30
+        args.min_altitude = 25
+        args.moon_min_dist = 20
+        args.moon_max_dist = 40
+        args.transit_fraction = 0.5
+        args.no_error_alert = True
+        args.baseline = 1
+        try:
+            run_plan(args)
+            self.assertEquals(2, len(os.listdir(plan_dir)))
+            with open(plan_dir + "observation_plan.csv", 'r') as fp:
+                self.assertEquals(8, len(fp.readlines()))
+        finally:
+            shutil.rmtree(plan_dir, ignore_errors=True)
 
 
     @staticmethod
