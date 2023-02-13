@@ -15,8 +15,7 @@ class SpockStabilityCalculator(StabilityCalculator):
         Runs one stability scenario using Spock.
 
         :param SimulationInput simulation_input:
-        :return dict: the result with the spock-specific metrics stability_probability and the
-        median_expected_instability_time
+        :return dict: the result with the spock-specific metrics stability_probability and the median_expected_instability_time
         """
         sim = self.init_rebound_simulation(simulation_input)
         feature_classifier_model = FeatureClassifier()

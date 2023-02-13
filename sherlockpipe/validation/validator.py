@@ -31,14 +31,13 @@ class Validator(ToolWithCandidate):
         """
         Runs the validation storing a PDF report with the results together to some csvs for reproducibility.
 
-        :param candidate: a candidate dataframe containing TICID, period, duration, t0, transits, depth, rp_rs, number,
-        curve and sectors data.
-        :param star: the star dataframe.
-        :param cpus: the number of cpus to be used.
-        :param contrast_curve_file: the auxiliary contrast curve file to give more information to the validation engine.
+        :param candidate: a candidate dataframe containing TICID, period, duration, t0, transits, depth, rp_rs, number, curve and sectors data
+        :param star: the star dataframe
+        :param cpus: the number of cpus to be used
+        :param contrast_curve_file: the auxiliary contrast curve file to give more information to the validation engine
         :param bins: the number of bins to resize the light curve
         :param scenarios: the number of scenarios to compute the validation and get the average
-        :param sigma_mode: whether to compute the sigma for the validation from the 'flux_err' or the 'binning'.
+        :param sigma_mode: whether to compute the sigma for the validation from the 'flux_err' or the 'binning'
         """
         object_id = candidate["id"]
         period = candidate.loc[candidate['id'] == object_id]['period'].iloc[0]
@@ -121,7 +120,7 @@ class Validator(ToolWithCandidate):
         :param sectors: the sectors of the tic
         :param lc_file: the light curve source file
         :param transit_depth: the depth of the transit signal (ppts)
-        :param period: the period of the transit signal /days)
+        :param period: the period of the transit signal (days)
         :param t0: the t0 of the transit signal (days)
         :param transit_duration: the duration of the transit signal (minutes)
         :param rp_rstar: radius of planet divided by radius of star
@@ -129,8 +128,9 @@ class Validator(ToolWithCandidate):
         :param bins: the number of bins to average the folded curve
         :param scenarios: the number of scenarios to validate
         :param sigma_mode: the way to calculate the sigma for the validation ['flux_err' | 'binning']
-        :param contrast_curve_file: the auxiliary contrast curve file to give more information to the validation engine.
+        :param contrast_curve_file: the auxiliary contrast curve file to give more information to the validation engine
         :param run: the search run where the candidate was spotted
+        :return str: the directory where the results are stored
         """
         save_dir = indir + "/triceratops"
         if os.path.exists(save_dir):
@@ -335,11 +335,11 @@ class Validator(ToolWithCandidate):
     @staticmethod
     def probs_without_scenarios(csv_file, no_scenarios):
         """
-        Helper method to re-compute the probabilities removing the given scenarios.
+        Helper method to re-compute the probabilities removing the given scenarios
 
         :param csv_file: the csv file with all the scenarios probabilities
         :param no_scenarios: the scenarios to be removed from the calculation of probabilities
-        :return: the new fpp, nfpp, fpp2, fpp3 and the filtered scenarios dataframe.
+        :return: the new fpp, nfpp, fpp2, fpp3 and the filtered scenarios dataframe
         """
         scenarios_df = pd.read_csv(csv_file)
         scenarios_prob = scenarios_df['prob'].sum()
@@ -526,10 +526,10 @@ class TriceratopsThreadValidator:
         """
         Computes the input scenario FPP and NFPP. In addition, FPP2 and FPP3+, from the probability boost proposed in
         Lissauer et al. (2012) eq. 8 and 9 for systems where one or more planets have already been confirmed, are also
-        provided just in case they are useful so they don't need to be manually calculated.
+        provided just in case they are useful so they don't need to be manually calculated
 
         :param input: ValidatorInput
-        :return: the FPP values, the probabilities dataframe and additional target values.
+        :return: the FPP values, the probabilities dataframe and additional target values
         """
         #input.target.calc_depths(tdepth=input.depth, all_ap_pixels=input.apertures)
         input.target.calc_probs(time=input.time, flux_0=input.flux, flux_err_0=input.sigma, P_orb=input.period,

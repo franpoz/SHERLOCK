@@ -25,8 +25,7 @@ class Updater:
 
         :param clean: Specifies whether the ELEANOR data should be wiped and downloaded again.
         :param ois: Specifies whether the OIs metadata is the only one to be refreshed (ignoring ELEANOR and LATTE)
-        :param force: Specifies whether the last download timestamp should be ignored and proceed as if a refresh was
-        needed.
+        :param force: Specifies whether the last download timestamp should be ignored and proceed as if a refresh was needed.
         """
         ois_manager = OisManager(self.cache_dir)
         timestamp_ois_path = os.path.join(self.cache_dir, '.sherlockpipe/timestamp_ois.txt')
