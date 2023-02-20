@@ -1,11 +1,13 @@
 import unittest
 
+import pkg_resources
+
 from sherlockpipe.loading import common
 
 
 class TestCommon(unittest.TestCase):
-    MODULE_PATH = "../resources/RandomSignalSelector.py"
-    YAML_PATH = "../resources/user-properties.yaml"
+    MODULE_PATH = pkg_resources.resource_filename("sherlockpipe.tests.resources", "RandomSignalSelector.py")
+    YAML_PATH = pkg_resources.resource_filename("sherlockpipe.tests.resources", "user-properties.yaml")
 
     def test_load_module(self):
         loaded_module = common.load_module(self.MODULE_PATH)
