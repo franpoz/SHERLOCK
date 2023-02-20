@@ -35,7 +35,7 @@ class TestsEntrypoints(unittest.TestCase):
         vetting_dir = object_dir + '/vetting_0'
         try:
             run_vet(object_dir, 1, None, cpus=4)
-            self.assertEquals(6, len(os.listdir(vetting_dir)))
+            self.assertEquals(7, len(os.listdir(vetting_dir)))
         finally:
             shutil.rmtree(vetting_dir, ignore_errors=True)
 
@@ -67,6 +67,7 @@ class TestsEntrypoints(unittest.TestCase):
         finally:
             shutil.rmtree(search_dir, ignore_errors=True)
 
+    @unittest.skip("Allesfitter is broken here: https://github.com/MNGuenther/allesfitter/issues/57")
     def test_plan(self):
         object_dir = TestsEntrypoints.get_path('test_endpoints_data/fit_1/')
         plan_dir = object_dir + 'plan/'
