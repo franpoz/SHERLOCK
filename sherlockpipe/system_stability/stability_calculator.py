@@ -8,6 +8,8 @@ from abc import ABC, abstractmethod
 from multiprocessing import Pool
 import numpy as np
 import rebound
+from astropy import units as u
+from lcbuilder.helper import LcbuilderHelper
 
 from sherlockpipe import constants
 
@@ -153,7 +155,8 @@ class StabilityCalculator(ABC):
             ecc = simulation_input.ecc_arr[planet_key]
             inc = np.deg2rad(simulation_input.inc_arr[planet_key])
             omega = np.deg2rad(simulation_input.omega_arr[planet_key])
-            sim.add(m=mass * constants.EARTH_TO_SUN_MASS / simulation_input.star_mass, P=period, e=ecc, omega=omega, inc=inc)
+            sim.add(m=LcbuilderHelper.convert_from_to(mass, u.M_earth, u.M_sun) / simulation_input.star_mass,
+                    P=period, e=ecc, omega=omega, inc=inc)
         sim.dt = min_period / 365.25 / 100
         # sim.status()
         sim.move_to_com()
