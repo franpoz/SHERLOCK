@@ -1,3 +1,4 @@
+import gc
 import logging
 import os
 import shutil
@@ -10,12 +11,15 @@ from email.mime.text import MIMEText
 from pathlib import Path
 
 import requests
+from apscheduler.executors.pool import ThreadPoolExecutor, ProcessPoolExecutor
 
-from sherlockpipe.fit import run_fit
-from sherlockpipe.loading.run import run, load_from_yaml
-from sherlockpipe.stability import stability_args_parse, run_stability
-from sherlockpipe.validate import validation_args_parse, run_validate
-from sherlockpipe.vet import run_vet
+from sherlockpipe.bayesian_fit.run import run_fit
+from sherlockpipe.search.run import run_search, load_from_yaml
+from sherlockpipe.stability import stability_args_parse
+from sherlockpipe.system_stability.run import run_stability
+from sherlockpipe.validate import validation_args_parse
+from sherlockpipe.validation.run import run_validate
+from sherlockpipe.vetting.run import run_vet
 
 
 def move_input_to_working(running_file, working_dir):
@@ -39,7 +43,7 @@ def run_script(input_dir, output_dir, working_dir, cpus, pa):
                 working_target_dir = working_dir + '/' + Path(working_file).stem
                 os.mkdir(working_target_dir)
                 os.chdir(working_target_dir)
-                properties = run(working_file, False, cpus)
+                properties = run_search(working_file, False, cpus)
             elif os.path.isdir(path_str):
                 running_file = path_str
                 working_target_dir = move_input_to_working(path_str, working_dir)
@@ -100,9 +104,9 @@ def run_script(input_dir, output_dir, working_dir, cpus, pa):
     finally:
         os.chdir(working_dir)
         if running_file is not None and os.path.exists(running_file):
-            os.remove(running_file)
+            shutil.rmtree(running_file, ignore_errors=True)
         if working_file is not None and os.path.exists(working_file):
-            os.remove(working_file)
+            shutil.rmtree(working_file, ignore_errors=True)
         if working_target_dir is not None and os.path.exists(working_target_dir):
             logging.info("Finished file %s", running_file)
             output_file = output_dir + '/' + Path(working_target_dir).stem
@@ -112,6 +116,7 @@ def run_script(input_dir, output_dir, working_dir, cpus, pa):
                 send_email(output_file, receiver_address, pa)
             else:
                 logging.warning('Cannot send an email because the receiver email was not provided.')
+        gc.collect()
 
 
 def send_email(filename, receiver_address, pa):
@@ -184,7 +189,11 @@ if __name__ == '__main__':
             shutil.rmtree(file_in_working, ignore_errors=True)
     from apscheduler.schedulers.blocking import BlockingScheduler
     logging.getLogger('apscheduler.executors.default').setLevel(logging.ERROR)
-    scheduler = BlockingScheduler()
+    executors = {
+        'default': ProcessPoolExecutor(1),
+        'processpool': ProcessPoolExecutor(1)
+    }
+    scheduler = BlockingScheduler(executors)
     scheduler.add_job(run_script, 'interval', minutes=1, max_instances=1, misfire_grace_time=600000,
                       kwargs={"input_dir": args.input_dir, "output_dir": args.output_dir,
                               "working_dir": args.working_dir, "cpus": args.cpus, "pa": args.pa})
