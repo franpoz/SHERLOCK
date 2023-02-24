@@ -196,7 +196,7 @@ if __name__ == '__main__':
     scheduler = BlockingScheduler(executors)
     scheduler.add_job(run_script, 'interval', minutes=1, max_instances=1, misfire_grace_time=600000,
                       kwargs={"input_dir": args.input_dir, "output_dir": args.output_dir,
-                              "working_dir": args.working_dir, "cpus": args.cpus, "pa": args.pa})
+                              "working_dir": args.working_dir, "cpus": args.cpus, "pa": args.pa}, replace_existing=True)
     scheduler.add_job(clean_old_outputs, 'interval', days=1, max_instances=1,
-                      kwargs={"output_dir": args.output_dir})
+                      kwargs={"output_dir": args.output_dir}, replace_existing=True)
     scheduler.start()
