@@ -197,9 +197,6 @@ class Sherlock:
         """
         Entrypoint of Sherlock which launches the main execution for all the input object_infos
         """
-        logging.info('SHERLOCK (Searching for Hints of Exoplanets fRom Lightcurves Of spaCe-base seeKers)')
-        logging.info('Version %s', sys.modules["sherlockpipe"].__version__)
-        logging.info('MODE: %s', "ANALYSE" if not self.explore else "EXPLORE")
         if len(self.sherlock_targets) == 0 and self.use_ois:
             self.sherlock_targets = [MissionObjectInfo('all', object_id)
                                      for object_id in self.ois["Object Id"].astype('string').unique()]
@@ -417,6 +414,9 @@ class Sherlock:
         object_info = sherlock_target.object_info
         sherlock_id = object_info.sherlock_id()
         object_dir = self.__setup_object_logging(sherlock_id)
+        logging.info('SHERLOCK (Searching for Hints of Exoplanets fRom Lightcurves Of spaCe-base seeKers)')
+        logging.info('Version %s', sys.modules["sherlockpipe"].__version__)
+        logging.info('MODE: %s', "ANALYSE" if not self.explore else "EXPLORE")
         logging.info('ID: %s', sherlock_id)
         if sherlock_target.source_properties_file is not None:
             logging.info("Storing properties file %s", sherlock_target.source_properties_file)
