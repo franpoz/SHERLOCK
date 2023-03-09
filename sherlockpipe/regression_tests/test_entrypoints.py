@@ -67,6 +67,7 @@ class TestsEntrypoints(unittest.TestCase):
         finally:
             shutil.rmtree(search_dir, ignore_errors=True)
 
+    @unittest.skip("Allesfitter is failing loading data: https://github.com/MNGuenther/allesfitter/issues/57")
     def test_plan(self):
         object_dir = TestsEntrypoints.get_path('test_endpoints_data/fit_1/')
         plan_dir = object_dir + 'plan/'
