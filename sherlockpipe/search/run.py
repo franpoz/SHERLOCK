@@ -49,7 +49,7 @@ def get_star_info(object_id: str, target: dict) -> StarInfo:
     return input_star_info
 
 
-def extract_sectors(object_info: MissionObjectInfo, cache_dir: str) -> object:
+def extract_sectors(object_info: MissionObjectInfo, cache_dir: str) -> np.ndarray:
     """
     Given the object info and the cache directory, it searches in `lightkurve` for the target pixel files and retrieves
     the sectors, quarters or campaigns either as an integer (if only one) or as a list.
@@ -60,7 +60,7 @@ def extract_sectors(object_info: MissionObjectInfo, cache_dir: str) -> object:
     """
     mission, mission_prefix, id_int = LcBuilder().parse_object_info(object_info.mission_id())
     lcf_search_results = lightkurve.search_targetpixelfile(object_info.mission_id(),
-                                                           mission=object_info.mission_id(), cadence="long")\
+                                                           mission=mission, cadence="long")\
         .download_all(download_dir=cache_dir)
     sector_name, sectors = LcbuilderHelper.mission_lightkurve_sector_extraction(mission, lcf_search_results)
     return sectors
@@ -169,7 +169,7 @@ def run_search(properties: str, explore: bool, results_dir: None, cpus: int = No
             pickle_mode = get_from_user_or_config(target_configs, sherlock_user_properties, "PICKLE_MODE")
             mission = None
             mode = get_from_user_or_config_or_default(target_configs, sherlock_user_properties, "MODE", "GLOBAL")
-            sectors = get_from_user_or_config_or_default(target_configs, sherlock_user_properties, "SECTORS", "all")
+            sectors = get_from_user_or_config_or_default(target_configs, sherlock_user_properties, "SECTOR", "all")
             use_harmonics_spectra = get_from_user_or_config_or_default(target_configs, sherlock_user_properties, "USE_HARMONICS_SPECTRA", False)
             truncate_border = get_from_user_or_config_or_default(target_configs, sherlock_user_properties, "TRUNCATE_BORDERS_DAYS", 0)
             if sectors != "all" and len(np.array(sectors).shape) > 1:
@@ -209,7 +209,7 @@ def run_search(properties: str, explore: bool, results_dir: None, cpus: int = No
                                                          ignore_original,
                                                          pickle_mode, use_harmonics_spectra)
                         sherlock_targets.append(sherlock_target)
-                if mode == "SECTOR" or mode == "BOTH" and isinstance(built_object_info, MissionObjectInfo):
+                if mode == "SECTOR" or mode == "BOTH" and isinstance(built_object_info, MissionObjectInfo.MissionObjectInfo):
                     if sectors == 'all':
                         sectors = extract_sectors(built_object_info, cache_dir)
                     sectors_unique = np.unique(np.array(sectors).flatten())
@@ -277,7 +277,7 @@ def run_search(properties: str, explore: bool, results_dir: None, cpus: int = No
                                                  ignore_original, pickle_mode, use_harmonics_spectra)
                 if mode == "GLOBAL" or mode == "BOTH":
                     sherlock_targets.append(sherlock_target)
-                if mode == "SECTOR" or mode == "BOTH" and isinstance(built_object_info, MissionObjectInfo):
+                if mode == "SECTOR" or mode == "BOTH" and isinstance(built_object_info, MissionObjectInfo.MissionObjectInfo):
                     if sectors == 'all':
                         sectors = extract_sectors(built_object_info, cache_dir)
                     for sector in sectors:
@@ -314,11 +314,11 @@ def run_search(properties: str, explore: bool, results_dir: None, cpus: int = No
                                                          pickle_mode, use_harmonics_spectra)
                         sherlock_targets.append(sherlock_target)
                 if mode != "GLOBAL" and mode != "BOTH" and not (mode == "SECTOR" or mode == "BOTH" and
-                                                                isinstance(built_object_info, MissionObjectInfo)):
+                                                                isinstance(built_object_info, MissionObjectInfo.MissionObjectInfo)):
                     raise ValueError("Not a valid run mode: " + str(mode) + " for target: " + str(target))
         except Exception as e:
             print("Error found for target " + target)
             traceback.print_exc()
             print("Continuing with the target list")
-    sherlock.Sherlock(sherlock_targets, explore, cache_dir, results_dir=results_dir).run()
+    sherlock.Sherlock(sherlock_targets, explore, cache_dir=cache_dir, results_dir=results_dir).run()
     return sherlock_user_properties
