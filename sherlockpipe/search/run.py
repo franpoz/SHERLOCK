@@ -115,6 +115,8 @@ def run_search(properties: str, explore: bool, results_dir: None, cpus: int = No
             initial_mask = get_from_user_or_config(target_configs, sherlock_user_properties, "INITIAL_MASK")
             initial_transit_mask = get_from_user_or_config(target_configs, sherlock_user_properties,
                                                            "INITIAL_TRANSIT_MASK")
+            initial_ois_mask = get_from_user_or_config(target_configs, sherlock_user_properties,
+                                                           "INITIAL_OIS_MASK")
             sde_min = get_from_user_or_config(target_configs, sherlock_user_properties, "SDE_MIN")
             snr_min = get_from_user_or_config(target_configs, sherlock_user_properties, "SNR_MIN")
             custom_search_zone = extract_custom_class(
@@ -169,7 +171,7 @@ def run_search(properties: str, explore: bool, results_dir: None, cpus: int = No
             pickle_mode = get_from_user_or_config(target_configs, sherlock_user_properties, "PICKLE_MODE")
             mission = None
             mode = get_from_user_or_config_or_default(target_configs, sherlock_user_properties, "MODE", "GLOBAL")
-            sectors = get_from_user_or_config_or_default(target_configs, sherlock_user_properties, "SECTOR", "all")
+            sectors = get_from_user_or_config_or_default(target_configs, sherlock_user_properties, "SECTORS", "all")
             use_harmonics_spectra = get_from_user_or_config_or_default(target_configs, sherlock_user_properties, "USE_HARMONICS_SPECTRA", False)
             truncate_border = get_from_user_or_config_or_default(target_configs, sherlock_user_properties, "TRUNCATE_BORDERS_DAYS", 0)
             if sectors != "all" and len(np.array(sectors).shape) > 1:
@@ -207,7 +209,7 @@ def run_search(properties: str, explore: bool, results_dir: None, cpus: int = No
                                                          min_quorum, fit_method, oversampling,
                                                          t0_fit_margin, duration_grid_step, properties, cache_dir,
                                                          ignore_original,
-                                                         pickle_mode, use_harmonics_spectra)
+                                                         pickle_mode, use_harmonics_spectra, ois_mask=initial_ois_mask)
                         sherlock_targets.append(sherlock_target)
                 if mode == "SECTOR" or mode == "BOTH" and isinstance(built_object_info, MissionObjectInfo.MissionObjectInfo):
                     if sectors == 'all':
@@ -244,7 +246,7 @@ def run_search(properties: str, explore: bool, results_dir: None, cpus: int = No
                                                          min_quorum, fit_method, oversampling,
                                                          t0_fit_margin, duration_grid_step, properties, cache_dir,
                                                          ignore_original,
-                                                         pickle_mode, use_harmonics_spectra)
+                                                         pickle_mode, use_harmonics_spectra, ois_mask=initial_ois_mask)
                         sherlock_targets.append(sherlock_target)
             else:
                 built_object_info = lcbuilder.build_object_info(target, author, sectors, file, exptime,
@@ -274,7 +276,8 @@ def run_search(properties: str, explore: bool, results_dir: None, cpus: int = No
                                                  period_max, period_protect, best_signal_algorithm, quorum_strength,
                                                  min_quorum, fit_method, oversampling,
                                                  t0_fit_margin, duration_grid_step, properties, cache_dir,
-                                                 ignore_original, pickle_mode, use_harmonics_spectra)
+                                                 ignore_original, pickle_mode, use_harmonics_spectra,
+                                                 ois_mask=initial_ois_mask)
                 if mode == "GLOBAL" or mode == "BOTH":
                     sherlock_targets.append(sherlock_target)
                 if mode == "SECTOR" or mode == "BOTH" and isinstance(built_object_info, MissionObjectInfo.MissionObjectInfo):
@@ -311,7 +314,7 @@ def run_search(properties: str, explore: bool, results_dir: None, cpus: int = No
                                                          min_quorum, fit_method, oversampling,
                                                          t0_fit_margin, duration_grid_step, properties, cache_dir,
                                                          ignore_original,
-                                                         pickle_mode, use_harmonics_spectra)
+                                                         pickle_mode, use_harmonics_spectra, ois_mask=initial_ois_mask)
                         sherlock_targets.append(sherlock_target)
                 if mode != "GLOBAL" and mode != "BOTH" and not (mode == "SECTOR" or mode == "BOTH" and
                                                                 isinstance(built_object_info, MissionObjectInfo.MissionObjectInfo)):
