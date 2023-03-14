@@ -5,6 +5,7 @@ import pickle
 import shutil
 from typing import List
 
+import lightkurve
 import pandas
 import wotan
 import matplotlib.pyplot as plt
@@ -527,6 +528,17 @@ class Sherlock:
             Watson.vetting_field_of_view(fov_dir, mission, object_num, lc_build.cadence, lc_build.star_info.ra,
                                          lc_build.star_info.dec, lc_build.sectors if isinstance(lc_build.sectors, list)
                                          else lc_build.sectors.tolist(), lc_build.tpf_source, lc_build.tpf_apertures)
+        if sherlock_target.ois_mask and self.ois is not None:
+            logging.info("Masking OIS")
+            target_ois = self.ois[self.ois["Object Id"] == object_info.mission_id()]
+            target_ois = target_ois[target_ois["OI"].notnull()]
+            transits_dict = []
+            for index, oi_row in target_ois.iterrows():
+                epoch = oi_row['Epoch (BJD)']
+                epoch = LcbuilderHelper.correct_epoch(mission, epoch)
+                transits_dict.append({'P': oi_row["Period (days)"], 'T0': epoch,
+                                      'D': oi_row['Duration (hours)'] * 60 * 2})
+            lc_build.lc = LcbuilderHelper.mask_transits_dict(lc_build.lc, transits_dict)
         return lc_build
 
     def __analyse(self, sherlock_target, time, lcs, flux_err, star_info, id_run, transits_min_count, cadence, report,
@@ -539,7 +551,7 @@ class Sherlock:
         run_dir = self.__init_object_dir(star_info.object_id) + '/' + str(id_run) + '/'
         signal_selection = sherlock_target.signal_score_selectors[sherlock_target.best_signal_algorithm]\
             .select(id_run, sherlock_target, star_info, transits_min_count, time, lcs, transit_results, wl, cadence)
-        title = 'Run ' + str(id_run) + '# curve: ' + str(signal_selection.curve_index) + \
+        title = 'Run ' + str(id_run) + '# curve: SELECTED' + \
                 ' # P=' + format(signal_selection.transit_result.period, '.2f') + 'd # T0=' + \
                 format(signal_selection.transit_result.t0, '.2f') + ' # Depth=' + \
                 format(signal_selection.transit_result.depth, '.4f') + "ppt # Dur=" + \
@@ -723,7 +735,7 @@ class Sherlock:
             existing_period_in_object = self.ois[(self.ois["Object Id"] == object_info.mission_id()) &
                                                  (0.99 < self.ois["Period (days)"] / period) &
                                                  (self.ois["Period (days)"] / period < 1.01) &
-                                                 (np.abs(self.ois['Epoch (BJD)'] - corrected_epoch) / period < 0.05)]
+                                                 (np.abs(self.ois['Epoch (BJD)'] - corrected_epoch) % period < 0.05 * period)]
             existing_period_in_oi = existing_period_in_object[existing_period_in_object["OI"].notnull()]
             oi = existing_period_in_oi["OI"].iloc[0] if len(
                 existing_period_in_oi.index) > 0 else np.nan

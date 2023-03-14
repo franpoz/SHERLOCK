@@ -138,6 +138,9 @@ INITIAL_MASK:
 #     D: 136.9
 INITIAL_TRANSIT_MASK:
 
+# Whether known objects of interest should be masked before searching
+INITIAL_OIS_MASK: False
+
 # Number of days to be truncated at the beginning and at the end of each data gaps greater than the number specified
 TRUNCATE_BORDERS_DAYS: 0
 
