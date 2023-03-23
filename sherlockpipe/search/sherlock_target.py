@@ -43,7 +43,7 @@ class SherlockTarget:
         self.max_sectors = max_sectors
         self.bin_minutes = bin_minutes
         self.mask_mode = mask_mode
-        self.cpu_cores = cpu_cores
+        self.cpu_cores = cpu_cores if cpu_cores <= os.cpu_count() else os.cpu_count()
         self.max_runs = max_runs
         self.period_min = period_min
         self.period_max = period_max
@@ -61,7 +61,7 @@ class SherlockTarget:
         self.search_zone = search_zone
         self.custom_transit_template = custom_transit_template
         self.custom_selection_algorithm = custom_selection_algorithm
-        self.detrend_cores = detrend_cores
+        self.detrend_cores = detrend_cores if detrend_cores <= os.cpu_count() else os.cpu_count()
         self.detrends_number = detrends_number
         self.detrend_l_max = detrend_l_max
         self.detrend_l_min = detrend_l_min
