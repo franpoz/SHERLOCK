@@ -52,4 +52,4 @@ jobs:
       uses: docker/build-push-action@v3
       with:
         push: true
-        tags: sherlockpipe/sherlockpipe:${{github.ref_name}}
+        tags: [sherlockpipe/sherlockpipe:${{github.ref_name}}, sherlockpipe/sherlockpipe:latest]
