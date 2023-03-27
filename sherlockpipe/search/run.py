@@ -150,7 +150,8 @@ def run_search(properties: str, explore: bool, results_dir: None, cpus: int = No
                                                          "INITIAL_HIGH_RMS_THRESHOLD")
             high_rms_enabled = get_from_user_or_config(target_configs, sherlock_user_properties,
                                                        "INITIAL_HIGH_RMS_MASK")
-            outliers_sigma = get_from_user_or_config(target_configs, sherlock_user_properties, "OUTLIERS_SIGMA")
+            lower_outliers_sigma = get_from_user_or_config(target_configs, sherlock_user_properties, "UPPER_OUTLIERS_SIGMA")
+            upper_outliers_sigma = get_from_user_or_config(target_configs, sherlock_user_properties, "LOWER_OUTLIERS_SIGMA")
             exptime = get_from_user_or_config(target_configs, sherlock_user_properties, "EXPTIME")
             eleanor_corr_flux = get_from_user_or_config(target_configs, sherlock_user_properties,
                                                         "ELEANOR_CORRECTED_FLUX")
@@ -180,7 +181,7 @@ def run_search(properties: str, explore: bool, results_dir: None, cpus: int = No
                         built_object_info = lcbuilder.build_object_info(target, author, sectors_subset, file, exptime,
                                                                         initial_mask, initial_transit_mask,
                                                                         star_info, aperture, eleanor_corr_flux,
-                                                                        outliers_sigma,
+                                                                        upper_outliers_sigma,
                                                                         high_rms_enabled, high_rms_threshold,
                                                                         high_rms_bin_hours,
                                                                         smooth_enabled, auto_detrend_enabled,
@@ -192,7 +193,8 @@ def run_search(properties: str, explore: bool, results_dir: None, cpus: int = No
                                                                         oscillation_amplitude_threshold,
                                                                         oscillation_ws_scale,
                                                                         oscillation_min_period, oscillation_max_period,
-                                                                        exptime_binning, truncate_border)
+                                                                        exptime_binning, truncate_border,
+                                                                        lower_outliers_sigma=lower_outliers_sigma)
                         sherlock_target = SherlockTarget(built_object_info,
                                                          detrend_method, detrend_l_min, detrend_l_max, detrends_number,
                                                          detrend_cores,
@@ -219,7 +221,7 @@ def run_search(properties: str, explore: bool, results_dir: None, cpus: int = No
                         object_info = lcbuilder.build_object_info(target, author, [sector], file, exptime,
                                                                   initial_mask, initial_transit_mask,
                                                                   star_info, aperture, eleanor_corr_flux,
-                                                                  outliers_sigma,
+                                                                  upper_outliers_sigma,
                                                                   high_rms_enabled, high_rms_threshold,
                                                                   high_rms_bin_hours,
                                                                   smooth_enabled, auto_detrend_enabled,
@@ -229,7 +231,8 @@ def run_search(properties: str, explore: bool, results_dir: None, cpus: int = No
                                                                   reduce_simple_oscillations, oscillation_snr_threshold,
                                                                   oscillation_amplitude_threshold, oscillation_ws_scale,
                                                                   oscillation_min_period, oscillation_max_period,
-                                                                  exptime_binning, truncate_border)
+                                                                  exptime_binning, truncate_border,
+                                                                  lower_outliers_sigma=lower_outliers_sigma)
                         sherlock_target = SherlockTarget(object_info,
                                                          detrend_method, detrend_l_min, detrend_l_max, detrends_number,
                                                          detrend_cores,
@@ -251,7 +254,8 @@ def run_search(properties: str, explore: bool, results_dir: None, cpus: int = No
             else:
                 built_object_info = lcbuilder.build_object_info(target, author, sectors, file, exptime,
                                                                 initial_mask, initial_transit_mask,
-                                                                star_info, aperture, eleanor_corr_flux, outliers_sigma,
+                                                                star_info, aperture, eleanor_corr_flux,
+                                                                upper_outliers_sigma,
                                                                 high_rms_enabled, high_rms_threshold,
                                                                 high_rms_bin_hours,
                                                                 smooth_enabled, auto_detrend_enabled,
@@ -261,7 +265,8 @@ def run_search(properties: str, explore: bool, results_dir: None, cpus: int = No
                                                                 reduce_simple_oscillations, oscillation_snr_threshold,
                                                                 oscillation_amplitude_threshold, oscillation_ws_scale,
                                                                 oscillation_min_period, oscillation_max_period,
-                                                                exptime_binning, truncate_border)
+                                                                exptime_binning, truncate_border,
+                                                                lower_outliers_sigma=lower_outliers_sigma)
                 sherlock_target = SherlockTarget(built_object_info,
                                                  detrend_method, detrend_l_min, detrend_l_max, detrends_number,
                                                  detrend_cores,
@@ -287,7 +292,7 @@ def run_search(properties: str, explore: bool, results_dir: None, cpus: int = No
                         object_info = lcbuilder.build_object_info(target, author, [sector], file, exptime,
                                                                   initial_mask, initial_transit_mask,
                                                                   star_info, aperture, eleanor_corr_flux,
-                                                                  outliers_sigma,
+                                                                  upper_outliers_sigma,
                                                                   high_rms_enabled, high_rms_threshold,
                                                                   high_rms_bin_hours,
                                                                   smooth_enabled, auto_detrend_enabled,
@@ -297,7 +302,8 @@ def run_search(properties: str, explore: bool, results_dir: None, cpus: int = No
                                                                   reduce_simple_oscillations, oscillation_snr_threshold,
                                                                   oscillation_amplitude_threshold, oscillation_ws_scale,
                                                                   oscillation_min_period, oscillation_max_period,
-                                                                  exptime_binning, truncate_border)
+                                                                  exptime_binning, truncate_border,
+                                                                  lower_outliers_sigma=lower_outliers_sigma)
                         sherlock_target = SherlockTarget(object_info,
                                                          detrend_method, detrend_l_min, detrend_l_max, detrends_number,
                                                          detrend_cores,
