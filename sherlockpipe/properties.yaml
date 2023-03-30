@@ -42,8 +42,10 @@ AUTO_DETREND_METHOD: 'cosine'
 AUTO_DETREND_RATIO: 0.25
 # User defined python class extending SHERLOCK Preparer abstract class. An absolute path to the file must be provided.
 PREPARE_ALGORITHM:
-# User defined sigma threshold for outliers clipping
-OUTLIERS_SIGMA: 3
+# User defined sigma threshold for upper-outliers clipping
+UPPER_OUTLIERS_SIGMA: 3
+# User defined sigma threshold for lower-outliers clipping
+LOWER_OUTLIERS_SIGMA:
 # The lightkurve 'author' to be used for the download. ELEANOR is also supported for long cadence TESS data.
 AUTHOR:
 # Cadence of data to be retrieved
