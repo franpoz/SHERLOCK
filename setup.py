@@ -30,7 +30,7 @@ setuptools.setup(
                         "celerite==0.4.0", # Allesfitter dependency
                         "corner==2.1.0", # Allesfitter dependency
                         "Cython==0.29.21",
-                        "dearwatson==0.5.10", # Vetting
+                        "dearwatson==0.5.12", # Vetting
                         "dynesty==1.0.1", # Allesfitter dependency
                         "ellc==1.8.5", # Allesfitter dependency
                         "emcee==3.0.2", # Allesfitter dependency
