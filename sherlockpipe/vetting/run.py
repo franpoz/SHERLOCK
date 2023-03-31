@@ -41,7 +41,7 @@ def run_vet(object_dir, candidate, properties, cpus=os.cpu_count() - 1):
             raise SystemExit("User selected a wrong candidate number.")
         candidates = candidates.rename(columns={'Object Id': 'id'})
         candidate = candidates.iloc[[candidate_selection - 1]]
-        candidate['number'] = [candidate_selection]
+        candidate.iloc[:]['number'] = candidate_selection
         transits_df_file = vetter.object_dir() + "/transits_stats.csv"
         if os.path.exists(transits_df_file):
             transits_df = pd.read_csv(vetter.object_dir() + "/transits_stats.csv")

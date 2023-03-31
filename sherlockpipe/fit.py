@@ -1,8 +1,5 @@
 from argparse import ArgumentParser
-from os import path
 from sherlockpipe.bayesian_fit.run import run_fit
-
-resources_dir = path.join(path.dirname(__file__))
 
 
 def fit_parse_args(args=None):

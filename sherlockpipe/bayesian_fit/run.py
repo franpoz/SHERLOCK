@@ -78,8 +78,8 @@ def run_fit(args):
         selected_candidates_df["number"] = ""
         selected_candidates_df["name"] = ""
         for candidate_selection in candidate_selections:
-            selected_candidates_df['number'][candidate_selection - 1] = candidate_selection
-            selected_candidates_df['name'][candidate_selection - 1] = 'SOI_' + \
+            selected_candidates_df.loc[candidate_selection - 1, ['number']] = candidate_selection
+            selected_candidates_df.loc[candidate_selection - 1, ['name']] = 'SOI_' + \
                                                                       str(selected_candidates_df['number'][
                                                                               candidate_selection - 1])
         selected_candidates_df = selected_candidates_df.iloc[

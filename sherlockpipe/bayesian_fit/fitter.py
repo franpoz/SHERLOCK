@@ -2,16 +2,19 @@ import logging
 import math
 import re
 import shutil
+from pathlib import Path
+
 import allesfitter
 import numpy as np
 import pandas as pd
 import os
 from os import path
 import matplotlib.pyplot as plt
-
 from sherlockpipe.loading.tool_with_candidate import ToolWithCandidate
 
+
 resources_dir = path.join(path.dirname(__file__))
+resources_dir = str(Path(resources_dir).parent.absolute())
 
 
 class Fitter(ToolWithCandidate):

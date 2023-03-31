@@ -46,7 +46,7 @@ def run_validate(args):
             raise SystemExit("User selected a wrong candidate number.")
         candidates = candidates.rename(columns={'Object Id': 'id'})
         candidate = candidates.iloc[[candidate_selection - 1]]
-        candidate['number'] = [candidate_selection]
+        candidate.iloc[:]['number'] = candidate_selection
         logging.info("Selected signal number " + str(candidate_selection))
     validator = Validator(object_dir, validation_dir, len(candidate) == 1, candidates)
     validator.validate(candidate, star_df.iloc[0], args.cpus, args.contrast_curve, args.bins, args.scenarios,
