@@ -40,6 +40,7 @@ def run_vet(object_dir, candidate, properties, cpus=os.cpu_count() - 1):
         if candidate_selection < 1 or candidate_selection > len(candidates.index):
             raise SystemExit("User selected a wrong candidate number.")
         candidates = candidates.rename(columns={'Object Id': 'id'})
+        candidates['number'] = 1
         candidate = candidates.iloc[[candidate_selection - 1]]
         candidate.iloc[:]['number'] = candidate_selection
         transits_df_file = vetter.object_dir() + "/transits_stats.csv"
