@@ -40,7 +40,7 @@ def run_fit(args):
     logger.addHandler(handler)
     star_df = pd.read_csv(object_dir + "/params_star.csv")
     if args.candidate is None:
-        user_properties = common.load_yaml(args.properties)
+        user_properties = common.load_from_yaml(args.properties)
         selected_candidates_df = pd.DataFrame(
             columns=['id', 'period', 't0', 'duration', 'cpus', 'rp_rs', 'a', 'number', 'name',
                      'lc'])

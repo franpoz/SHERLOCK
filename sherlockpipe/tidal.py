@@ -32,7 +32,7 @@ def run_tidal(object_dir, candidate, properties):
     logging.info("Starting tidal locking time computation")
     star_df = pd.read_csv(object_dir + "/params_star.csv")
     if candidate is None:
-        user_properties = common.load_yaml(properties)
+        user_properties = common.load_from_yaml(properties)
         candidate = pd.DataFrame(columns=['id', 'period', 'depth', 't0', 'sectors', 'number', 'lc'])
         candidate = candidate.append(user_properties, ignore_index=True)
         candidate['id'] = star_df.iloc[0]["obj_id"]

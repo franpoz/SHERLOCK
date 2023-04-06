@@ -31,7 +31,7 @@ def run_vet(object_dir, candidate, properties, cpus=os.cpu_count() - 1):
     star_df = pd.read_csv(vetter.object_dir() + "/params_star.csv")
     transits_df = None
     if candidate is None:
-        user_properties = common.load_yaml(properties)
+        user_properties = common.load_from_yaml(properties)
         candidate = pd.DataFrame(columns=['id', 'period', 'depth', 't0', 'sectors', 'number', 'lc'])
         candidate = candidate.append(user_properties, ignore_index=True)
         candidate['id'] = star_df.iloc[0]["obj_id"]
