@@ -257,12 +257,14 @@ class Sherlock:
                     self.__analyse(sherlock_target, time, lcs, flux_err, lc_build.star_info, id_run,
                                    lc_build.transits_min_count, lc_build.cadence, self.report[sherlock_id], wl,
                                    period_grid, lc_build.detrend_period)
-                for index in np.arange(len(signal_selection.transit_result.t0s)):
-                    transits_stats_df = transits_stats_df.append({'candidate': str(int(id_run - 1)),
-                                              't0': signal_selection.transit_result.t0s[index],
-                                              'depth': signal_selection.transit_result.depths[index],
-                                              'depth_err': signal_selection.transit_result.depths_err[index]},
-                                             ignore_index=True)
+                all_nan_results = len(np.argwhere(np.isnan(signal_selection.transit_result.t0s)).flatten()) == 0
+                if not all_nan_results:
+                    for index in np.arange(len(signal_selection.transit_result.t0s)):
+                        transits_stats_df = transits_stats_df.append({'candidate': str(int(id_run - 1)),
+                                                  't0': signal_selection.transit_result.t0s[index],
+                                                  'depth': signal_selection.transit_result.depths[index],
+                                                  'depth_err': signal_selection.transit_result.depths_err[index]},
+                                                 ignore_index=True)
                 transits_stats_df = transits_stats_df.sort_values(by=['candidate', 't0'], ascending=True)
                 transits_stats_df.to_csv(object_dir + "transits_stats.csv", index=False)
                 best_signal_score = signal_selection.score
@@ -280,7 +282,8 @@ class Sherlock:
                 object_report["duration"] = signal_selection.transit_result.duration * 60 * 24
                 object_report["t0"] = signal_selection.transit_result.t0
                 object_report["depth"] = signal_selection.transit_result.depth
-                if signal_selection.transit_result is not None and signal_selection.transit_result.results is not None:
+                if signal_selection.transit_result is not None and signal_selection.transit_result.results is not None\
+                        and not all_nan_results:
                     object_report['rp_rs'] = signal_selection.transit_result.results.rp_rs
                     real_transit_args = np.argwhere(~np.isnan(signal_selection.transit_result
                                                               .results.transit_depths))
