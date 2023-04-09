@@ -43,7 +43,7 @@ def run_script(input_dir, output_dir, working_dir, cpus, pa):
                 working_target_dir = working_dir + '/' + Path(working_file).stem
                 os.mkdir(working_target_dir)
                 os.chdir(working_target_dir)
-                properties = run_search(working_file, False, cpus)
+                properties = run_search(working_file, False, None, cpus=cpus)
             elif os.path.isdir(path_str):
                 running_file = path_str
                 working_target_dir = move_input_to_working(path_str, working_dir)
