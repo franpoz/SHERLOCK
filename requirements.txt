@@ -26,7 +26,7 @@ corner==2.1.0
 cryptography==40.0.1
 cycler==0.11.0
 Cython==0.29.21
-dearwatson==0.5.116
+dearwatson==0.6.0
 Deprecated==1.2.13
 dynesty==1.0.1
 einops==0.6.0
@@ -47,7 +47,7 @@ grpcio==1.53.0
 html5lib==1.1
 idna==2.10
 imageio==2.9.0
-importlib-metadata==6.2.1
+importlib-metadata==6.3.0
 importlib-resources==5.12.0
 jaraco.classes==3.2.3
 jeepney==0.8.0
@@ -114,7 +114,7 @@ SecretStorage==3.3.3
 semantic-version==2.10.0
 setuptools==56.0.0
 setuptools-scm==7.1.0
-sherlockpipe==0.35.0
+sherlockpipe==0.35.1
 six==1.16.0
 sklearn==0.0
 soupsieve==2.4
