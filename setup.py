@@ -30,12 +30,11 @@ setuptools.setup(
                         "celerite==0.4.0", # Allesfitter dependency
                         "corner==2.1.0", # Allesfitter dependency
                         "Cython==0.29.21",
-                        "dearwatson==0.6.0", # Vetting
+                        "dearwatson==0.7.0", # Vetting
                         "dynesty==1.0.1", # Allesfitter dependency
                         "ellc==1.8.5", # Allesfitter dependency
                         "emcee==3.0.2", # Allesfitter dependency
                         "mock==4.0.3",
-                        'numba==0.53.1', # foldedleastsquares dependency
                         'pdf2image==1.16.2',
                         'pytransit==2.5.21', #Validation
                         'pytz', # Observation plan: Not using version because it gets the DB updated with each release
