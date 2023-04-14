@@ -45,7 +45,7 @@ setuptools.setup(
                         'setuptools>=41.0.0',
                         "sklearn==0.0",
                         "spock==1.3.1", # Stability
-                        'statsmodels==0.12.2', # Allesfitter dependency
+                        'statsmodels==0.13.5', # Allesfitter dependency, might conflict with lcbuilder dependency for autocorrelation
                         'timezonefinder==5.2.0', # Observation plan
                         'tqdm==4.56.0',
                         'triceratops==1.0.15', # Validation
