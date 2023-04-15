@@ -21,8 +21,6 @@ def stability_args_parse(args=None):
                     required=False)
     ap.add_argument('--years', type=int, default=500, help="The number of years to integrate (for MEGNO).",
                     required=False)
-    ap.add_argument('--spock', dest='use_spock', action='store_true',
-                    help="Whether to force the usage of megno even for multiplanetary systems.")
     ap.add_argument('--free_params', type=str, default=None, help="The parameters to be entirely sampled, separated by "
                                                                   "commas. E.g. 'eccentricity,omega'", required=False)
     return ap.parse_args(args)

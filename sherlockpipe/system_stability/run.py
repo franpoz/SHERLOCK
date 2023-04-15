@@ -142,14 +142,11 @@ def run_stability(args):
                                                                                       user_properties["STAR"]["M_UP"]
             star_mass_bins = args.star_mass_bins if "M_BINS" not in user_properties["STAR"] else \
             user_properties["STAR"]["M_BINS"]
-    stability_calculator = SpockStabilityCalculator() if len(planets_params) >= 3 and args.use_spock \
-        else MegnoStabilityCalculator(args.years)  # TODO add check of periods ratio less than 2 for spock
-    logger.info("%.0f planets to be simulated. %s will be used", len(planets_params),
-                type(stability_calculator).__name__)
+    stability_calculator = MegnoStabilityCalculator(args.years)
+    logger.info("%.0f planets to be simulated", len(planets_params))
     logger.info("Lowest star mass: %.2f", star_mass_low)
     logger.info("Highest star mass: %.2f", star_mass_up)
     logger.info("Star mass bins: %.0f", star_mass_bins)
     for key, body in enumerate(planets_params):
         logger.info("Body %.0f: %s", key, json.dumps(body.__dict__))
-    stability_calculator.run(stability_dir, star_mass_low, star_mass_up, star_mass_bins, planets_params, args.cpus,
-                             free_params)
+    stability_calculator.run(stability_dir, star_mass_low, star_mass_up, star_mass_bins, planets_params, args.cpus, free_params)
