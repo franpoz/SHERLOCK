@@ -10,7 +10,6 @@ from sherlockpipe.loading import common
 from sherlockpipe.loading.common import get_from_dict
 from sherlockpipe.system_stability.megno import MegnoStabilityCalculator
 from sherlockpipe.system_stability.stability_calculator import PlanetInput
-from sherlockpipe.system_stability.spock import SpockStabilityCalculator
 
 
 def run_stability(args):
