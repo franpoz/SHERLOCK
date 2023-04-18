@@ -22,13 +22,13 @@ setuptools.setup(
     ],
     python_requires='>=3.8',
     install_requires=['arviz==0.12.1', # Validation required (pytransit, from triceratops)
-                        'astroplan==0.7',
+                        'astroplan==0.8',
                         "astroquery==0.4.6",
                         "allesfitter==1.2.10", # Fit
                         'argparse==1.4.0', # All modules
                         'beautifulsoup4==4.9.3', # Parsing HTML and XML, for OIs extraction
                         "celerite==0.4.0", # Allesfitter dependency
-                        "corner==2.1.0", # Allesfitter dependency
+                        "corner==2.2.2", # Allesfitter dependency
                         "Cython==0.29.21",
                         "dearwatson==0.7.0", # Vetting
                         "dynesty==1.0.1", # Allesfitter dependency
@@ -47,7 +47,7 @@ setuptools.setup(
                         'statsmodels==0.13.5', # Allesfitter dependency, might conflict with lcbuilder dependency for autocorrelation
                         'timezonefinder==5.2.0', # Observation plan
                         'tqdm==4.56.0',
-                        'triceratops==1.0.15', # Validation
+                        'triceratops==1.0.17', # Validation
                         'uncertainties==3.1.5' # Observation plan
     ]
 )
