@@ -335,13 +335,11 @@ class Sherlock:
                         candidates_df = candidates_df.append(report, ignore_index=True)
                         i = i + 1
                     candidates_df.to_csv(object_dir + "candidates.csv", index=False)
-        except InvalidNumberOfSectorsError as e:
+        except InvalidNumberOfSectorsError:
             logging.exception("Invalid number of sectors exception")
-            print(e)
             self.__remove_object_dir(sherlock_id)
-        except Exception as e:
+        except Exception:
             logging.exception("Unexpected exception")
-            print(e)
 
     def noise(self, time, flux, signal_power):
         from scipy.signal import periodogram, welch
@@ -449,7 +447,8 @@ class Sherlock:
         logging.info('Threshold limit for SDE: %.1f', sherlock_target.sde_min)
         if object_info.outliers_sigma:
             logging.info('Sigma threshold for upper outliers clipping: %.1f', object_info.outliers_sigma)
-        logging.info('Sigma threshold for lower outliers clipping: %.1f', object_info.lower_outliers_sigma)
+        if object_info.lower_outliers_sigma:
+            logging.info('Sigma threshold for lower outliers clipping: %.1f', object_info.lower_outliers_sigma)
         logging.info("Fit method: %s", sherlock_target.fit_method)
         if sherlock_target.oversampling is not None:
             logging.info('Oversampling: %.3f', sherlock_target.oversampling)
