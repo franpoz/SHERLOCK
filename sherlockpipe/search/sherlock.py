@@ -336,11 +336,11 @@ class Sherlock:
                         i = i + 1
                     candidates_df.to_csv(object_dir + "candidates.csv", index=False)
         except InvalidNumberOfSectorsError as e:
-            logging.exception(str(e))
+            logging.exception("Invalid number of sectors exception")
             print(e)
             self.__remove_object_dir(sherlock_id)
         except Exception as e:
-            logging.exception(str(e))
+            logging.exception("Unexpected exception")
             print(e)
 
     def noise(self, time, flux, signal_power):
@@ -802,7 +802,7 @@ class Sherlock:
             rp = star_info.radius * math.sqrt(depth / 1000) / 0.0091577
         except ValueError as e:
             logging.error("Planet radius could not be calculated: depth=%s, star_radius=%s", depth, star_info.radius)
-            logging.exception(str(e))
+            logging.exception("Planet radius could not be calculated")
             print(e)
         return rp
 
