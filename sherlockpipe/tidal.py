@@ -20,6 +20,8 @@ def tidal_args_parse(args=None):
 def run_tidal(object_dir, candidate, properties):
     object_dir = os.getcwd() if object_dir is None else object_dir
     candidates = pd.read_csv(object_dir + "/candidates.csv")
+    if not isinstance(logging.root, logging.RootLogger):
+        logging.root = logging.RootLogger(logging.INFO)
     formatter = logging.Formatter(fmt='%(asctime)s %(levelname)-8s %(message)s', datefmt='%Y-%m-%d %H:%M:%S')
     logger = logging.getLogger()
     while len(logger.handlers) > 0:

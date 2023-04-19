@@ -14,6 +14,8 @@ def run_vet(object_dir, candidate, properties, cpus=os.cpu_count() - 1):
     file_dir = vetter.watson.object_dir + "/vetting.log"
     if os.path.exists(file_dir):
         os.remove(file_dir)
+    if not isinstance(logging.root, logging.RootLogger):
+        logging.root = logging.RootLogger(logging.INFO)
     formatter = logging.Formatter(fmt='%(asctime)s %(levelname)-8s %(message)s', datefmt='%Y-%m-%d %H:%M:%S')
     logger = logging.getLogger()
     while len(logger.handlers) > 0:

@@ -20,6 +20,8 @@ def run_validate(args):
     if os.path.exists(file_dir):
         os.remove(file_dir)
     formatter = logging.Formatter(fmt='%(asctime)s %(levelname)-8s %(message)s', datefmt='%Y-%m-%d %H:%M:%S')
+    if not isinstance(logging.root, logging.RootLogger):
+        logging.root = logging.RootLogger(logging.INFO)
     logger = logging.getLogger()
     while len(logger.handlers) > 0:
         logger.handlers.pop()

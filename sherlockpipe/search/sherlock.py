@@ -4,7 +4,7 @@ import multiprocessing
 import pickle
 import shutil
 from typing import List
-
+import traceback
 import lightkurve
 import pandas
 import wotan
@@ -376,6 +376,8 @@ class Sherlock:
         return dir + "/"
 
     def __setup_logging(self):
+        if not isinstance(logging.root, logging.RootLogger):
+            logging.root = logging.RootLogger(logging.INFO)
         logging.captureWarnings(True)
         formatter = logging.Formatter(fmt='%(asctime)s %(levelname)-8s %(message)s', datefmt='%Y-%m-%d %H:%M:%S')
         logger = logging.getLogger()
@@ -388,6 +390,8 @@ class Sherlock:
         logger.addHandler(handler)
 
     def __setup_object_logging(self, object_id, clean_dir=True):
+        if not isinstance(logging.root, logging.RootLogger):
+            logging.root = logging.RootLogger(logging.INFO)
         object_dir = self.__init_object_dir(object_id, clean_dir)
         logger = logging.getLogger()
         while len(logger.handlers) > 1:
@@ -400,6 +404,8 @@ class Sherlock:
         return object_dir
 
     def __setup_object_report_logging(self, object_id, clean=False):
+        if not isinstance(logging.root, logging.RootLogger):
+            logging.root = logging.RootLogger(logging.INFO)
         object_dir = self.__setup_object_logging(object_id, False)
         logger = logging.getLogger()
         logger.handlers.pop()

@@ -187,6 +187,8 @@ if __name__ == '__main__':
             shutil.move(file_in_working, args.input_dir + '/' + filename)
         else:
             shutil.rmtree(file_in_working, ignore_errors=True)
+    if not isinstance(logging.root, logging.RootLogger):
+        logging.root = logging.RootLogger(logging.INFO)
     from apscheduler.schedulers.blocking import BlockingScheduler
     logging.getLogger('apscheduler.executors.default').setLevel(logging.ERROR)
     executors = {
