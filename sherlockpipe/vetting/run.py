@@ -49,6 +49,9 @@ def run_vet(object_dir, candidate, properties, cpus=os.cpu_count() - 1):
         if os.path.exists(transits_df_file):
             transits_df = pd.read_csv(vetter.object_dir() + "/transits_stats.csv")
             transits_df = transits_df[transits_df["candidate"] == candidate_selection - 1]
+            if len(transits_df) == 0:
+                logging.info("Not NAN transits found for candidate in transits_stats.csv file")
+                transits_df = None
         # watson.data_dir = watson.object_dir
         logging.info("Selected signal number " + str(candidate_selection))
     transits_mask = []

@@ -257,7 +257,7 @@ class Sherlock:
                     self.__analyse(sherlock_target, time, lcs, flux_err, lc_build.star_info, id_run,
                                    lc_build.transits_min_count, lc_build.cadence, self.report[sherlock_id], wl,
                                    period_grid, lc_build.detrend_period)
-                all_nan_results = len(np.argwhere(np.isnan(signal_selection.transit_result.t0s)).flatten()) == 0
+                all_nan_results = len(np.argwhere(~np.isnan(signal_selection.transit_result.t0s)).flatten()) == 0
                 if not all_nan_results:
                     for index in np.arange(len(signal_selection.transit_result.t0s)):
                         transits_stats_df = transits_stats_df.append({'candidate': str(int(id_run - 1)),
@@ -282,6 +282,8 @@ class Sherlock:
                 object_report["duration"] = signal_selection.transit_result.duration * 60 * 24
                 object_report["t0"] = signal_selection.transit_result.t0
                 object_report["depth"] = signal_selection.transit_result.depth
+                object_report["depth_err"] = signal_selection.transit_result.depth_err
+                object_report["depth_sig"] = signal_selection.transit_result.depth / signal_selection.transit_result.depth_err
                 if signal_selection.transit_result is not None and signal_selection.transit_result.results is not None\
                         and not all_nan_results:
                     object_report['rp_rs'] = signal_selection.transit_result.results.rp_rs
@@ -309,8 +311,9 @@ class Sherlock:
                 self.report[sherlock_id].append(object_report)
                 self.__setup_object_report_logging(sherlock_id, True)
                 logging.info("Listing most promising candidates for ID %s:", sherlock_id)
-                logging.info("%-12s%-10s%-10s%-10s%-8s%-8s%-8s%-8s%-14s%-14s%-12s%-25s%-10s%-18s%-20s", "Detrend no.", "Period",
-                             "Per_err", "Duration", "T0", "Depth", "SNR", "SDE", "Border_score", "Matching OI", "Harmonic",
+                logging.info("%-12s%-10s%-10s%-10s%-8s%-8s%-11s%-11s%-8s%-8s%-14s%-14s%-12s%-25s%-10s%-18s%-20s",
+                             "Detrend no.", "Period", "Per_err", "Duration", "T0", "Depth", "Depth_err", "Depth_sig",
+                             "SNR", "SDE", "Border_score", "Matching OI", "Harmonic",
                              "Planet radius (R_Earth)", "Rp/Rs", "Semi-major axis", "Habitability Zone")
                 if sherlock_id in self.report:
                     candidates_df = pandas.DataFrame(columns=['curve', 'period', 'per_err', 'duration', 't0', 'depth',
@@ -327,9 +330,10 @@ class Sherlock:
                             report['rad_p'] = np.nan
                         else:
                             report['rad_p'] = self.__calculate_planet_radius(lc_build.star_info, report["depth"])
-                        logging.info("%-12s%-10.4f%-10.5f%-10.2f%-8.2f%-8.3f%-8.2f%-8.2f%-14.2f%-14s%-12s%-25.5f%-10.5f%-18.5f%-20s",
+                        logging.info("%-12s%-10.4f%-10.5f%-10.2f%-8.2f%-8.3f%-11.3f%-11.3f%-8.2f%-8.2f%-14.2f%-14s%-12s%-25.5f%-10.5f%-18.5f%-20s",
                                      report["curve"], report["period"], report["per_err"],
-                                     report["duration"], report["t0"], report["depth"], report["snr"], report["sde"],
+                                     report["duration"], report["t0"], report["depth"], report["depth_err"],
+                                     report["depth_sig"], report["snr"], report["sde"],
                                      report["border_score"], report["oi"], report["harmonic"],
                                      report['rad_p'], report['rp_rs'], a, habitability_zone)
                         candidates_df = candidates_df.append(report, ignore_index=True)
@@ -677,10 +681,10 @@ class Sherlock:
                            cadence, report, period_grid, detrend_source_period):
         object_info = sherlock_target.object_info
         detrend_logging_customs = 'ker_size' if sherlock_target.detrend_method == 'gp' else "win_size"
-        logging.info("%-12s%-12s%-10s%-8s%-18s%-14s%-14s%-12s%-12s%-16s%-14s%-12s%-25s%-10s%-18s%-20s",
-                     detrend_logging_customs, "Period", "Per_err", "N.Tran", "Mean Depth (ppt)", "T. dur (min)", "T0",
-                     "SNR", "SDE", "Border_score", "Matching OI", "Harmonic", "Planet radius (R_Earth)", "Rp/Rs",
-                     "Semi-major axis", "Habitability Zone")
+        logging.info("%-12s%-12s%-10s%-8s%-18s%-12s%-12s%-14s%-14s%-12s%-12s%-16s%-14s%-12s%-25s%-10s%-18s%-20s",
+                     detrend_logging_customs, "Period", "Per_err", "N.Tran", "Mean Depth (ppt)", 'Depth_err',
+                     'Depth_sig', "T. dur (min)", "T0", "SNR", "SDE", "Border_score", "Matching OI", "Harmonic",
+                     "Planet radius (R_Earth)", "Rp/Rs", "Semi-major axis", "Habitability Zone")
         transit_results = {}
         plot_dir = self.__init_object_run_dir(star_info.object_id, id_run)
         if not sherlock_target.ignore_original:
@@ -691,9 +695,10 @@ class Sherlock:
             a, habitability_zone = self.habitability_calculator \
                 .calculate_hz_score(star_info.teff, star_info.mass, star_info.lum, transit_result.period)
             oi = self.__find_matching_oi(object_info, transit_result.period, transit_result.t0)
-            logging.info('%-12s%-12.5f%-10.6f%-8s%-18.3f%-14.1f%-14.4f%-12.3f%-12.3f%-16.2f%-14s%-12s%-25.5f%-10.5f%-18.5f%-20s',
+            logging.info('%-12s%-12.5f%-10.6f%-8s%-18.3f%-12.3f%-12.3f%-14.1f%-14.4f%-12.3f%-12.3f%-16.2f%-14s%-12s%-25.5f%-10.5f%-18.5f%-20s',
                          "PDCSAP_FLUX", transit_result.period,
-                         transit_result.per_err, transit_result.count, transit_result.depth,
+                         transit_result.per_err, transit_result.count, transit_result.depth, transit_result.depth_err,
+                         transit_result.depth / transit_result.depth_err,
                          transit_result.duration * 24 * 60, transit_result.t0, transit_result.snr, transit_result.sde,
                          transit_result.border_score, oi, transit_result.harmonic, r_planet, rp_rs, a,
                          habitability_zone)
@@ -718,9 +723,10 @@ class Sherlock:
             a, habitability_zone = self.habitability_calculator \
                 .calculate_hz_score(star_info.teff, star_info.mass, star_info.lum, transit_result.period)
             oi = self.__find_matching_oi(object_info, transit_result.period, transit_result.t0)
-            logging.info('%-12.4f%-12.5f%-10.6f%-8s%-18.3f%-14.1f%-14.4f%-12.3f%-12.3f%-16.2f%-14s%-12s%-25.5f%-10.5f%-18.5f%-20s',
+            logging.info('%-12.4f%-12.5f%-10.6f%-8s%-18.3f%-12.3f%-12.3f%-14.1f%-14.4f%-12.3f%-12.3f%-16.2f%-14s%-12s%-25.5f%-10.5f%-18.5f%-20s',
                          wl[i], transit_result.period,
-                     transit_result.per_err, transit_result.count, transit_result.depth,
+                     transit_result.per_err, transit_result.count, transit_result.depth, transit_result.depth_err,
+                         transit_result.depth / transit_result.depth_err,
                      transit_result.duration * 24 * 60, transit_result.t0, transit_result.snr, transit_result.sde,
                          transit_result.border_score, oi, transit_result.harmonic, r_planet, rp_rs, a,
                      habitability_zone)
@@ -774,14 +780,17 @@ class Sherlock:
         if sherlock_target.custom_transit_template is not None:
             power_args["transit_template_generator"] = sherlock_target.custom_transit_template
         results = model.power(**power_args)
+        depths = (1 - results.transit_depths) * 1000
+        depths_err = results.transit_depths_uncertainties * 1000
         if results.T0 != 0:
             depths = results.transit_depths[~np.isnan(results.transit_depths)]
             depth = (1. - np.mean(depths)) * 1000
+            depth_err = np.sqrt(np.nansum([depth_err ** 2 for depth_err in depths_err])) / len(depths_err)
+            depth_err = np.nanmean(depths_err)
         else:
             t0s = results.transit_times
             depth = results.transit_depths
-        depths = (1 - results.transit_depths) * 1000
-        depths_err = results.transit_depths_uncertainties * 1000
+            depth_err = np.nan
         t0s = np.array(results.transit_times)
         in_transit = tls.transit_mask(time, results.period, results.duration, results.T0)
         transit_count = results.distinct_transit_count
@@ -796,7 +805,7 @@ class Sherlock:
         harmonic = self.__is_harmonic(results, run_results, report, detrend_source_period)
         harmonic_power = harmonic_spectrum(results['periods'], results.power)
         return TransitResult(power_args, results, results.period, results.period_uncertainty, duration,
-                             results.T0, t0s, depths, depths_err, depth, results.odd_even_mismatch,
+                             results.T0, t0s, depths, depths_err, depth, depth_err, results.odd_even_mismatch,
                              (1 - results.depth_mean_even[0]) * 1000, (1 - results.depth_mean_odd[0]) * 1000, transit_count,
                              results.snr, results.SDE, results.FAP, border_score, in_transit, harmonic,
                              harmonic_power)
