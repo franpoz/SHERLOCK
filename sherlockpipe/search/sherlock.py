@@ -342,7 +342,7 @@ class Sherlock:
         except InvalidNumberOfSectorsError:
             logging.exception("Invalid number of sectors exception")
             self.__remove_object_dir(sherlock_id)
-        except Exception:
+        except Exception as e:
             logging.exception("Unexpected exception")
 
     def noise(self, time, flux, signal_power):
@@ -712,7 +712,7 @@ class Sherlock:
             save_transit_plot(star_info.object_id, plot_title, plot_dir, plot_file, time, lcs[0], transit_result,
                               cadence, id_run, sherlock_target.use_harmonics_spectra)
         else:
-            transit_result = TransitResult(None, None, 0, 0, 0, 0, [], [], 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, [], False)
+            transit_result = TransitResult(None, None, 0, 0, 0, 0, [], [], 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, [])
         transit_results[0] = transit_result
         for i in range(1, len(wl)):
             transit_result = self.__adjust_transit(sherlock_target, time, lcs[i], star_info, transits_min_count,
@@ -786,7 +786,6 @@ class Sherlock:
             depths = results.transit_depths[~np.isnan(results.transit_depths)]
             depth = (1. - np.mean(depths)) * 1000
             depth_err = np.sqrt(np.nansum([depth_err ** 2 for depth_err in depths_err])) / len(depths_err)
-            depth_err = np.nanmean(depths_err)
         else:
             t0s = results.transit_times
             depth = results.transit_depths

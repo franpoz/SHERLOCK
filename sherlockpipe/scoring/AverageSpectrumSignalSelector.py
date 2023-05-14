@@ -53,9 +53,10 @@ class AverageSpectrumSignalSelector(SignalSelector):
         results.periods = transit_results[best_curve_for_signal].results['periods']
         results.power = power
         harmonic_power = harmonic_spectrum(results.periods, power)
+        depth_err = np.sqrt(np.nansum([depth_err ** 2 for depth_err in depths_err])) / len(depths_err)
         result = TransitResult(power_args, results, period, period / 100, results['duration'],
                                results['T0'], t0s, depths,
-                               depths_err, results['depth'], results['odd_even_mismatch'],
+                               depths_err, results['depth'], depth_err, results['odd_even_mismatch'],
                                (1 - results.depth_mean_even[0]) * 1000, (1 - results.depth_mean_odd[0]) * 1000,
                                transit_count, results.snr, SDE, None, border_score, in_transit, False,
                                harmonic_power)
