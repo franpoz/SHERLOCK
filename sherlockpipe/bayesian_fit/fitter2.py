@@ -5,7 +5,7 @@ import re
 import shutil
 from pathlib import Path
 
-import allesfitter
+import alexfitter
 import numpy as np
 import pandas as pd
 import os
@@ -75,7 +75,7 @@ class Fitter2(ToolWithCandidate):
 
     def fit(self, candidate_df, fit_candidate_df, star_df, cpus, allesfit_dir, tolerance, fit_orbit):
         """
-        Main method to run the allesfitter fit.
+        Main method to run the alexfitter fit.
 
         :param candidate_df: the candidates dataframe to be used for noise estimation.
         :param fit_candidate_df: the candidates dataframe to be used for the final fit.
@@ -94,7 +94,6 @@ class Fitter2(ToolWithCandidate):
         # We load the unprocessed raw PDCSAP flux curve
         lc = pd.read_csv(self.object_dir + '/lc.csv', header=0)
         time, flux, flux_err = lc["#time"].values, lc["flux"].values, lc["flux_err"].values
-        time, flux, flux_err = self.mask_non_fit_candidates(time, flux, flux_err, candidate_df, fit_candidate_df)
         #time, flux, flux_err = self.mask_previous_candidates(time, flux, flux_err, run)
         lc = pd.DataFrame(columns=['#time', 'flux', 'flux_err'])
         lc['#time'] = time
@@ -110,7 +109,7 @@ class Fitter2(ToolWithCandidate):
             f.truncate()
         logging.info("Running initial guess")
         try:
-            allesfitter.show_initial_guess(allesfit_dir)
+            alexfitter.show_initial_guess(allesfit_dir)
         except Exception as e:
             logging.exception(str(e))
         # TODO fix custom_plot for all candidates
@@ -120,9 +119,9 @@ class Fitter2(ToolWithCandidate):
         shutil.copy(allesfit_dir + '/settings.csv', allesfit_dir + '/settings_before_noise.csv')
         if not self.only_initial:
             logging.info("Preparing bayesian fit")
-            if self.estimate_noise:
+            if self.estimate_noise and self.detrend == 'gp':
                 logging.info("Running noise estimation")
-                allesfitter.estimate_noise_out_of_transit(allesfit_dir)
+                alexfitter.estimate_noise_out_of_transit(allesfit_dir)
                 noise_estimation = pd.read_csv(allesfit_dir + "/priors/summary_phot.csv")
                 noise_estimation = noise_estimation.iloc[0]
                 noise_distribution_params = DistributionParams(yerr=noise_estimation['ln_yerr_median'],
@@ -140,19 +139,26 @@ class Fitter2(ToolWithCandidate):
                                                            distribution='normal',
                                                            distribution_params=noise_distribution_params))
                     f.truncate()
+            time, flux, flux_err = self.mask_non_fit_candidates(time, flux, flux_err, candidate_df, fit_candidate_df)
+            # time, flux, flux_err = self.mask_previous_candidates(time, flux, flux_err, run)
+            lc = pd.DataFrame(columns=['#time', 'flux', 'flux_err'])
+            lc['#time'] = time
+            lc['flux'] = flux
+            lc['flux_err'] = flux_err
+            lc.to_csv(allesfit_dir + "/lc.csv", index=False)
             if not self.mcmc:
                 logging.info("Running dynamic nested sampling")
                 try:
-                    allesfitter.show_initial_guess(allesfit_dir)
-                    allesfitter.ns_fit(allesfit_dir)
-                    allesfitter.ns_output(allesfit_dir)
+                    alexfitter.show_initial_guess(allesfit_dir)
+                    alexfitter.ns_fit(allesfit_dir)
+                    alexfitter.ns_output(allesfit_dir)
                 except Exception as e:
                     logging.exception(str(e))
             elif self.mcmc:
                 logging.info("Running MCMC")
                 try:
-                    allesfitter.mcmc_fit(allesfit_dir)
-                    allesfitter.mcmc_output(allesfit_dir)
+                    alexfitter.mcmc_fit(allesfit_dir)
+                    alexfitter.mcmc_output(allesfit_dir)
                 except Exception as e:
                     logging.exception(str(e))
             logging.info("Generating custom plots")
@@ -208,7 +214,7 @@ class Fitter2(ToolWithCandidate):
         :param allesfit_dir: the directory where allesfitter data is stred
         :param mode: the allesfitter plot model
         """
-        allesclass = allesfitter.allesclass(allesfit_dir)
+        allesclass = alexfitter.allesclass(allesfit_dir)
         baseline_width = fit_width * 24
         baseline_to_period = fit_width / period
         fig, axes = plt.subplots(2, 3, figsize=(18, 6), gridspec_kw={'height_ratios': [3, 1]}, sharex='col')

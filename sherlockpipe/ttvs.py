@@ -6,7 +6,7 @@ import shutil
 import sys
 from argparse import ArgumentParser
 
-import allesfitter
+import alexfitter
 import pandas as pd
 from numpy import arange
 from contextlib import redirect_stdout
@@ -34,11 +34,11 @@ class TtvFitter:
         self._tune_settings()
         self._fix_time_params()
         self._prepare_ttv_params()
-        allesfitter.show_initial_guess(ttvs_dir)
+        alexfitter.show_initial_guess(ttvs_dir)
         if not args.only_initial:
             logging.info("Running dynamic nested sampling")
-            allesfitter.ns_fit(ttvs_dir)
-            allesfitter.ns_output(ttvs_dir)
+            alexfitter.ns_fit(ttvs_dir)
+            alexfitter.ns_output(ttvs_dir)
 
     def _tune_settings(self):
         logging.info("Enabling TTVs fitting setting")
@@ -69,7 +69,7 @@ class TtvFitter:
 
     def _prepare_ttv_params(self):
         logging.info("Preparing TTVs params")
-        allesfitter.prepare_ttv_fit(self.ttvs_dir)
+        alexfitter.prepare_ttv_fit(self.ttvs_dir)
         with open(self.ttvs_dir + '/ttv_preparation/ttv_initial_guess_params.csv') as f:
             ttvs_params = f.readlines()
         ttvs_error_str = str(self.ttvs_error)

@@ -4,7 +4,7 @@ import re
 import shutil
 from pathlib import Path
 
-import allesfitter
+import alexfitter
 import numpy as np
 import pandas as pd
 import os
@@ -86,7 +86,7 @@ class Fitter(ToolWithCandidate):
             f.truncate()
         logging.info("Running initial guess")
         try:
-            allesfitter.show_initial_guess(allesfit_dir)
+            alexfitter.show_initial_guess(allesfit_dir)
         except Exception as e:
             logging.exception(str(e))
         # TODO fix custom_plot for all candidates
@@ -96,15 +96,15 @@ class Fitter(ToolWithCandidate):
             if not self.mcmc:
                 logging.info("Running dynamic nested sampling")
                 try:
-                    allesfitter.ns_fit(allesfit_dir)
-                    allesfitter.ns_output(allesfit_dir)
+                    alexfitter.ns_fit(allesfit_dir)
+                    alexfitter.ns_output(allesfit_dir)
                 except Exception as e:
                     logging.exception(str(e))
             elif self.mcmc:
                 logging.info("Running MCMC")
                 try:
-                    allesfitter.mcmc_fit(allesfit_dir)
-                    allesfitter.mcmc_output(allesfit_dir)
+                    alexfitter.mcmc_fit(allesfit_dir)
+                    alexfitter.mcmc_output(allesfit_dir)
                 except Exception as e:
                     logging.exception(str(e))
             logging.info("Generating custom plots")
@@ -154,7 +154,7 @@ class Fitter(ToolWithCandidate):
         :param allesfit_dir: the directory where allesfitter data is stred
         :param mode: the allesfitter plot model
         """
-        allesclass = allesfitter.allesclass(allesfit_dir)
+        allesclass = alexfitter.allesclass(allesfit_dir)
         baseline_width = fit_width * 24
         baseline_to_period = fit_width / period
         fig, axes = plt.subplots(2, 3, figsize=(18, 6), gridspec_kw={'height_ratios': [3, 1]}, sharex='col')

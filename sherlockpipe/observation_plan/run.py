@@ -3,7 +3,7 @@
 import shutil
 import os
 
-import allesfitter
+import alexfitter
 import numpy as np
 import pandas as pd
 from lcbuilder.lcbuilder_class import LcBuilder
@@ -27,7 +27,7 @@ def run_plan(args):
     fit_derived_results = pd.read_csv(object_dir + "/results/ns_derived_table.csv")
     fit_results = pd.read_csv(object_dir + "/results/ns_table.csv")
     candidates_count = len(fit_results[fit_results["#name"].str.contains("_period")])
-    alles = allesfitter.allesclass(object_dir)
+    alles = alexfitter.allesclass(object_dir)
     since = Time.now() if args.since is None else Time(args.since, scale='utc')
     percentile = 99.7 if args.error_sigma == 3 else 95 if args.error_sigma == 2 else 68
     for i in np.arange(0, candidates_count):
