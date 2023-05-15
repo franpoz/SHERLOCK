@@ -783,8 +783,8 @@ class Sherlock:
         depths = (1 - results.transit_depths) * 1000
         depths_err = results.transit_depths_uncertainties * 1000
         if results.T0 != 0:
-            depths = results.transit_depths[~np.isnan(results.transit_depths)]
-            depth = (1. - np.mean(depths)) * 1000
+            depths_calc = results.transit_depths[~np.isnan(results.transit_depths)]
+            depth = (1. - np.mean(depths_calc)) * 1000
             depth_err = np.sqrt(np.nansum([depth_err ** 2 for depth_err in depths_err])) / len(depths_err)
         else:
             t0s = results.transit_times
