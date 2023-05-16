@@ -7,18 +7,26 @@
 Installation
 =============================================
 
-Firstly, you must know that *SHERLOCK* is a package that lies on many different depencies whose versions are fixed.
-Hence, we strongly encourage all the users to use a *Python*
-`virtual environment <https://docs.python.org/3/library/venv.html>`_ to install *SHERLOCK* to avoid
-versions collisions with your typical host installation.
+Firstly, you must know that *SHERLOCK* is a package that lies on many different dependencies whose versions are fixed.
+Hence, we strongly encourage all the users to use a *Python* virtual environment, preferently built with a conda distribution.
+If anaconda is available in your distribution, please try using it. You can install it following the next instructions
+https://docs.anaconda.com/free/anaconda/install/linux/
 
-Some of the *SHERLOCK* dependencies need ``numpy`` and ``Cython``  before being installed and therefore you should install them before trying the SHERLOCK installation. Take also into account that the dependencies brought by SHERLOCK also need additional operating system tools that need to be installed separately (C++ compiler, Fortran compiler, etc). So, be aware of counting with the next OS packages installed in your environment (e.g. for Python3.8 in a Linux distribution):
+Once you installed it, you'd have to create a new environment for *SHERLOCK*:
+`conda create -n sherlockenv python=3.10 anaconda`
+
+
+Some of the *SHERLOCK* dependencies need ``numpy`` and ``Cython``  before being installed and therefore you should
+install them before trying the SHERLOCK installation. Take also into account that the dependencies brought by SHERLOCK
+also need additional operating system tools that need to be installed separately (C++ compiler, Fortran compiler, etc).
+So, be aware of counting with the next OS packages installed in your environment (e.g. for Python3 in a Linux
+distribution):
 
 .. code-block::
 
    build-essential
    libssl-dev
-   python3.8
+   python3.10
    python3-pip
    libbz2-dev
    libssl-dev
@@ -34,24 +42,22 @@ Some of the *SHERLOCK* dependencies need ``numpy`` and ``Cython``  before being 
    gcc
    locales
    python3-tk
-   python3.8-dev
+   python3.10-dev
 
 In case you are running a non-Linux distribution you will need to guess your OS packages matching the ones we mention for Linux.
 
-Therefore, once you have got the OS tools, the *SHERLOCK* package can be installed in several ways. The cleanest one is by running:
+Therefore, once you have got the OS tools, the *SHERLOCK* package can be installed in several ways. The cleanest one is by running::
 
-``python3 -m pip install -r requirements.txt``
+   conda activate sherlockenv
+   wget https://raw.githubusercontent.com/PlanetHunters/SHERLOCK/master/requirements.txt
+   python3 -m pip install -r requirements.txt
 
-Where the ``requirements.txt`` file should contain the same than
-`requirements.txt <https://github.com/PlanetHunters/SHERLOCK/blob/master/requirements.txt>`_.
+An additional installation method is running the next commands::
 
-An additional installation method is running the next commands:
-
-``python3 -m pip install numpy``
-
-``python3 -m pip install Cython``
-
-``python3 -m pip install sherlockpipe``
+   conda activate sherlockenv
+   python3 -m pip install numpy
+   python3 -m pip install Cython
+   python3 -m pip install sherlockpipe
 
 You can also use our Docker image from `DockerHub <https://hub.docker.com/repository/docker/sherlockpipe/sherlockpipe>`_
 or build it from our `Dockerfile <https://github.com/PlanetHunters/SHERLOCK/blob/master/docker/Dockerfile>`_. Therefore, you
@@ -64,17 +70,6 @@ Dependencies
 All the needed dependencies should be included by your `pip` installation of *SHERLOCK*. If you are
 interested you can inspect the requirements list under
 `setup.py <https://github.com/PlanetHunters/SHERLOCK/blob/master/setup.py>`_.
-
------------
-Integration
------------
-
-*SHERLOCK* integrates with several third party services. Some of them are listed below:
-
-* TESS, Kepler and K2 databases through `Lightkurve <https://github.com/KeplerGO/lightkurve>`_, `ELEANOR <https://adina.feinste.in/eleanor/) and [LATTE](https://github.com/noraeisner/LATTE>`_.
-* MAST and Vizier catalogs through `Lightkurve <https://github.com/KeplerGO/lightkurve>`_, `transitleastsquares <https://github.com/hippke/tls>`_ and `Triceratops <https://github.com/stevengiacalone/triceratops>`_
-* `NASA Exoplanet Archive API <https://exoplanetarchive.ipac.caltech.edu/docs/program_interfaces.html>`_
-* `TESS ExoFOP <https://exofop.ipac.caltech.edu/tess/view_toi.php>`_.
 
 --------
 Testing
