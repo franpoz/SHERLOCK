@@ -478,7 +478,7 @@ class Sherlock:
                 object_info.oscillation_max_period < object_info.oscillation_min_period:
             logging.info("Stellar oscillation period has been set to empty. Defaulting to 1/3 the minimum search period")
             object_info.oscillation_max_period = sherlock_target.period_min / 3
-        lc_build = self.lcbuilder.build(object_info, object_dir)
+        lc_build = self.lcbuilder.build(object_info, object_dir, cpus=sherlock_target.cpu_cores)
         logging.info('Minimum number of transits: %s', lc_build.transits_min_count)
         lightcurve_timespan = lc_build.lc.time[len(lc_build.lc.time) - 1] - lc_build.lc.time[0]
         if sherlock_target.search_zone is not None and not (lc_build.star_info.mass_assumed or
