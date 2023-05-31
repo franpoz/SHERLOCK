@@ -17,11 +17,11 @@ chardet==4.0.0
 cmake==3.26.3
 configparser==5.0.1
 corner==2.2.2
-cryptography==40.0.2
+cryptography==41.0.0
 cycler==0.11.0
 Cython==0.29.21
 dearwatson==0.7.6
-Deprecated==1.2.13
+Deprecated==1.2.14
 dynesty==1.0.1
 ellc==1.8.5
 emcee==3.0.2
@@ -105,7 +105,7 @@ seaborn==0.11.1
 SecretStorage==3.3.3
 semantic-version==2.10.0
 setuptools==58.1.0
-sherlockpipe==0.36.7
+sherlockpipe==0.36.8
 six==1.16.0
 sklearn==0.0
 soupsieve==2.4.1
