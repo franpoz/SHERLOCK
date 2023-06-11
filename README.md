@@ -32,6 +32,7 @@ archivePrefix = {arXiv},
 ```
 
 Also, you may be interested in having a look at recent papers that used SHERLOCK: \
+[Pozuelos et al. (2023)](https://ui.adsabs.harvard.edu/abs/2023A%26A...672A..70P/abstract) \
 [Delrez et al. (2022)](https://ui.adsabs.harvard.edu/abs/2022arXiv220902831D/abstract)\
 [Dransfield et al. (2022)](https://ui.adsabs.harvard.edu/abs/2022MNRAS.tmp.1364D/abstract) \
 [Luque et al. (2022)](https://ui.adsabs.harvard.edu/abs/2022arXiv220410261L/abstract) \
