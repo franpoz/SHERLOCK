@@ -4,6 +4,8 @@ RUN apt-get update && DEBIAN_FRONTEND=noninteractive apt-get install -y build-es
     libbz2-dev libssl-dev libreadline-dev \
     libffi-dev libsqlite3-dev tk-dev libpng-dev libfreetype6-dev llvm-9 llvm-9-dev \
     gfortran gcc locales python3-tk \
+    poppler-utils \
+    libhdf5-dev\
     nano
 RUN sed -i '/en_US.UTF-8/s/^# //g' /etc/locale.gen && locale-gen
 ENV LANG en_US.UTF-8

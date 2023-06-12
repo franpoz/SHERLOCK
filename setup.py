@@ -34,6 +34,7 @@ setuptools.setup(
                         "dynesty==1.0.1", # Allesfitter dependency
                         "ellc==1.8.5", # Allesfitter dependency
                         "emcee==3.0.2", # Allesfitter dependency
+                        "h5py==3.7.0", # Allesfitter dependency
                         "mock==4.0.3",
                         'pdf2image==1.16.2',
                         'pytransit==2.5.21', #Validation
