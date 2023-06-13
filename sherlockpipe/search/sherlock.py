@@ -14,6 +14,7 @@ import numpy as np
 import os
 import sys
 
+from lcbuilder.HarmonicSelector import HarmonicSelector
 from lcbuilder.helper import LcbuilderHelper
 from lcbuilder.lcbuilder_class import LcBuilder
 from lcbuilder.curve_preparer.Flattener import Flattener
@@ -358,6 +359,7 @@ class Sherlock:
     def __init_object_dir(self, object_id, clean_dir=False):
         dir = self.results_dir + str(object_id)
         dir = dir.replace(" ", "_")
+        dir = dir if not self.explore else dir + '_explore'
         if clean_dir:
             self.__remove_object_dir(object_id)
         if not os.path.exists(dir):
@@ -745,18 +747,16 @@ class Sherlock:
         return transit_results
 
     def __find_matching_oi(self, object_info, period, epoch):
+        oi = ""
         if self.ois is not None:
             mission, mission_id, target_id = LcBuilder().parse_object_info(object_info.mission_id())
             corrected_epoch = LcbuilderHelper.normalize_mission_epoch(mission, epoch)
-            existing_period_in_object = self.ois[(self.ois["Object Id"] == object_info.mission_id()) &
-                                                 (0.99 < self.ois["Period (days)"] / period) &
-                                                 (self.ois["Period (days)"] / period < 1.01) &
-                                                 (np.abs(self.ois['Epoch (BJD)'] - corrected_epoch) % period < 0.05 * period)]
-            existing_period_in_oi = existing_period_in_object[existing_period_in_object["OI"].notnull()]
-            oi = existing_period_in_oi["OI"].iloc[0] if len(
-                existing_period_in_oi.index) > 0 else np.nan
-        else:
-            oi = ""
+            existing_period_in_object = self.ois[(self.ois["Object Id"] == object_info.mission_id())]
+            exists_oi = False
+            for index, row in existing_period_in_object.iterrows():
+                if HarmonicSelector.is_harmonic(0, (np.abs(corrected_epoch - row['Epoch (BJD)']) % period), period, row["Period (days)"]):
+                    oi = row["OI"]
+                    break
         return oi
 
     def __adjust_transit(self, sherlock_target, time, lc, star_info, transits_min_count, run_results, report, cadence,
