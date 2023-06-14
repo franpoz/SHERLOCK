@@ -191,7 +191,7 @@ class TestsSherlock(unittest.TestCase):
                                                                                mass=0.3, mass_min=0.05, mass_max=0.075,
                                                                                ra=13.132258, dec=64.334238)),
                                      detrends_number=1, max_runs=1, oversampling=0.05)], True).run()
-            run_dir = "TIC181804752_[9]"
+            run_dir = "TIC181804752_[9]_explore"
             self.assertTrue(os.path.exists(run_dir))
             self.assertTrue(os.path.exists(run_dir + "/Periodogram_Initial_TIC181804752_[9].png"))
             self.assertFalse(os.path.exists(run_dir + "/1"))
