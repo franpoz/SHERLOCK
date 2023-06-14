@@ -129,7 +129,7 @@ class TestsSherlock(unittest.TestCase):
         run_dir = "TIC181804752_[9]"
         try:
             Sherlock([SherlockTarget(MissionObjectInfo([9], "TIC 181804752", cadence=1800, smooth_enabled=False,
-                                                            high_rms_enabled=False),
+                                                            high_rms_enabled=False, initial_mask=[[1900, 1901]]),
                                      detrends_number=1, max_runs=1, oversampling=0.05)]).run()
             self.__assert_run_files(run_dir, assert_rms_mask=False)
         finally:
@@ -149,7 +149,7 @@ class TestsSherlock(unittest.TestCase):
         try:
             Sherlock([SherlockTarget(MissionObjectInfo([9], "TIC 181804752", cadence=1800, high_rms_enabled=True),
                                      detrends_number=1, oversampling=0.05)], True).run()
-            run_dir = "TIC181804752_[9]"
+            run_dir = "TIC181804752_[9]_explore"
             self.assertTrue(os.path.exists(run_dir))
             self.assertTrue(os.path.exists(run_dir + "/Periodogram_Initial_TIC181804752_[9].png"))
             self.assertFalse(os.path.exists(run_dir + "/1"))
@@ -161,7 +161,7 @@ class TestsSherlock(unittest.TestCase):
         try:
             Sherlock([SherlockTarget(MissionObjectInfo([5], "TIC 259377017", cadence=1800, auto_detrend_enabled=True),
                                      detrends_number=1, max_runs=1, oversampling=0.05)], True).run()
-            run_dir = "TIC259377017_[5]"
+            run_dir = "TIC259377017_[5]_explore"
             self.assertTrue(os.path.exists(run_dir))
             self.assertTrue(os.path.exists(run_dir + '/Phase_detrend_period_TIC259377017_[5]_8.50_days.png'))
         finally:
