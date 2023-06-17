@@ -4,6 +4,8 @@ import sys
 import numpy as np
 import pandas as pd
 from lcbuilder.star.HabitabilityCalculator import HabitabilityCalculator
+
+from sherlockpipe.bayesian_fit.fit_report import FitReport
 from sherlockpipe.bayesian_fit.fitter import Fitter
 from sherlockpipe.bayesian_fit.fitter2 import Fitter2
 from sherlockpipe.loading import common
@@ -188,3 +190,12 @@ def run_fit2(args):
                     args.mcmc, args.detrend, rho_err_multi=args.rho_err_multi, sigma_err_multi=args.sigma_err_multi,
                      yerr_err_multi=args.yerr_err_multi)
     fitter.fit(selected_candidates_df, only_fit_candidate_df, star_df, cpus, fitting_dir, args.tolerance, args.fit_orbit)
+    FitReport(fitting_dir,
+              star_df['obj_id'].iloc[0],
+              star_df['ra'].iloc[0],
+              star_df['dec'].iloc[0],
+              star_df['v'].iloc[0],
+              star_df['j'].iloc[0],
+              star_df['h'].iloc[0],
+              star_df['k'].iloc[0],
+              selected_candidates_df).create_report()
