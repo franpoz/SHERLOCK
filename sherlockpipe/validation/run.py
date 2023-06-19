@@ -1,5 +1,8 @@
 import logging
 import os
+import shutil
+from pathlib import Path
+
 import pandas as pd
 import sys
 
@@ -8,13 +11,14 @@ from sherlockpipe.validation.validator import Validator
 
 
 def run_validate(args):
-    index = 0
     object_dir = os.getcwd() if args.object_dir is None else args.object_dir
     candidates = pd.read_csv(object_dir + "/candidates.csv")
-    validation_dir = object_dir + "/validation_" + str(index)
-    while os.path.exists(validation_dir) or os.path.isdir(validation_dir):
-        validation_dir = object_dir + "/validation_" + str(index)
-        index = index + 1
+    if args.candidate is not None:
+        validation_dir = object_dir + "/fit_" + str(args.candidate)
+    else:
+        validation_dir = object_dir + "/fit_" + str(Path(args.properties).stem)
+    if os.path.exists(validation_dir) or os.path.isdir(validation_dir):
+        shutil.rmtree(validation_dir, ignore_errors=True)
     os.mkdir(validation_dir)
     file_dir = validation_dir + "/validation.log"
     if os.path.exists(file_dir):

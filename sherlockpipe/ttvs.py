@@ -93,10 +93,9 @@ if __name__ == '__main__':
     args = ap.parse_args()
     object_dir = os.getcwd() if args.object_dir is None else args.object_dir
     index = 0
-    ttvs_dir = object_dir + "/ttvs_" + str(index)
-    while os.path.exists(ttvs_dir) or os.path.isdir(ttvs_dir):
-        ttvs_dir = object_dir + "/ttvs_" + str(index)
-        index = index + 1
+    ttvs_dir = object_dir + "/ttvs"
+    if os.path.exists(ttvs_dir) or os.path.isdir(ttvs_dir):
+        shutil.rmtree(ttvs_dir, ignore_errors=True)
     os.mkdir(ttvs_dir)
     file_dir = ttvs_dir + "/ttvs.log"
     if os.path.exists(file_dir):

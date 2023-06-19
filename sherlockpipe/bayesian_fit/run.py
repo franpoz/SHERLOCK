@@ -1,6 +1,9 @@
 import logging
 import os
+import shutil
 import sys
+from pathlib import Path
+
 import numpy as np
 import pandas as pd
 from lcbuilder.star.HabitabilityCalculator import HabitabilityCalculator
@@ -20,10 +23,11 @@ def run_fit(args):
         candidate_selections = str(args.candidate)
         candidate_selections = candidate_selections.split(",")
         candidate_selections = list(map(int, candidate_selections))
-    fitting_dir = object_dir + "/fit_" + str(index)
-    while os.path.exists(fitting_dir) or os.path.isdir(fitting_dir):
-        fitting_dir = object_dir + "/fit_" + str(index)
-        index = index + 1
+        fitting_dir = object_dir + "/fit_" + str(candidate_selections)
+    else:
+        fitting_dir = object_dir + "/fit_" + str(Path(args.properties).stem)
+    if os.path.exists(fitting_dir) or os.path.isdir(fitting_dir):
+        shutil.rmtree(fitting_dir, ignore_errors=True)
     os.mkdir(fitting_dir)
     file_dir = fitting_dir + "/fit.log"
     if os.path.exists(file_dir):
@@ -99,7 +103,6 @@ def run_fit(args):
     fitter.fit(selected_candidates_df, star_df, cpus, fitting_dir, args.tolerance, args.fit_orbit)
 
 def run_fit2(args):
-    index = 0
     object_dir = os.getcwd() if args.object_dir is None else args.object_dir
     candidates_df = pd.read_csv(object_dir + "/candidates.csv")
     candidate_selections = []
@@ -107,10 +110,11 @@ def run_fit2(args):
         candidate_selections = str(args.candidate)
         candidate_selections = candidate_selections.split(",")
         candidate_selections = list(map(int, candidate_selections))
-    fitting_dir = object_dir + "/fit_" + str(index)
-    while os.path.exists(fitting_dir) or os.path.isdir(fitting_dir):
-        fitting_dir = object_dir + "/fit_" + str(index)
-        index = index + 1
+        fitting_dir = object_dir + "/fit_" + str(candidate_selections)
+    else:
+        fitting_dir = object_dir + "/fit_" + str(Path(args.properties).stem)
+    if os.path.exists(fitting_dir) or os.path.isdir(fitting_dir):
+        shutil.rmtree(fitting_dir, ignore_errors=True)
     os.mkdir(fitting_dir)
     file_dir = fitting_dir + "/fit.log"
     if os.path.exists(file_dir):

@@ -1,8 +1,11 @@
 import logging
 import os
+import shutil
 import sys
 
 import json
+from pathlib import Path
+
 import pandas as pd
 from numpy import arange
 
@@ -14,11 +17,9 @@ from sherlockpipe.system_stability.stability_calculator import PlanetInput
 
 def run_stability(args):
     object_dir = os.getcwd() if args.object_dir is None else args.object_dir
-    index = 0
-    stability_dir = object_dir + "/stability_" + str(index)
-    while os.path.exists(stability_dir) or os.path.isdir(stability_dir):
-        stability_dir = object_dir + "/stability_" + str(index)
-        index = index + 1
+    stability_dir = object_dir + "/stability" if args.properties is None else object_dir + "/stability_" + str(Path(args.properties).stem)
+    if os.path.exists(stability_dir) or os.path.isdir(stability_dir):
+        shutil.rmtree(stability_dir, ignore_errors=True)
     os.mkdir(stability_dir)
     file_dir = stability_dir + "/stability.log"
     if os.path.exists(file_dir):
