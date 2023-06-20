@@ -23,7 +23,7 @@ class TestsEntrypoints(unittest.TestCase):
         args.bins = 50
         args.scenarios = 2
         args.sigma_mode = 'flux_err'
-        validation_dir = object_dir + '/validation_0'
+        validation_dir = object_dir + '/validation_1'
         try:
             run_validate(args)
             self.assertEquals(6, len(os.listdir(validation_dir + '/triceratops')))
@@ -32,7 +32,7 @@ class TestsEntrypoints(unittest.TestCase):
 
     def test_vetting(self):
         object_dir = TestsEntrypoints.get_path('test_endpoints_data/')
-        vetting_dir = object_dir + '/vetting_0'
+        vetting_dir = object_dir + '/vetting_1'
         try:
             run_vet(object_dir, 1, None, cpus=4)
             self.assertEquals(7, len(os.listdir(vetting_dir)))
@@ -53,9 +53,9 @@ class TestsEntrypoints(unittest.TestCase):
         args.years = 500
         try:
             run_stability(args)
-            self.assertEquals(2, len(os.listdir(object_dir + '/stability_0')))
+            self.assertEquals(2, len(os.listdir(object_dir + '/stability_stability')))
         finally:
-            shutil.rmtree(object_dir + '/stability_0', ignore_errors=True)
+            shutil.rmtree(object_dir + '/stability_stability', ignore_errors=True)
 
     def test_search(self):
         properties_dir = TestsEntrypoints.get_path("search.yaml")
