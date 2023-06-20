@@ -14,9 +14,9 @@ def run_validate(args):
     object_dir = os.getcwd() if args.object_dir is None else args.object_dir
     candidates = pd.read_csv(object_dir + "/candidates.csv")
     if args.candidate is not None:
-        validation_dir = object_dir + "/fit_" + str(args.candidate)
+        validation_dir = object_dir + "/validate_" + str(args.candidate)
     else:
-        validation_dir = object_dir + "/fit_" + str(Path(args.properties).stem)
+        validation_dir = object_dir + "/validate_" + str(Path(args.properties).stem)
     if os.path.exists(validation_dir) or os.path.isdir(validation_dir):
         shutil.rmtree(validation_dir, ignore_errors=True)
     os.mkdir(validation_dir)

@@ -1,6 +1,9 @@
 import logging
 import os
+import shutil
 import sys
+from pathlib import Path
+
 import pandas as pd
 
 from sherlockpipe.loading import common
@@ -10,7 +13,14 @@ from sherlockpipe.vetting.vetter import Vetter
 def run_vet(object_dir, candidate, properties, cpus=os.cpu_count() - 1):
     object_dir = os.getcwd() if object_dir is None else object_dir
     candidates = pd.read_csv(object_dir + "/candidates.csv")
-    vetter = Vetter(object_dir, candidate is not None, candidates)
+    if candidate is not None:
+        vetting_dir = object_dir + "/vet_" + str(candidate)
+    else:
+        vetting_dir = object_dir + "/vet_" + str(Path(properties).stem)
+    if os.path.exists(vetting_dir) or os.path.isdir(vetting_dir):
+        shutil.rmtree(vetting_dir, ignore_errors=True)
+    os.mkdir(vetting_dir)
+    vetter = Vetter(object_dir, vetting_dir, candidate is not None, candidates)
     file_dir = vetter.watson.object_dir + "/vetting.log"
     if os.path.exists(file_dir):
         os.remove(file_dir)
