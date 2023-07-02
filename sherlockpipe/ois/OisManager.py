@@ -179,9 +179,9 @@ class OisManager:
             epic_data['pl_trandep'] = epic_data['pl_trandep'].astype(float) * 1000000
             epic_data['ra'] = epic_data['ra'].astype(str).replace("h", ":").replace("m", ":").replace("s", "")
             epic_data['dec'] = epic_data['dec'].astype(str).replace("d", ":").replace("m", ":").replace("s", "")
-            epic_data[epic_data['disposition'] == "CANDIDATE"]['disposition'] = "PC"
-            epic_data[epic_data['disposition'] == "CONFIRMED"]['disposition'] = "CP"
-            epic_data[epic_data['disposition'] == "FALSE POSITIVE"]['disposition'] = "FP"
+            epic_data.loc[epic_data['disposition'] == "CANDIDATE", ['disposition']] = "PC"
+            epic_data.loc[epic_data['disposition'] == "CONFIRMED", ['disposition']] = "CP"
+            epic_data.loc[epic_data['disposition'] == "FALSE POSITIVE", ['disposition']] = "FP"
             epic_data = epic_data.rename(columns={'pl_name': 'OI', 'epic_hosname': 'Object Id',
                                                 'disposition': 'Disposition', 'pl_trandur': 'Duration (hours)',
                                                 'pl_orbper': 'Period (days)',
