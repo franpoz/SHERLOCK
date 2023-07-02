@@ -79,6 +79,8 @@ PERIOD_MIN: 0.5
 PERIOD_MAX: 33
 # The period to be used to calculate the transit duration used as limit to define the lowest detrend window size.
 PERIOD_PROTECT: 10
+# Minimum number of transits to be spotted by TLS
+MIN_TRANSITS_COUNT: 2
 # The binning to be applied to RMS calculations
 BIN_MINUTES: 10
 # Found transits can be masked or can be reduced to 1. Thus 'mask' and 'subtract' methods are provided. 'subtract' is
