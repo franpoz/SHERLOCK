@@ -38,7 +38,7 @@ class SherlockTarget:
                  source_properties_file=None,
                  cache_dir=os.path.expanduser('~') + "/",
                  ignore_original=False, pickle_mode='none', use_harmonics_spectra=False,
-                 ois_mask=False):
+                 ois_mask=False, min_transits_count=2):
         self.min_sectors = min_sectors
         self.max_sectors = max_sectors
         self.bin_minutes = bin_minutes
@@ -106,3 +106,4 @@ class SherlockTarget:
         self.ignore_original = ignore_original
         self.use_harmonics_spectra = use_harmonics_spectra
         self.ois_mask = ois_mask
+        self.min_transits_count = min_transits_count
