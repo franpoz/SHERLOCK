@@ -205,6 +205,10 @@ class Sherlock:
         for sherlock_target in self.sherlock_targets:
             self.__run_object(sherlock_target)
 
+    def __min_transits_count(self, lc_build, sherlock_target):
+        return sherlock_target.min_transits_count \
+                if sherlock_target.min_transits_count > 0 else lc_build.transits_min_count
+
     def __run_object(self, sherlock_target):
         """
         Performs the analysis for one object_info
@@ -221,10 +225,12 @@ class Sherlock:
             time = lc_build.lc.time.value
             flux = lc_build.lc.flux.value
             flux_err = lc_build.lc.flux_err.value
+            min_transits_count = self.__min_transits_count(lc_build, sherlock_target)
             period_grid, oversampling = LcbuilderHelper.calculate_period_grid(time, sherlock_target.period_min,
                                                                 sherlock_target.period_max,
                                                                 sherlock_target.oversampling,
-                                                                lc_build.star_info, lc_build.transits_min_count)
+                                                                lc_build.star_info,
+                                                                1)
             id_run = 1
             best_signal_score = 1
             self.report[sherlock_id] = []
@@ -256,7 +262,7 @@ class Sherlock:
                 logging.info("________________________________ run %s________________________________", id_run)
                 transit_results, signal_selection = \
                     self.__analyse(sherlock_target, time, lcs, flux_err, lc_build.star_info, id_run,
-                                   lc_build.transits_min_count, lc_build.cadence, self.report[sherlock_id], wl,
+                                   min_transits_count, lc_build.cadence, self.report[sherlock_id], wl,
                                    period_grid, lc_build.detrend_period)
                 all_nan_results = len(np.argwhere(~np.isnan(signal_selection.transit_result.t0s)).flatten()) == 0
                 if not all_nan_results:
@@ -481,7 +487,8 @@ class Sherlock:
             logging.info("Stellar oscillation period has been set to empty. Defaulting to 1/3 the minimum search period")
             object_info.oscillation_max_period = sherlock_target.period_min / 3
         lc_build = self.lcbuilder.build(object_info, object_dir, cpus=sherlock_target.cpu_cores)
-        logging.info('Minimum number of transits: %s', lc_build.transits_min_count)
+        min_transits_count = self.__min_transits_count(lc_build, sherlock_target)
+        logging.info('Minimum number of transits: %s', min_transits_count)
         lightcurve_timespan = lc_build.lc.time[len(lc_build.lc.time) - 1] - lc_build.lc.time[0]
         if sherlock_target.search_zone is not None and not (lc_build.star_info.mass_assumed or
                                                             lc_build.star_info.radius_assumed):
