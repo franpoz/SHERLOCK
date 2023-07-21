@@ -11,11 +11,12 @@ class SdeBorderCorrectedSignalSelector(BasicSignalSelector):
     """
     def __init__(self):
         super().__init__()
+        self.zero_epsilon = 1e-6
 
     def select(self, id_run, sherlock_target, star_info, transits_min_count, time, lcs, transit_results, wl, cadence):
         basic_signal_selection = super().select(id_run, sherlock_target, star_info, transits_min_count, time, lcs,
                                                 transit_results, wl, cadence)
-        signals_sde = np.nan_to_num([transit_result.sde * transit_result.border_score
+        signals_sde = np.nan_to_num([transit_result.sde * (transit_result.border_score * self.zero_epsilon)
                                      for key, transit_result in transit_results.items()])
         best_signal_sde = np.nanmax(signals_sde)
         best_signal_sde_index = np.nanargmax(signals_sde)

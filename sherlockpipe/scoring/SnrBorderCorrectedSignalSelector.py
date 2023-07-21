@@ -11,11 +11,12 @@ class SnrBorderCorrectedSignalSelector(BasicSignalSelector):
     """
     def __init__(self):
         super().__init__()
+        self.zero_epsilon = 1e-6
 
     def select(self, id_run, sherlock_target, star_info, transits_min_count, time, lcs, transit_results, wl, cadence):
         basic_signal_selection = super().select(id_run, sherlock_target, star_info, transits_min_count, time, lcs,
                                                 transit_results, wl, cadence)
-        signals_snr = np.nan_to_num([transit_result.snr * transit_result.border_score
+        signals_snr = np.nan_to_num([transit_result.snr * (transit_result.border_score + self.zero_epsilon)
                                      for key, transit_result in transit_results.items()])
         best_signal_snr = np.nanmax(signals_snr)
         best_signal_snr_index = np.nanargmax(signals_snr)

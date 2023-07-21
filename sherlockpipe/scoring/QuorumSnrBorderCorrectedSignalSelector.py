@@ -17,11 +17,12 @@ class QuorumSnrBorderCorrectedSignalSelector(BasicSignalSelector):
         super().__init__()
         self.strength = strength
         self.min_quorum = min_quorum
+        self.zero_epsilon = 1e-6
 
     def select(self, id_run, sherlock_target, star_info, transits_min_count, time, lcs, transit_results, wl, cadence):
         basic_signal_selection = super().select(id_run, sherlock_target, star_info, transits_min_count, time, lcs,
                                                 transit_results, wl, cadence)
-        index_snr_period_t0_array = [[key, transit_result.snr * transit_result.border_score,
+        index_snr_period_t0_array = [[key, transit_result.snr * (transit_result.border_score * self.zero_epsilon),
                                         transit_result.period, transit_result.t0]
                                         for key, transit_result in transit_results.items()]
         # index_snr_period_t0_array = sorted(index_snr_period_t0_array, key=lambda k: k[2])
