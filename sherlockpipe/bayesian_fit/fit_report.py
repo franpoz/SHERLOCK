@@ -35,6 +35,7 @@ class FitReport:
     This class creates a fit report for the fitting module of SHERLOCK.
     """
     LOGO_IMAGE = resources_dir + "/../resources/images/sherlock3.png"
+    CANDIDATE_COLORS = ['firebrick', 'cornflowerblue', 'pink', 'limegreen', 'sandybrown', 'turquoise', 'violet']
 
     def __init__(self, data_dir, object_id, ra, dec, v, j, h, k, candidates_df):
         self.data_dir = data_dir
@@ -142,7 +143,9 @@ class FitReport:
         star_radius = star_df['R_star'].iloc[0]
         ld_a = ns_derived_df.loc[ns_derived_df['#property'] == 'Limb darkening; $u_\\mathrm{1; lc}$', 'value'].iloc[0]
         ld_b = ns_derived_df.loc[ns_derived_df['#property'] == 'Limb darkening; $u_\\mathrm{2; lc}$', 'value'].iloc[0]
+        color_index = 0
         for companion in alles.settings['companions_phot']:
+            color_index = color_index % len(self.CANDIDATE_COLORS)
             period = ns_table_df.loc[ns_table_df['#name'] == companion + '_period', 'median'].iloc[0]
             epoch = ns_table_df.loc[ns_table_df['#name'] == companion + '_epoch', 'median'].iloc[0]
             depth = ns_derived_df.loc[ns_derived_df[
@@ -195,32 +198,38 @@ class FitReport:
             flux_binned = bin_means
             bin_means, bin_edges, binnumber = binned_statistic(time_folded_sub, model_sub, statistic='mean', bins=40)
             model_binned = bin_means
+            color = self.CANDIDATE_COLORS[color_index]
             fig1 = plt.figure(1)
+            fig1.patch.set_facecolor('xkcd:white')
             frame1 = fig1.add_axes((.1, .3, .8, .6))
-            plt.scatter(data_df['time_folded'].to_numpy(), data_df['flux'].to_numpy(), color='gray', alpha=0.1)
-            plt.errorbar(time_binned, flux_binned, yerr=bin_stds / 2, xerr=bin_width / 2, marker='o', markersize=1,
-                         color='deeppink', alpha=0.5, linestyle='none')
-            plt.scatter(time_binned, flux_binned, color="blue", alpha=1)
-            plt.plot(data_df['time_folded'].to_numpy(), data_df['model'].to_numpy(), color='red')
-            plt.xlim([0.5 - total_duration_over_period * 2.5, 0.5 + total_duration_over_period * 2.5])
+            data_df_time_folded_hours = (data_df['time_folded'].to_numpy() * period - (period / 2)) * 24
+            time_binned_hours = (time_binned * period - (period / 2)) * 24
+            plt.scatter(data_df_time_folded_hours, data_df['flux'].to_numpy(),
+                        color='gray', s=1, alpha=0.25, rasterized=True)
+            plt.errorbar(time_binned_hours, flux_binned, yerr=bin_stds / 2,
+                         marker='o', markersize=6, color=color, alpha=1, markeredgecolor='black', ls='none')
+            plt.plot(data_df_time_folded_hours, data_df['model'].to_numpy(), color='black', linestyle='-', alpha=1)
+            plt.xlim([-total_duration * 1.5, total_duration * 1.5])
             plt.ylim(
                 [np.nanmin(flux_binned) - np.nanmax(bin_stds), np.nanmax(flux_binned) + np.nanmax(bin_stds)])
             plt.xticks([])
+            plt.ylabel(r'Relative flux', fontsize='small')
             plt.title(r'$P= ' + str(np.round(period, 2)) + r'd ,R=' + str(
                 np.round(radius_earth, 2)) + r' \mathrm{R_{\oplus}}$, Depth=' + str(np.round(depth, 2)) + ' ppts')
             frame2 = fig1.add_axes((.1, .1, .8, .2))
             residuals = data_df['flux'].to_numpy() - data_df['model'].to_numpy()
             residuals_model = flux_binned - model_binned
-            plt.scatter(data_df['time_folded'].to_numpy(), residuals, color='gray', alpha=0.5)
-            plt.errorbar(time_binned, residuals_model, yerr=bin_stds / 2, xerr=bin_width / 2, marker='o', markersize=1,
-                         color='deeppink', alpha=0.5, linestyle='none')
-            plt.scatter(time_binned, residuals_model, color='blue', alpha=0.5)
+            plt.scatter(data_df_time_folded_hours, residuals, color='gray', s=1, alpha=0.25, rasterized=True)
+            plt.errorbar(time_binned_hours, residuals_model, yerr=bin_stds / 2,
+                         marker='o', markersize=6, color=color, alpha=1, markeredgecolor='black', ls='none')
             plt.ylim(
                 [np.nanmin(residuals_model) - np.nanmax(bin_stds), np.nanmax(residuals_model) + np.nanmax(bin_stds)])
-            plt.xlabel(r'Phase', fontsize='small')
-            plt.ylabel(r'Flux norm.', fontsize='small')
-            plt.savefig(self.data_dir + '/' + companion + '_folded_curve.png')
+            plt.xlim([-total_duration * 1.5, total_duration * 1.5])
+            plt.xlabel(r"Time from mid-transit (hours)", fontsize='small')
+            plt.ylabel(r'Relative flux', fontsize='small')
+            plt.savefig(self.data_dir + '/' + companion + '_folded_curve.png', bbox_inches="tight")
             plt.close()
+            color_index = color_index + 1
         # Styles to be used
         styles = getSampleStyleSheet()
         styles.add(ParagraphStyle(name="ParagraphAlignCenter", alignment=TA_CENTER))
@@ -325,7 +334,7 @@ class FitReport:
             companion = candidate_row['name']
             folded_curve_file = self.data_dir + "/" + companion + "_folded_curve.png"
             if os.path.exists(folded_curve_file):
-                story.append(Image(folded_curve_file, width=13 * cm, height=8 * cm))
+                story.append(Image(folded_curve_file, width=12 * cm, height=8 * cm))
                 descripcion = '<font name="HELVETICA" size="9"><strong>Figure ' + str(
                     figure) + ': </strong>Folded curve with residuals of the final fit for ' + companion + '.</font>'
                 story.append(Spacer(1, 5))
@@ -338,16 +347,16 @@ class FitReport:
                     tabla_data = tabla_data + \
                                  [['Prior', ns_row['#name'],
                                    ufloat(ns_row['median'],
-                                          ns_row['lower_error'] if not isinstance(ns_row['lower_error'], str) else 0,
-                                          ns_row['upper_error'] if not isinstance(ns_row['upper_error'], str) else 0)
+                                          float(ns_row['lower_error']) if self.is_float(ns_row['lower_error']) else 0,
+                                          float(ns_row['lower_error']) if self.is_float(ns_row['upper_error']) else 0)
                                    ]]
             for index, ns_row in ns_derived_df.iterrows():
                 if companion in ns_row['#property']:
                     tabla_data = tabla_data + \
                                   [['Posterior', ns_row['#property'],
                                     ufloat(ns_row['value'],
-                                          ns_row['lower_error'] if not isinstance(ns_row['lower_error'], str) else 0,
-                                          ns_row['upper_error'] if not isinstance(ns_row['upper_error'], str) else 0)
+                                          float(ns_row['lower_error']) if self.is_float(ns_row['lower_error']) else 0,
+                                          float(ns_row['lower_error']) if self.is_float(ns_row['upper_error']) else 0)
                                     ]]
             table_colwidth = [2 * cm, 11 * cm, 5 * cm]
             table_number_rows = len(tabla_data)
