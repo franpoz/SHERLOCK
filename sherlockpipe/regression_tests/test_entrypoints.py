@@ -23,7 +23,7 @@ class TestsEntrypoints(unittest.TestCase):
         args.bins = 50
         args.scenarios = 2
         args.sigma_mode = 'flux_err'
-        validation_dir = object_dir + '/validation_1'
+        validation_dir = object_dir + '/validate_1'
         try:
             run_validate(args)
             self.assertEquals(6, len(os.listdir(validation_dir + '/triceratops')))
@@ -32,7 +32,7 @@ class TestsEntrypoints(unittest.TestCase):
 
     def test_vetting(self):
         object_dir = TestsEntrypoints.get_path('test_endpoints_data/')
-        vetting_dir = object_dir + '/vetting_1'
+        vetting_dir = object_dir + '/vet_1'
         try:
             run_vet(object_dir, 1, None, cpus=4)
             self.assertEquals(7, len(os.listdir(vetting_dir)))
