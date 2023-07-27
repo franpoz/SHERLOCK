@@ -79,7 +79,9 @@ execution definition into your host work directory. You could then execute the n
    cd /home/sherlock
    python3 -m sherlock --properties properties.yaml --explore
 
-And voilà! *SHERLOCK* should be running in explore mode for your defined targets.
+And voilà! *SHERLOCK* should be running in explore mode for your defined targets. Any outputs created by *SHERLOCK* in
+the current directory are automatically mapped into your host work directory, so you can inspect them easily on your
+machine.
 
 -------------
 Dependencies
