@@ -59,9 +59,27 @@ An additional installation method is running the next commands::
    python3 -m pip install Cython
    python3 -m pip install sherlockpipe
 
-You can also use our Docker image from `DockerHub <https://hub.docker.com/repository/docker/sherlockpipe/sherlockpipe>`_
+-------------
+Docker usage
+-------------
+If you are not running on Linux or you're just curious, you can also use our Docker image from
+`DockerHub <https://hub.docker.com/repository/docker/sherlockpipe/sherlockpipe>`_
 or build it from our `Dockerfile <https://github.com/PlanetHunters/SHERLOCK/blob/master/docker/Dockerfile>`_. Therefore, you
-can also use as a Singularity container meanwhile they support Docker.
+can also use as a Singularity container meanwhile they support Docker. You would need to install
+`Docker <https://docs.docker.com/engine/install/>`_. Once you've got it, the steps to get the *SHERLOCK* container up
+and running are::
+
+   sudo docker pull sherlockpipe/sherlockpipe:latest
+   sudo docker run -v someAbsoluteDirectoryFromYourHost:/home/sherlock --name sherlock -it sherlockpipe/sherlockpipe:latest /bin/bash
+
+This way you will be logged into a container with the ability of running *SHERLOCK*, with your host work directory
+mounted into the *SHERLOCK* container. Let's say that you have prepared a `properties.yaml` file with a *SHERLOCK*
+execution definition into your host work directory. You could then execute the next commands in your container::
+
+   cd /home/sherlock
+   python3 -m sherlock --properties properties.yaml --explore
+
+And voilà! *SHERLOCK* should be running in explore mode for your defined targets.
 
 -------------
 Dependencies
