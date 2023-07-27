@@ -210,8 +210,8 @@ class FitReport:
                          marker='o', markersize=6, color=color, alpha=1, markeredgecolor='black', ls='none')
             plt.plot(data_df_time_folded_hours, data_df['model'].to_numpy(), color='black', linestyle='-', alpha=1)
             plt.xlim([-total_duration * 1.5, total_duration * 1.5])
-            plt.ylim(
-                [np.nanmin(flux_binned) - np.nanmax(bin_stds), np.nanmax(flux_binned) + np.nanmax(bin_stds)])
+            ylim = np.nanmax([1 - np.abs(np.nanmin(flux_binned) - np.nanmax(bin_stds)), np.abs(np.nanmax(flux_binned) + np.nanmax(bin_stds)) - 1])
+            plt.ylim([1 - ylim, 1 + ylim])
             plt.xticks([])
             plt.ylabel(r'Relative flux', fontsize='small')
             plt.title(r'$P= ' + str(np.round(period, 2)) + r'd ,R=' + str(
@@ -222,8 +222,8 @@ class FitReport:
             plt.scatter(data_df_time_folded_hours, residuals, color='gray', s=1, alpha=0.25, rasterized=True)
             plt.errorbar(time_binned_hours, residuals_model, yerr=bin_stds / 2,
                          marker='o', markersize=6, color=color, alpha=1, markeredgecolor='black', ls='none')
-            plt.ylim(
-                [np.nanmin(residuals_model) - np.nanmax(bin_stds), np.nanmax(residuals_model) + np.nanmax(bin_stds)])
+            ylim = np.nanmax([np.nanmin(residuals_model) - np.nanmax(bin_stds), np.abs(np.nanmax(residuals_model) + np.nanmax(bin_stds))])
+            plt.ylim([-ylim, ylim])
             plt.xlim([-total_duration * 1.5, total_duration * 1.5])
             plt.xlabel(r"Time from mid-transit (hours)", fontsize='small')
             plt.ylabel(r'Relative flux', fontsize='small')
