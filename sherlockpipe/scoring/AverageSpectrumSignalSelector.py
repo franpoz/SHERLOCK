@@ -30,7 +30,7 @@ class AverageSpectrumSignalSelector(SignalSelector):
         model = tls.transitleastsquares(time, lcs[best_curve_for_signal])
         power_args = {"transit_template": sherlock_target.fit_method, "n_transits_min": transits_min_count,
                       "T0_fit_margin": sherlock_target.t0_fit_margin, "show_progress_bar": False,
-                      "use_threads": 1, "oversampling_factor": oversampling,
+                      "use_threads": sherlock_target.cpu_cores, "oversampling_factor": oversampling,
                       "duration_grid_step": sherlock_target.duration_grid_step,
                       "period_grid": np.array([period])}
         if star_info.ld_coefficients is not None:
