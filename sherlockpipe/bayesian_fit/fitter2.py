@@ -99,6 +99,8 @@ class Fitter2(ToolWithCandidate):
         lc['#time'] = time
         lc['flux'] = flux
         lc['flux_err'] = flux_err
+        curve_rms = np.nanstd(flux)
+        lc.loc[(lc['flux_err'] == 0) | np.isnan(lc['flux_err']), 'flux_err'] = curve_rms
         lc.to_csv(allesfit_dir + "/lc.csv", index=False)
         if os.path.exists(sherlock_star_file) and os.path.isfile(sherlock_star_file):
             shutil.copyfile(sherlock_star_file, star_file)
@@ -145,6 +147,8 @@ class Fitter2(ToolWithCandidate):
             lc['#time'] = time
             lc['flux'] = flux
             lc['flux_err'] = flux_err
+            curve_rms = np.nanstd(flux)
+            lc.loc[(lc['flux_err'] == 0) | np.isnan(lc['flux_err']), 'flux_err'] = curve_rms
             lc.to_csv(allesfit_dir + "/lc.csv", index=False)
             if not self.mcmc:
                 logging.info("Running dynamic nested sampling")
