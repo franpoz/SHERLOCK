@@ -1,5 +1,5 @@
 """Run script for observation plan"""
-
+import logging
 import shutil
 import os
 
@@ -13,6 +13,8 @@ from astropy.time import Time
 
 
 def run_plan(args):
+    if not isinstance(logging.root, logging.RootLogger):
+        logging.root = logging.RootLogger(logging.INFO)
     if args.observatories is None and (args.lat is None or args.lon is None or args.alt is None):
         raise ValueError("You either need to set the 'observatories' property or the lat, lon and alt.")
     object_dir = os.getcwd() if args.object_dir is None else args.object_dir

@@ -1,4 +1,6 @@
 import datetime
+import logging
+
 from astropy.coordinates import Angle
 from reportlab.lib import colors
 from reportlab.lib.pagesizes import A4
@@ -9,6 +11,9 @@ from reportlab.platypus import BaseDocTemplate, PageTemplate, Frame, Paragraph, 
 from os import path
 from uncertainties import ufloat
 from astropy import units as u
+from astropy.time import Time
+from dateutil.parser import parse
+
 
 width, height = A4
 resources_dir = path.join(path.dirname(__file__))
@@ -66,14 +71,27 @@ class ObservationReport:
         self.df['TZ'] = self.df['TZ'].astype('str')
         self.df['timezone'].astype(str)
         # Removing milliseconds from dates:
-        self.df['ingress'] = self.df['ingress'].str[:-4]
-        self.df['twilight_evening'] = self.df['twilight_evening'].str[:-4]
-        self.df['midtime'] = self.df['midtime'].str[:-4]
-        self.df['egress'] = self.df['egress'].str[:-4]
-        self.df['twilight_morning'] = self.df['twilight_morning'].str[:-4]
-        self.df['start_obs'] = self.df['start_obs'].str[:-4]
-        self.df['end_obs'] = self.df['end_obs'].str[:-4]
-
+        self.df.loc[(self.df["ingress"].apply(lambda x: len(str(x)) > 4)), 'ingress'] = \
+            self.df[(self.df["ingress"].apply(lambda x: len(str(x)) > 4))]['ingress'].str[:-4]
+        self.df.loc[(self.df["twilight_evening"].apply(lambda x: len(str(x)) > 4)), 'twilight_evening'] = \
+            self.df[(self.df["twilight_evening"].apply(lambda x: len(str(x)) > 4))]['twilight_evening'].str[:-4]
+        self.df.loc[(self.df["midtime"].apply(lambda x: len(str(x)) > 4)), 'midtime'] = \
+            self.df[(self.df["midtime"].apply(lambda x: len(str(x)) > 4))]['midtime'].str[:-4]
+        self.df.loc[(self.df["egress"].apply(lambda x: len(str(x)) > 4)), 'egress'] = \
+            self.df[(self.df["egress"].apply(lambda x: len(str(x)) > 4))]['egress'].str[:-4]
+        self.df.loc[(self.df["twilight_morning"].apply(lambda x: len(str(x)) > 4)), 'twilight_morning'] = \
+            self.df[(self.df["twilight_morning"].apply(lambda x: len(str(x)) > 4))]['twilight_morning'].str[:-4]
+        self.df.loc[(self.df["start_obs"].apply(lambda x: len(str(x)) > 4)), 'start_obs'] = \
+            self.df[(self.df["start_obs"].apply(lambda x: len(str(x)) > 4))]['start_obs'].str[:-4]
+        self.df.loc[(self.df["end_obs"].apply(lambda x: len(str(x)) > 4)), 'end_obs'] = \
+            self.df[(self.df["end_obs"].apply(lambda x: len(str(x)) > 4))]['end_obs'].str[:-4]
+        self.df.loc[(self.df["ingress"].apply(lambda x: len(str(x)) <= 4)), 'ingress'] = '--'
+        self.df.loc[(self.df["midtime"].apply(lambda x: len(str(x)) <= 4)), 'midtime'] = '--'
+        self.df.loc[(self.df["egress"].apply(lambda x: len(str(x)) <= 4)), 'egress'] = '--'
+        self.df.loc[(self.df["twilight_evening"].apply(lambda x: len(str(x)) <= 4)), 'twilight_evening'] = '--'
+        self.df.loc[(self.df["twilight_morning"].apply(lambda x: len(str(x)) <= 4)), 'twilight_morning'] = '--'
+        self.df.loc[(self.df["start_obs"].apply(lambda x: len(str(x)) <= 4)), 'start_obs'] = '--'
+        self.df.loc[(self.df["end_obs"].apply(lambda x: len(str(x)) <= 4)), 'end_obs'] = '--'
         # Generamos la columna que contendrá el nombre de las imágenes:
         self.df['image_path'] = self.images_path + self.df['observatory'] + "_" + self.df['midtime'] + ".png"
         # Finalmente con las rutas creamos los objetos:
@@ -81,19 +99,28 @@ class ObservationReport:
 
 
         # We want to sort the dates row-wise, only keeping the interesting columns
-        df_dates = self.df[['twilight_evening', 'ingress', 'midtime', 'egress', 'start_obs', 'end_obs', 'twilight_morning']]
-        df_dates.columns = ['TWE', 'I', 'M', 'E', 'SO', 'EO', 'TWM']
+        df_dates = self.df[['twilight_evening', 'ingress', 'midtime', 'egress', 'start_obs', 'end_obs', 'twilight_morning', 'timezone']]
+        df_dates.columns = ['TWE', 'I', 'M', 'E', 'SO', 'EO', 'TWM', 'tz']
         dict_fechas = df_dates.to_dict('index')
         new_dict_fechas = {}
-        for item in dict_fechas:
+        for index, row in df_dates.iterrows():
             # Lo ordenamos por los valores de cada key:
-            list_of_tuples = sorted(dict_fechas[item].items(), key=lambda item: item[1])
+            items = row[['TWE', 'I', 'M', 'E', 'SO', 'EO', 'TWM']].to_dict()
+            list_of_tuples = sorted(items.items(), key=lambda item: item[1])
             # Definimos la noche como false:
             night = 0
             # Recorremos las tuplas y si noche es uno (lo que sucede a partir del TWE) ponemos en negrita la fecha.
             # Con esto vamos a generar una nueva lista de tuplas que tendrá las fechas apropiadas en negrita:
             list_of_tuples_with_night = []
             for tup in list_of_tuples:
+                try:
+                    y = list(tup)
+                    local_time = parse(tup[1])
+                    utime = Time(local_time) - row['tz'] * u.hour
+                    y[1] = str(tup[1]) + ' (' + str(round(utime.jd, 2)) + ' JD)'
+                    tup = tuple(y)
+                except Exception as e:
+                    logging.exception(f"Can't convert to date {tup[1]}")
                 if night == 1 and tup[0] != 'TWM':
                     y = list(tup)
                     y[1] = '<strong>' + str(tup[1]) + '</strong>'
@@ -106,7 +133,7 @@ class ObservationReport:
             # Unimos las tuplas separando key y value con ":":
             join_list = [': '.join(tup) for tup in list_of_tuples_with_night]
             # Para terminar, el nuevo diccionario une los elementos de la lista separando por saltos de línea:
-            new_dict_fechas[item] = '<br/>'.join(join_list)
+            new_dict_fechas[index] = '<font name="HELVETICA" size="8">' + '<br/>'.join(join_list) + '</font>'
         # Finalmente, creamos la columna Event times mapeando el index del dataframe con el del diccionario:
         self.df['Event times'] = self.df.index.to_series().map(new_dict_fechas)
         # La columna Transit Times Error será el concatenado de los errores:
@@ -339,7 +366,7 @@ class ObservationReport:
                 table5_rowwidths.append(1.2 * inch)
 
         # Creates a table with 5 columns, variable width:
-        table5_colwidths = [1.1 * inch, 0.3 * inch, 2.3 * inch, 0.7 * inch, 0.7 * inch, 2.2 * inch]
+        table5_colwidths = [1.1 * inch, 0.3 * inch, 2.5 * inch, 0.6 * inch, 0.5 * inch, 2.2 * inch]
         tabla5 = Table(final_data, table5_colwidths, table5_rowwidths, repeatRows=1)
         tabla5.setStyle(table_style)
         # Le damos el estilo alternando colores de filas:
