@@ -532,6 +532,7 @@ class TriceratopsThreadValidator:
         :return: the FPP values, the probabilities dataframe and additional target values
         """
         #input.target.calc_depths(tdepth=input.depth, all_ap_pixels=input.apertures)
+        input.target.stars.loc['plx', 0] = 0
         input.target.calc_probs(time=input.time, flux_0=input.flux, flux_err_0=input.sigma, P_orb=float(input.period),
                                 contrast_curve_file=input.contrast_curve, parallel=True)
         fpp2 = 1 - 25 * (1 - input.target.FPP) / (25 * (1 - input.target.FPP) + input.target.FPP)

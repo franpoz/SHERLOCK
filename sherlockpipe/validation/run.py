@@ -55,6 +55,8 @@ def run_validate(args):
         candidate = candidates.iloc[[candidate_selection - 1]]
         candidate.iloc[:]['number'] = candidate_selection
         logging.info("Selected signal number " + str(candidate_selection))
+    if args.sectors is not None:
+        candidate['sectors'] = args.sectors
     validator = Validator(object_dir, validation_dir, len(candidate) == 1, candidates)
     validator.validate(candidate, star_df.iloc[0], args.cpus, args.contrast_curve, args.bins, args.scenarios,
                        args.sigma_mode)

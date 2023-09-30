@@ -18,6 +18,8 @@ def validation_args_parse(arguments=None):
                     required=False)
     ap.add_argument('--contrast_curve', type=str, default=None, help="The contrast curve in csv format.",
                     required=False)
+    ap.add_argument('--sectors', type=str, default=None, help="The sectors to be used.",
+                    required=False)
     return ap.parse_args(arguments)
 
 
