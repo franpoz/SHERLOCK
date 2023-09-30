@@ -116,7 +116,7 @@ class ObservationReport:
                 try:
                     y = list(tup)
                     local_time = parse(tup[1])
-                    utime = Time(local_time) - row['tz'] * u.hour
+                    utime = Time(local_time)
                     y[1] = str(tup[1]) + ' (' + str(round(utime.jd, 2)) + ' JD)'
                     tup = tuple(y)
                 except Exception as e:

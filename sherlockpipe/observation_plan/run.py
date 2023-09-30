@@ -22,6 +22,9 @@ def run_plan(args):
     ns_file = object_dir + "/results/ns_table.csv"
     if not os.path.exists(ns_derived_file) or not os.path.exists(ns_file):
         raise ValueError("Bayesian fit posteriors files {" + ns_file + ", " + ns_derived_file + "} not found")
+    plan_dir = object_dir + "/plan"
+    if os.path.exists(plan_dir):
+        shutil.rmtree(plan_dir, ignore_errors=True)
     star_df = pd.read_csv(object_dir + "/params_star.csv")
     object_id = star_df.iloc[0]["obj_id"]
     ra = star_df.iloc[0]["ra"]

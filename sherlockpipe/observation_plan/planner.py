@@ -155,9 +155,8 @@ class Planner:
                                                'twilight_morning', 'observable', 'moon_phase', 'moon_dist'])
         plan_dir = object_dir + "/plan"
         images_dir = plan_dir + "/images"
-        if os.path.exists(plan_dir):
-            shutil.rmtree(plan_dir, ignore_errors=True)
-        os.mkdir(plan_dir)
+        if not os.path.exists(plan_dir):
+            os.mkdir(plan_dir)
         if os.path.exists(images_dir):
             shutil.rmtree(images_dir, ignore_errors=True)
         os.mkdir(images_dir)
