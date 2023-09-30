@@ -23,6 +23,7 @@ class TestsEntrypoints(unittest.TestCase):
         args.bins = 50
         args.scenarios = 2
         args.sigma_mode = 'flux_err'
+        args.sectors = None
         validation_dir = object_dir + '/validate_1'
         try:
             run_validate(args)
