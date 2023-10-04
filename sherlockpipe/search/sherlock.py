@@ -28,6 +28,7 @@ from lcbuilder.star.HabitabilityCalculator import HabitabilityCalculator
 
 from sherlockpipe.plot.plotting import save_transit_plot
 from sherlockpipe.scoring.helper import compute_border_score, harmonic_spectrum
+from sherlockpipe.search.phase_coverage.phase_coverage import PhaseCoverage
 from sherlockpipe.search.sherlock_target import SherlockTarget
 from sherlockpipe.search.transitresult import TransitResult
 from multiprocessing import Pool
@@ -209,7 +210,7 @@ class Sherlock:
         return sherlock_target.min_transits_count \
                 if sherlock_target.min_transits_count > 0 else lc_build.transits_min_count
 
-    def __run_object(self, sherlock_target):
+    def __run_object(self, sherlock_target: SherlockTarget):
         """
         Performs the analysis for one object_info
 
@@ -238,6 +239,7 @@ class Sherlock:
             logging.info('SEARCH RUNS with period grid: [%.2f - %.2f] and length %.0f', np.min(period_grid),
                          np.max(period_grid), len(period_grid))
             logging.info('================================================')
+            PhaseCoverage.compute_phase_coverage(sherlock_target.object_info.sherlock_id(), time, period_grid, sherlock_target.cpu_cores)
             lcs, wl = self.__detrend(sherlock_target, time, flux, flux_err,
                                      lc_build.star_info)
             lcs = np.concatenate(([flux], lcs), axis=0)
