@@ -187,3 +187,5 @@ CACHE_DIR:
 PICKLE_MODE: 'none'
 # Whether subharmonics spectrum should be plotted
 USE_HARMONICS_SPECTRA: False
+# Whether the time phase coverage for each period should be computed and plotted
+COMPUTE_PHASE_COVERAGE: False

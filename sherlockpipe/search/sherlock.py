@@ -239,12 +239,14 @@ class Sherlock:
             logging.info('SEARCH RUNS with period grid: [%.2f - %.2f] and length %.0f', np.min(period_grid),
                          np.max(period_grid), len(period_grid))
             logging.info('================================================')
-            PhaseCoverage.compute_phase_coverage(sherlock_target.object_info.sherlock_id(), time, period_grid, sherlock_target.cpu_cores)
+            object_dir = self.__init_object_dir(sherlock_target.object_info.sherlock_id())
+            if sherlock_target.compute_phase_coverage:
+                PhaseCoverage.compute_phase_coverage(object_dir, time, period_grid,
+                                                     sherlock_target.cpu_cores)
             lcs, wl = self.__detrend(sherlock_target, time, flux, flux_err,
                                      lc_build.star_info)
             lcs = np.concatenate(([flux], lcs), axis=0)
             object_info = sherlock_target.object_info
-            object_dir = self.__init_object_dir(object_info.sherlock_id())
             i = 0
             for lc in lcs:
                 lc_df = pandas.DataFrame(columns=['#time', 'flux', 'flux_err'])
