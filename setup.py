@@ -38,7 +38,7 @@ setuptools.setup(
                         'numba==0.53.1', # foldedleastsquares dependency
                         'pytransit==2.5.21', #Validation
                         'pytz', # Observation plan: Not using version because it gets the DB updated with each release
-                        "requests==2.25.1", # OIs management
+                        "requests==2.31.0", # OIs management
                         "rebound==3.17.3", # Stability
                         "reproject==0.4",
                         "seaborn==0.11.1",
