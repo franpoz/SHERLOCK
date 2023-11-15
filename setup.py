@@ -20,7 +20,7 @@ setuptools.setup(
         "License :: OSI Approved :: MIT License",
         "Operating System :: OS Independent",
     ],
-    python_requires='>=3.8',
+    python_requires='>=3.10',
     install_requires=['arviz==0.12.1', # Validation required (pytransit, from triceratops)
                         'astroplan==0.8',
                         "astroquery==0.4.6",
@@ -30,7 +30,7 @@ setuptools.setup(
                         "celerite==0.4.0", # Allesfitter dependency
                         "corner==2.2.2", # Allesfitter dependency
                         "Cython==0.29.21",
-                        "dearwatson==0.7.11", # Vetting
+                        "dearwatson==0.7.13", # Vetting
                         "dynesty==1.0.1", # Allesfitter dependency
                         "ellc==1.8.5", # Allesfitter dependency
                         "emcee==3.0.2", # Allesfitter dependency
