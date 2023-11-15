@@ -109,7 +109,8 @@ class TestsSherlock(unittest.TestCase):
         try:
             self.assertGreater(len(sherlock.ois.index), 100)
             sherlock.limit_ois(0, 5)
-            self.assertEqual(len(sherlock.ois.index), 5)
+            self.assertEqual(len(sherlock.run_ois.index), 5)
+            self.assertGreater(len(sherlock.ois.index), 23000)
             self.assertTrue(sherlock.use_ois)
         finally:
             os.remove(sherlock.ois_manager.tois_csv)
