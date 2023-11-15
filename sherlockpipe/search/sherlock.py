@@ -54,6 +54,7 @@ class Sherlock:
     wl_max = {}
     report = {}
     ois = None
+    run_ois = None
     config_step = 0
     use_ois = False
 
@@ -124,16 +125,16 @@ class Sherlock:
         :return: the Sherlock object itself
         """
         self.use_ois = True
-        self.ois = self.ois[self.ois["Disposition"].notnull()]
-        self.ois = self.ois[self.ois["Period (days)"].notnull()]
-        self.ois = self.ois[self.ois["Planet Radius (R_Earth)"].notnull()]
-        self.ois = self.ois[self.ois["Planet Insolation (Earth Flux)"].notnull()]
-        self.ois = self.ois[self.ois["Depth (ppm)"].notnull()]
-        self.ois = self.ois[(self.ois["Disposition"] == "KP") | (self.ois["Disposition"] == "CP")]
-        self.ois = self.ois[self.ois["Period (days)"] < 10]
-        self.ois = self.ois[self.ois["Planet Radius (R_Earth)"] > 5]
-        self.ois = self.ois[self.ois["Planet Insolation (Earth Flux)"] > 4]
-        self.ois.sort_values(by=['Object Id', 'OI'])
+        self.run_ois = self.ois[self.ois["Disposition"].notnull()]
+        self.run_ois = self.run_ois[self.run_ois["Period (days)"].notnull()]
+        self.run_ois = self.run_ois[self.run_ois["Planet Radius (R_Earth)"].notnull()]
+        self.run_ois = self.run_ois[self.run_ois["Planet Insolation (Earth Flux)"].notnull()]
+        self.run_ois = self.run_ois[self.run_ois["Depth (ppm)"].notnull()]
+        self.run_ois = self.run_ois[(self.run_ois["Disposition"] == "KP") | (self.run_ois["Disposition"] == "CP")]
+        self.run_ois = self.run_ois[self.run_ois["Period (days)"] < 10]
+        self.run_ois = self.run_ois[self.run_ois["Planet Radius (R_Earth)"] > 5]
+        self.run_ois = self.run_ois[self.run_ois["Planet Insolation (Earth Flux)"] > 4]
+        self.run_ois.sort_values(by=['Object Id', 'OI'])
         return self
 
     def filter_multiplanet_ois(self):
@@ -144,14 +145,14 @@ class Sherlock:
         :return: the Sherlock object itself
         """
         self.use_ois = True
-        self.ois = self.ois[self.ois["Disposition"].notnull()]
-        self.ois = self.ois[self.ois["Period (days)"].notnull()]
-        self.ois = self.ois[self.ois["Period (days)"] > 0]
-        self.ois = self.ois[self.ois["Depth (ppm)"].notnull()]
-        self.ois = self.ois[
-            (self.ois["Disposition"] == "KP") | (self.ois["Disposition"] == "CP") | (self.ois["Disposition"] == "PC")]
-        self.ois = self.ois[self.ois.duplicated(subset=['Object Id'], keep=False)]
-        self.ois.sort_values(by=['Object Id', 'OI'])
+        self.run_ois = self.ois[self.ois["Disposition"].notnull()]
+        self.run_ois = self.run_ois[self.run_ois["Period (days)"].notnull()]
+        self.run_ois = self.run_ois[self.run_ois["Period (days)"] > 0]
+        self.run_ois = self.run_ois[self.run_ois["Depth (ppm)"].notnull()]
+        self.run_ois = self.run_ois[
+            (self.run_ois["Disposition"] == "KP") | (self.run_ois["Disposition"] == "CP") | (self.run_ois["Disposition"] == "PC")]
+        self.run_ois = self.run_ois[self.run_ois.duplicated(subset=['Object Id'], keep=False)]
+        self.run_ois.sort_values(by=['Object Id', 'OI'])
         return self
 
     def filter_high_snr_long_period_ois(self):
@@ -162,14 +163,33 @@ class Sherlock:
         :return: the Sherlock object itself
         """
         self.use_ois = True
-        self.ois = self.ois[self.ois["Disposition"].notnull()]
-        self.ois = self.ois[self.ois["Period (days)"].notnull()]
-        self.ois = self.ois[self.ois["Period (days)"] > 20]
-        self.ois = self.ois[self.ois["Depth (ppm)"].notnull()]
-        self.ois = self.ois[self.ois["Depth (ppm)"] > 7500]
-        self.ois = self.ois[
-            (self.ois["Disposition"] == "KP") | (self.ois["Disposition"] == "CP") | (self.ois["Disposition"] == "PC")]
-        self.ois.sort_values(by=['Object Id', 'OI'])
+        self.run_ois = self.run_ois[self.run_ois["Disposition"].notnull()]
+        self.run_ois = self.run_ois[self.run_ois["Period (days)"].notnull()]
+        self.run_ois = self.run_ois[self.run_ois["Period (days)"] > 20]
+        self.run_ois = self.run_ois[self.run_ois["Depth (ppm)"].notnull()]
+        self.run_ois = self.run_ois[self.run_ois["Depth (ppm)"] > 7500]
+        self.run_ois = self.run_ois[
+            (self.run_ois["Disposition"] == "KP") | (self.run_ois["Disposition"] == "CP") | (self.run_ois["Disposition"] == "PC")]
+        self.run_ois.sort_values(by=['Object Id', 'OI'])
+        return self
+
+    def filter_short_period_ois(self):
+        """
+        Filters the in-memory OIs given some basic filters associated to big and long-period targets. This method is added
+        as an example
+
+        :return: the Sherlock object itself
+        """
+        self.use_ois = True
+        self.run_ois = self.ois[self.ois["Period (days)"].notnull()]
+        self.run_ois = self.run_ois[self.run_ois["Period (days)"] < 5]
+        self.run_ois = self.run_ois.loc[self.run_ois['OI'].str.startswith('TOI', na=False)]
+        self.run_ois = self.run_ois[
+            (self.run_ois["Disposition"] == "KP") | (self.run_ois["Disposition"] == "CP") | (self.run_ois["Disposition"] == "PC")]
+        self.run_ois = self.run_ois.sort_values(by=['Object Id', 'OI'])
+        self.run_ois = self.run_ois.drop_duplicates(['Object Id'], keep='first')
+        self.run_ois = self.run_ois.sort_values(by=['TESS Mag'])
+        self.limit_ois(0, 100)
         return self
 
     def filter_ois(self, function):
@@ -192,17 +212,17 @@ class Sherlock:
         :return: the Sherlock object itself
         """
         if limit == 0:
-            limit = len(self.ois.index)
-        self.ois = self.ois[offset:limit]
+            limit = len(self.run_ois.index)
+        self.run_ois = self.run_ois[offset:limit]
         return self
 
     def run(self):
         """
         Entrypoint of Sherlock which launches the main execution for all the input object_infos
         """
-        if len(self.sherlock_targets) == 0 and self.use_ois:
-            self.sherlock_targets = [MissionObjectInfo('all', object_id)
-                                     for object_id in self.ois["Object Id"].astype('string').unique()]
+        if (self.sherlock_targets is None or len(self.sherlock_targets) == 0) and self.use_ois:
+            self.sherlock_targets = [SherlockTarget(MissionObjectInfo('all', object_id))
+                                     for object_id in self.run_ois["Object Id"].astype('string').unique()]
         for sherlock_target in self.sherlock_targets:
             self.__run_object(sherlock_target)
 
@@ -765,7 +785,7 @@ class Sherlock:
             existing_period_in_object = self.ois[(self.ois["Object Id"] == object_info.mission_id())]
             exists_oi = False
             for index, row in existing_period_in_object.iterrows():
-                if HarmonicSelector.is_harmonic(0, (np.abs(corrected_epoch - row['Epoch (BJD)']) % period), period, row["Period (days)"]):
+                if HarmonicSelector.is_harmonic(0, (np.abs(corrected_epoch - row['Epoch (BJD)']) % row["Period (days)"]), period, row["Period (days)"]):
                     oi = row["OI"]
                     break
         return oi
