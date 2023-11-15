@@ -135,6 +135,10 @@ STAR:
 # The initial mask of time ranges to be applied. E.g: [[1546.25, 1550.5], [1561, 1563]]
 INITIAL_MASK:
 
+# The time measurements to be allowed. Once the light curve gets above the set threshold, all the subsequent data
+# is removed
+INITIAL_TRIM:
+
 # The initial mask of known transiting candidates to be applied. E.g:
 # INITIAL_TRANSIT_MASK:
 #   - T0: 1354.5510
