@@ -96,6 +96,7 @@ def run_search(properties: str, explore: bool, results_dir: None, cpus: int = No
             star_info = get_star_info(target, target_configs)
             min_sectors = get_from_user_or_config(target_configs, sherlock_user_properties, "MIN_SECTORS")
             max_sectors = get_from_user_or_config(target_configs, sherlock_user_properties, "MAX_SECTORS")
+            initial_trim = get_from_user_or_config(target_configs, sherlock_user_properties, "INITIAL_TRIM")
             bin_minutes = get_from_user_or_config(target_configs, sherlock_user_properties, "BIN_MINUTES")
             mask_mode = get_from_user_or_config(target_configs, sherlock_user_properties, "MASK_MODE")
             cpu_cores = get_from_user_or_config(target_configs, sherlock_user_properties, "CPU_CORES") \
@@ -150,8 +151,8 @@ def run_search(properties: str, explore: bool, results_dir: None, cpus: int = No
                                                          "INITIAL_HIGH_RMS_THRESHOLD")
             high_rms_enabled = get_from_user_or_config(target_configs, sherlock_user_properties,
                                                        "INITIAL_HIGH_RMS_MASK")
-            lower_outliers_sigma = get_from_user_or_config(target_configs, sherlock_user_properties, "UPPER_OUTLIERS_SIGMA")
-            upper_outliers_sigma = get_from_user_or_config(target_configs, sherlock_user_properties, "LOWER_OUTLIERS_SIGMA")
+            lower_outliers_sigma = get_from_user_or_config(target_configs, sherlock_user_properties, "LOWER_OUTLIERS_SIGMA")
+            upper_outliers_sigma = get_from_user_or_config(target_configs, sherlock_user_properties, "UPPER_OUTLIERS_SIGMA")
             exptime = get_from_user_or_config(target_configs, sherlock_user_properties, "EXPTIME")
             eleanor_corr_flux = get_from_user_or_config(target_configs, sherlock_user_properties,
                                                         "ELEANOR_CORRECTED_FLUX")
@@ -198,7 +199,8 @@ def run_search(properties: str, explore: bool, results_dir: None, cpus: int = No
                                                                         oscillation_ws_scale,
                                                                         oscillation_min_period, oscillation_max_period,
                                                                         exptime_binning, truncate_border,
-                                                                        lower_outliers_sigma=lower_outliers_sigma)
+                                                                        lower_outliers_sigma=lower_outliers_sigma,
+                                                                        initial_trim=initial_trim)
                         sherlock_target = SherlockTarget(built_object_info,
                                                          detrend_method, detrend_l_min, detrend_l_max, detrends_number,
                                                          detrend_cores,
@@ -238,7 +240,8 @@ def run_search(properties: str, explore: bool, results_dir: None, cpus: int = No
                                                                   oscillation_amplitude_threshold, oscillation_ws_scale,
                                                                   oscillation_min_period, oscillation_max_period,
                                                                   exptime_binning, truncate_border,
-                                                                  lower_outliers_sigma=lower_outliers_sigma)
+                                                                  lower_outliers_sigma=lower_outliers_sigma,
+                                                                  initial_trim=initial_trim)
                         sherlock_target = SherlockTarget(object_info,
                                                          detrend_method, detrend_l_min, detrend_l_max, detrends_number,
                                                          detrend_cores,
@@ -274,7 +277,8 @@ def run_search(properties: str, explore: bool, results_dir: None, cpus: int = No
                                                                 oscillation_amplitude_threshold, oscillation_ws_scale,
                                                                 oscillation_min_period, oscillation_max_period,
                                                                 exptime_binning, truncate_border,
-                                                                lower_outliers_sigma=lower_outliers_sigma)
+                                                                lower_outliers_sigma=lower_outliers_sigma,
+                                                                initial_trim=initial_trim)
                 sherlock_target = SherlockTarget(built_object_info,
                                                  detrend_method, detrend_l_min, detrend_l_max, detrends_number,
                                                  detrend_cores,
@@ -312,7 +316,8 @@ def run_search(properties: str, explore: bool, results_dir: None, cpus: int = No
                                                                   oscillation_amplitude_threshold, oscillation_ws_scale,
                                                                   oscillation_min_period, oscillation_max_period,
                                                                   exptime_binning, truncate_border,
-                                                                  lower_outliers_sigma=lower_outliers_sigma)
+                                                                  lower_outliers_sigma=lower_outliers_sigma,
+                                                                  initial_trim=initial_trim)
                         sherlock_target = SherlockTarget(object_info,
                                                          detrend_method, detrend_l_min, detrend_l_max, detrends_number,
                                                          detrend_cores,
