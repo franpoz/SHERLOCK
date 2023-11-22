@@ -12,7 +12,7 @@ set -e
 git_tag=$1
 echo "GIT TAG IS " ${git_tag}
 echo "Run regression tests"
-tox -r -e py39-local,py310-local > tests.log
+tox -r -e py310-local > tests.log
 tests_results=$(cat tests.log | grep "congratulations")
 if ! [[ -z ${tests_results} ]]; then
   echo "Run all tests"
@@ -24,7 +24,7 @@ if ! [[ -z ${tests_results} ]]; then
   rm -r sherlockpipe-reqs
   rm -R *egg-info
   set -e
-  tox -r -e py39-gha,py310-gha > tests.log
+  tox -r -e py310-gha > tests.log
 else
   echo "TESTS FAILED. See tests.log"
   set +e
@@ -46,14 +46,14 @@ if ! [[ -z ${tests_results} ]]; then
   rm -r sherlockpipe-reqs
   rm -R *egg-info
   set -e
-  python3.9 -m venv sherlockpipe-reqs
+  python3.10 -m venv sherlockpipe-reqs
   source sherlockpipe-reqs/bin/activate
-  python3.9 -m pip install pip -U
-  python3.9 -m pip install numpy==1.23.5
+  python3.10 -m pip install pip -U
+  python3.10 -m pip install numpy==1.23.5
   sed -i '6s/.*/version = "'${git_tag}'"/' setup.py
   sed -i '1s/.*/__version__ = "'${git_tag}'"/' sherlockpipe/__init__.py
-  python3.9 -m pip install -e .
-  python3.9 -m pip list --format=freeze > requirements.txt
+  python3.10 -m pip install -e .
+  python3.10 -m pip list --format=freeze > requirements.txt
   deactivate
   git add requirements.txt
   git add setup.py
