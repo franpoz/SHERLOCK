@@ -72,7 +72,7 @@ class Validator(ToolWithCandidate):
         try:
             self.execute_triceratops(cpus, self.data_dir, object_id, sectors, lc_file, transit_depth,
                                           period, t0, duration, rp_rstar, a_rstar, bins, scenarios, sigma_mode,
-                                          contrast_curve_file, run)
+                                          contrast_curve_file, run, star_df=star)
             report = ValidationReport(self.data_dir + '/triceratops', "statistical_validation_report.pdf", object_id, star['ra'], star['dec'],
                                        t0, period, duration, transit_depth, star["v"], star["j"], star["h"],
                                        star["k"])
@@ -89,7 +89,7 @@ class Validator(ToolWithCandidate):
 
     def execute_triceratops(self, cpus, indir, object_id, sectors, lc_file, transit_depth, period, t0,
                             transit_duration, rp_rstar, a_rstar, bins, scenarios, sigma_mode, contrast_curve_file,
-                            run):
+                            run, star_df):
         """ Calculates probabilities of the signal being caused by any of the following astrophysical sources:
         TP No unresolved companion. Transiting planet with Porb around target star. (i, Rp)
         EB No unresolved companion. Eclipsing binary with Porb around target star. (i, qshort)
@@ -130,6 +130,7 @@ class Validator(ToolWithCandidate):
         :param sigma_mode: the way to calculate the sigma for the validation ['flux_err' | 'binning']
         :param contrast_curve_file: the auxiliary contrast curve file to give more information to the validation engine
         :param run: the search run where the candidate was spotted
+        :param star_df: the star dataframe containing the host parameters
         :return str: the directory where the results are stored
         """
         save_dir = indir + "/triceratops"
@@ -143,8 +144,8 @@ class Validator(ToolWithCandidate):
         logging.info("----------------------")
         logging.info("Pre-processing sectors")
         mission, mission_prefix, id_int = LcBuilder().parse_object_info(object_id)
+        sectors = np.array(sectors)
         if mission == "TESS":
-            sectors = np.array(sectors)
             sectors_cut = TesscutClass().get_sectors(objectname="TIC " + str(id_int))
             sectors_cut = np.array([sector_row["sector"] for sector_row in sectors_cut])
             if len(sectors) != len(sectors_cut):
@@ -207,6 +208,12 @@ class Validator(ToolWithCandidate):
         logging.info("Calculating validation closest stars depths")
         target.calc_depths(depth, valid_apertures)
         target.stars.to_csv(save_dir + "/stars.csv", index=False)
+        if np.isnan(target.stars.loc[0, 'mass']):
+            target.stars.loc[0, 'mass'] = star_df['M_star']
+        if np.isnan(target.stars.loc[0, 'rad']):
+            target.stars.loc[0, 'rad'] = star_df['R_star']
+        if np.isnan(target.stars.loc[0, 'Teff']):
+            target.stars.loc[0, 'Teff'] = star_df['Teff']
         logging.info("Preparing validation processes inputs")
         input_n_times = [ValidatorInput(save_dir, copy.deepcopy(target), bin_centers, bin_means, sigma, period, depth,
                                         valid_apertures, value, contrast_curve_file)
