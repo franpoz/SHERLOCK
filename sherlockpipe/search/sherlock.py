@@ -225,8 +225,6 @@ class Sherlock:
             self.sherlock_targets = [SherlockTarget(MissionObjectInfo('all', object_id))
                                      for object_id in self.run_ois["Object Id"].astype('string').unique()]
         for sherlock_target in self.sherlock_targets:
-            # sherlock_target.object_info.initial_trim = 60
-            # sherlock_target.object_info.initial_trim_sectors = 2
             if all_targets_properties is not None:
                 for key, value in all_targets_properties.items():
                     setattr(sherlock_target, key, value)
