@@ -139,6 +139,9 @@ INITIAL_MASK:
 # is removed
 INITIAL_TRIM:
 
+# The number of sectors to be used. If the search contains more than the limit, only the first ones will be kept
+INITIAL_TRIM_SECTORS:
+
 # The initial mask of known transiting candidates to be applied. E.g:
 # INITIAL_TRANSIT_MASK:
 #   - T0: 1354.5510
