@@ -97,6 +97,7 @@ def run_search(properties: str, explore: bool, results_dir: None, cpus: int = No
             min_sectors = get_from_user_or_config(target_configs, sherlock_user_properties, "MIN_SECTORS")
             max_sectors = get_from_user_or_config(target_configs, sherlock_user_properties, "MAX_SECTORS")
             initial_trim = get_from_user_or_config(target_configs, sherlock_user_properties, "INITIAL_TRIM")
+            initial_trim_sectors = get_from_user_or_config(target_configs, sherlock_user_properties, "INITIAL_TRIM_SECTORS")
             bin_minutes = get_from_user_or_config(target_configs, sherlock_user_properties, "BIN_MINUTES")
             mask_mode = get_from_user_or_config(target_configs, sherlock_user_properties, "MASK_MODE")
             cpu_cores = get_from_user_or_config(target_configs, sherlock_user_properties, "CPU_CORES") \
@@ -200,7 +201,8 @@ def run_search(properties: str, explore: bool, results_dir: None, cpus: int = No
                                                                         oscillation_min_period, oscillation_max_period,
                                                                         exptime_binning, truncate_border,
                                                                         lower_outliers_sigma=lower_outliers_sigma,
-                                                                        initial_trim=initial_trim)
+                                                                        initial_trim=initial_trim,
+                                                                        initial_trim_sectors=initial_trim_sectors)
                         sherlock_target = SherlockTarget(built_object_info,
                                                          detrend_method, detrend_l_min, detrend_l_max, detrends_number,
                                                          detrend_cores,
@@ -241,7 +243,8 @@ def run_search(properties: str, explore: bool, results_dir: None, cpus: int = No
                                                                   oscillation_min_period, oscillation_max_period,
                                                                   exptime_binning, truncate_border,
                                                                   lower_outliers_sigma=lower_outliers_sigma,
-                                                                  initial_trim=initial_trim)
+                                                                  initial_trim=initial_trim,
+                                                                  initial_trim_sectors=initial_trim_sectors)
                         sherlock_target = SherlockTarget(object_info,
                                                          detrend_method, detrend_l_min, detrend_l_max, detrends_number,
                                                          detrend_cores,
@@ -278,7 +281,8 @@ def run_search(properties: str, explore: bool, results_dir: None, cpus: int = No
                                                                 oscillation_min_period, oscillation_max_period,
                                                                 exptime_binning, truncate_border,
                                                                 lower_outliers_sigma=lower_outliers_sigma,
-                                                                initial_trim=initial_trim)
+                                                                initial_trim=initial_trim,
+                                                                initial_trim_sectors=initial_trim_sectors)
                 sherlock_target = SherlockTarget(built_object_info,
                                                  detrend_method, detrend_l_min, detrend_l_max, detrends_number,
                                                  detrend_cores,
@@ -317,7 +321,8 @@ def run_search(properties: str, explore: bool, results_dir: None, cpus: int = No
                                                                   oscillation_min_period, oscillation_max_period,
                                                                   exptime_binning, truncate_border,
                                                                   lower_outliers_sigma=lower_outliers_sigma,
-                                                                  initial_trim=initial_trim)
+                                                                  initial_trim=initial_trim,
+                                                                  initial_trim_sectors=initial_trim_sectors)
                         sherlock_target = SherlockTarget(object_info,
                                                          detrend_method, detrend_l_min, detrend_l_max, detrends_number,
                                                          detrend_cores,
