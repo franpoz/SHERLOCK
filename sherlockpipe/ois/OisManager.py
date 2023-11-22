@@ -78,6 +78,8 @@ class OisManager:
         if os.path.exists(self.epic_csv):
             epic_data = pd.read_csv(self.epic_csv)
             ois = pd.concat([ois, epic_data]) if ois is not None else epic_data
+        toi_data['Sectors'] = [x.strip('()').split(',') for x in toi_data['Sectors']]
+        toi_data["Sectors"] = toi_data["Sectors"].apply(lambda x: [int(i) for i in x])
         return ois
 
     def update_tic_csvs(self):
