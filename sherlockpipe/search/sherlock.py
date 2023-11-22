@@ -186,6 +186,7 @@ class Sherlock:
         self.run_ois = self.run_ois.loc[self.run_ois['OI'].str.startswith('TOI', na=False)]
         self.run_ois = self.run_ois[
             (self.run_ois["Disposition"] == "KP") | (self.run_ois["Disposition"] == "CP") | (self.run_ois["Disposition"] == "PC")]
+        self.run_ois = self.run_ois[self.run_ois['Sectors'].apply(lambda x: len(str(x)) <= 2)]
         self.run_ois = self.run_ois.sort_values(by=['Object Id', 'OI'])
         self.run_ois = self.run_ois.drop_duplicates(['Object Id'], keep='first')
         self.run_ois = self.run_ois.sort_values(by=['TESS Mag'])
@@ -216,7 +217,7 @@ class Sherlock:
         self.run_ois = self.run_ois[offset:limit]
         return self
 
-    def run(self):
+    def run(self, all_targets_properties: dict = None):
         """
         Entrypoint of Sherlock which launches the main execution for all the input object_infos
         """
@@ -224,6 +225,11 @@ class Sherlock:
             self.sherlock_targets = [SherlockTarget(MissionObjectInfo('all', object_id))
                                      for object_id in self.run_ois["Object Id"].astype('string').unique()]
         for sherlock_target in self.sherlock_targets:
+            # sherlock_target.object_info.initial_trim = 60
+            # sherlock_target.object_info.initial_trim_sectors = 2
+            if all_targets_properties is not None:
+                for key, value in all_targets_properties.items():
+                    setattr(sherlock_target, key, value)
             self.__run_object(sherlock_target)
 
     def __min_transits_count(self, lc_build, sherlock_target):
