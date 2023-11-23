@@ -227,7 +227,12 @@ class Sherlock:
         for sherlock_target in self.sherlock_targets:
             if all_targets_properties is not None:
                 for key, value in all_targets_properties.items():
-                    setattr(sherlock_target, key, value)
+                    if '.' in key:
+                        keys = key.split('.')
+                        inner_attribute = getattr(sherlock_target, keys[0])
+                        setattr(inner_attribute, keys[1], value)
+                    else:
+                        setattr(sherlock_target, key, value)
             self.__run_object(sherlock_target)
 
     def __min_transits_count(self, lc_build, sherlock_target):
