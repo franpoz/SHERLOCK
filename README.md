@@ -46,7 +46,7 @@ Also, you may be interested in having a look at recent papers that used SHERLOCK
 ## Full Tutorials 
 
 We have conducted dedicated workshops to teach SHERLOCK's usage and best practices. The last one was held on June 2023 at the
-[Instituto de Astrofísica de Andalucía-CSIC](https://www.iaa.csic.es/).
+[Instituto de Astrofísica de Andalucía-CSIC](https://www.iaa.csic.es/en).
 You can find all the material used (Jupyter notebooks, full examples, presentations, etc.) in this link: [SHERLOCK Workshop IAA-CSIC](https://github.com/iaa-so-training/sherlock-tutorial).
 Let us know if you or your lab are interested in the SHERLOCK package! We might organize an introduction and a hands-on session to help you get familiar with the code and/or implement new functionalities.   
 
