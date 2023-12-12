@@ -7,8 +7,8 @@ rm -r .pytest_cache
 rm -r build
 rm -r sherlockpipe-reqs
 rm -R *egg-info
+conda remove -n sherlockpipe-reqs --all -y
 set -e
-
 git_tag=$1
 echo "GIT TAG IS " ${git_tag}
 echo "Run regression tests"
@@ -22,6 +22,7 @@ if ! [[ -z ${tests_results} ]]; then
   rm -r .pytest_cache
   rm -r build
   rm -r sherlockpipe-reqs
+  conda remove -n sherlockpipe-reqs --all -y
   rm -R *egg-info
   set -e
   tox -r -e py310-gha > tests.log
@@ -32,6 +33,7 @@ else
   rm -r .pytest_cache
   rm -r build
   rm -r sherlockpipe-reqs
+  conda remove -n sherlockpipe-reqs --all -y
   rm -R *egg-info
   set -e
   exit 1
@@ -45,15 +47,16 @@ if ! [[ -z ${tests_results} ]]; then
   rm -r build
   rm -r sherlockpipe-reqs
   rm -R *egg-info
+  conda remove -n sherlockpipe-reqs --all -y
   set -e
-  python3.10 -m venv sherlockpipe-reqs
-  source sherlockpipe-reqs/bin/activate
-  python3.10 -m pip install pip -U
-  python3.10 -m pip install numpy==1.23.5
+  conda create -n sherlockpipe-reqs python=3.10 anaconda -y
+  ~/anaconda3/bin/activate sherlockpipe-reqs
+  python3 -m pip install pip -U
+  python3 -m pip install numpy==1.23.5
   sed -i '6s/.*/version = "'${git_tag}'"/' setup.py
   sed -i '1s/.*/__version__ = "'${git_tag}'"/' sherlockpipe/__init__.py
-  python3.10 -m pip install -e .
-  python3.10 -m pip list --format=freeze > requirements.txt
+  python3 -m pip install -e .
+  python3 -m pip list --format=freeze > requirements.txt
   deactivate
   git add requirements.txt
   git add setup.py
@@ -85,3 +88,4 @@ rm -r .tox
 rm -r .pytest_cache
 rm -r build
 rm -R *egg-info
+conda remove -n sherlockpipe-reqs --all -y
