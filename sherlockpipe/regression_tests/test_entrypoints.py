@@ -35,8 +35,11 @@ class TestsEntrypoints(unittest.TestCase):
         object_dir = TestsEntrypoints.get_path('test_endpoints_data/')
         vetting_dir = object_dir + '/vet_1'
         try:
-            run_vet(object_dir, 1, None, cpus=4)
+            run_vet(object_dir, 1, None, cpus=4, run_iatson=False)
             self.assertEquals(7, len(os.listdir(vetting_dir)))
+            shutil.rmtree(vetting_dir, ignore_errors=True)
+            run_vet(object_dir, 1, None, cpus=4, run_iatson=True)
+            self.assertEquals(9, len(os.listdir(vetting_dir)))
         finally:
             shutil.rmtree(vetting_dir, ignore_errors=True)
 

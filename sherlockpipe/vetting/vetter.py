@@ -12,7 +12,8 @@ class Vetter(ToolWithCandidate):
 
     def run(self, cpus, **kwargs):
         self.watson.vetting_with_data(kwargs['candidate'], kwargs['star_df'], kwargs['transits_df'],
-                                      cpus, transits_mask=kwargs["transits_mask"])
+                                      cpus, transits_mask=kwargs["transits_mask"],
+                                      iatson_enabled=kwargs['iatson_enabled'], iatson_inputs_save=True)
 
     def object_dir(self):
         return self.watson.object_dir
