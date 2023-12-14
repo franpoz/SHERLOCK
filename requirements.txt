@@ -100,7 +100,6 @@ datasets==2.12.0
 datashader==0.15.2
 datashape==0.5.4
 dearwatson==0.8.3
-dearwatson==0.8.0
 dearwatson==0.8.1
 dearwatson==0.8.2
 debugpy==1.6.7
@@ -231,7 +230,6 @@ libarchive-c==2.9
 libclang==16.0.6
 libclang==16.0.6
 libmambapy==1.5.1
-lightkurve==2.4.2
 lightkurve==2.4.2
 linkify-it-py==2.0.0
 lit==17.0.6
@@ -451,7 +449,7 @@ semantic-version==2.10.0
 Send2Trash==1.8.0
 service-identity==18.1.0
 setuptools==69.0.2
-sherlockpipe==0.41.0
+sherlockpipe==0.41.1
 sip==6.6.2
 six==1.16.0
 sklearn==0.0
