@@ -182,10 +182,10 @@ class Sherlock:
         """
         self.use_ois = True
         self.run_ois = self.ois[self.ois["Period (days)"].notnull()]
-        self.run_ois = self.run_ois[self.run_ois["Period (days)"] < 5]
+        self.run_ois = self.run_ois[self.run_ois["Period (days)"] < 10]
         self.run_ois = self.run_ois.loc[self.run_ois['OI'].str.startswith('TOI', na=False)]
         self.run_ois = self.run_ois[
-            (self.run_ois["Disposition"] == "KP") | (self.run_ois["Disposition"] == "CP") | (self.run_ois["Disposition"] == "PC")]
+            (self.run_ois["Disposition"] == "KP") | (self.run_ois["Disposition"] == "CP")]
         self.run_ois = self.run_ois[self.run_ois['Sectors'].apply(lambda x: len(str(x)) <= 2)]
         self.run_ois = self.run_ois.sort_values(by=['Object Id', 'OI'])
         self.run_ois = self.run_ois.drop_duplicates(['Object Id'], keep='first')
