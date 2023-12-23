@@ -333,7 +333,7 @@ photutils==1.10.0
 pickleshare==0.7.5
 Pillow==9.4.0
 Pillow==9.5.0
-pip==23.3.1
+pip==23.3.2
 pkce==1.0.3
 pkginfo==1.9.6
 platformdirs==3.10.0
@@ -449,7 +449,7 @@ semantic-version==2.10.0
 Send2Trash==1.8.0
 service-identity==18.1.0
 setuptools==69.0.2
-sherlockpipe==0.41.1
+sherlockpipe==0.41.2
 sip==6.6.2
 six==1.16.0
 sklearn==0.0
