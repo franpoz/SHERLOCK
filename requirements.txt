@@ -92,6 +92,7 @@ corner==2.2.2
 cryptography==41.0.3
 cssselect==1.1.0
 cycler==0.11.0
+Cython==3.0.7
 Cython==3.0.6
 cytoolz==0.12.0
 daal4py==2023.1.1
@@ -99,7 +100,8 @@ dask==2023.6.0
 datasets==2.12.0
 datashader==0.15.2
 datashape==0.5.4
-dearwatson==0.8.3
+dearwatson==0.8.4
+dearwatson==0.8.4
 dearwatson==0.8.1
 dearwatson==0.8.2
 debugpy==1.6.7
@@ -113,7 +115,7 @@ distributed==2023.6.0
 docstring-to-markdown==0.11
 docutils==0.18.1
 dynesty==1.0.1
-ellc==1.8.8
+ellc==1.8.5
 ellc==1.8.8
 emcee==3.0.2
 entrypoints==0.4
@@ -121,8 +123,9 @@ et-xmlfile==1.1.0
 everest-pipeline==2.0.12
 everest-pipeline==2.0.12
 executing==0.8.3
+exoml==0.0.18
 exoml==0.0.15
-exoml==0.0.15
+exoml==0.0.17
 extension-helpers==1.1.1
 extension-helpers==0.1
 fasteners==0.19
@@ -224,8 +227,10 @@ keyring==23.13.1
 kiwisolver==1.4.4
 lazy_loader==0.2
 lazy-object-proxy==1.6.0
+lcbuilder==0.14.3
+lcbuilder==0.14.3
 lcbuilder==0.14.2
-lcbuilder==0.14.2
+lcbuilder==0.14.4
 libarchive-c==2.9
 libclang==16.0.6
 libclang==16.0.6
@@ -242,7 +247,7 @@ lz4==4.3.2
 Markdown==3.4.1
 markdown-it-py==2.2.0
 MarkupSafe==2.1.1
-matplotlib==3.7.2
+matplotlib==3.5.2
 matplotlib==3.8.2
 matplotlib-inline==0.1.6
 mccabe==0.7.0
@@ -448,8 +453,9 @@ SecretStorage==3.3.1
 semantic-version==2.10.0
 Send2Trash==1.8.0
 service-identity==18.1.0
-setuptools==69.0.2
-sherlockpipe==0.41.2
+setuptools==69.0.3
+setuptools-scm==8.0.4
+sherlockpipe==0.41.3
 sip==6.6.2
 six==1.16.0
 sklearn==0.0
