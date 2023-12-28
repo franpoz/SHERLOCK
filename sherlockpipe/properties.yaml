@@ -68,6 +68,8 @@ SNR_MIN: 5
 SDE_MIN: 5
 # Number of processes to be spawned by SHERLOCK search.
 CPU_CORES: 7
+# Choose search engine: cpu|gpu|gpu_approximate
+SEARCH_ENGINE: 'cpu'
 # Search zone can be 'hz' or 'ohz' for habitable and optimistic habitable zones. This will override period_min and
 # period_max values
 SEARCH_ZONE:

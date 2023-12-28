@@ -4,8 +4,6 @@ import multiprocessing
 import pickle
 import shutil
 from typing import List
-import traceback
-import lightkurve
 import pandas
 import wotan
 import matplotlib.pyplot as plt
@@ -812,6 +810,8 @@ class Sherlock:
         power_args["M_star"] = star_info.mass
         power_args["M_star_min"] = star_info.mass_min
         power_args["M_star_max"] = star_info.mass_max
+        power_args['use_gpu'] = sherlock_target.search_engine == 'gpu' or sherlock_target.search_engine == 'gpu_approximate'
+        power_args['gpu_approximate'] = sherlock_target.search_engine == 'gpu_approximate'
         if sherlock_target.custom_transit_template is not None:
             power_args["transit_template_generator"] = sherlock_target.custom_transit_template
         results = model.power(**power_args)
