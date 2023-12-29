@@ -3,7 +3,7 @@ import setuptools
 with open("README.md", "r") as fh:
     long_description = fh.read()
 
-version = "0.42.1"
+version = "0.42.2"
 setuptools.setup(
     name="sherlockpipe", # Replace with your own username
     version=version,
@@ -29,7 +29,7 @@ setuptools.setup(
                         'beautifulsoup4==4.9.3', # Parsing HTML and XML, for OIs extraction
                         "celerite==0.4.0", # Allesfitter dependency
                         "corner==2.2.2", # Allesfitter dependency
-                        "dearwatson==0.9.2", # Vetting
+                        "dearwatson==0.9.3", # Vetting
                         "dynesty==1.0.1", # Allesfitter dependency
                         "emcee==3.0.2", # Allesfitter dependency
                         "h5py==3.10.0", # Allesfitter dependency
