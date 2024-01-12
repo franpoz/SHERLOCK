@@ -348,7 +348,7 @@ class Sherlock:
                         logging.info("Max runs limit of %.0f is reached. Stopping.", sherlock_target.max_runs)
                 else:
                     logging.info('New best signal does not look very promising. End')
-                self.report = pandas.concat([self.report, pandas.DataFrame([object_report])], ignore_index=True)
+                self.report[sherlock_id].append(object_report)
                 self.__setup_object_report_logging(sherlock_id, True)
                 logging.info("Listing most promising candidates for ID %s:", sherlock_id)
                 logging.info("%-12s%-10s%-10s%-10s%-8s%-8s%-11s%-11s%-8s%-8s%-14s%-14s%-12s%-25s%-10s%-18s%-20s",
