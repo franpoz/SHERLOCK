@@ -299,8 +299,8 @@ class Sherlock:
                 all_nan_results = len(np.argwhere(~np.isnan(signal_selection.transit_result.t0s)).flatten()) == 0
                 if not all_nan_results:
                     for index in np.arange(len(signal_selection.transit_result.t0s)):
-                        transit_stats_df = pd.concat([transit_stats_df,
-                                                      pd.DataFrame([{'candidate': str(int(id_run - 1)),
+                        transit_stats_df = pandas.concat([transit_stats_df,
+                                                      pandas.DataFrame([{'candidate': str(int(id_run - 1)),
                                                                      't0': signal_selection.transit_result.t0s[index],
                                                                      'depth': signal_selection.transit_result.depths[index],
                                                                      'depth_err': signal_selection.transit_result.depths_err[index]}])],
@@ -348,7 +348,7 @@ class Sherlock:
                         logging.info("Max runs limit of %.0f is reached. Stopping.", sherlock_target.max_runs)
                 else:
                     logging.info('New best signal does not look very promising. End')
-                self.report = pd.concat([self.report, pd.DataFrame([object_report])], ignore_index=True)
+                self.report = pandas.concat([self.report, pandas.DataFrame([object_report])], ignore_index=True)
                 self.__setup_object_report_logging(sherlock_id, True)
                 logging.info("Listing most promising candidates for ID %s:", sherlock_id)
                 logging.info("%-12s%-10s%-10s%-10s%-8s%-8s%-11s%-11s%-8s%-8s%-14s%-14s%-12s%-25s%-10s%-18s%-20s",
@@ -376,7 +376,7 @@ class Sherlock:
                                      report["depth_sig"], report["snr"], report["sde"],
                                      report["border_score"], report["oi"], report["harmonic"],
                                      report['rad_p'], report['rp_rs'], a, habitability_zone)
-                        candidates_df = pd.concat([candidates_df, pd.DataFrame([report])], ignore_index=True)
+                        candidates_df = pandas.concat([candidates_df, pandas.DataFrame([report])], ignore_index=True)
                         i = i + 1
                     candidates_df.to_csv(object_dir + "candidates.csv", index=False)
         except InvalidNumberOfSectorsError:
