@@ -299,7 +299,7 @@ class Sherlock:
                 all_nan_results = len(np.argwhere(~np.isnan(signal_selection.transit_result.t0s)).flatten()) == 0
                 if not all_nan_results:
                     for index in np.arange(len(signal_selection.transit_result.t0s)):
-                        transit_stats_df = pandas.concat([transit_stats_df,
+                        transits_stats_df = pandas.concat([transits_stats_df,
                                                       pandas.DataFrame([{'candidate': str(int(id_run - 1)),
                                                                      't0': signal_selection.transit_result.t0s[index],
                                                                      'depth': signal_selection.transit_result.depths[index],
