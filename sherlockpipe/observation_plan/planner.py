@@ -8,7 +8,7 @@ import shutil
 import astroplan
 import matplotlib
 from astroplan.plots import plot_airmass
-from astropy.coordinates import SkyCoord, get_moon
+from astropy.coordinates import SkyCoord, get_body
 import astropy.units as u
 from astroplan import EclipsingSystem
 import pandas as pd
@@ -52,7 +52,7 @@ class MoonIlluminationSeparationConstraint(Constraint):
         # removed the location argument here, which causes small <1 deg
         # inaccuracies, but it is needed until astropy PR #5897 is released
         # which should be astropy 1.3.2
-        moon = get_moon(times)
+        moon = get_body("moon", times)
         # note to future editors - the order matters here
         # moon.separation(targets) is NOT the same as targets.separation(moon)
         # the former calculates the separation in the frame of the moon coord
@@ -170,7 +170,7 @@ class Planner:
             constraints = [AtNightConstraint.twilight_nautical(), AltitudeConstraint(min=min_altitude * u.deg),
                            MoonIlluminationSeparationConstraint(min_dist=moon_min_dist * u.deg,
                                                                 max_dist=moon_max_dist * u.deg)]
-            moon_for_midtransit_times = get_moon(midtransit_times)
+            moon_for_midtransit_times = get_body("moon", midtransit_times)
             moon_dist_midtransit_times = moon_for_midtransit_times.separation(SkyCoord(ra, dec, unit="deg"))
             moon_phase_midtransit_times = np.round(astroplan.moon_illumination(midtransit_times), 2)
             transits_since_epoch = np.round((midtransit_times - primary_eclipse_time).jd / period)
@@ -208,7 +208,7 @@ class Planner:
         return observatories_df, observables_df, alert_date, plan_dir, images_dir
 
     @staticmethod
-    def plan_event(planner_input):
+    def plan_event(planner_input: PlannerInput):
         try:
             twilight_evening = planner_input.observer_site.twilight_evening_nautical(planner_input.midtransit_time)
             twilight_morning = planner_input.observer_site.twilight_morning_nautical(planner_input.midtransit_time)
@@ -217,11 +217,7 @@ class Planner:
             lowest_ingress = ingress - planner_input.low_err_delta[planner_input.i]
             highest_egress = egress + planner_input.up_err_delta[planner_input.i]
             if planner_input.error_alert and (highest_egress - lowest_ingress).jd > 0.33:
-                alert_date = planner_input.midtransit_time \
-                    if (planner_input.alert_date is None) or \
-                       (planner_input.alert_date is not None and planner_input.alert_date >= planner_input.midtransit_time) \
-                    else planner_input.alert_date
-                return (alert_date, None)
+                return (planner_input.midtransit_time , None)
             else:
                 baseline_low = lowest_ingress - planner_input.baseline * u.hour
                 baseline_up = highest_egress + planner_input.baseline * u.hour

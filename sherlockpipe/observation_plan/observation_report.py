@@ -1,6 +1,7 @@
 import datetime
 import logging
 
+import pandas as pd
 from astropy.coordinates import Angle
 from reportlab.lib import colors
 from reportlab.lib.pagesizes import A4
@@ -24,7 +25,7 @@ class ObservationReport:
     Used to create a pdf file from the parameters and images generated in the plan stage.
     """
     LOGO_IMAGE = resources_dir + "/../resources/images/sherlock3.png"
-    ALERT_IMAGE = resources_dir + "/resources/images/alert.png"
+    ALERT_IMAGE = resources_dir + "/../resources/images/alert.png"
 
     def __init__(self, df_observatories, df, alert_date, object_id, name, working_path, ra, dec, t0, t0_low_err, t0_up_err, period,
                  period_low_err, period_up_err, duration, duration_low_err, duration_up_err, depth, depth_low_err,
@@ -70,81 +71,83 @@ class ObservationReport:
         self.df['TZ'] = self.df['timezone'].fillna(0).astype('int')
         self.df['TZ'] = self.df['TZ'].astype('str')
         self.df['timezone'].astype(str)
+        df_output = pd.DataFrame(columns=['Observatory', 'TZ', 'Event times', 'TT Error', 'Moon', 'Image'])
         # Removing milliseconds from dates:
-        self.df.loc[(self.df["ingress"].apply(lambda x: len(str(x)) > 4)), 'ingress'] = \
-            self.df[(self.df["ingress"].apply(lambda x: len(str(x)) > 4))]['ingress'].str[:-4]
-        self.df.loc[(self.df["twilight_evening"].apply(lambda x: len(str(x)) > 4)), 'twilight_evening'] = \
-            self.df[(self.df["twilight_evening"].apply(lambda x: len(str(x)) > 4))]['twilight_evening'].str[:-4]
-        self.df.loc[(self.df["midtime"].apply(lambda x: len(str(x)) > 4)), 'midtime'] = \
-            self.df[(self.df["midtime"].apply(lambda x: len(str(x)) > 4))]['midtime'].str[:-4]
-        self.df.loc[(self.df["egress"].apply(lambda x: len(str(x)) > 4)), 'egress'] = \
-            self.df[(self.df["egress"].apply(lambda x: len(str(x)) > 4))]['egress'].str[:-4]
-        self.df.loc[(self.df["twilight_morning"].apply(lambda x: len(str(x)) > 4)), 'twilight_morning'] = \
-            self.df[(self.df["twilight_morning"].apply(lambda x: len(str(x)) > 4))]['twilight_morning'].str[:-4]
-        self.df.loc[(self.df["start_obs"].apply(lambda x: len(str(x)) > 4)), 'start_obs'] = \
-            self.df[(self.df["start_obs"].apply(lambda x: len(str(x)) > 4))]['start_obs'].str[:-4]
-        self.df.loc[(self.df["end_obs"].apply(lambda x: len(str(x)) > 4)), 'end_obs'] = \
-            self.df[(self.df["end_obs"].apply(lambda x: len(str(x)) > 4))]['end_obs'].str[:-4]
-        self.df.loc[(self.df["ingress"].apply(lambda x: len(str(x)) <= 4)), 'ingress'] = '--'
-        self.df.loc[(self.df["midtime"].apply(lambda x: len(str(x)) <= 4)), 'midtime'] = '--'
-        self.df.loc[(self.df["egress"].apply(lambda x: len(str(x)) <= 4)), 'egress'] = '--'
-        self.df.loc[(self.df["twilight_evening"].apply(lambda x: len(str(x)) <= 4)), 'twilight_evening'] = '--'
-        self.df.loc[(self.df["twilight_morning"].apply(lambda x: len(str(x)) <= 4)), 'twilight_morning'] = '--'
-        self.df.loc[(self.df["start_obs"].apply(lambda x: len(str(x)) <= 4)), 'start_obs'] = '--'
-        self.df.loc[(self.df["end_obs"].apply(lambda x: len(str(x)) <= 4)), 'end_obs'] = '--'
-        # Generamos la columna que contendrá el nombre de las imágenes:
-        self.df['image_path'] = self.images_path + self.df['observatory'] + "_" + self.df['midtime'] + ".png"
-        # Finalmente con las rutas creamos los objetos:
-        self.df['Image'] = self.df['image_path'].apply(lambda x: Image(x))
+        if len(self.df) > 0:
+            self.df.loc[(self.df["ingress"].apply(lambda x: len(str(x)) > 4)), 'ingress'] = \
+                self.df[(self.df["ingress"].apply(lambda x: len(str(x)) > 4))]['ingress'].str[:-4]
+            self.df.loc[(self.df["twilight_evening"].apply(lambda x: len(str(x)) > 4)), 'twilight_evening'] = \
+                self.df[(self.df["twilight_evening"].apply(lambda x: len(str(x)) > 4))]['twilight_evening'].str[:-4]
+            self.df.loc[(self.df["midtime"].apply(lambda x: len(str(x)) > 4)), 'midtime'] = \
+                self.df[(self.df["midtime"].apply(lambda x: len(str(x)) > 4))]['midtime'].str[:-4]
+            self.df.loc[(self.df["egress"].apply(lambda x: len(str(x)) > 4)), 'egress'] = \
+                self.df[(self.df["egress"].apply(lambda x: len(str(x)) > 4))]['egress'].str[:-4]
+            self.df.loc[(self.df["twilight_morning"].apply(lambda x: len(str(x)) > 4)), 'twilight_morning'] = \
+                self.df[(self.df["twilight_morning"].apply(lambda x: len(str(x)) > 4))]['twilight_morning'].str[:-4]
+            self.df.loc[(self.df["start_obs"].apply(lambda x: len(str(x)) > 4)), 'start_obs'] = \
+                self.df[(self.df["start_obs"].apply(lambda x: len(str(x)) > 4))]['start_obs'].str[:-4]
+            self.df.loc[(self.df["end_obs"].apply(lambda x: len(str(x)) > 4)), 'end_obs'] = \
+                self.df[(self.df["end_obs"].apply(lambda x: len(str(x)) > 4))]['end_obs'].str[:-4]
+            self.df.loc[(self.df["ingress"].apply(lambda x: len(str(x)) <= 4)), 'ingress'] = '--'
+            self.df.loc[(self.df["midtime"].apply(lambda x: len(str(x)) <= 4)), 'midtime'] = '--'
+            self.df.loc[(self.df["egress"].apply(lambda x: len(str(x)) <= 4)), 'egress'] = '--'
+            self.df.loc[(self.df["twilight_evening"].apply(lambda x: len(str(x)) <= 4)), 'twilight_evening'] = '--'
+            self.df.loc[(self.df["twilight_morning"].apply(lambda x: len(str(x)) <= 4)), 'twilight_morning'] = '--'
+            self.df.loc[(self.df["start_obs"].apply(lambda x: len(str(x)) <= 4)), 'start_obs'] = '--'
+            self.df.loc[(self.df["end_obs"].apply(lambda x: len(str(x)) <= 4)), 'end_obs'] = '--'
+            # Generamos la columna que contendrá el nombre de las imágenes:
+            self.df['image_path'] = self.images_path + self.df['observatory'] + "_" + self.df['midtime'] + ".png"
+            # Finalmente con las rutas creamos los objetos:
+            self.df['Image'] = self.df['image_path'].apply(lambda x: Image(x))
 
 
-        # We want to sort the dates row-wise, only keeping the interesting columns
-        df_dates = self.df[['twilight_evening', 'ingress', 'midtime', 'egress', 'start_obs', 'end_obs', 'twilight_morning', 'timezone']]
-        df_dates.columns = ['TWE', 'I', 'M', 'E', 'SO', 'EO', 'TWM', 'tz']
-        dict_fechas = df_dates.to_dict('index')
-        new_dict_fechas = {}
-        for index, row in df_dates.iterrows():
-            # Lo ordenamos por los valores de cada key:
-            items = row[['TWE', 'I', 'M', 'E', 'SO', 'EO', 'TWM']].to_dict()
-            list_of_tuples = sorted(items.items(), key=lambda item: item[1])
-            # Definimos la noche como false:
-            night = 0
-            # Recorremos las tuplas y si noche es uno (lo que sucede a partir del TWE) ponemos en negrita la fecha.
-            # Con esto vamos a generar una nueva lista de tuplas que tendrá las fechas apropiadas en negrita:
-            list_of_tuples_with_night = []
-            for tup in list_of_tuples:
-                try:
-                    y = list(tup)
-                    local_time = parse(tup[1])
-                    utime = Time(local_time)
-                    y[1] = str(tup[1]) + ' (' + str(round(utime.jd, 2)) + ' JD)'
-                    tup = tuple(y)
-                except Exception as e:
-                    logging.exception(f"Can't convert to date {tup[1]}")
-                if night == 1 and tup[0] != 'TWM':
-                    y = list(tup)
-                    y[1] = '<strong>' + str(tup[1]) + '</strong>'
-                    tup = tuple(y)
-                if tup[0] == 'TWM':
-                    night = 0
-                if tup[0] == 'TWE':
-                    night = 1
-                list_of_tuples_with_night.append(tup)
-            # Unimos las tuplas separando key y value con ":":
-            join_list = [': '.join(tup) for tup in list_of_tuples_with_night]
-            # Para terminar, el nuevo diccionario une los elementos de la lista separando por saltos de línea:
-            new_dict_fechas[index] = '<font name="HELVETICA" size="8">' + '<br/>'.join(join_list) + '</font>'
-        # Finalmente, creamos la columna Event times mapeando el index del dataframe con el del diccionario:
-        self.df['Event times'] = self.df.index.to_series().map(new_dict_fechas)
-        # La columna Transit Times Error será el concatenado de los errores:
-        self.df['TT Error'] = '-' + self.df['midtime_low_err_h'].map(str) + '<br/>+' + self.df['midtime_up_err_h'].map(
-            str)
-        # La columna Moon será el concatenado de la moon_phase y de moon_dist:
-        self.df['moon_phase'] = (self.df['moon_phase'] * 100).astype(int)
-        self.df['moon_dist'] = self.df['moon_dist'].astype(int)
-        self.df['Moon'] = self.df['moon_phase'].map(str) + '%<br/>' + self.df['moon_dist'].map(str) + 'º'
-        # El dataframe final solo tendrá unas pocas columnas del excel inicial:
-        df_output = self.df[['Observatory', 'TZ', 'Event times', 'TT Error', 'Moon', 'Image']]
+            # We want to sort the dates row-wise, only keeping the interesting columns
+            df_dates = self.df[['twilight_evening', 'ingress', 'midtime', 'egress', 'start_obs', 'end_obs', 'twilight_morning', 'timezone']]
+            df_dates.columns = ['TWE', 'I', 'M', 'E', 'SO', 'EO', 'TWM', 'tz']
+            dict_fechas = df_dates.to_dict('index')
+            new_dict_fechas = {}
+            for index, row in df_dates.iterrows():
+                # Lo ordenamos por los valores de cada key:
+                items = row[['TWE', 'I', 'M', 'E', 'SO', 'EO', 'TWM']].to_dict()
+                list_of_tuples = sorted(items.items(), key=lambda item: item[1])
+                # Definimos la noche como false:
+                night = 0
+                # Recorremos las tuplas y si noche es uno (lo que sucede a partir del TWE) ponemos en negrita la fecha.
+                # Con esto vamos a generar una nueva lista de tuplas que tendrá las fechas apropiadas en negrita:
+                list_of_tuples_with_night = []
+                for tup in list_of_tuples:
+                    try:
+                        y = list(tup)
+                        local_time = parse(tup[1])
+                        utime = Time(local_time)
+                        y[1] = str(tup[1]) + ' (' + str(round(utime.jd, 2)) + ' JD)'
+                        tup = tuple(y)
+                    except Exception as e:
+                        logging.exception(f"Can't convert to date {tup[1]}")
+                    if night == 1 and tup[0] != 'TWM':
+                        y = list(tup)
+                        y[1] = '<strong>' + str(tup[1]) + '</strong>'
+                        tup = tuple(y)
+                    if tup[0] == 'TWM':
+                        night = 0
+                    if tup[0] == 'TWE':
+                        night = 1
+                    list_of_tuples_with_night.append(tup)
+                # Unimos las tuplas separando key y value con ":":
+                join_list = [': '.join(tup) for tup in list_of_tuples_with_night]
+                # Para terminar, el nuevo diccionario une los elementos de la lista separando por saltos de línea:
+                new_dict_fechas[index] = '<font name="HELVETICA" size="8">' + '<br/>'.join(join_list) + '</font>'
+            # Finalmente, creamos la columna Event times mapeando el index del dataframe con el del diccionario:
+            self.df['Event times'] = self.df.index.to_series().map(new_dict_fechas)
+            # La columna Transit Times Error será el concatenado de los errores:
+            self.df['TT Error'] = '-' + self.df['midtime_low_err_h'].map(str) + '<br/>+' + self.df['midtime_up_err_h'].map(
+                str)
+            # La columna Moon será el concatenado de la moon_phase y de moon_dist:
+            self.df['moon_phase'] = (self.df['moon_phase'] * 100).astype(int)
+            self.df['moon_dist'] = self.df['moon_dist'].astype(int)
+            self.df['Moon'] = self.df['moon_phase'].map(str) + '%<br/>' + self.df['moon_dist'].map(str) + 'º'
+            # El dataframe final solo tendrá unas pocas columnas del excel inicial:
+            df_output = self.df[['Observatory', 'TZ', 'Event times', 'TT Error', 'Moon', 'Image']]
         return df_output
 
     @staticmethod
@@ -327,7 +330,7 @@ class ObservationReport:
         story.append(Spacer(1, 5))
         story.append(Paragraph(table4_descripcion, styles["ParagraphAlignCenter"]))
 
-        if self.alert_date is not None:
+        if self.alert_date is not None and df_manipulated is not None:
             story.append(Spacer(1, 30))
             story.append(Image(self.ALERT_IMAGE, width=15, height=15))
             alert = '<font name="HELVETICA" size="9" color="red">The table 5 with the observations will only contain \
