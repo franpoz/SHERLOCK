@@ -24,7 +24,7 @@ setuptools.setup(
     install_requires=['arviz==0.12.1', # Validation required (pytransit, from triceratops)
                         'astroplan==0.8',
                         "astroquery==0.4.6",
-                        "alexfitter==1.2.12", # Fit
+                        "alexfitter==1.2.15", # Fit
                         'argparse==1.4.0', # All modules
                         'beautifulsoup4==4.9.3', # Parsing HTML and XML, for OIs extraction
                         "celerite==0.4.0", # Allesfitter dependency
