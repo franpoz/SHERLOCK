@@ -142,7 +142,7 @@ seaborn==0.11.1
 SecretStorage==3.3.3
 semantic-version==2.10.0
 setuptools==68.2.2
-sherlockpipe==0.43.0
+sherlockpipe==0.43.1
 six==1.16.0
 sklearn==0.0
 soupsieve==2.5
