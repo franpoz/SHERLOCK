@@ -366,7 +366,7 @@ ${sherlock:baseline_params}
                 errs_params = "ln_err_flux_lc," + str(distribution_params.yerr) + ",1," + distribution + " " + \
                               str(distribution_params.yerr_lower_err) + " " + \
                               str(distribution_params.yerr_upper_err) + "," \
-                              "$\\\\log{\\\\sigma_\\\\mathrm{lc}}$,\\$\\\\log{ \\\\mathrm{rel. flux.} }$"
+                              "$\\\\log{\\\\sigma_\\\\mathrm{lc}}$,$\\\\log{ \\\\mathrm{rel. flux.} }$"
                 baseline_params = "baseline_gp_matern32_lnsigma_flux_lc," + str(
                     distribution_params.lnsigma) + ",1," + distribution + \
                                   " " + str(distribution_params.lnsigma_lower_err) + " " + \
@@ -389,7 +389,7 @@ ${sherlock:baseline_params}
                 errs_params = "ln_err_flux_lc," + str(distribution_params.yerr) + ",1," + distribution + " " + \
                               str(distribution_params.yerr) + " " + \
                               str(sigma_lnyerr) + "," \
-                              "$\\\\log{\\\\sigma_\\\\mathrm{lc}}$,\\$\\\\log{ \\\\mathrm{rel. flux.} }$"
+                              "$\\\\log{\\\\sigma_\\\\mathrm{lc}}$,$\\\\log{ \\\\mathrm{rel. flux.} }$"
                 baseline_params = "baseline_gp_matern32_lnsigma_flux_lc," + str(distribution_params.lnsigma) + ",1," + distribution + \
                                   " " + str(distribution_params.lnsigma) + " " + str(sigma_lnsigma) + "," \
                                   "$\\\\mathrm{gp: \\\\ln{\\\\sigma} (lc)}$,\n" + \
