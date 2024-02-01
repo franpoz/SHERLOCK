@@ -94,6 +94,8 @@ class SherlockTarget:
             self.fit_method = "grazing"
         elif fit_method is not None and fit_method.lower() == 'tailed':
             self.fit_method = "tailed"
+        elif fit_method is not None and fit_method.lower() == 'bls-periodogram':
+            self.fit_method = 'bls-periodogram'
         self.oversampling = oversampling
         if self.oversampling is not None:
             self.oversampling = self.oversampling

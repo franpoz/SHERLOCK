@@ -4,7 +4,11 @@ import multiprocessing
 import pickle
 import shutil
 from typing import List
+
+import foldedleastsquares
+import lightkurve
 import pandas
+import pandas as pd
 import wotan
 import matplotlib.pyplot as plt
 import foldedleastsquares as tls
@@ -51,6 +55,7 @@ class Sherlock:
     wl_min = {}
     wl_max = {}
     report = {}
+    time_reports = {}
     ois = None
     run_ois = None
     config_step = 0
@@ -802,49 +807,94 @@ class Sherlock:
     def __adjust_transit(self, sherlock_target, time, lc, star_info, transits_min_count, run_results, report, cadence,
                          period_grid, detrend_source_period):
         oversampling = sherlock_target.oversampling
-        model = tls.transitleastsquares(time, lc)
-        power_args = {"transit_template": sherlock_target.fit_method, "period_min": sherlock_target.period_min,
-                      "period_max": sherlock_target.period_max, "n_transits_min": transits_min_count,
-                      "T0_fit_margin": sherlock_target.t0_fit_margin, "show_progress_bar": False,
-                      "use_threads": sherlock_target.cpu_cores, "oversampling_factor": oversampling,
-                      "duration_grid_step": sherlock_target.duration_grid_step,
-                      "period_grid": period_grid}
-        if star_info.ld_coefficients is not None:
-            power_args["u"] = star_info.ld_coefficients
-        power_args["R_star"] = star_info.radius
-        power_args["R_star_min"] = star_info.radius_min
-        power_args["R_star_max"] = star_info.radius_max
-        power_args["M_star"] = star_info.mass
-        power_args["M_star_min"] = star_info.mass_min
-        power_args["M_star_max"] = star_info.mass_max
-        power_args['use_gpu'] = sherlock_target.search_engine == 'gpu' or sherlock_target.search_engine == 'gpu_approximate'
-        power_args['gpu_approximate'] = sherlock_target.search_engine == 'gpu_approximate'
-        if sherlock_target.custom_transit_template is not None:
-            power_args["transit_template_generator"] = sherlock_target.custom_transit_template
-        results = model.power(**power_args)
-        depths = (1 - results.transit_depths) * 1000
-        depths_err = results.transit_depths_uncertainties * 1000
-        if results.T0 != 0:
-            depths_calc = results.transit_depths[~np.isnan(results.transit_depths)]
-            depth = (1. - np.mean(depths_calc)) * 1000
-            depth_err = np.sqrt(np.nansum([depth_err ** 2 for depth_err in depths_err])) / len(depths_err)
+        power_args = None
+        if sherlock_target.fit_method == 'bls-periodogram':
+            bls_results = lightkurve.LightCurve(time=time, flux=lc).to_periodogram(method='bls', period=period_grid)
+            max_power_index = np.argmax(bls_results.power)
+            results = type('', (object,), {"foo": 1})()
+            results.SDE = bls_results.power[max_power_index].value / np.nanmedian(bls_results.power).value
+            results.power = bls_results.power
+            results.FAP = 0
+            results.duration = bls_results.duration_at_max_power.value
+            duration = results.duration
+            results.period = bls_results.period_at_max_power.value
+            results.T0 = bls_results.transit_time_at_max_power.value
+            in_transit = tls.transit_mask(time, results.period, 2 * results.duration, results.T0)
+            transit_count = sum([value != in_transit[index + 1] if index < len(in_transit) - 1 else False for index, value in enumerate(in_transit)]) // 2
+            oot_flux = lc[~in_transit]
+            results.snr = bls_results.snr[max_power_index].value / np.nanstd(oot_flux)
+            depth = bls_results.depth[max_power_index].value * 1000
+            depth_err = depth / results.snr
+            results.rp_rs = (depth * (star_info.radius ** 2)) ** 2
+            results.odd_even_mismatch = 0
+            results.periods = bls_results.period.value
+            results.period_uncertainty = np.abs(results.period - bls_results.period[max_power_index - 1].value) \
+                if max_power_index > 0 else np.abs(results.period - bls_results.period[max_power_index + 1].value)
+            t0s = []
+            depths = [depth for value in range(0, transit_count)]
+            results.transit_depths = depths
+            results.depth_mean_even = [depth]
+            results.depth_mean_odd = [depth]
+            depths_err = [0 for value in range(0, transit_count)]
+            results.model_lightcurve_time = time
+            results.model_lightcurve_model = np.ones(len(time))
+            results.model_lightcurve_model[in_transit] = 1 - depth / 1000
+            lc_model_df = pd.DataFrame(columns=['time', 'flux'])
+            lc_model_df['time'] = foldedleastsquares.fold(time, results.period, results.T0 + results.period / 2)
+            lc_model_df['flux'] = lc
+            lc_model_df.sort_values(by=['time'], ascending=True, inplace=True)
+            results.model_folded_phase = lc_model_df['time'].to_numpy()
+            intransit_folded_indexes = (
+                np.argwhere((results.model_folded_phase >= 0.5 - 0.5 * duration / results.period) &
+                            (results.model_folded_phase <= 0.5 + 0.5 * duration / results.period)).flatten())
+            results.model_folded_model = np.ones(len(time))
+            results.model_folded_model[intransit_folded_indexes] = 1 - depth / 1000
+            results.folded_phase = results.model_folded_phase
+            results.folded_y = lc_model_df['flux'].to_numpy()
         else:
-            t0s = results.transit_times
-            depth = results.transit_depths
-            depth_err = np.nan
-        t0s = np.array(results.transit_times)
-        in_transit = tls.transit_mask(time, results.period, results.duration, results.T0)
-        transit_count = results.distinct_transit_count
+            model = tls.transitleastsquares(time, lc)
+            power_args = {"transit_template": sherlock_target.fit_method, "period_min": sherlock_target.period_min,
+                          "period_max": sherlock_target.period_max, "n_transits_min": transits_min_count,
+                          "T0_fit_margin": sherlock_target.t0_fit_margin, "show_progress_bar": False,
+                          "use_threads": sherlock_target.cpu_cores, "oversampling_factor": oversampling,
+                          "duration_grid_step": sherlock_target.duration_grid_step,
+                          "period_grid": period_grid}
+            if star_info.ld_coefficients is not None:
+                power_args["u"] = star_info.ld_coefficients
+            power_args["R_star"] = star_info.radius
+            power_args["R_star_min"] = star_info.radius_min
+            power_args["R_star_max"] = star_info.radius_max
+            power_args["M_star"] = star_info.mass
+            power_args["M_star_min"] = star_info.mass_min
+            power_args["M_star_max"] = star_info.mass_max
+            power_args['use_gpu'] = sherlock_target.search_engine == 'gpu' or sherlock_target.search_engine == 'gpu_approximate'
+            power_args['gpu_approximate'] = sherlock_target.search_engine == 'gpu_approximate'
+            if sherlock_target.custom_transit_template is not None:
+                power_args["transit_template_generator"] = sherlock_target.custom_transit_template
+            results = model.power(**power_args)
+            depths = (1 - results.transit_depths) * 1000
+            depths_err = results.transit_depths_uncertainties * 1000
+            if results.T0 != 0:
+                depths_calc = results.transit_depths[~np.isnan(results.transit_depths)]
+                depth = (1. - np.mean(depths_calc)) * 1000
+                depth_err = np.sqrt(np.nansum([depth_err ** 2 for depth_err in depths_err])) / len(depths_err)
+            else:
+                t0s = results.transit_times
+                depth = results.transit_depths
+                depth_err = np.nan
+            t0s = np.array(results.transit_times)
+            in_transit = tls.transit_mask(time, results.period, results.duration, results.T0)
+            transit_count = results.distinct_transit_count
+            # Recalculating duration because of tls issue https://github.com/hippke/tls/issues/83
+            intransit_folded_model = np.where(results['model_folded_model'] < 1.)[0]
+            if len(intransit_folded_model) > 0:
+                duration = results['period'] * (results['model_folded_phase'][intransit_folded_model[-1]]
+                                                - results['model_folded_phase'][intransit_folded_model[0]])
+            else:
+                duration = results['duration']
         border_score = compute_border_score(time, results, in_transit, cadence)
-        # Recalculating duration because of tls issue https://github.com/hippke/tls/issues/83
-        intransit_folded_model = np.where(results['model_folded_model'] < 1.)[0]
-        if len(intransit_folded_model) > 0:
-            duration = results['period'] * (results['model_folded_phase'][intransit_folded_model[-1]]
-                                            - results['model_folded_phase'][intransit_folded_model[0]])
-        else:
-            duration = results['duration']
         harmonic = self.__is_harmonic(results, run_results, report, detrend_source_period)
-        harmonic_power = harmonic_spectrum(results['periods'], results.power)
+        harmonic_power = harmonic_spectrum(results.periods, results.power)
         return TransitResult(power_args, results, results.period, results.period_uncertainty, duration,
                              results.T0, t0s, depths, depths_err, depth, depth_err, results.odd_even_mismatch,
                              (1 - results.depth_mean_even[0]) * 1000, (1 - results.depth_mean_odd[0]) * 1000, transit_count,
