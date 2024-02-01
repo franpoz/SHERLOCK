@@ -253,9 +253,7 @@ class FitReport:
                        '<a href="https://github.com/franpoz/SHERLOCK" color="blue">https://github.com/franpoz/SHERLOCK</a>) ' \
                        'and focuses on the target star %s.</font>' % self.object_id
         story.append(Paragraph(introduction, styles["ParagraphAlignJustify"]))
-
         story.append(Spacer(1, 30))
-
         # Generamos la tabla 1 con los parámetros:
         tabla1_data = [['RA (deg)', 'Dec (deg)', 'V (mag)', 'J (mag)', 'H (mag)', 'K (mag)'],
                        [Angle(self.ra, u.deg).to_string(unit=u.hourangle, sep=':',
@@ -378,6 +376,3 @@ class FitReport:
                               topMargin=95, bottomMargin=15,
                               pageTemplates=global_template)
         doc.build(story)
-        for file in os.listdir(self.data_dir):
-            if ".png" in file:
-                os.remove(self.data_dir + '/' + file)
