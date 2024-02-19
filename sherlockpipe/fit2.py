@@ -14,9 +14,9 @@ def fit_parse_args(args=None):
                     help="Whether to only run an initial guess of the transit")
     ap.set_defaults(only_initial=False)
     ap.add_argument('--cpus', type=int, default=None, help="The number of CPU cores to be used.", required=False)
-    ap.add_argument('--rho_err_multi', type=float, default=5.0, help="The rho sigma times used for final fit.", required=False)
-    ap.add_argument('--sigma_err_multi', type=float, default=5.0, help="The sigma sigma times used for final fit.", required=False)
-    ap.add_argument('--yerr_err_multi', type=float, default=5.0, help="The flux error sigma times used for final fit.", required=False)
+    ap.add_argument('--rho_err_multi', type=float, default=1.0, help="The rho sigma times used for final fit.", required=False)
+    ap.add_argument('--sigma_err_multi', type=float, default=1.0, help="The sigma sigma times used for final fit.", required=False)
+    ap.add_argument('--yerr_err_multi', type=float, default=1.0, help="The flux error sigma times used for final fit.", required=False)
     ap.add_argument('--tolerance', type=float, default=0.01, help="The tolerance of the nested sampling algorithm.",
                     required=False)
     ap.add_argument('--mcmc', dest='mcmc', action='store_true', help="Whether to run using mcmc or ns. Default is ns.")
