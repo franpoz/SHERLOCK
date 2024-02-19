@@ -54,7 +54,7 @@ def run_vet(object_dir, candidate, properties, cpus=os.cpu_count() - 1, run_iats
         candidates = candidates.rename(columns={'Object Id': 'id'})
         candidates['number'] = 1
         candidate = candidates.iloc[[candidate_selection - 1]]
-        candidate.iloc[:]['number'] = candidate_selection
+        candidate.loc[:, 'number'] = candidate_selection
         transits_df_file = vetter.object_dir() + "/transits_stats.csv"
         if os.path.exists(transits_df_file):
             transits_df = pd.read_csv(vetter.object_dir() + "/transits_stats.csv")
