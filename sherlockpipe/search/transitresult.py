@@ -4,7 +4,7 @@ class TransitResult:
     """
     def __init__(self, power_args, results, period, per_err, duration,
                  t0, t0s, depths, depths_err, depth, depth_err, odd_even_mismatch, depth_mean_even, depth_mean_odd,
-                 count, snr, sde, fap, border_score, in_transit, harmonic=None, harmonic_spectrum=None):
+                 count, snr, sde, fap, border_score, in_transit, harmonic=None, harmonic_spectrum=None, mode='tls'):
         self.power_args = power_args
         self.results = results
         self.period = period
@@ -27,3 +27,4 @@ class TransitResult:
         self.in_transit = in_transit
         self.harmonic = harmonic
         self.harmonic_spectrum = harmonic_spectrum
+        self.mode = mode
