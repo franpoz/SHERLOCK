@@ -5,10 +5,7 @@ import pickle
 import shutil
 from typing import List
 
-import foldedleastsquares
-import lightkurve
 import pandas
-import pandas as pd
 import wotan
 import matplotlib.pyplot as plt
 import foldedleastsquares as tls
@@ -29,7 +26,6 @@ from sherlockpipe.ois.OisManager import OisManager
 from lcbuilder.star.HabitabilityCalculator import HabitabilityCalculator
 
 from sherlockpipe.plot.plotting import save_transit_plot
-from sherlockpipe.scoring.helper import compute_border_score, harmonic_spectrum
 from sherlockpipe.search.phase_coverage.phase_coverage import PhaseCoverage
 from sherlockpipe.search.sherlock_target import SherlockTarget
 from sherlockpipe.search.transitresult import TransitResult
@@ -806,100 +802,12 @@ class Sherlock:
 
     def __adjust_transit(self, sherlock_target, time, lc, star_info, transits_min_count, run_results, report, cadence,
                          period_grid, detrend_source_period):
-        oversampling = sherlock_target.oversampling
-        power_args = None
-        if sherlock_target.fit_method == 'bls-periodogram':
-            bls_results = lightkurve.LightCurve(time=time, flux=lc).to_periodogram(method='bls', period=period_grid)
-            max_power_index = np.argmax(bls_results.power)
-            results = type('', (object,), {"foo": 1})()
-            results.SDE = bls_results.power[max_power_index].value / np.nanmedian(bls_results.power).value
-            results.power = bls_results.power
-            results.FAP = 0
-            results.duration = bls_results.duration_at_max_power.value
-            duration = results.duration
-            results.period = bls_results.period_at_max_power.value
-            results.T0 = bls_results.transit_time_at_max_power.value
-            in_transit = tls.transit_mask(time, results.period, 2 * results.duration, results.T0)
-            transit_count = sum([value != in_transit[index + 1] if index < len(in_transit) - 1 else False for index, value in enumerate(in_transit)]) // 2
-            oot_flux = lc[~in_transit]
-            results.snr = bls_results.snr[max_power_index].value / np.nanstd(oot_flux)
-            depth = bls_results.depth[max_power_index].value * 1000
-            depth_err = depth / results.snr
-            results.rp_rs = (depth * (star_info.radius ** 2)) ** 2
-            results.odd_even_mismatch = 0
-            results.periods = bls_results.period.value
-            results.period_uncertainty = np.abs(results.period - bls_results.period[max_power_index - 1].value) \
-                if max_power_index > 0 else np.abs(results.period - bls_results.period[max_power_index + 1].value)
-            t0s = []
-            depths = [depth for value in range(0, transit_count)]
-            results.transit_depths = depths
-            results.depth_mean_even = [depth]
-            results.depth_mean_odd = [depth]
-            depths_err = [0 for value in range(0, transit_count)]
-            results.model_lightcurve_time = time
-            results.model_lightcurve_model = np.ones(len(time))
-            results.model_lightcurve_model[in_transit] = 1 - depth / 1000
-            lc_model_df = pd.DataFrame(columns=['time', 'flux'])
-            lc_model_df['time'] = foldedleastsquares.fold(time, results.period, results.T0 + results.period / 2)
-            lc_model_df['flux'] = lc
-            lc_model_df.sort_values(by=['time'], ascending=True, inplace=True)
-            results.model_folded_phase = lc_model_df['time'].to_numpy()
-            intransit_folded_indexes = (
-                np.argwhere((results.model_folded_phase >= 0.5 - 0.5 * duration / results.period) &
-                            (results.model_folded_phase <= 0.5 + 0.5 * duration / results.period)).flatten())
-            results.model_folded_model = np.ones(len(time))
-            results.model_folded_model[intransit_folded_indexes] = 1 - depth / 1000
-            results.folded_phase = results.model_folded_phase
-            results.folded_y = lc_model_df['flux'].to_numpy()
+        if sherlock_target.fit_method in sherlock_target.searchers:
+            searcher = sherlock_target.searchers[sherlock_target.fit_method]
         else:
-            model = tls.transitleastsquares(time, lc)
-            power_args = {"transit_template": sherlock_target.fit_method, "period_min": sherlock_target.period_min,
-                          "period_max": sherlock_target.period_max, "n_transits_min": transits_min_count,
-                          "T0_fit_margin": sherlock_target.t0_fit_margin, "show_progress_bar": False,
-                          "use_threads": sherlock_target.cpu_cores, "oversampling_factor": oversampling,
-                          "duration_grid_step": sherlock_target.duration_grid_step,
-                          "period_grid": period_grid}
-            if star_info.ld_coefficients is not None:
-                power_args["u"] = star_info.ld_coefficients
-            power_args["R_star"] = star_info.radius
-            power_args["R_star_min"] = star_info.radius_min
-            power_args["R_star_max"] = star_info.radius_max
-            power_args["M_star"] = star_info.mass
-            power_args["M_star_min"] = star_info.mass_min
-            power_args["M_star_max"] = star_info.mass_max
-            power_args['use_gpu'] = sherlock_target.search_engine == 'gpu' or sherlock_target.search_engine == 'gpu_approximate'
-            power_args['gpu_approximate'] = sherlock_target.search_engine == 'gpu_approximate'
-            if sherlock_target.custom_transit_template is not None:
-                power_args["transit_template_generator"] = sherlock_target.custom_transit_template
-            results = model.power(**power_args)
-            depths = (1 - results.transit_depths) * 1000
-            depths_err = results.transit_depths_uncertainties * 1000
-            if results.T0 != 0:
-                depths_calc = results.transit_depths[~np.isnan(results.transit_depths)]
-                depth = (1. - np.mean(depths_calc)) * 1000
-                depth_err = np.sqrt(np.nansum([depth_err ** 2 for depth_err in depths_err])) / len(depths_err)
-            else:
-                t0s = results.transit_times
-                depth = results.transit_depths
-                depth_err = np.nan
-            t0s = np.array(results.transit_times)
-            in_transit = tls.transit_mask(time, results.period, results.duration, results.T0)
-            transit_count = results.distinct_transit_count
-            # Recalculating duration because of tls issue https://github.com/hippke/tls/issues/83
-            intransit_folded_model = np.where(results['model_folded_model'] < 1.)[0]
-            if len(intransit_folded_model) > 0:
-                duration = results['period'] * (results['model_folded_phase'][intransit_folded_model[-1]]
-                                                - results['model_folded_phase'][intransit_folded_model[0]])
-            else:
-                duration = results['duration']
-        border_score = compute_border_score(time, results, in_transit, cadence)
-        harmonic = self.__is_harmonic(results, run_results, report, detrend_source_period)
-        harmonic_power = harmonic_spectrum(results.periods, results.power)
-        return TransitResult(power_args, results, results.period, results.period_uncertainty, duration,
-                             results.T0, t0s, depths, depths_err, depth, depth_err, results.odd_even_mismatch,
-                             (1 - results.depth_mean_even[0]) * 1000, (1 - results.depth_mean_odd[0]) * 1000, transit_count,
-                             results.snr, results.SDE, results.FAP, border_score, in_transit, harmonic,
-                             harmonic_power)
+            searcher = sherlock_target.searchers['default']
+        return searcher.search(sherlock_target, time, lc, star_info, transits_min_count, run_results, report, cadence,
+                        period_grid, detrend_source_period)
 
     def __calculate_planet_radius(self, star_info, depth):
         rp = np.nan
@@ -910,28 +818,6 @@ class Sherlock:
             logging.exception("Planet radius could not be calculated")
             print(e)
         return rp
-
-    def __is_harmonic(self, tls_results, run_results, report, detrend_source_period):
-        scales = [0.25, 0.5, 1, 2, 4]
-        if detrend_source_period is not None:
-            rotator_scale = round(tls_results.period / detrend_source_period, 2)
-            rotator_harmonic = np.array(np.argwhere((np.array(scales) > rotator_scale - 0.02) & (np.array(scales) < rotator_scale + 0.02))).flatten()
-            if len(rotator_harmonic) > 0:
-                return str(scales[rotator_harmonic[0]]) + "*source"
-        period_scales = [tls_results.period / round(item["period"], 2) for item in report]
-        for key, period_scale in enumerate(period_scales):
-            period_harmonic = np.array(np.argwhere((np.array(scales) > period_scale - 0.02) & (np.array(scales) < period_scale + 0.02))).flatten()
-            if len(period_harmonic) > 0:
-                period_harmonic = scales[period_harmonic[0]]
-                return str(period_harmonic) + "*SOI" + str(key + 1)
-        period_scales = [round(tls_results.period / run_results[key].period, 2) if run_results[key].period > 0 else 0 for key in run_results]
-        for key, period_scale in enumerate(period_scales):
-            period_harmonic = np.array(np.argwhere(
-                (np.array(scales) > period_scale - 0.02) & (np.array(scales) < period_scale + 0.02))).flatten()
-            if len(period_harmonic) > 0 and period_harmonic[0] != 2:
-                period_harmonic = scales[period_harmonic[0]]
-                return str(period_harmonic) + "*this(" + str(key) + ")"
-        return "-"
 
     def __trim_axs(self, axs, N):
         [axis.remove() for axis in axs.flat[N:]]

@@ -1,5 +1,6 @@
 import multiprocessing
 import os
+from typing import Dict
 
 from lcbuilder.objectinfo.ObjectInfo import ObjectInfo
 
@@ -10,6 +11,9 @@ from sherlockpipe.scoring.QuorumSdeBorderCorrectedSignalSelector import QuorumSd
 from sherlockpipe.scoring.QuorumSnrBorderCorrectedSignalSelector import QuorumSnrBorderCorrectedSignalSelector
 from sherlockpipe.scoring.SdeBorderCorrectedSignalSelector import SdeBorderCorrectedSignalSelector
 from sherlockpipe.scoring.SnrBorderCorrectedSignalSelector import SnrBorderCorrectedSignalSelector
+from sherlockpipe.search.BlsSearcher import BlsSearcher
+from sherlockpipe.search.Searcher import Searcher
+from sherlockpipe.search.TlsSearcher import TlsSearcher
 from sherlockpipe.search_zones.HabitableSearchZone import HabitableSearchZone
 from sherlockpipe.search_zones.OptimisticHabitableSearchZone import OptimisticHabitableSearchZone
 
@@ -86,6 +90,7 @@ class SherlockTarget:
                                            quorum_strength, min_quorum),
                                        self.VALID_SIGNAL_SELECTORS[6]: AverageSpectrumSignalSelector(),
                                        "user": custom_selection_algorithm}
+        self.searchers: Dict[str, Searcher] = {'bls-periodogram': BlsSearcher(), 'default': TlsSearcher()}
         self.best_signal_algorithm = best_signal_algorithm if custom_selection_algorithm is None else "user"
         self.fit_method = "default"
         if fit_method is not None and fit_method.lower() == 'bls':
