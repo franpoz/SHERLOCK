@@ -131,8 +131,8 @@ class StabilityCalculator(ABC):
                                  json.dumps(planet_param.__dict__))
             if planet_param.radius is not None:
                 planet_param.mass = StabilityCalculator.mass_from_radius(planet_param.radius)
-                planet_param.mass_low_err = (planet_param.mass - StabilityCalculator.mass_from_radius(planet_param.radius - planet_param.radius_low_err)) * 2
-                planet_param.mass_up_err = (StabilityCalculator.mass_from_radius(planet_param.radius + planet_param.radius_up_err) - planet_param.mass) * 2
+                planet_param.mass_low_err = planet_param.mass - StabilityCalculator.mass_from_radius(planet_param.radius - planet_param.radius_low_err)
+                planet_param.mass_up_err = StabilityCalculator.mass_from_radius(planet_param.radius + planet_param.radius_up_err) - planet_param.mass
         return planet_params
 
     @staticmethod
