@@ -67,7 +67,7 @@ class Validator(ToolWithCandidate):
             else:
                 sectors = list(sectors_in)
         except:
-            sectors = [0]
+            sectors = []
         object_id = object_id.iloc[0]
         try:
             self.execute_triceratops(cpus, self.data_dir, object_id, sectors, lc_file, transit_depth,
@@ -148,11 +148,15 @@ class Validator(ToolWithCandidate):
         if mission == "TESS":
             sectors_cut = TesscutClass().get_sectors(objectname="TIC " + str(id_int))
             sectors_cut = np.array([sector_row["sector"] for sector_row in sectors_cut])
-            if len(sectors) != len(sectors_cut):
-                logging.warning("WARN: Some sectors were not found in TESSCUT")
-                logging.warning("WARN: Sherlock sectors were: " + str(sectors))
-                logging.warning("WARN: TESSCUT sectors were: " + str(sectors_cut))
-            sectors = np.intersect1d(sectors, sectors_cut)
+            if len(sectors) == 0:
+                logging.warning("WARN: Sherlock sectors are empty, using TESSCUT sectors")
+                sectors = sectors_cut
+            else:
+                if len(sectors) != len(sectors_cut):
+                    logging.warning("WARN: Some sectors were not found in TESSCUT")
+                    logging.warning("WARN: Sherlock sectors were: " + str(sectors))
+                    logging.warning("WARN: TESSCUT sectors were: " + str(sectors_cut))
+                sectors = np.intersect1d(sectors, sectors_cut)
             if len(sectors) == 0:
                 logging.warning("There are no available sectors to be validated, skipping TRICERATOPS.")
                 return save_dir, None, None
