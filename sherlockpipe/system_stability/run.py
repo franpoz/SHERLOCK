@@ -123,7 +123,7 @@ def run_stability(args):
                                                   mass=get_from_dict(planet, "M"),
                                                   mass_low_err=get_from_dict(planet, "M_LOW"),
                                                   mass_up_err=get_from_dict(planet, "M_UP"),
-                                                  eccentricity=get_from_dict(planet, "E_LOW"),
+                                                  eccentricity=get_from_dict(planet, "E"),
                                                   ecc_low_err=get_from_dict(planet, "E_LOW"),
                                                   ecc_up_err=get_from_dict(planet, "E_UP"),
                                                   inclination=get_from_dict(planet, "I"),

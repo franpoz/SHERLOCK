@@ -203,15 +203,15 @@ def plot_stability(masses, eccentricities, megnos, save_dir):
     plt.plot(ecc, ebb, '-', color="black")
     plt.savefig(save_dir + '/stability_megno.png', bbox_inches='tight', dpi=200)
 
-#megno_df = pd.read_csv("/home/martin/Downloads/sherlock/sherlock_confusion_matrix/cps/done/TIC420779000_all/stability_stability/stability_megno.csv")
-#megno_df[['mass1', 'mass2']] = megno_df['masses'].str.split(',', expand=True)
-#megno_df['mass2'] = megno_df['mass2'].astype(float)
-#megno_df[['ecc1', 'ecc2']] = megno_df['eccentricities'].str.split(',', expand=True)
-#megno_df['ecc2'] = megno_df['ecc2'].astype(float)
-#megno_df['ecc1'] = megno_df['ecc1'].astype(float)
-#megno_df = megno_df.groupby(['mass2', 'ecc2'])['megno'].mean().reset_index()
-#megno_df.sort_values(by=['mass2', 'ecc2'], ascending=True, inplace=True)
-#plot_stability(megno_df['mass2'].to_numpy(), megno_df['ecc2'].to_numpy(), megno_df['megno'].to_numpy(),'./')
+# megno_df = pd.read_csv("/home/martin/Downloads/sherlock/sherlock_confusion_matrix/cps/done/TIC420779000_all/stability_stability/stability_megno.csv")
+# megno_df[['mass1', 'mass2']] = megno_df['masses'].str.split(',', expand=True)
+# megno_df['mass2'] = megno_df['mass2'].astype(float)
+# megno_df[['ecc1', 'ecc2']] = megno_df['eccentricities'].str.split(',', expand=True)
+# megno_df['ecc2'] = megno_df['ecc2'].astype(float)
+# megno_df['ecc1'] = megno_df['ecc1'].astype(float)
+# megno_df = megno_df.groupby(['mass2', 'ecc2'])['megno'].mean().reset_index()
+# megno_df.sort_values(by=['mass2', 'ecc2'], ascending=True, inplace=True)
+# plot_stability(megno_df['mass2'].to_numpy(), megno_df['ecc2'].to_numpy(), megno_df['megno'].to_numpy(),'./')
 
 # sistemas = ['TOI-2441', 'WASP-16', 'HAT-P-26', 'HAT-P-27']
 # periodos_orbitales = [[0.8], [3.2], [4.2], [3.03]]

@@ -144,7 +144,7 @@ class StabilityCalculator(ABC):
         :return: the rebound initialized simulation scenario
         """
         sim = rebound.Simulation()
-        sim.units = ('yr', 'AU', 'Msun')
+        sim.units = ('Yr', 'AU', 'Msun')
         sim.integrator = "whfast"
         sim.ri_whfast.safe_mode = 0
         sim.add(m=simulation_input.star_mass)
@@ -156,7 +156,7 @@ class StabilityCalculator(ABC):
             inc = np.deg2rad(simulation_input.inc_arr[planet_key])
             omega = np.deg2rad(simulation_input.omega_arr[planet_key])
             sim.add(m=LcbuilderHelper.convert_from_to(mass, u.M_earth, u.M_sun) / simulation_input.star_mass,
-                    P=period, e=ecc, omega=omega, inc=inc)
+                    P=period / 365.25, e=ecc, omega=omega, inc=inc)
         sim.dt = min_period / 365.25 / 100
         # sim.status()
         sim.move_to_com()
@@ -228,11 +228,11 @@ class StabilityCalculator(ABC):
                                          planet_param.omega + planet_param.omega_up_err,
                                          planet_param.omega_bins)
             planet_omega.append(omega_grid)
-        period_grid = np.array(np.meshgrid(*np.array(planet_period))).T.reshape(-1, len(planet_period))
-        masses_grid = np.array(np.meshgrid(*np.array(planet_masses))).T.reshape(-1, len(planet_masses))
-        ecc_grid = np.array(np.meshgrid(*np.array(planet_ecc))).T.reshape(-1, len(planet_ecc))
-        inc_grid = np.array(np.meshgrid(*np.array(planet_inc))).T.reshape(-1, len(planet_inc))
-        omega_grid = np.array(np.meshgrid(*np.array(planet_omega))).T.reshape(-1, len(planet_omega))
+        period_grid = np.array(np.meshgrid(*np.array(planet_period, dtype=object))).T.reshape(-1, len(planet_period))
+        masses_grid = np.array(np.meshgrid(*np.array(planet_masses, dtype=object))).T.reshape(-1, len(planet_masses))
+        ecc_grid = np.array(np.meshgrid(*np.array(planet_ecc, dtype=object))).T.reshape(-1, len(planet_ecc))
+        inc_grid = np.array(np.meshgrid(*np.array(planet_inc, dtype=object))).T.reshape(-1, len(planet_inc))
+        omega_grid = np.array(np.meshgrid(*np.array(planet_omega, dtype=object))).T.reshape(-1, len(planet_omega))
         simulation_inputs = []
         i = 0
         star_masses_scenario_num = len(star_masses)
