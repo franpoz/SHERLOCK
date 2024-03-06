@@ -1,6 +1,6 @@
 import numpy as np
 
-from foldedleastsquares.stats import spectra
+from foldedleastsquares.stats import spectra, period_uncertainty
 from sherlockpipe.scoring.SignalSelector import SignalSelector
 from sherlockpipe.scoring.helper import harmonic_spectrum
 from sherlockpipe.search.transitresult import TransitResult
@@ -29,13 +29,15 @@ class AverageSpectrumSignalSelector(SignalSelector):
                                      transit_results.values()]
         best_curve_for_signal = np.nanargmax(signals_powers_for_period)
         period = transit_results[non_nan_result_args[0]].results.periods[index_highest_power]
+        period_grid = transit_results[non_nan_result_args[0]].results.periods
         if sherlock_target.fit_method in sherlock_target.searchers:
             searcher = sherlock_target.searchers[sherlock_target.fit_method]
         else:
             searcher = sherlock_target.searchers['default']
         result: TransitResult = searcher.search(sherlock_target, time, lcs[best_curve_for_signal], star_info, transits_min_count,
-                                 None, None, cadence, [period, period], None)
+                                 None, None, cadence, [period, period + 1e-6], None)
         result.results.periods = transit_results[best_curve_for_signal].results.periods
+        result.results.period_uncertainty = period_uncertainty(period_grid, power)
         result.results.power = power
         result.sde = SDE
         result.results.SDE = SDE
