@@ -191,7 +191,7 @@ def plot_stability(masses, eccentricities, megnos, save_dir):
     ax = plt.subplot(111)
     extent = [min(par_m2), max(par_m2), min(par_m1), max(par_m1)] #x,y
     ax.set_xlim(extent[0], extent[1])
-    ax.set_xlabel("Mass $R_\\oplus$")
+    ax.set_xlabel("Mass $M_\\oplus$")
     ax.set_ylim(extent[2], extent[3])
     ax.set_ylabel("Eccentricity")
     im = ax.imshow(np.transpose(results), interpolation="none", vmin=1., vmax=5, cmap="plasma", origin="lower", aspect='auto', extent=extent)
@@ -203,7 +203,7 @@ def plot_stability(masses, eccentricities, megnos, save_dir):
     plt.plot(ecc, ebb, '-', color="black")
     plt.savefig(save_dir + '/stability_megno.png', bbox_inches='tight', dpi=200)
 
-# megno_df = pd.read_csv("/home/martin/Downloads/sherlock/sherlock_confusion_matrix/cps/done/TIC420779000_all/stability_stability/stability_megno.csv")
+# megno_df = pd.read_csv("/home/martin/Downloads/sherlock/sherlock_confusion_matrix/cps/done/TIC461239485_all/stability_stability/stability_megno.csv")
 # megno_df[['mass1', 'mass2']] = megno_df['masses'].str.split(',', expand=True)
 # megno_df['mass2'] = megno_df['mass2'].astype(float)
 # megno_df[['ecc1', 'ecc2']] = megno_df['eccentricities'].str.split(',', expand=True)
