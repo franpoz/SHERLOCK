@@ -11,8 +11,6 @@ import rebound
 from astropy import units as u
 from lcbuilder.helper import LcbuilderHelper
 
-from sherlockpipe import constants
-
 
 """Includes classes to be used ase base for stability simulations"""
 
@@ -155,8 +153,8 @@ class StabilityCalculator(ABC):
             inc = np.deg2rad(simulation_input.inc_arr[planet_key])
             omega = np.deg2rad(simulation_input.omega_arr[planet_key])
             sim.add(m=LcbuilderHelper.convert_from_to(mass, u.M_earth, u.M_sun) / simulation_input.star_mass,
-                    P=period / 365.25, e=ecc, omega=omega, inc=inc)
-        sim.dt = min_period / 365.25 * self.dt
+                    P=LcbuilderHelper.convert_from_to(period, u.day, u.year), e=ecc, omega=omega, inc=inc)
+        sim.dt = LcbuilderHelper.convert_from_to(min_period, u.day, u.year) * self.dt
         # sim.status()
         sim.move_to_com()
         return sim
