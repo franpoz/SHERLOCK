@@ -144,7 +144,7 @@ def run_stability(args):
                                                                                       user_properties["STAR"]["M_UP"]
             star_mass_bins = args.star_mass_bins if "M_BINS" not in user_properties["STAR"] else \
             user_properties["STAR"]["M_BINS"]
-    stability_calculator = MegnoStabilityCalculator(args.years)
+    stability_calculator = MegnoStabilityCalculator(args.years, args.dt)
     logger.info(f'Simulation set to maximum time of {args.years} years')
     logger.info("%.0f planets to be simulated", len(planets_params))
     logger.info("Lowest star mass: %.2f", star_mass_low)

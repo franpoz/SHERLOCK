@@ -90,8 +90,8 @@ class StabilityCalculator(ABC):
     Template class for system stability calculation algorithms
     """
 
-    def __init__(self):
-        pass
+    def __init__(self, dt=0.05):
+        self.dt = dt
 
     @staticmethod
     def mass_from_radius(radius):
@@ -135,8 +135,7 @@ class StabilityCalculator(ABC):
                 planet_param.mass_up_err = StabilityCalculator.mass_from_radius(planet_param.radius + planet_param.radius_up_err) - planet_param.mass
         return planet_params
 
-    @staticmethod
-    def init_rebound_simulation(simulation_input):
+    def init_rebound_simulation(self, simulation_input):
         """
         Initializes the simulation for rebound-based algorithms
 
@@ -157,7 +156,7 @@ class StabilityCalculator(ABC):
             omega = np.deg2rad(simulation_input.omega_arr[planet_key])
             sim.add(m=LcbuilderHelper.convert_from_to(mass, u.M_earth, u.M_sun) / simulation_input.star_mass,
                     P=period / 365.25, e=ecc, omega=omega, inc=inc)
-        sim.dt = min_period / 365.25 / 100
+        sim.dt = min_period / 365.25 * self.dt
         # sim.status()
         sim.move_to_com()
         return sim

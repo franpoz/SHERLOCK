@@ -21,6 +21,8 @@ def stability_args_parse(args=None):
                     required=False)
     ap.add_argument('--years', type=int, default=500, help="The number of years to integrate (for MEGNO).",
                     required=False)
+    ap.add_argument('--dt', type=float, default=0.05, help="The fraction of the shortest orbit to use for each integration step.",
+                    required=False)
     ap.add_argument('--free_params', type=str, default=None, help="The parameters to be entirely sampled, separated by "
                                                                   "commas. E.g. 'eccentricity,omega'", required=False)
     return ap.parse_args(args)
