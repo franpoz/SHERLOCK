@@ -60,13 +60,16 @@ if ! [[ -z ${tests_results} ]]; then
   python3 -m pip install -e .
   python3 -m pip list --format=freeze > requirements.txt
   conda deactivate
+  git pull franpoz master
+  git merge --allow-unrelated-histories franpoz/master
   git add requirements.txt
   git add setup.py
   git add sherlockpipe/__init__.py
   git commit -m "Preparing release ${git_tag}"
   git tag ${git_tag} -m "New release"
-  git push
-  git push --tags
+  git push -u origin
+  git push -u franpoz master:master
+  git push -u origin --tags
 #  python3 setup.py sdist bdist_wheel
 #  python3 -m twine upload dist/*
 #  echo "Build docker image"
