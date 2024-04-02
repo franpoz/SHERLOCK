@@ -9,7 +9,7 @@ MODE: "GLOBAL"
 # If enabled, an initial mask for high RMS areas is applied ONLY to SHORT CADENCE light curves (no FFI).
 INITIAL_HIGH_RMS_MASK: False
 # If enabled, an initial Savinsky-Golay filter is applied ONLY to SHORT CADENCE light curves (no FFI).
-INITIAL_SMOOTH_ENABLED: True
+INITIAL_SMOOTH_ENABLED: False
 # Multiplier factor to select high RMS hours areas
 INITIAL_HIGH_RMS_THRESHOLD: 2
 # Hours for RMS binning
