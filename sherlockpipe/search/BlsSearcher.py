@@ -23,12 +23,14 @@ class BlsSearcher(Searcher):
         duration = results.duration
         results.period = bls_results.period_at_max_power.value
         results.T0 = bls_results.transit_time_at_max_power.value
-        in_transit = tls.transit_mask(time, results.period, 2 * results.duration, results.T0)
+        in_transit_double = tls.transit_mask(time, results.period, 2 * results.duration, results.T0)
+        in_transit = tls.transit_mask(time, results.period, results.duration, results.T0)
         transit_count = sum(
             [value != in_transit[index + 1] if index < len(in_transit) - 1 else False for index, value in
              enumerate(in_transit)]) // 2
         oot_flux = lc[~in_transit]
-        results.snr = bls_results.snr[max_power_index].value / np.nanstd(oot_flux)
+        it_flux = lc[in_transit]
+        results.snr = np.abs(np.mean(1 - it_flux)) / np.nanstd(oot_flux) * (len(it_flux) ** 0.5)
         depth = bls_results.depth[max_power_index].value * 1000
         depth_err = depth / results.snr
         results.rp_rs = (depth * (star_info.radius ** 2)) ** 2
