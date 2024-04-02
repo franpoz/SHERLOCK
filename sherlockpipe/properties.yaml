@@ -1,3 +1,6 @@
+# Properties to be used when running SHERLOCK with a yaml properties file
+
+# The root list of targets
 TARGETS:
 
 # Whether SHERLOCK will run all the sectors together, separately or both. [GLOBAL|SECTOR|BOTH]
