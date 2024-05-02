@@ -1,3 +1,4 @@
+import dataclasses
 import logging
 import math
 import re
@@ -10,11 +11,26 @@ import pandas as pd
 import os
 from os import path
 import matplotlib.pyplot as plt
+from lcbuilder.helper import LcbuilderHelper
+
 from sherlockpipe.loading.tool_with_candidate import ToolWithCandidate
 
 
 resources_dir = path.join(path.dirname(__file__))
 resources_dir = str(Path(resources_dir).parent.absolute())
+
+
+@dataclasses.dataclass
+class DistributionParams:
+    yerr: float = -7.0
+    yerr_lower_err: float = -15.0
+    yerr_upper_err: float = 0.0
+    lnsigma: float = 0.0
+    lnsigma_lower_err: float = -30.0
+    lnsigma_upper_err: float = 30.0
+    lnrho: float = 0.0
+    lnrho_lower_err: float = -30.0
+    lnrho_upper_err: float = 30.0
 
 
 class Fitter(ToolWithCandidate):
@@ -23,19 +39,46 @@ class Fitter(ToolWithCandidate):
     """
 
     def __init__(self, object_dir, fit_dir, only_initial, is_candidate_from_search, candidates_df, mcmc=False,
-                 detrend=None):
+                 detrend=None, estimate_noise=True, rho_err_multi=5.0, sigma_err_multi=5.0, yerr_err_multi=5.0):
         super().__init__(is_candidate_from_search, candidates_df)
         self.object_dir = os.getcwd() if object_dir is None else object_dir
         self.data_dir = fit_dir
         self.only_initial = only_initial
         self.mcmc = mcmc
         self.detrend = detrend
+        self.estimate_noise = estimate_noise
+        self.rho_err_multi = rho_err_multi
+        self.sigma_err_multi = sigma_err_multi
+        self.yerr_err_multi = yerr_err_multi
 
-    def fit(self, candidate_df, star_df, cpus, allesfit_dir, tolerance, fit_orbit):
+    def mask_non_fit_candidates(self, time, flux, flux_err, candidate_df, fit_candidate_df):
         """
-        Main method to run the allesfitter fit.
+        Masks all the candidates found in previous runs in the SHERLOCK search.
 
-        :param candidate_df: the candidates dataframe.
+        :param time: the time array
+        :param flux: the flux measurements array
+        :param flux_err: the flux error measurements array
+        :param candidate_df: the candidates used for noise estimation
+        :param fit_candidate_df: the candidates used for fit
+        :return: time, flux and flux_err with previous candidates in-transit data masked
+        """
+        mask_candidate_df = candidate_df.loc[~candidate_df['number'].isin(fit_candidate_df['number'])]
+        for index, candidate_row in mask_candidate_df.iterrows():
+            period = candidate_row["period"]
+            duration = candidate_row["duration"]
+            duration = duration / 60 / 24
+            t0 = candidate_row["t0"]
+            logging.info("Masking candidate number %.0f with P=%.3fd, T0=%.2f and D=%.2fd", index + 1, period, t0,
+                         duration)
+            time, flux, flux_err = LcbuilderHelper.mask_transits(time, flux, period, duration * 2, t0, flux_err)
+        return time, flux, flux_err
+
+    def fit(self, candidate_df, fit_candidate_df, star_df, cpus, allesfit_dir, tolerance, fit_orbit):
+        """
+        Main method to run the alexfitter fit.
+
+        :param candidate_df: the candidates dataframe to be used for noise estimation.
+        :param fit_candidate_df: the candidates dataframe to be used for the final fit.
         :param star_df: the star dataframe.
         :param cpus: the number of cpus to be used.
         :param allesfit_dir: the directory for the fit to be run.
@@ -47,42 +90,24 @@ class Fitter(ToolWithCandidate):
         star_file = allesfit_dir + "/params_star.csv"
         params_file = allesfit_dir + "/params.csv"
         settings_file = allesfit_dir + "/settings.csv"
-        lc_file = Fitter.select_lc_file(candidate_df)
         run = int(candidate_df['number'].iloc[0])
-        lc = pd.read_csv(self.object_dir + lc_file, header=0)
+        # We load the unprocessed raw PDCSAP flux curve
+        lc = pd.read_csv(self.object_dir + '/lc.csv', header=0)
         time, flux, flux_err = lc["#time"].values, lc["flux"].values, lc["flux_err"].values
-        time, flux, flux_err = self.mask_previous_candidates(time, flux, flux_err, run)
+        #time, flux, flux_err = self.mask_previous_candidates(time, flux, flux_err, run)
         lc = pd.DataFrame(columns=['#time', 'flux', 'flux_err'])
         lc['#time'] = time
         lc['flux'] = flux
         lc['flux_err'] = flux_err
+        curve_rms = np.nanstd(flux)
+        lc.loc[(lc['flux_err'] == 0) | np.isnan(lc['flux_err']), 'flux_err'] = curve_rms
         lc.to_csv(allesfit_dir + "/lc.csv", index=False)
         if os.path.exists(sherlock_star_file) and os.path.isfile(sherlock_star_file):
             shutil.copyfile(sherlock_star_file, star_file)
-        shutil.copyfile(resources_dir + "/resources/allesfitter/settings.csv", settings_file)
-        fit_width = Fitter.select_fit_width(candidate_df)
-        # TODO replace sherlock properties from allesfitter files
-        # TODO only use params_star when the star mass or radius was not assumed
         logging.info("Preparing fit properties")
-        with open(settings_file, 'r+') as f:
-            text = f.read()
-            text = re.sub('\\${sherlock:cores}', str(cpus), text)
-            text = re.sub('\\${sherlock:fit_width}', str(fit_width), text)
-            text = re.sub('\\${sherlock:fit_ttvs}', "False", text)
-            text = re.sub('\\${sherlock:names}', ' '.join(candidate_df["name"].astype('str')), text)
-            text = re.sub('\\${sherlock:tolerance}', str(tolerance), text)
-            if self.detrend == 'hybrid_spline':
-                detrend_param = "baseline_flux_lc,hybrid_spline"
-            elif self.detrend == 'gp':
-                detrend_param = 'baseline_flux_lc,sample_GP_Matern32'
-            else:
-                detrend_param = ''
-            text = re.sub('\\${sherlock:detrend}', detrend_param, text)
-            f.seek(0)
-            f.write(text)
-            f.truncate()
+        self.overwrite_settings(settings_file, cpus, candidate_df, tolerance, "multi")
         with open(params_file, 'w') as f:
-            f.write(Fitter.fill_candidates_params(candidate_df, star_df, fit_orbit, self.detrend))
+            f.write(self.fill_candidates_params(candidate_df, star_df, fit_orbit, self.detrend))
             f.truncate()
         logging.info("Running initial guess")
         try:
@@ -91,11 +116,44 @@ class Fitter(ToolWithCandidate):
             logging.exception(str(e))
         # TODO fix custom_plot for all candidates
         # Fitter.custom_plot(candidate_row["name"], candidate_row["period"], fit_width, allesfit_dir, "initial_guess")
+        shutil.copytree(allesfit_dir + '/results', allesfit_dir + '/results_initial_guess_before_noise')
+        shutil.copy(allesfit_dir + '/params.csv', allesfit_dir + '/params_before_noise.csv')
+        shutil.copy(allesfit_dir + '/settings.csv', allesfit_dir + '/settings_before_noise.csv')
         if not self.only_initial:
             logging.info("Preparing bayesian fit")
+            if self.estimate_noise and self.detrend == 'gp':
+                logging.info("Running noise estimation")
+                alexfitter.estimate_noise_out_of_transit(allesfit_dir)
+                noise_estimation = pd.read_csv(allesfit_dir + "/priors/summary_phot.csv")
+                noise_estimation = noise_estimation.iloc[0]
+                noise_distribution_params = DistributionParams(yerr=noise_estimation['ln_yerr_median'],
+                                   yerr_lower_err=noise_estimation['ln_yerr_ll'],
+                                   yerr_upper_err=noise_estimation['ln_yerr_ul'],
+                                   lnsigma=noise_estimation['gp_ln_sigma_median'],
+                                   lnsigma_lower_err=noise_estimation['gp_ln_sigma_ll'],
+                                   lnsigma_upper_err=noise_estimation['gp_ln_sigma_ul'],
+                                   lnrho=noise_estimation['gp_ln_rho_median'],
+                                   lnrho_lower_err=noise_estimation['gp_ln_rho_ll'],
+                                   lnrho_upper_err=noise_estimation['gp_ln_rho_ul'])
+                self.overwrite_settings(settings_file, cpus, fit_candidate_df, tolerance, "multi")
+                with open(params_file, 'w') as f:
+                    f.write(self.fill_candidates_params(fit_candidate_df, star_df, fit_orbit, self.detrend,
+                                                           distribution='normal',
+                                                           distribution_params=noise_distribution_params))
+                    f.truncate()
+            time, flux, flux_err = self.mask_non_fit_candidates(time, flux, flux_err, candidate_df, fit_candidate_df)
+            # time, flux, flux_err = self.mask_previous_candidates(time, flux, flux_err, run)
+            lc = pd.DataFrame(columns=['#time', 'flux', 'flux_err'])
+            lc['#time'] = time
+            lc['flux'] = flux
+            lc['flux_err'] = flux_err
+            curve_rms = np.nanstd(flux)
+            lc.loc[(lc['flux_err'] == 0) | np.isnan(lc['flux_err']), 'flux_err'] = curve_rms
+            lc.to_csv(allesfit_dir + "/lc.csv", index=False)
             if not self.mcmc:
                 logging.info("Running dynamic nested sampling")
                 try:
+                    alexfitter.show_initial_guess(allesfit_dir)
                     alexfitter.ns_fit(allesfit_dir)
                     alexfitter.ns_output(allesfit_dir)
                 except Exception as e:
@@ -111,22 +169,28 @@ class Fitter(ToolWithCandidate):
             # TODO fix custom_plot for all candidates
             # Fitter.custom_plot(candidate_row["name"], candidate_row["period"], fit_width, allesfit_dir, "posterior")
 
-    @staticmethod
-    def select_lc_file(candidate_df):
-        """
-        Chooses the lightcurve file to be used for the fit. If the number of candidates is greater than 1, it will use
-        the PDCSAP_flux by default. If only one candidate is used, the candidate is fit against its better Sherlock
-        detrend.
 
-        :param candidate_df: the candidate dataframe
-        :return: the lightcurve file path to be used.
-        """
-        if len(candidate_df) > 1:
-            lc_file = "/lc.csv"
-        else:
-            candidate_row = candidate_df.iloc[0]
-            lc_file = "/lc_" + str(candidate_row["curve"]) + ".csv"
-        return lc_file
+    def overwrite_settings(self, settings_file, cpus, candidate_df, tolerance, boundaries="single"):
+        shutil.copyfile(resources_dir + "/resources/allesfitter/settings2.csv", settings_file)
+        fit_width = Fitter.select_fit_width(candidate_df)
+        with open(settings_file, 'r+') as f:
+            text = f.read()
+            text = re.sub('\\${sherlock:cores}', str(cpus), text)
+            text = re.sub('\\${sherlock:fit_width}', str(fit_width), text)
+            text = re.sub('\\${sherlock:fit_ttvs}', "False", text)
+            text = re.sub('\\${sherlock:names}', ' '.join(candidate_df["name"].astype('str')), text)
+            text = re.sub('\\${sherlock:boundaries}', str(boundaries), text)
+            text = re.sub('\\${sherlock:tolerance}', str(tolerance), text)
+            if self.detrend == 'hybrid_spline':
+                detrend_param = "baseline_flux_lc,hybrid_spline"
+            elif self.detrend == 'gp':
+                detrend_param = 'baseline_flux_lc,sample_GP_Matern32'
+            else:
+                detrend_param = ''
+            text = re.sub('\\${sherlock:detrend}', detrend_param, text)
+            f.seek(0)
+            f.write(text)
+            f.truncate()
 
     @staticmethod
     def select_fit_width(candidate_df):
@@ -182,8 +246,8 @@ class Fitter(ToolWithCandidate):
         style = ['phasezoom_occ']
         style = ['phase_variations']
 
-    @staticmethod
-    def fill_candidates_params(candidate_df, star_df, fit_orbit, detrend_mode):
+    def fill_candidates_params(self, candidate_df, star_df, fit_orbit, detrend_mode, distribution: str = 'uniform',
+                               distribution_params: DistributionParams=None):
         """
         Fills the candidate planets initial parameters and their distribution to be fit.
 
@@ -191,13 +255,16 @@ class Fitter(ToolWithCandidate):
         :param star_df: the star dataframe
         :param fit_orbit: whether to fit eccentricity and arg. of periastron.
         :param detrend_mode: type of detrend to be used
+        :param distribution: uniform or normal
+        :param distribution_params: the distribution parameters if known
         :return: the allesfitter candidates parameters
         """
         candidate_priors_text = ""
         for key, row in candidate_df.iterrows():
             candidate_priors_text = candidate_priors_text + \
                                     Fitter.fill_candidate_params(row, star_df, fit_orbit)
-        return candidate_priors_text + Fitter.fill_instrument_params(star_df, detrend_mode)
+        return candidate_priors_text + self.fill_instrument_params(star_df, detrend_mode, distribution,
+                                                                      distribution_params)
 
     @staticmethod
     def fill_candidate_params(candidate_row, star_df, fit_orbit):
@@ -267,31 +334,22 @@ ${sherlock:name}_f_s,0.0,${sherlock:fit_orbit},uniform -1.0 1.0,$\sqrt{e_b} \sin
         candidate_params = re.sub('\\${sherlock:sum_rp_rs_a_max}', str(sum_rp_rs_a_max), candidate_params)
         candidate_params = re.sub('\\${sherlock:name}', str(candidate_row["name"]), candidate_params)
         return candidate_params
-
-    @staticmethod
-    def fill_instrument_params(star_df, detrend_mode):
+    def fill_instrument_params(self, star_df, detrend_mode, distribution='uniform', distribution_params: DistributionParams=None):
         """
         Fills the star and systematics information for each instrument (so far only one)
 
         :param star_df: the star dataframe
         :param detrend_mode: type of detrend to be used
+        :param distribution: distribution: uniform or normal
+        :param distribution_params : if set, chooses the baseline fit values
         :return: the allesfitter instrument params
         """
-        instrument_params = """#dilution per instrument,,,,,
-dil_lc,0.0,0,trunc_normal 0 1 0.0 0.0,$D_\mathrm{0; lc}$,
-#limb darkening coefficients per instrument,,,,,
+        instrument_params = """#limb darkening coefficients per instrument,,,,,
 host_ldc_q1_lc,${sherlock:ld_a},1,uniform 0.0 1.0,$q_{1; \mathrm{lc}}$,
 host_ldc_q2_lc,${sherlock:ld_b},1,uniform 0.0 1.0,$q_{2; \mathrm{lc}}$,
-#surface brightness per instrument and companion,,,,,
-host_sbratio_lc,0.0,0,trunc_normal 0 1 0.0 0.0,$J_{b; \mathrm{lc}}$,
-#albedo per instrument and companion,,,,,
-host_geom_albedo_lc,0.0,0,trunc_normal 0 1 0.0 0.0,$A_{\mathrm{geom}; host; \mathrm{lc}}$,
-${sherlock:name}_geom_albedo_lc,0.0,0,trunc_normal 0 1 0.0 0.0,$A_{\mathrm{geom}; b; \mathrm{lc}}$,
-#gravity darkening per instrument and companion,,,,,
-host_gdc_lc,0.0,0,trunc_normal 0 1 0.0 0.0,$Grav. dark._{b; \mathrm{lc}}$,
 #spots per instrument and companion,,,,,
 #errors per instrument,
-ln_err_flux_lc,-7.0,1,uniform -15.0 0.0,$\log{\sigma_\mathrm{lc}}$,$\log{ \mathrm{rel. flux.} }$
+${sherlock:err_params}
 #baseline per instrument,
 ${sherlock:baseline_params}
 """
@@ -302,11 +360,44 @@ ${sherlock:baseline_params}
             instrument_params = re.sub('\\${sherlock:ld_a}', "0.5", instrument_params)
             instrument_params = re.sub('\\${sherlock:ld_b}', "0.5", instrument_params)
         if detrend_mode == 'gp':
-            baseline_params = 'baseline_gp_matern32_lnsigma_flux_lc,0.0,1,uniform -15.0 15.0,' \
-                              '$\mathrm{gp: \ln{\sigma} (lc)}$,\n' + \
-                              'baseline_gp_matern32_lnrho_flux_lc,0.0,1,uniform -15.0 15.0,' \
-                              '$\mathrm{gp: \ln{\rho} (lc)}$,'
+            if distribution_params is None:
+                distribution_params = DistributionParams()
+            if 'uniform' == distribution:
+                errs_params = "ln_err_flux_lc," + str(distribution_params.yerr) + ",1," + distribution + " " + \
+                              str(distribution_params.yerr_lower_err) + " " + \
+                              str(distribution_params.yerr_upper_err) + "," \
+                              "$\\\\log{\\\\sigma_\\\\mathrm{lc}}$,$\\\\log{ \\\\mathrm{rel. flux.} }$"
+                baseline_params = "baseline_gp_matern32_lnsigma_flux_lc," + str(
+                    distribution_params.lnsigma) + ",1," + distribution + \
+                                  " " + str(distribution_params.lnsigma_lower_err) + " " + \
+                                  str(distribution_params.lnsigma_upper_err) + "," \
+                                  "$\\\\mathrm{gp: \\\\ln{\\\\sigma} (lc)}$,\n" + \
+                                  "baseline_gp_matern32_lnrho_flux_lc," + str(distribution_params.lnrho) + ",1," + \
+                                  distribution + " " + str(distribution_params.lnrho_lower_err) + " " + \
+                                  str(distribution_params.lnrho_upper_err) + "," \
+                                  "$\\\\mathrm{gp: \\\\ln{\\\\rho} (lc)}$,"
+            else:
+                sigma_lnyerr = (distribution_params.yerr_lower_err \
+                    if distribution_params.yerr_lower_err > distribution_params.yerr_upper_err \
+                    else distribution_params.yerr_upper_err) * self.yerr_err_multi
+                sigma_lnsigma = (distribution_params.lnsigma_lower_err \
+                    if distribution_params.lnsigma_lower_err > distribution_params.lnsigma_upper_err \
+                    else distribution_params.lnsigma_upper_err) * self.sigma_err_multi
+                sigma_lnrho = (distribution_params.lnrho_lower_err \
+                    if distribution_params.lnrho_lower_err > distribution_params.lnrho_upper_err \
+                    else distribution_params.lnrho_upper_err) * self.rho_err_multi
+                errs_params = "ln_err_flux_lc," + str(distribution_params.yerr) + ",1," + distribution + " " + \
+                              str(distribution_params.yerr) + " " + \
+                              str(sigma_lnyerr) + "," \
+                              "$\\\\log{\\\\sigma_\\\\mathrm{lc}}$,$\\\\log{ \\\\mathrm{rel. flux.} }$"
+                baseline_params = "baseline_gp_matern32_lnsigma_flux_lc," + str(distribution_params.lnsigma) + ",1," + distribution + \
+                                  " " + str(distribution_params.lnsigma) + " " + str(sigma_lnsigma) + "," \
+                                  "$\\\\mathrm{gp: \\\\ln{\\\\sigma} (lc)}$,\n" + \
+                                  "baseline_gp_matern32_lnrho_flux_lc," + str(distribution_params.lnrho) + ",1," + distribution + \
+                                  " " + str(distribution_params.lnrho) + " " + str(sigma_lnrho) + "," \
+                                  "$\\\\mathrm{gp: \\\\ln{\\\\rho} (lc)}$,"
         else:
             baseline_params = ""
+        instrument_params = re.sub('\\${sherlock:err_params}', errs_params, instrument_params)
         instrument_params = re.sub('\\${sherlock:baseline_params}', baseline_params, instrument_params)
         return instrument_params
