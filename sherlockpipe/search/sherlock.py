@@ -189,7 +189,6 @@ class Sherlock:
         self.run_ois = self.run_ois.sort_values(by=['Object Id', 'OI'])
         self.run_ois = self.run_ois.drop_duplicates(['Object Id'], keep='first')
         self.run_ois = self.run_ois.sort_values(by=['TESS Mag'])
-        self.limit_ois(0, 100)
         return self
 
     def filter_ois(self, function):
