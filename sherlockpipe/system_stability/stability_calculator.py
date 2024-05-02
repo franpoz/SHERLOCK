@@ -11,6 +11,7 @@ import rebound
 from astropy import units as u
 from lcbuilder.helper import LcbuilderHelper
 
+from sherlockpipe.system_stability.mr_forecast import MrForecast
 
 """Includes classes to be used ase base for stability simulations"""
 
@@ -127,10 +128,11 @@ class StabilityCalculator(ABC):
             if planet_param.radius is None and (planet_param.mass_low_err is None or planet_param.mass_low_err is None):
                 raise ValueError("There is one body without either radius or mass information: " +
                                  json.dumps(planet_param.__dict__))
-            if planet_param.radius is not None:
-                planet_param.mass = StabilityCalculator.mass_from_radius(planet_param.radius)
-                planet_param.mass_low_err = planet_param.mass - StabilityCalculator.mass_from_radius(planet_param.radius - planet_param.radius_low_err)
-                planet_param.mass_up_err = StabilityCalculator.mass_from_radius(planet_param.radius + planet_param.radius_up_err) - planet_param.mass
+            if planet_param.radius is not None and planet_param.mass is None:
+                mass, mass_up_err, mass_low_err = MrForecast.Rstat2M(planet_param.radius, np.max([planet_param.radius_up_err, planet_param.radius_low_err]))
+                planet_param.mass = mass
+                planet_param.mass_low_err = mass_low_err
+                planet_param.mass_up_err = mass_up_err
         return planet_params
 
     def init_rebound_simulation(self, simulation_input):
