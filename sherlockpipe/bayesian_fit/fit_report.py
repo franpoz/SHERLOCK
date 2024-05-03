@@ -4,12 +4,14 @@ import gzip
 import os
 import pathlib
 import pickle
+import re
 
 import alexfitter
 import batman
 import foldedleastsquares
 from PyPDF2 import PdfReader
 from astropy.coordinates import Angle
+from lcbuilder.star.HabitabilityCalculator import HabitabilityCalculator
 from pdf2image import pdf2image
 from reportlab.lib import colors
 from reportlab.lib.pagesizes import A4
@@ -26,9 +28,21 @@ import matplotlib.pyplot as plt
 from scipy.stats import binned_statistic
 from uncertainties import ufloat
 
+from sherlockpipe.system_stability.mr_forecast import MrForecast
+
 width, height = A4
 resources_dir = path.join(path.dirname(__file__))
 
+
+def replace_sub(match):
+    inner = match.group(1)
+    # Return the reformatted date
+    return f"<sub>{inner}</sub>"
+
+def replace_mathrm(match):
+    inner = match.group(1)
+    # Return the reformatted date
+    return f"{{{inner}}}"
 
 class FitReport:
     """
@@ -47,6 +61,7 @@ class FitReport:
         self.h = h
         self.k = k
         self.candidates_df = candidates_df
+        self.habitability_calculator = HabitabilityCalculator()
 
     @staticmethod
     def row_colors(df, table_object):
@@ -300,11 +315,18 @@ class FitReport:
         logz_arg = np.argmax(allesfitter_results.logz)
         logz = allesfitter_results.logz[logz_arg]
         logz_err = allesfitter_results.logzerr[logz_arg]
-        tabla_data = tabla_data + [['Metric', 'Bayesian evidence (logZ)', ufloat(logz, logz_err, logz_err)]]
+        table_paragraph_style = ParagraphStyle(
+            name='CustomStyle',
+            fontSize=5,  # Set the font size to 14
+            leading=7,  # Set the line spacing to ensure lines do not overlap
+            fontName='Helvetica',  # Use Helvetica font
+            alignment=TA_CENTER
+        )
+        tabla_data = tabla_data + [['Metric', Paragraph('Bayesian evidence (logZ)', table_paragraph_style), ufloat(logz, logz_err, logz_err)]]
         for index, ns_row in ns_table_df.iterrows():
             if not any(companion in ns_row['#name'] for companion in alles.settings['companions_phot']) and "#" not in ns_row['#name']:
                 tabla_data = tabla_data + \
-                             [['Prior', ns_row['#name'],
+                             [['Prior', Paragraph(ns_row['#name'], table_paragraph_style),
                                ufloat(ns_row['median'],
                                       float(ns_row['lower_error']) if self.is_float(ns_row['lower_error']) else 0,
                                       float(ns_row['upper_error']) if self.is_float(ns_row['upper_error']) else 0)
@@ -312,7 +334,7 @@ class FitReport:
         for index, ns_row in ns_derived_df.iterrows():
             if not any(companion in ns_row['#property'] for companion in alles.settings['companions_phot']) and "#" not in ns_row['#property']:
                 tabla_data = tabla_data + \
-                             [['Posterior', ns_row['#property'],
+                             [['Posterior', Paragraph(self.replace_latex(ns_row['#property']), table_paragraph_style),
                                ufloat(ns_row['value'],
                                       float(ns_row['lower_error']) if self.is_float(ns_row['lower_error']) else 0,
                                       float(ns_row['upper_error']) if self.is_float(ns_row['upper_error']) else 0)
@@ -343,7 +365,7 @@ class FitReport:
             for index, ns_row in ns_table_df.iterrows():
                 if companion in ns_row['#name']:
                     tabla_data = tabla_data + \
-                                 [['Prior', ns_row['#name'],
+                                 [['Prior', Paragraph(ns_row['#name'], table_paragraph_style),
                                    ufloat(ns_row['median'],
                                           float(ns_row['lower_error']) if self.is_float(ns_row['lower_error']) else 0,
                                           float(ns_row['lower_error']) if self.is_float(ns_row['upper_error']) else 0)
@@ -351,11 +373,42 @@ class FitReport:
             for index, ns_row in ns_derived_df.iterrows():
                 if companion in ns_row['#property']:
                     tabla_data = tabla_data + \
-                                  [['Posterior', ns_row['#property'],
+                                  [['Posterior', Paragraph(self.replace_latex(ns_row['#property']), table_paragraph_style),
                                     ufloat(ns_row['value'],
                                           float(ns_row['lower_error']) if self.is_float(ns_row['lower_error']) else 0,
                                           float(ns_row['lower_error']) if self.is_float(ns_row['upper_error']) else 0)
                                     ]]
+            companion_period = ns_table_df.loc[ns_table_df['#name'] == companion + '_period', 'median'].iloc[0]
+            companion_period_low_err = float(ns_table_df.loc[ns_table_df['#name'] == companion + '_period', 'lower_error'].iloc[0])
+            companion_period_up_err = float(ns_table_df.loc[ns_table_df['#name'] == companion + '_period', 'upper_error'].iloc[0])
+            companion_radius = ns_derived_df.loc[ns_derived_df['#property'] == 'Companion radius ' + companion + '; $R_\\mathrm{' + companion + '}$ ($\\mathrm{R_{\\oplus}}$)', 'value'].iloc[0]
+            companion_radius_low_err = float(ns_derived_df.loc[ns_derived_df['#property'] == 'Companion radius ' + companion + '; $R_\\mathrm{' + companion + '}$ ($\\mathrm{R_{\\oplus}}$)', 'lower_error'].iloc[0])
+            companion_radius_up_err = float(ns_derived_df.loc[ns_derived_df['#property'] == 'Companion radius ' + companion + '; $R_\\mathrm{' + companion + '}$ ($\\mathrm{R_{\\oplus}}$)', 'upper_error'].iloc[0])
+            companion_mass, companion_mass_up_err, companion_mass_low_err = MrForecast.Rstat2M(companion_radius, np.max([companion_radius_up_err, companion_radius_low_err]))
+            companion_teq = self.habitability_calculator.calculate_teq(star_df['mass'].iloc[0], star_df['radius'].iloc[0], companion_period, star_df['Teff_star'].iloc[0])
+            companion_tsm = self.habitability_calculator.calculate_TSM(companion_radius, companion_mass,
+                                                                       companion_teq, star_df['radius'].iloc[0], star_df['j'].iloc[0])
+            companion_esm = self.habitability_calculator.calculate_ESM(companion_radius, companion_teq, star_df['radius'].iloc[0], star_df['Teff_star'].iloc[0], star_df['k'].iloc[0])
+            companion_semi_amplitude, companion_semi_amplitude_low_err, companion_semi_amplitude_up_err = (
+                self.habitability_calculator.calculate_semi_amplitude(companion_period, companion_period_low_err, companion_period_up_err,
+                                                                      companion_mass, companion_mass_low_err, companion_mass_up_err,
+                                                                      star_df['mass'].iloc[0], star_df['M_star_lerr'].iloc[0], star_df['M_star_uerr'].iloc[0]))
+            tabla_data = tabla_data + \
+                         [['Prediction', Paragraph(f'Equilibrium Temperature {companion} T<sub>eq{companion}</sub>; (K)', table_paragraph_style), np.round(companion_teq, 1)]]
+            tabla_data = tabla_data + \
+                         [['Prediction', Paragraph(f'TSM {companion}', table_paragraph_style), np.round(companion_tsm, 1)]]
+            tabla_data = tabla_data + \
+                         [['Prediction', Paragraph(f'ESM {companion}', table_paragraph_style), np.round(companion_esm, 1)]]
+            tabla_data = tabla_data + \
+                         [['Prediction', Paragraph(f'Companion mass {companion}; M<sub>{companion}</sub> (M<sub>Earth</sub>)', table_paragraph_style),
+                           ufloat(companion_mass,
+                                          companion_mass_low_err if companion_mass_low_err < companion_mass else companion_mass,
+                                          companion_mass_up_err)]]
+            tabla_data = tabla_data + \
+                         [['Prediction', Paragraph(f'RV K (i=90º, e=0º) {companion} (m/s)', table_paragraph_style),
+                           ufloat(companion_semi_amplitude,
+                                          companion_semi_amplitude_low_err if companion_semi_amplitude_low_err < companion_semi_amplitude else companion_semi_amplitude,
+                                          companion_semi_amplitude_up_err)]]
             table_colwidth = [2 * cm, 11 * cm, 5 * cm]
             table_number_rows = len(tabla_data)
             tabla = Table(tabla_data, table_colwidth, table_number_rows * [0.4 * cm])
@@ -363,7 +416,7 @@ class FitReport:
             story.append(tabla)
             story.append(Spacer(1, 5))
             table2_descripcion = '<font name="HELVETICA" size="9"><strong>Table ' + str(table) + ': </strong>' \
-                                 'The bayesian fitted priors and posteriors for ' + candidate_row['name'] + '.</font>'
+                                 'The bayesian fitted priors, posteriors and related predictions for ' + candidate_row['name'] + '.</font>'
             story.append(Paragraph(table2_descripcion, styles["ParagraphAlignCenter"]))
             story.append(PageBreak())
             table = table + 1
@@ -376,3 +429,21 @@ class FitReport:
                               topMargin=95, bottomMargin=15,
                               pageTemplates=global_template)
         doc.build(story)
+
+    def replace_latex(self, content):
+        content = re.sub('\\\\mathrm{(.*)}', replace_mathrm, content)
+        content = re.sub('\\\\mathrm{(.*)}', replace_mathrm, content)
+        content = re.sub('\\\\mathrm{(.*)}', replace_mathrm, content)
+        content = re.sub('_{([\w; ]*)}', replace_sub, content)
+        content = re.sub('_\\\\([\w]+)', replace_sub, content)
+        content = re.sub('_{\\\\([\w]+)}', replace_sub, content)
+        content = re.sub('\$', '', content)
+        content = re.sub('\\\\delta', '<greek>d</greek>', content)
+        content = re.sub('\\\\rho', '<greek>r</greek>', content)
+        content = re.sub('\\\\star;', 'star', content)
+        content = re.sub('oplus', 'Earth', content)
+        content = re.sub('odot', 'Sun', content)
+        content = re.sub('jup', 'Jup', content)
+        content = re.sub('_{([\w]+)}', replace_sub, content)
+        content = re.sub('[{}]', '', content)
+        return content
