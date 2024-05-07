@@ -1,6 +1,7 @@
 import json
 import logging
 import multiprocessing
+import random
 from typing import List, Dict
 
 import matplotlib.pyplot as plt
@@ -153,7 +154,10 @@ class StabilityCalculator(ABC):
             min_period = min_period if period > min_period else period
             ecc = simulation_input.ecc_arr[planet_key]
             inc = np.deg2rad(simulation_input.inc_arr[planet_key])
-            omega = np.deg2rad(simulation_input.omega_arr[planet_key])
+            if simulation_input.omega_arr[planet_key] == 'rand':
+                omega = random.uniform(0, 360)
+            else:
+                omega = np.deg2rad(simulation_input.omega_arr[planet_key])
             sim.add(m=LcbuilderHelper.convert_from_to(mass, u.M_earth, u.M_sun) / simulation_input.star_mass,
                     P=LcbuilderHelper.convert_from_to(period, u.day, u.year), e=ecc, omega=omega, inc=inc)
         sim.dt = LcbuilderHelper.convert_from_to(min_period, u.day, u.year) * self.dt
