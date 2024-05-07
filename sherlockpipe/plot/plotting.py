@@ -171,7 +171,7 @@ def plot_system_architecture(sistemas, temperaturas_estrellas, tamaños_estrella
 def plot_stability(masses, eccentricities, megnos, save_dir):
     unique_masses = np.unique(masses)
     unique_eccs = np.unique(eccentricities)
-    results = np.full((len(unique_masses), len(unique_eccs)), 10)
+    results = np.full((len(unique_masses), len(unique_eccs)), 10.0)
     for index, mass in enumerate(masses):
         mass_index = np.argwhere(unique_masses == mass).flatten()[0]
         ecc = eccentricities[index]
