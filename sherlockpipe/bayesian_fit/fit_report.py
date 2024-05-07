@@ -368,7 +368,7 @@ class FitReport:
                                  [['Prior', Paragraph(ns_row['#name'], table_paragraph_style),
                                    ufloat(ns_row['median'],
                                           float(ns_row['lower_error']) if self.is_float(ns_row['lower_error']) else 0,
-                                          float(ns_row['lower_error']) if self.is_float(ns_row['upper_error']) else 0)
+                                          float(ns_row['upper_error']) if self.is_float(ns_row['upper_error']) else 0)
                                    ]]
             for index, ns_row in ns_derived_df.iterrows():
                 if companion in ns_row['#property']:
@@ -376,7 +376,7 @@ class FitReport:
                                   [['Posterior', Paragraph(self.replace_latex(ns_row['#property']), table_paragraph_style),
                                     ufloat(ns_row['value'],
                                           float(ns_row['lower_error']) if self.is_float(ns_row['lower_error']) else 0,
-                                          float(ns_row['lower_error']) if self.is_float(ns_row['upper_error']) else 0)
+                                          float(ns_row['upper_error']) if self.is_float(ns_row['upper_error']) else 0)
                                     ]]
             companion_period = ns_table_df.loc[ns_table_df['#name'] == companion + '_period', 'median'].iloc[0]
             companion_period_low_err = float(ns_table_df.loc[ns_table_df['#name'] == companion + '_period', 'lower_error'].iloc[0])
@@ -384,21 +384,49 @@ class FitReport:
             companion_radius = ns_derived_df.loc[ns_derived_df['#property'] == 'Companion radius ' + companion + '; $R_\\mathrm{' + companion + '}$ ($\\mathrm{R_{\\oplus}}$)', 'value'].iloc[0]
             companion_radius_low_err = float(ns_derived_df.loc[ns_derived_df['#property'] == 'Companion radius ' + companion + '; $R_\\mathrm{' + companion + '}$ ($\\mathrm{R_{\\oplus}}$)', 'lower_error'].iloc[0])
             companion_radius_up_err = float(ns_derived_df.loc[ns_derived_df['#property'] == 'Companion radius ' + companion + '; $R_\\mathrm{' + companion + '}$ ($\\mathrm{R_{\\oplus}}$)', 'upper_error'].iloc[0])
+            companion_depth = ns_derived_df.loc[ns_derived_df['#property'] == 'Transit depth (undil.) ' + companion + '; $\\delta_\\mathrm{tr; undil; ' + companion + '; lc}$ (ppt)', 'value'].iloc[0]
+            companion_depth_low_err = ns_derived_df.loc[ns_derived_df['#property'] == 'Transit depth (undil.) ' + companion + '; $\\delta_\\mathrm{tr; undil; ' + companion + '; lc}$ (ppt)', 'lower_error'].iloc[0]
+            companion_depth_up_err = ns_derived_df.loc[ns_derived_df['#property'] == 'Transit depth (undil.) ' + companion + '; $\\delta_\\mathrm{tr; undil; ' + companion + '; lc}$ (ppt)', 'upper_error'].iloc[0]
+            companion_teq = ns_derived_df.loc[ns_derived_df['#property'] == 'Equilibrium temperature ' + companion + '; $T_\\mathrm{eq;' + companion + '}$ (K)', 'value'].iloc[0]
+            companion_teq_low_err = ns_derived_df.loc[ns_derived_df['#property'] == 'Equilibrium temperature ' + companion + '; $T_\\mathrm{eq;' + companion + '}$ (K)', 'lower_error'].iloc[0]
+            companion_teq_up_err = ns_derived_df.loc[ns_derived_df['#property'] == 'Equilibrium temperature ' + companion + '; $T_\\mathrm{eq;' + companion + '}$ (K)', 'upper_error'].iloc[0]
             companion_mass, companion_mass_up_err, companion_mass_low_err = MrForecast.Rstat2M(companion_radius, np.max([companion_radius_up_err, companion_radius_low_err]))
-            companion_teq = self.habitability_calculator.calculate_teq(star_df['mass'].iloc[0], star_df['radius'].iloc[0], companion_period, star_df['Teff_star'].iloc[0])
-            companion_tsm = self.habitability_calculator.calculate_TSM(companion_radius, companion_mass,
-                                                                       companion_teq, star_df['radius'].iloc[0], star_df['j'].iloc[0])
-            companion_esm = self.habitability_calculator.calculate_ESM(companion_radius, companion_teq, star_df['radius'].iloc[0], star_df['Teff_star'].iloc[0], star_df['k'].iloc[0])
+            companion_teq, companion_teq_low_err, companion_teq_up_err = \
+                self.habitability_calculator.calculate_teq(star_df['M_star'].iloc[0], star_df['M_star_lerr'].iloc[0], star_df['M_star_uerr'].iloc[0],
+                                                           star_df['R_star'].iloc[0], star_df['R_star_lerr'].iloc[0], star_df['R_star_lerr'].iloc[0],
+                                                           companion_period, companion_period_low_err, companion_period_up_err,
+                                                           star_df['Teff_star'].iloc[0], star_df['Teff_star_lerr'].iloc[0], star_df['Teff_star_lerr'].iloc[0])
+            companion_tsm, companion_tsm_low_err, companion_tsm_up_err = \
+                self.habitability_calculator.calculate_TSM(companion_radius, companion_radius_low_err, companion_radius_up_err, companion_mass,
+                                                                       companion_mass_low_err, companion_mass_up_err,
+                                                                       companion_teq, companion_teq_low_err, companion_teq_up_err,
+                                                                       star_df['R_star'].iloc[0], star_df['R_star_lerr'].iloc[0], star_df['R_star_lerr'].iloc[0],
+                                                                       star_df['j'].iloc[0])
+            companion_esm, companion_esm_low_err, companion_esm_up_err = \
+                self.habitability_calculator.calculate_ESM(companion_depth, companion_depth_low_err, companion_depth_up_err,
+                                                           companion_teq, companion_teq_low_err, companion_teq_up_err,
+                                                           star_df['Teff_star'].iloc[0], star_df['Teff_star_lerr'].iloc[0],
+                                                           star_df['Teff_star_uerr'].iloc[0] , star_df['k'].iloc[0])
             companion_semi_amplitude, companion_semi_amplitude_low_err, companion_semi_amplitude_up_err = (
                 self.habitability_calculator.calculate_semi_amplitude(companion_period, companion_period_low_err, companion_period_up_err,
                                                                       companion_mass, companion_mass_low_err, companion_mass_up_err,
-                                                                      star_df['mass'].iloc[0], star_df['M_star_lerr'].iloc[0], star_df['M_star_uerr'].iloc[0]))
+                                                                      star_df['M_star'].iloc[0], star_df['M_star_lerr'].iloc[0], star_df['M_star_uerr'].iloc[0]))
             tabla_data = tabla_data + \
-                         [['Prediction', Paragraph(f'Equilibrium Temperature {companion} T<sub>eq{companion}</sub>; (K)', table_paragraph_style), np.round(companion_teq, 1)]]
+                         [['Prediction', Paragraph(f'Equilibrium Temperature {companion} T<sub>eq{companion}</sub>; (K)', table_paragraph_style),
+                           ufloat(companion_teq,
+                                  companion_teq_low_err if companion_teq_low_err < companion_teq else companion_teq,
+                                  companion_teq_up_err)]]
             tabla_data = tabla_data + \
-                         [['Prediction', Paragraph(f'TSM {companion}', table_paragraph_style), np.round(companion_tsm, 1)]]
+                         [['Prediction', Paragraph(f'TSM {companion}', table_paragraph_style),
+                           ufloat(companion_tsm,
+                                  companion_tsm_low_err if companion_tsm_low_err < companion_tsm else companion_tsm,
+                                  companion_tsm_up_err)
+                           ]]
             tabla_data = tabla_data + \
-                         [['Prediction', Paragraph(f'ESM {companion}', table_paragraph_style), np.round(companion_esm, 1)]]
+                         [['Prediction', Paragraph(f'ESM {companion}', table_paragraph_style),
+                           ufloat(companion_esm,
+                                  companion_esm_low_err if companion_esm_low_err < companion_esm else companion_esm,
+                                  companion_esm_up_err)]]
             tabla_data = tabla_data + \
                          [['Prediction', Paragraph(f'Companion mass {companion}; M<sub>{companion}</sub> (M<sub>Earth</sub>)', table_paragraph_style),
                            ufloat(companion_mass,
