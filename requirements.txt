@@ -28,14 +28,14 @@ cryptography==42.0.7
 cycler==0.12.1
 Cython==3.0.6
 dask==2024.5.0
-dearwatson==0.10.1
+dearwatson==0.10.2
 Deprecated==1.2.14
 dm-tree==0.1.8
 dynesty==1.0.1
 ellc==1.8.8
 emcee==3.0.2
 everest-pipeline==2.0.12
-exoml==0.1.9
+exoml==0.1.10
 extension-helpers==0.1
 fasteners==0.19
 fbpca==1.0
@@ -70,7 +70,7 @@ keras-core==0.1.7
 keras-nlp==0.8.1
 keyring==25.2.0
 kiwisolver==1.4.5
-lcbuilder==0.18.0
+lcbuilder==0.18.1
 libclang==18.1.1
 lightkurve==2.4.2
 llvmlite==0.41.1
@@ -139,7 +139,7 @@ pytz==2024.1
 pyvo==1.5.1
 PyYAML==6.0.1
 rebound==3.17.3
-regex==2024.4.28
+regex==2024.5.10
 reportlab==4.0.7
 reproject==0.13.0
 requests==2.25.1
@@ -154,7 +154,7 @@ seaborn==0.11.1
 SecretStorage==3.3.3
 semantic-version==2.10.0
 setuptools==69.5.1
-sherlockpipe==0.46.1
+sherlockpipe==0.46.2
 six==1.16.0
 sklearn==0.0
 soupsieve==2.5
@@ -191,5 +191,5 @@ wotan==1.9
 wrapt==1.14.1
 xarray==2024.3.0
 xarray-einstats==0.7.0
-zarr==2.17.2
+zarr==2.18.0
 zipp==3.18.1
