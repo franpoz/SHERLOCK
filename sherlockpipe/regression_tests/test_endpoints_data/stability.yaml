@@ -30,6 +30,10 @@ BODIES:
     O_LOW: 10
     O_UP: 10
     O_BINS: 1
+    OM: 0
+    OM_LOW: 10
+    OM_UP: 10
+    OM_BINS: 1
   - P: 2.5724
     P_LOW: 0.05
     P_UP: 0.05
@@ -50,6 +54,10 @@ BODIES:
     O_LOW: 10
     O_UP: 10
     O_BINS: 1
+    OM: 0
+    OM_LOW: 10
+    OM_UP: 10
+    OM_BINS: 1
   - P: 14.3220
     P_LOW: 0.05
     P_UP: 0.05
@@ -70,3 +78,7 @@ BODIES:
     O_LOW: 10
     O_UP: 10
     O_BINS: 1
+    OM: 0
+    OM_LOW: 10
+    OM_UP: 10
+    OM_BINS: 1
