@@ -114,6 +114,7 @@ def run_stability(args):
             mass_bins = args.mass_bins if "M_BINS" not in planet else planet["M_BINS"]
             inc_bins = args.inc_bins if "I_BINS" not in planet else planet["I_BINS"]
             om_bins = args.omega_bins if "O_BINS" not in planet else planet["O_BINS"]
+            om_big_bins = args.omega_bins if "OM_BINS" not in planet else planet["OM_BINS"]
             user_planet_params.append(PlanetInput(period=get_from_dict(planet, "P"),
                                                   period_low_err=get_from_dict(planet, "P_LOW"),
                                                   period_up_err=get_from_dict(planet, "P_UP"),
@@ -132,8 +133,11 @@ def run_stability(args):
                                                   omega=get_from_dict(planet, "O"),
                                                   omega_low_err=get_from_dict(planet, "O_LOW"),
                                                   omega_up_err=get_from_dict(planet, "O_UP"),
+                                                  omega_big=get_from_dict(planet, "OM"),
+                                                  omega_big_low_err=get_from_dict(planet, "OM_LOW"),
+                                                  omega_big_up_err=get_from_dict(planet, "OM_UP"),
                                                   period_bins=period_bins, mass_bins=mass_bins, ecc_bins=ecc_bins,
-                                                  inc_bins=inc_bins, omega_bins=om_bins))
+                                                  inc_bins=inc_bins, omega_bins=om_bins, omega_big_bins=om_big_bins))
         planets_params = planets_params + user_planet_params
         if "STAR" in user_properties:
             star_mass = star_mass_low if "M" not in user_properties["STAR"] else user_properties["STAR"]["M"]
@@ -144,7 +148,7 @@ def run_stability(args):
                                                                                       user_properties["STAR"]["M_UP"]
             star_mass_bins = args.star_mass_bins if "M_BINS" not in user_properties["STAR"] else \
             user_properties["STAR"]["M_BINS"]
-    stability_calculator = MegnoStabilityCalculator(args.years, args.dt)
+    stability_calculator = MegnoStabilityCalculator(args.years, args.dt, args.repetitions)
     logger.info(f'Simulation set to maximum time of {args.years} years')
     logger.info("%.0f planets to be simulated", len(planets_params))
     logger.info("Lowest star mass: %.2f", star_mass_low)
