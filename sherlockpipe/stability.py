@@ -16,10 +16,14 @@ def stability_args_parse(args=None):
     ap.add_argument('--inc_bins', type=int, default=1, help="The number of inclination bins to use.", required=False)
     ap.add_argument('--omega_bins', type=int, default=1, help="The number of argument of periastron bins to use.",
                     required=False)
+    ap.add_argument('--omega_big_bins', type=int, default=1, help="The number of argument of periastron bins to use.",
+                    required=False)
     ap.add_argument('--mass_bins', type=int, default=1, help="The number of mass bins to use.", required=False)
     ap.add_argument('--star_mass_bins', type=int, default=1, help="The number of star mass bins to use.",
                     required=False)
     ap.add_argument('--years', type=int, default=500, help="The number of years to integrate (for MEGNO).",
+                    required=False)
+    ap.add_argument('--repetitions', type=int, default=3, help="The number of times each scenario should be run to get its median megno.",
                     required=False)
     ap.add_argument('--dt', type=float, default=0.05, help="The fraction of the shortest orbit to use for each integration step.",
                     required=False)
