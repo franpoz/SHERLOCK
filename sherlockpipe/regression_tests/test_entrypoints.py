@@ -56,6 +56,7 @@ class TestsEntrypoints(unittest.TestCase):
         args.use_spock = False
         args.years = 500
         args.dt = 0.001
+        args.repetitions = 1
         try:
             run_stability(args)
             self.assertEquals(2, len(os.listdir(object_dir + '/stability_stability')))
