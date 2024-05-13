@@ -114,7 +114,7 @@ def run_stability(args):
             mass_bins = args.mass_bins if "M_BINS" not in planet else planet["M_BINS"]
             inc_bins = args.inc_bins if "I_BINS" not in planet else planet["I_BINS"]
             om_bins = args.omega_bins if "O_BINS" not in planet else planet["O_BINS"]
-            om_big_bins = args.omega_bins if "OM_BINS" not in planet else planet["OM_BINS"]
+            om_big_bins = args.omega_big_bins if "OM_BINS" not in planet else planet["OM_BINS"]
             user_planet_params.append(PlanetInput(period=get_from_dict(planet, "P"),
                                                   period_low_err=get_from_dict(planet, "P_LOW"),
                                                   period_up_err=get_from_dict(planet, "P_UP"),
