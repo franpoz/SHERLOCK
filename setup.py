@@ -29,7 +29,7 @@ setuptools.setup(
                         'beautifulsoup4==4.9.3', # Parsing HTML and XML, for OIs extraction
                         "celerite==0.4.0", # Allesfitter dependency
                         "corner==2.2.2", # Allesfitter dependency
-                        "dearwatson==0.10.3", # Vetting
+                        "dearwatson==0.10.5", # Vetting
                         "dynesty==1.0.1", # Allesfitter dependency
                         "emcee==3.0.2", # Allesfitter dependency
                         "h5py==3.10.0", # Allesfitter dependency
