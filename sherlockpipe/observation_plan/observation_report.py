@@ -1,5 +1,6 @@
 import datetime
 import logging
+import os.path
 
 import pandas as pd
 from astropy.coordinates import Angle
@@ -98,7 +99,7 @@ class ObservationReport:
             # Generamos la columna que contendrá el nombre de las imágenes:
             self.df['image_path'] = self.images_path + self.df['observatory'] + "_" + self.df['midtime'] + ".png"
             # Finalmente con las rutas creamos los objetos:
-            self.df['Image'] = self.df['image_path'].apply(lambda x: Image(x))
+            self.df['Image'] = self.df['image_path'].apply(lambda x: Image(x) if os.path.exists(x) else Paragraph(""))
 
 
             # We want to sort the dates row-wise, only keeping the interesting columns
@@ -118,10 +119,11 @@ class ObservationReport:
                 for tup in list_of_tuples:
                     try:
                         y = list(tup)
-                        local_time = parse(tup[1])
-                        utime = Time(local_time)
-                        y[1] = str(tup[1]) + ' (' + str(round(utime.jd, 2)) + ' JD)'
-                        tup = tuple(y)
+                        if tup[1] != '--':
+                            local_time = parse(tup[1])
+                            utime = Time(local_time)
+                            y[1] = str(tup[1]) + ' (' + str(round(utime.jd, 2)) + ' JD)'
+                            tup = tuple(y)
                     except Exception as e:
                         logging.exception(f"Can't convert to date {tup[1]}")
                     if night == 1 and tup[0] != 'TWM':

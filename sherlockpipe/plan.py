@@ -11,11 +11,11 @@ if __name__ == '__main__':
     ap.add_argument('--lon', help="Observer longitude", required=False)
     ap.add_argument('--alt', help="Observer altitude", required=False)
     ap.add_argument('--tz', help="Time zone (in hours offset from UTC)", required=False)
-    ap.add_argument('--min_altitude', help="Minimum altitude of the target to be observable", default=23,
+    ap.add_argument('--min_altitude', help="Minimum altitude of the target to be observable", type=float, default=23,
                     required=False)
-    ap.add_argument('--moon_min_dist', help="Minimum required moon distance for moon minimum illumination.", default=30,
+    ap.add_argument('--moon_min_dist', help="Minimum required moon distance for moon minimum illumination.", type=float, default=30,
                     required=False)
-    ap.add_argument('--moon_max_dist', help="Minimum required moon distance for moon maximum illumination.", default=55,
+    ap.add_argument('--moon_max_dist', help="Minimum required moon distance for moon maximum illumination.", type=float, default=55,
                     required=False)
     ap.add_argument('--max_days', help="Maximum number of days for the plan to take.", type=int, default=365, required=False)
     ap.add_argument('--transit_fraction', help="Minimum transit fraction to be observable.", type=float, default=0.5,

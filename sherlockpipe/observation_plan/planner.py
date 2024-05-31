@@ -163,13 +163,19 @@ class Planner:
         alert_date = None
         planner_inputs = []
         for index, observatory_row in observatories_df.iterrows():
-            observer_site = Observer(latitude=observatory_row["lat"], longitude=observatory_row["lon"],
-                                     elevation=u.Quantity(observatory_row["alt"], unit="m"))
+            if observatory_row['lat'] is None or observatory_row['lat'] == '' or np.isnan(observatory_row['lat']) or \
+                (observatory_row['lon'] is None or observatory_row['lon'] == '' or np.isnan(observatory_row['lon']) or \
+                 observatory_row['alt'] is None or observatory_row['alt'] == '') or np.isnan(observatory_row['alt']):
+                observer_site = None
+                constraints = []
+            else:
+                observer_site = Observer(latitude=observatory_row["lat"], longitude=observatory_row["lon"],
+                                         elevation=u.Quantity(observatory_row["alt"], unit="m"))
+                constraints = [AtNightConstraint.twilight_nautical(), AltitudeConstraint(min=min_altitude * u.deg)]
+            constraints = constraints + [MoonIlluminationSeparationConstraint(min_dist=moon_min_dist * u.deg,
+                                                                max_dist=moon_max_dist * u.deg)]
             midtransit_times = system.next_primary_eclipse_time(since, n_eclipses=n_transits)
             ingress_egress_times = system.next_primary_ingress_egress_time(since, n_eclipses=n_transits)
-            constraints = [AtNightConstraint.twilight_nautical(), AltitudeConstraint(min=min_altitude * u.deg),
-                           MoonIlluminationSeparationConstraint(min_dist=moon_min_dist * u.deg,
-                                                                max_dist=moon_max_dist * u.deg)]
             moon_for_midtransit_times = get_body("moon", midtransit_times)
             moon_dist_midtransit_times = moon_for_midtransit_times.separation(SkyCoord(ra, dec, unit="deg"))
             moon_phase_midtransit_times = np.round(astroplan.moon_illumination(midtransit_times), 2)
@@ -210,8 +216,11 @@ class Planner:
     @staticmethod
     def plan_event(planner_input: PlannerInput):
         try:
-            twilight_evening = planner_input.observer_site.twilight_evening_nautical(planner_input.midtransit_time)
-            twilight_morning = planner_input.observer_site.twilight_morning_nautical(planner_input.midtransit_time)
+            twilight_evening = None
+            twilight_morning = None
+            if planner_input.observer_site is not None:
+                twilight_evening = planner_input.observer_site.twilight_evening_nautical(planner_input.midtransit_time)
+                twilight_morning = planner_input.observer_site.twilight_morning_nautical(planner_input.midtransit_time)
             ingress = planner_input.ingress_egress_times[planner_input.i][0]
             egress = planner_input.ingress_egress_times[planner_input.i][1]
             lowest_ingress = ingress - planner_input.low_err_delta[planner_input.i]
@@ -222,10 +231,13 @@ class Planner:
                 baseline_low = lowest_ingress - planner_input.baseline * u.hour
                 baseline_up = highest_egress + planner_input.baseline * u.hour
                 transit_times = baseline_low + (baseline_up - baseline_low) * np.linspace(0, 1, 100)
-                observable_transit_times = astroplan.is_event_observable(planner_input.constraints,
-                                                                         planner_input.observer_site,
-                                                                         planner_input.target,
-                                                                         times=transit_times)[0]
+                if planner_input.observer_site is None:
+                    observable_transit_times = np.full(transit_times.shape, True)
+                else:
+                    observable_transit_times = astroplan.is_event_observable(planner_input.constraints,
+                                                                             planner_input.observer_site,
+                                                                             planner_input.target,
+                                                                             times=transit_times)[0]
                 observable_transit_times_true = np.argwhere(observable_transit_times)
                 observable = len(observable_transit_times_true) / 100
                 if observable < planner_input.transit_fraction:
@@ -235,10 +247,11 @@ class Planner:
                 start_plot = baseline_low
                 end_plot = baseline_up
                 # TODO check whether twilight evening happens before twilight morning, if not, the check is different
-                if twilight_evening > start_obs:
-                    start_obs = twilight_evening
-                if twilight_morning < end_obs:
-                    end_obs = twilight_morning
+                if planner_input.observer_site is not None:
+                    if twilight_evening > start_obs:
+                        start_obs = twilight_evening
+                    if twilight_morning < end_obs:
+                        end_obs = twilight_morning
             moon_dist = round(planner_input.moon_dist_midtransit_times[planner_input.i].degree)
             moon_phase = planner_input.moon_phase_midtransit_times[planner_input.i]
             # TODO get is_event_observable for several parts of the transit (ideally each 5 mins) to get the proper observable percent. Also with baseline
@@ -257,72 +270,73 @@ class Planner:
                                                     "midtime_low_err_h":
                                                         str(int(planner_input.midtransit_time_low_err[planner_input.i] // 1)) + ":" +
                                                         str(int(planner_input.midtransit_time_low_err[planner_input.i] % 1 * 60)).zfill(2),
-                                                    "twilight_evening": twilight_evening.isot,
-                                                    "twilight_morning": twilight_morning.isot,
+                                                    "twilight_evening": twilight_evening.isot if twilight_evening is not None else None,
+                                                    "twilight_morning": twilight_morning.isot if twilight_morning is not None else None,
                                                     "observable": observable, "moon_phase": moon_phase,
                                                     "moon_dist": moon_dist}
-            plot_time = start_plot + (end_plot - start_plot) * np.linspace(0, 1, 100)
-            plt.tick_params(labelsize=6)
-            airmass_ax = plot_airmass(planner_input.target, planner_input.observer_site, plot_time, brightness_shading=False,
-                                      altitude_yaxis=True)
-            airmass_ax.axvspan(twilight_morning.plot_date, end_plot.plot_date, color='white')
-            airmass_ax.axvspan(start_plot.plot_date, twilight_evening.plot_date, color='white')
-            airmass_ax.axvspan(twilight_evening.plot_date, twilight_morning.plot_date, color='gray')
-            airmass_ax.axhspan(1. / np.cos(np.radians(90 - planner_input.min_altitude)), 5.0, color='green')
-            airmass_ax.get_figure().gca().set_title("")
-            airmass_ax.get_figure().gca().set_xlabel("")
-            airmass_ax.get_figure().gca().set_ylabel("")
-            airmass_ax.set_xlabel("")
-            airmass_ax.set_ylabel("")
-            xticks = []
-            xticks_labels = []
-            xticks.append(start_obs.plot_date)
-            hour_min_sec_arr = start_obs.isot.split("T")[1].split(":")
-            xticks_labels.append("T1_" + hour_min_sec_arr[0] + ":" + hour_min_sec_arr[1])
-            plt.axvline(x=start_obs.plot_date, color="violet")
-            xticks.append(end_obs.plot_date)
-            hour_min_sec_arr = end_obs.isot.split("T")[1].split(":")
-            xticks_labels.append("T1_" + hour_min_sec_arr[0] + ":" + hour_min_sec_arr[1])
-            plt.axvline(x=end_obs.plot_date, color="violet")
-            if start_plot < lowest_ingress < end_plot:
-                xticks.append(lowest_ingress.plot_date)
-                hour_min_sec_arr = lowest_ingress.isot.split("T")[1].split(":")
+            if planner_input.observer_site is not None:
+                plot_time = start_plot + (end_plot - start_plot) * np.linspace(0, 1, 100)
+                plt.tick_params(labelsize=6)
+                airmass_ax = plot_airmass(planner_input.target, planner_input.observer_site, plot_time, brightness_shading=False,
+                                          altitude_yaxis=True)
+                airmass_ax.axvspan(twilight_morning.plot_date, end_plot.plot_date, color='white')
+                airmass_ax.axvspan(start_plot.plot_date, twilight_evening.plot_date, color='white')
+                airmass_ax.axvspan(twilight_evening.plot_date, twilight_morning.plot_date, color='gray')
+                airmass_ax.axhspan(1. / np.cos(np.radians(90 - planner_input.min_altitude)), 5.0, color='green')
+                airmass_ax.get_figure().gca().set_title("")
+                airmass_ax.get_figure().gca().set_xlabel("")
+                airmass_ax.get_figure().gca().set_ylabel("")
+                airmass_ax.set_xlabel("")
+                airmass_ax.set_ylabel("")
+                xticks = []
+                xticks_labels = []
+                xticks.append(start_obs.plot_date)
+                hour_min_sec_arr = start_obs.isot.split("T")[1].split(":")
                 xticks_labels.append("T1_" + hour_min_sec_arr[0] + ":" + hour_min_sec_arr[1])
-                plt.axvline(x=lowest_ingress.plot_date, color="red")
-            if start_plot < ingress < end_plot:
-                xticks.append(ingress.plot_date)
-                hour_min_sec_arr = ingress.isot.split("T")[1].split(":")
+                plt.axvline(x=start_obs.plot_date, color="violet")
+                xticks.append(end_obs.plot_date)
+                hour_min_sec_arr = end_obs.isot.split("T")[1].split(":")
                 xticks_labels.append("T1_" + hour_min_sec_arr[0] + ":" + hour_min_sec_arr[1])
-                plt.axvline(x=ingress.plot_date, color="orange")
-            if start_plot < planner_input.midtransit_time < end_plot:
-                xticks.append(planner_input.midtransit_time.plot_date)
-                hour_min_sec_arr = planner_input.midtransit_time.isot.split("T")[1].split(":")
-                xticks_labels.append("T0_" + hour_min_sec_arr[0] + ":" + hour_min_sec_arr[1])
-                plt.axvline(x=planner_input.midtransit_time.plot_date, color="black")
-            if start_plot < egress < end_plot:
-                xticks.append(egress.plot_date)
-                hour_min_sec_arr = egress.isot.split("T")[1].split(":")
-                xticks_labels.append("T4_" + hour_min_sec_arr[0] + ":" + hour_min_sec_arr[1])
-                plt.axvline(x=egress.plot_date, color="orange")
-            if start_plot < highest_egress < end_plot:
-                xticks.append(highest_egress.plot_date)
-                hour_min_sec_arr = highest_egress.isot.split("T")[1].split(":")
-                xticks_labels.append("T4_" + hour_min_sec_arr[0] + ":" + hour_min_sec_arr[1])
-                plt.axvline(x=highest_egress.plot_date, color="red")
-            airmass_ax.xaxis.set_tick_params(labelsize=5)
-            airmass_ax.set_xticks([])
-            airmass_ax.set_xticklabels([])
-            degrees_ax = Planner.get_twin(airmass_ax)
-            degrees_ax.yaxis.set_tick_params(labelsize=6)
-            degrees_ax.set_yticks([1., 1.55572383, 2.])
-            degrees_ax.set_yticklabels([90, 50, 30])
-            fig = matplotlib.pyplot.gcf()
-            fig.set_size_inches(1.25, 0.75)
-            plt.savefig(
-                planner_input.plan_dir + "/images/" + planner_input.observatory_row["name"] + "_" +
-                str(planner_input.midtransit_time.isot)[:-4] + ".png",
-                bbox_inches='tight')
-            plt.close()
+                plt.axvline(x=end_obs.plot_date, color="violet")
+                if start_plot < lowest_ingress < end_plot:
+                    xticks.append(lowest_ingress.plot_date)
+                    hour_min_sec_arr = lowest_ingress.isot.split("T")[1].split(":")
+                    xticks_labels.append("T1_" + hour_min_sec_arr[0] + ":" + hour_min_sec_arr[1])
+                    plt.axvline(x=lowest_ingress.plot_date, color="red")
+                if start_plot < ingress < end_plot:
+                    xticks.append(ingress.plot_date)
+                    hour_min_sec_arr = ingress.isot.split("T")[1].split(":")
+                    xticks_labels.append("T1_" + hour_min_sec_arr[0] + ":" + hour_min_sec_arr[1])
+                    plt.axvline(x=ingress.plot_date, color="orange")
+                if start_plot < planner_input.midtransit_time < end_plot:
+                    xticks.append(planner_input.midtransit_time.plot_date)
+                    hour_min_sec_arr = planner_input.midtransit_time.isot.split("T")[1].split(":")
+                    xticks_labels.append("T0_" + hour_min_sec_arr[0] + ":" + hour_min_sec_arr[1])
+                    plt.axvline(x=planner_input.midtransit_time.plot_date, color="black")
+                if start_plot < egress < end_plot:
+                    xticks.append(egress.plot_date)
+                    hour_min_sec_arr = egress.isot.split("T")[1].split(":")
+                    xticks_labels.append("T4_" + hour_min_sec_arr[0] + ":" + hour_min_sec_arr[1])
+                    plt.axvline(x=egress.plot_date, color="orange")
+                if start_plot < highest_egress < end_plot:
+                    xticks.append(highest_egress.plot_date)
+                    hour_min_sec_arr = highest_egress.isot.split("T")[1].split(":")
+                    xticks_labels.append("T4_" + hour_min_sec_arr[0] + ":" + hour_min_sec_arr[1])
+                    plt.axvline(x=highest_egress.plot_date, color="red")
+                airmass_ax.xaxis.set_tick_params(labelsize=5)
+                airmass_ax.set_xticks([])
+                airmass_ax.set_xticklabels([])
+                degrees_ax = Planner.get_twin(airmass_ax)
+                degrees_ax.yaxis.set_tick_params(labelsize=6)
+                degrees_ax.set_yticks([1., 1.55572383, 2.])
+                degrees_ax.set_yticklabels([90, 50, 30])
+                fig = matplotlib.pyplot.gcf()
+                fig.set_size_inches(1.25, 0.75)
+                plt.savefig(
+                    planner_input.plan_dir + "/images/" + planner_input.observatory_row["name"] + "_" +
+                    str(planner_input.midtransit_time.isot)[:-4] + ".png",
+                    bbox_inches='tight')
+                plt.close()
             return (None, observable_dict)
         except Exception as e:
             logging.exception("Error when planning one observation event.")
