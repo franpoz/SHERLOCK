@@ -30,9 +30,9 @@ with elapsed_timer() as elapsed:
     # signals is the stronger one to be selected.
     # 10 Set the strength of the quorum algorithm votes, which makes every vote that is found to increase the SNR by
     # a factor of 1.2 for our selection.
-    sherlock = Sherlock([SherlockTarget(MissionObjectInfo("TIC 181804752", 'all'),
+    sherlock = Sherlock([SherlockTarget(MissionObjectInfo(mission_id="TIC 181804752", sectors='all'),
                                         max_runs=10, period_protect=12, period_min=1, period_max=10, bin_minutes=20,
-                                 cpu_cores=3, snr_min=6, sde_min=6, mask_mode="subtract",
-                                 best_signal_algorithm='quorum', quorum_strength=1.2)])\
+                                        cpu_cores=3, snr_min=6, sde_min=6, mask_mode="subtract",
+                                        best_signal_algorithm='quorum', quorum_strength=1.2)])\
         .run()
     print("Analysis took " + elapsed() + "s")

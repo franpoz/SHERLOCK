@@ -2,7 +2,6 @@ from contextlib import contextmanager
 from timeit import default_timer
 from sherlockpipe.search.sherlock import Sherlock
 from lcbuilder.objectinfo.InputObjectInfo import InputObjectInfo
-from lcbuilder.objectinfo.MissionFfiIdObjectInfo import MissionFfiIdObjectInfo
 from lcbuilder.objectinfo.MissionInputObjectInfo import MissionInputObjectInfo
 from lcbuilder.objectinfo.MissionObjectInfo import MissionObjectInfo
 
@@ -41,24 +40,29 @@ with elapsed_timer() as elapsed:
     # 10 Select the max period for a transit to be fit.
     # 11 Select the binning to calculate RMS
     # 12 Select the number of CPU cores to be used for the transit search.
-    # 13 Select the found transits masking method. We use subtract here as example, but it is discouraged.
-    # 14 Select the best signal algorithm, which provides a different implementation to decide which of the detrend
+    # 13 Select the best signal algorithm, which provides a different implementation to decide which of the detrend
     # signals is the stronger one to be selected.
-    # 15 Set the strength of the quorum algorithm votes, which makes every vote that is found to increase the SNR by
+    # 14 Set the strength of the quorum algorithm votes, which makes every vote that is found to increase the SNR by
     # a factor of 1.2 for our selection.
-    arguments = {"smoooth_enabled": True, "high_rms_enabled": True, "high_rms_threshold": 2.5,
-                 "high_rms_bin_hours": 3,
-                 "detrends_number": 12, "detrend_method": "gp", "cpu_cores": 2, "auto_detrend_enabled": True,
-                 "auto_detrend_ratio": 0.33, "auto_detrend_method": "cosine",
+    object_info_arguments = {"smoooth_enabled": True, "high_rms_enabled": True, "high_rms_threshold": 2.5,
+                             "high_rms_bin_hours": 3, "auto_detrend_enabled": True, "auto_detrend_ratio": 0.33,
+                             "auto_detrend_method": "cosine"}
+    arguments = {"detrends_number": 12, "detrend_method": "gp", "cpu_cores": 2,
                  "max_runs": 10, "period_protect": 12, "period_min": 1, "period_max": 10, "bin_minutes": 20,
-                 "run_cores": 3, "snr_min": 6, "sde_min": 6, "mask_mode": "subtract",
+                 "run_cores": 3, "snr_min": 6, "sde_min": 6,
                  "best_signal_algorithm": 'quorum', "quorum_strength": 1.2}
-    sherlock = Sherlock([SherlockTarget(MissionFfiIdObjectInfo("TIC 181804752", 'all'), **arguments),
-                                        SherlockTarget(MissionObjectInfo("TIC 259168516", [15]), **arguments),
-                                        SherlockTarget(MissionObjectInfo('KIC 10905746', 'all'), **arguments),
-                                        SherlockTarget(MissionObjectInfo('EPIC 249631677', 'all'), **arguments),
-                                        SherlockTarget(MissionInputObjectInfo("TIC 181804752", 'example_lc.csv',
-                                                               initial_mask=[[1625, 1626], [1645, 1646]]), **arguments),
-                                        SherlockTarget(InputObjectInfo("example_lc.csv", initial_detrend_period=0.8), **arguments)]) \
+    sherlock = Sherlock([SherlockTarget(MissionObjectInfo(mission_id="TIC 181804752", sectors='all', cadence='long',
+                                                          **object_info_arguments), **arguments),
+                                        SherlockTarget(MissionObjectInfo(mission_id="TIC 259168516", sectors=[15],
+                                                                         **object_info_arguments), **arguments),
+                                        SherlockTarget(MissionObjectInfo(mission_id='KIC 10905746', sectors='all',
+                                                                         **object_info_arguments), **arguments),
+                                        SherlockTarget(MissionObjectInfo(mission_id='EPIC 249631677', sectors='all',
+                                                                         **object_info_arguments), **arguments),
+                                        SherlockTarget(MissionInputObjectInfo(mission_id="TIC 181804752", input_file='example_lc.csv',
+                                                                              initial_mask=[[1625, 1626], [1645, 1646]],
+                                                                              **object_info_arguments), **arguments),
+                                        SherlockTarget(InputObjectInfo(input_file="example_lc.csv", auto_detrend_period=0.8,
+                                                                       **object_info_arguments), **arguments)]) \
         .run()
     print("Analysis took " + elapsed() + "s")
