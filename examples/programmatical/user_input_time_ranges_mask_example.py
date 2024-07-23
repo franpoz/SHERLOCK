@@ -17,7 +17,7 @@ def elapsed_timer():
 
 with elapsed_timer() as elapsed:
     # We will use only one mission object and will mask a time range from 1550 to 1551 and from 1560 to 1561
-    sherlock = Sherlock([SherlockTarget(MissionObjectInfo("TIC 181804752", 'all',
+    sherlock = Sherlock([SherlockTarget(MissionObjectInfo(mission_id="TIC 181804752", sectors='all',
                                                           initial_mask=[[1550, 1551], [1560, 1561]]))])\
         .run()
     print("Analysis took " + elapsed() + "s")
