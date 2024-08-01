@@ -29,7 +29,7 @@ setuptools.setup(
                         'beautifulsoup4==4.9.3', # Parsing HTML and XML, for OIs extraction
                         "celerite==0.4.0", # Allesfitter dependency
                         "corner==2.2.2", # Allesfitter dependency
-                        "dearwatson==0.10.9", # Vetting
+                        "dearwatson==0.11.1", # Vetting
                         "dynesty==1.0.1", # Allesfitter dependency
                         "emcee==3.0.2", # Allesfitter dependency
                         "h5py==3.10.0", # Allesfitter dependency
@@ -46,7 +46,6 @@ setuptools.setup(
                         'statsmodels==0.13.5', # Allesfitter dependency, might conflict with lcbuilder dependency for autocorrelation
                         'timezonefinder==5.2.0', # Observation plan
                         'tqdm==4.56.0',
-                        'triceratops==1.0.17', # Validation
                         'uncertainties==3.1.5' # Observation plan
     ]
 )
