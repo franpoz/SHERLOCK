@@ -14,4 +14,4 @@ if __name__ == '__main__':
     ap.add_argument('--gpt', action='store_true', default=False, help="Whether the GPT analysis should be run.", required=False)
     ap.add_argument('--gpt_key', type=str, default=None, help="The GPT api key.", required=False)
     args = ap.parse_args()
-    run_vet(args.object_dir, args.candidate, args.properties, args.cpus, run_iatson=args.ml, run_gpt=args.gpt, gpt_key=args.gpt_key)
+    run_vet(args.object_dir, args.candidate, args.properties, args.cpus, run_iatson=args.ml, run_gpt=args.gpt, gpt_key=args.gpt_key, only_summary=args.only_summary)
