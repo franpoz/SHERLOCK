@@ -285,7 +285,7 @@ class Validator(ToolWithCandidate):
             the_file.write("MEAN" + "," + str(fpp_sum) + "," + str(nfpp_sum) + "," + str(fpp2_sum) + "," +
                            str(fpp3_sum))
         logging.info("Plotting mean scenario outputs")
-        Validator.plot_triceratops_output(fpp_sum, nfpp_sum, fpp_err, nfpp_err, save_dir)
+        Validator.plot_triceratops_output([fpp_sum], [nfpp_sum], [fpp_err], [nfpp_err], save_dir)
         probs_total_df = probs_total_df.groupby(["ID", "scenario"], as_index=False).mean()
         target.probs = probs_total_df
         target.plot_fits(save=True, fname=save_dir + "/scenario_fits", time=bin_centers, flux_0=bin_means,
@@ -306,7 +306,7 @@ class Validator(ToolWithCandidate):
         return save_dir
 
     @staticmethod
-    def plot_triceratops_output(fpp, nfpp, fpp_err, nfpp_err, target_dir):
+    def plot_triceratops_output(fpps, nfpps, fpp_errs, nfpp_errs, target_dir, labels=None, legend_position='upper right'):
         """
         Given the TRICERATOPS informed FPP and NFPP, creates a plot with the information and the FP and Likely Planet
         thresholds
@@ -321,8 +321,11 @@ class Validator(ToolWithCandidate):
         likely = (0.5, 0.001)
         likely_nfpp = 0.1
         fig, axs = plt.subplots(1, 1, figsize=(8, 8), constrained_layout=True)
-        nfpp = nfpp if nfpp > min_fpp else min_fpp
-        fpp = fpp if fpp > min_fpp else min_fpp
+        for index, fpp in enumerate(fpps):
+            nfpp = nfpps[index] if nfpps[index] > min_fpp else min_fpp
+            fpp = fpp if fpp > min_fpp else min_fpp
+            axs.errorbar(fpp, nfpp, xerr=fpp_errs[index], yerr=nfpp_errs[index], marker="o", markersize=15,
+                         label=labels[index] if labels is not None else None)
         #axs.set_xlim([0, 1])
         #axs.set_ylim([0, 1])
         axs.set_yscale('log', base=10)
@@ -332,10 +335,9 @@ class Validator(ToolWithCandidate):
         axs.set_ylabel('NFPP', fontsize=25)
         axs.axhspan(0, likely[1], 0, likely[0], color="lightgreen", label="Likely Planet")
         axs.axhspan(likely_nfpp, 1, color="gainsboro", label="Likely NFP")
-        axs.errorbar(fpp, nfpp, xerr=fpp_err, yerr=nfpp_err, marker="o", markersize=15, markerfacecolor="blue",
-                     ecolor="cyan")
         axs.plot(min_fpp, min_fpp, markersize=0)
-        #axs.legend(loc='upper right', fontsize=25)
+        if labels is not None:
+            axs.legend(loc=legend_position, fontsize=20)
         axs.text(0.77, 0.115, "Likely NFP", fontsize=20)
         axs.text(0.23, 0.00057, "Likely Planet", fontsize=20)
         axs.tick_params(axis='both', which='major', labelsize=15)
@@ -543,7 +545,7 @@ class TriceratopsThreadValidator:
         :return: the FPP values, the probabilities dataframe and additional target values
         """
         #input.target.calc_depths(tdepth=input.depth, all_ap_pixels=input.apertures)
-        input.target.stars.loc['plx', 0] = 0
+        input.target.stars.loc[0, 'plx'] = 0
         input.target.calc_probs(time=input.time, flux_0=input.flux, flux_err_0=input.sigma, P_orb=float(input.period),
                                 contrast_curve_file=input.contrast_curve, parallel=True)
         fpp2 = 1 - 25 * (1 - input.target.FPP) / (25 * (1 - input.target.FPP) + input.target.FPP)
