@@ -69,7 +69,7 @@ class TestsEntrypoints(unittest.TestCase):
         search_dir = results_dir + "TIC305048087_[2]"
         try:
             run_search(properties_dir, False, results_dir, 4)
-            self.assertEquals(20, len(os.listdir(search_dir)))
+            self.assertEquals(21, len(os.listdir(search_dir)))
         finally:
             shutil.rmtree(search_dir, ignore_errors=True)
 
