@@ -8,7 +8,27 @@
 
 
 ## Citation
-We are currently working on a specific paper for SHERLOCK. In the meantime, the best way to cite SHERLOCK is by referencing the first paper where it was used [Pozuelos et al. (2020)](https://ui.adsabs.harvard.edu/abs/2020A%26A...641A..23P/abstract):
+We have already published a specific work presenting SHERLOCK! Hence, the best way to cite the software is referencing [Dévora-Pajares et al. (2024)](https://ui.adsabs.harvard.edu/abs/2024MNRAS.532.4752D/abstract):
+
+```
+@article{10.1093/mnras/stae1740,
+    author = {Dévora-Pajares, Martín and Pozuelos, Francisco J and Thuillier, Antoine and Timmermans, Mathilde and Van Grootel, Valérie and Bonidie, Victoria and Mota, Luis Cerdeño and Suárez, Juan C},
+    title = "{The sherlock pipeline: new exoplanet candidates in the WASP-16, HAT-P-27, HAT-P-26, and TOI-2411 systems}",
+    journal = {Monthly Notices of the Royal Astronomical Society},
+    volume = {532},
+    number = {4},
+    pages = {4752-4773},
+    year = {2024},
+    month = {07},
+    abstract = "{The launches of NASA Kepler and Transiting Exoplanet Survey Satellite (TESS) missions have significantly enhanced the interest in the exoplanet field during the last 15 yr, providing a vast amount of public data that are being exploited by the community thanks to the continuous development of new analysis tools. However, using these tools is not straightforward, and users must dive into different codes, input–output formats, and methodologies, hindering an efficient and robust exploration of the available data. We present the sherlock pipeline, an end-to-end public software that allows the users to easily explore observations from space-based missions such as TESS or Kepler to recover known planets and candidates issued by the official pipelines and search for new planetary candidates that remained unnoticed. The pipeline incorporates all the steps to search for transit-like features, vet potential candidates, provide statistical validation, conduct a Bayesian fitting, and compute observational windows from ground-based observatories. Its performance is tested against a catalogue of known and confirmed planets from the TESS mission, trying to recover the official TESS Objects of Interest (TOIs), explore the existence of companions that have been missed, and release them as new planetary candidates. sherlock demonstrated an excellent performance, recovering 98 per cent of the TOIs and confirmed planets in our test sample and finding new candidates. Specifically, we release four new planetary candidates around the systems WASP-16 (with P \\$\\sim\\$ 10.46 d and R \\$\\sim\\$ 2.20 \\$\\mathrm\\{ R\\}\_\\{\\oplus \\}\\$), HAT-P-27 (with P \\$\\sim\\$ 1.20 d and R \\$\\sim\\$ 4.33 \\$\\mathrm\\{ R\\}\_\\{\\oplus \\}\\$), HAT-P-26 (with P \\$\\sim\\$ 6.59 d and R \\$\\sim\\$ 1.97 \\$\\mathrm\\{ R\\}\_\\{\\oplus \\}\\$), and TOI-2411 (with P \\$\\sim\\$ 18.75 d and R \\$\\sim\\$ 2.88 \\$\\mathrm\\{ R\\}\_\\{\\oplus \\}\\$).}",
+    issn = {0035-8711},
+    doi = {10.1093/mnras/stae1740},
+    url = {https://doi.org/10.1093/mnras/stae1740},
+    eprint = {https://academic.oup.com/mnras/article-pdf/532/4/4752/58747111/stae1740.pdf},
+}
+```
+
+Additionally, we also encourage the citation of [Pozuelos et al. (2020)](https://ui.adsabs.harvard.edu/abs/2020A%26A...641A..23P/abstract) because it is the first work where the first preliminary version of SHERLOCK was used:
 
 ```
 @ARTICLE{2020A&A...641A..23P,
