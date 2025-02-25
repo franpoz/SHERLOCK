@@ -20,6 +20,7 @@ from lcbuilder.curve_preparer.Flattener import Flattener
 from lcbuilder.curve_preparer.Flattener import FlattenInput
 from lcbuilder.objectinfo.MissionObjectInfo import MissionObjectInfo
 from lcbuilder.objectinfo.InvalidNumberOfSectorsError import InvalidNumberOfSectorsError
+from lcbuilder.objectinfo.preparer.mission_data_preparer import MissionDataPreparer
 from watson.watson import Watson
 
 from sherlockpipe.ois.OisManager import OisManager
@@ -220,8 +221,17 @@ class Sherlock:
         Entrypoint of Sherlock which launches the main execution for all the input object_infos
         """
         if (self.sherlock_targets is None or len(self.sherlock_targets) == 0) and self.use_ois:
-            self.sherlock_targets = [SherlockTarget(MissionObjectInfo('all', object_id))
-                                     for object_id in self.run_ois["Object Id"].astype('string').unique()]
+            self.sherlock_targets = []
+            lcbuilder = LcBuilder()
+            for object_id in self.run_ois["Object Id"].astype('string').unique():
+                mission, _, _ = MissionDataPreparer.parse_object_id(object_id)
+                cadences = [LcBuilder.DEFAULT_CADENCES_FOR_MISSION[mission]]
+                authors = [lcbuilder.get_default_author(object_id, cadences[0])]
+            self.sherlock_targets = self.sherlock_targets + [
+                SherlockTarget(MissionObjectInfo('all', object_id, author=authors,
+                                                 cadence=[LcBuilder.DEFAULT_CADENCES_FOR_MISSION[
+                                                              MissionDataPreparer.parse_object_id(object_id)]]))
+                ]
         for sherlock_target in self.sherlock_targets:
             if all_targets_properties is not None:
                 for key, value in all_targets_properties.items():
@@ -277,9 +287,9 @@ class Sherlock:
             object_info = sherlock_target.object_info
             i = 0
             for lc in lcs:
-                lc_df = pandas.DataFrame(columns=['#time', 'flux', 'flux_err'])
+                lc_df = pandas.DataFrame(columns=['time', 'flux', 'flux_err'])
                 args = np.argwhere(~np.isnan(lc)).flatten()
-                lc_df['#time'] = time[args]
+                lc_df['time'] = time[args]
                 lc_df['flux'] = lc[args]
                 lc_df['flux_err'] = np.array(flux_err[args])
                 flux_err_mean = np.nanmean(lc_df['flux_err'])
@@ -582,8 +592,8 @@ class Sherlock:
             logging.info("======================================")
             fov_dir = object_dir + "/fov"
             Watson.vetting_field_of_view(fov_dir, mission, object_num, lc_build.cadence, lc_build.star_info.ra,
-                                         lc_build.star_info.dec, lc_build.sectors if isinstance(lc_build.sectors, list)
-                                         else lc_build.sectors.tolist(), lc_build.tpf_source, lc_build.tpf_apertures)
+                                         lc_build.star_info.dec, lc_build.sectors if isinstance(lc_build.sectors, (list, np.ndarray))
+                                         else list(lc_build.sectors), None, lc_build.tpf_apertures)
         if sherlock_target.ois_mask and self.ois is not None:
             logging.info("Masking OIS")
             target_ois = self.ois[self.ois["Object Id"] == object_info.mission_id()]
