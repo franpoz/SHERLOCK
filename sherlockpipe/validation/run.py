@@ -43,7 +43,7 @@ def run_validate(args):
     if args.candidate is None:
         logging.info("Reading validation input from properties file: %s", args.properties)
         user_properties = common.load_from_yaml(args.properties)
-        candidate = pd.DataFrame(columns=['id', 'period', 'depth', 't0', 'sectors', 'ffi', 'number', 'lc'])
+        candidate = pd.DataFrame(columns=['id', 'period', 'depth', 't0', 'sectors', 'number', 'lc', 'curve', 'rp_rs', 'a'])
         candidate = candidate.append(user_properties, ignore_index=True)
         candidate['id'] = star_df.iloc[0]["obj_id"]
     else:
@@ -58,5 +58,6 @@ def run_validate(args):
     if args.sectors is not None:
         candidate['sectors'] = args.sectors
     validator = Validator(object_dir, validation_dir, len(candidate) == 1, candidates)
-    validator.validate(candidate, star_df.iloc[0], args.cpus, args.contrast_curve, args.bins, args.scenarios,
-                       args.sigma_mode)
+    validator.validate(candidate, star_df.iloc[0], args.cpus, args.contrast_curve, args.additional_stars,
+                       args.bins, args.scenarios, args.sigma_mode, ignore_ebs=args.ignore_ebs,
+                       resolved_companion=args.resolved_companion, ignore_background_stars=args.ignore_background_stars)

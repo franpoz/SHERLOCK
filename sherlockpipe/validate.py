@@ -18,6 +18,15 @@ def validation_args_parse(arguments=None):
                     required=False)
     ap.add_argument('--contrast_curve', type=str, default=None, help="The contrast curve in csv format.",
                     required=False)
+    ap.add_argument("--additional_stars", type=str, default=None, help="The additional stars to use in the triceratops nearby list.",
+                    required=False)
+    ap.add_argument('--ignore_ebs', action='store_true', default=False, help="Whether EB scenarios should "
+                    "be ruled out (this is only recommended when follow-up observations discard them).", required=False)
+    ap.add_argument('--ignore_background_stars', action='store_true', default=False, help="Whether background star scenarios should "
+                    "be ruled out (this is only recommended when archive imaging discards them).", required=False)
+    ap.add_argument('--resolved_companion', type=str, default=None, help="Whether an unresolved companion is spotted or discarded."
+                                                                         " 'yes' means there is a resolved companion, 'no' means there are NO resolved companions. "
+                                                                         "This flag should not be set if the companion status is not known on beforehand", required=False)
     ap.add_argument('--sectors', type=str, default=None, help="The sectors to be used.",
                     required=False)
     return ap.parse_args(arguments)

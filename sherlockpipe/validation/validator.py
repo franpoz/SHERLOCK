@@ -27,7 +27,9 @@ class Validator(ToolWithCandidate):
         self.object_dir = os.getcwd() if object_dir is None else object_dir
         self.data_dir = validation_dir
 
-    def validate(self, candidate, star, cpus, contrast_curve_file, bins=100, scenarios=5, sigma_mode="flux_err"):
+    def validate(self, candidate, star, cpus, contrast_curve_file, additional_stars_file,
+                 bins=100, scenarios=5, sigma_mode="flux_err", ignore_ebs=False, resolved_companion=None,
+                 ignore_background_stars=False):
         """
         Runs the validation storing a PDF report with the results together to some csvs for reproducibility.
 
@@ -35,9 +37,13 @@ class Validator(ToolWithCandidate):
         :param star: the star dataframe
         :param cpus: the number of cpus to be used
         :param contrast_curve_file: the auxiliary contrast curve file to give more information to the validation engine
+        :param additional_stars_file: additional list of stars to be appended to triceratops stars list
         :param bins: the number of bins to resize the light curve
         :param scenarios: the number of scenarios to compute the validation and get the average
         :param sigma_mode: whether to compute the sigma for the validation from the 'flux_err' or the 'binning'
+        :param ignore_ebs: whether EB scenarios should be ignored
+        :param resolved_companion: whether a resolved companion can be ensured or discarded
+        :param ignore_background_stars: whether background star scenarios should be ignored
         """
         object_id = candidate["id"]
         period = candidate.loc[candidate['id'] == object_id]['period'].iloc[0]
@@ -72,7 +78,9 @@ class Validator(ToolWithCandidate):
         try:
             self.execute_triceratops(cpus, self.data_dir, object_id, sectors, lc_file, transit_depth,
                                           period, t0, duration, rp_rstar, a_rstar, bins, scenarios, sigma_mode,
-                                          contrast_curve_file, run, star_df=star)
+                                          contrast_curve_file, additional_stars_file, run, star_df=star,
+                                     ignore_ebs=ignore_ebs, resolved_companion=resolved_companion,
+                                     ignore_background_stars=ignore_background_stars)
             report = ValidationReport(self.data_dir + '/triceratops', "statistical_validation_report.pdf", object_id, star['ra'], star['dec'],
                                        t0, period, duration, transit_depth, star["v"], star["j"], star["h"],
                                        star["k"])
@@ -89,7 +97,8 @@ class Validator(ToolWithCandidate):
 
     def execute_triceratops(self, cpus, indir, object_id, sectors, lc_file, transit_depth, period, t0,
                             transit_duration, rp_rstar, a_rstar, bins, scenarios, sigma_mode, contrast_curve_file,
-                            run, star_df):
+                            additional_stars_file, run, star_df, ignore_ebs, resolved_companion,
+                            ignore_background_stars):
         """ Calculates probabilities of the signal being caused by any of the following astrophysical sources:
         TP No unresolved companion. Transiting planet with Porb around target star. (i, Rp)
         EB No unresolved companion. Eclipsing binary with Porb around target star. (i, qshort)
@@ -129,8 +138,12 @@ class Validator(ToolWithCandidate):
         :param scenarios: the number of scenarios to validate
         :param sigma_mode: the way to calculate the sigma for the validation ['flux_err' | 'binning']
         :param contrast_curve_file: the auxiliary contrast curve file to give more information to the validation engine
+        :param additional_stars_file: the additional stars to be appended to triceratops dataframe
         :param run: the search run where the candidate was spotted
         :param star_df: the star dataframe containing the host parameters
+        :param ignore_ebs: whether EB scenarios should be ignored
+        :param resolved_companion: whether a resolved companion can be ensured or discarded
+        :param ignore_background_stars: whether background star scenarios should be ignored
         :return str: the directory where the results are stored
         """
         save_dir = indir + "/triceratops"
@@ -162,7 +175,7 @@ class Validator(ToolWithCandidate):
                 return save_dir, None, None
         logging.info("Will execute validation for sectors: " + str(sectors))
         lc = pd.read_csv(lc_file, header=0)
-        time, flux, flux_err = lc["#time"].values, lc["flux"].values, lc["flux_err"].values
+        time, flux, flux_err = lc["time"].values, lc["flux"].values, lc["flux_err"].values
         time, flux, flux_err = self.mask_previous_candidates(time, flux, flux_err, run)
         if contrast_curve_file is not None:
             logging.info("Reading contrast curve %s", contrast_curve_file)
@@ -176,6 +189,10 @@ class Validator(ToolWithCandidate):
             plt.savefig(save_dir + "/contrast_curve.png")
             plt.clf()
             shutil.copy(contrast_curve_file, save_dir + "/cc_" + os.path.basename(contrast_curve_file))
+        additional_stars_df = None
+        if additional_stars_file is not None:
+            logging.info("Reading additional stars file %s", additional_stars_file)
+            additional_stars_df = pd.read_csv(additional_stars_file, index_col=False)
         logging.info("Preparing validation light curve for target")
         lc_len = len(time)
         zeros_lc = np.zeros(lc_len)
@@ -198,6 +215,36 @@ class Validator(ToolWithCandidate):
         logging.info("Flux err (ppm) = %s", sigma * 1000000)
         logging.info("Acquiring triceratops target")
         target = tr.target(ID=id_int, mission=mission, sectors=sectors)
+        if additional_stars_df is not None:
+            for row_index, row in additional_stars_df.iterrows():
+                target_id = row['obj_id'].removeprefix('TIC ')
+                if len(target.stars.loc[target.stars['ID'] == target_id]) == 0:
+                    logging.info("Appending star with id %s", row['obj_id'])
+                    target.add_star(row['obj_id'], row['tess_mag'], row['bound'])
+                else:
+                    logging.info("Overwriting star with id %s", row['obj_id'])
+                if row['tess_mag'] != None and not np.isnan(row['tess_mag']):
+                    target.stars.loc[target.stars['ID'] == target_id, 'Tmag'] = row['tess_mag']
+                if row['j'] != None and not np.isnan(row['j']):
+                    target.stars.loc[target.stars['ID'] == target_id, 'Jmag'] = row['j']
+                if row['h'] != None and not np.isnan(row['h']):
+                    target.stars.loc[target.stars['ID'] == target_id, 'Hmag'] = row['h']
+                if row['k'] != None and not np.isnan(row['k']):
+                    target.stars.loc[target.stars['ID'] == target_id, 'Kmag'] = row['k']
+                if row['ra'] != None and not np.isnan(row['ra']):
+                    target.stars.loc[target.stars['ID'] == target_id, 'ra'] = row['ra']
+                if row['dec'] != None and not np.isnan(row['dec']):
+                    target.stars.loc[target.stars['ID'] == target_id, 'dec'] = row['dec']
+                if row['M_star'] != None and not np.isnan(row['M_star']):
+                    target.stars.loc[target.stars['ID'] == target_id, 'mass'] = row['M_star']
+                if row['R_star'] != None and not np.isnan(row['R_star']):
+                    target.stars.loc[target.stars['ID'] == target_id, 'rad'] = row['R_star']
+                if row['Teff_star'] != None and not np.isnan(row['Teff_star']):
+                    target.stars.loc[target.stars['ID'] == target_id, 'Teff'] = row['Teff_star']
+                if row['sep_arsec'] != None and not np.isnan(row['sep_arsec']):
+                    target.stars.loc[target.stars['ID'] == target_id, 'sep (arcsec)'] = row['sep_arsec']
+                if row['PA'] != None and not np.isnan(row['PA']):
+                    target.stars.loc[target.stars['ID'] == target_id, 'PA (E of N)'] = row['PA']
         # TODO allow user input apertures
         logging.info("Reading apertures from directory")
         apertures = yaml.load(open(self.object_dir + "/apertures.yaml"), yaml.SafeLoader)
@@ -218,9 +265,13 @@ class Validator(ToolWithCandidate):
             target.stars.loc[0, 'rad'] = star_df['R_star']
         if np.isnan(target.stars.loc[0, 'Teff']):
             target.stars.loc[0, 'Teff'] = star_df['Teff']
+        bound_stars = additional_stars_df.loc[additional_stars_df['bound'] == True, 'obj_id'].tolist()
         logging.info("Preparing validation processes inputs")
         input_n_times = [ValidatorInput(save_dir, copy.deepcopy(target), bin_centers, bin_means, sigma, period, depth,
-                                        valid_apertures, value, contrast_curve_file)
+                                        valid_apertures, value, contrast_curve_file, ignore_ebs=ignore_ebs,
+                                        resolved_companion=resolved_companion,
+                                        ignore_background_stars=ignore_background_stars,
+                                        bound_stars=bound_stars)
                          for value in range(0, scenarios)]
         logging.info("Start validation processes")
         #TODO fix usage of cpus returning same value for all executions
@@ -233,9 +284,12 @@ class Validator(ToolWithCandidate):
         fpp_sum = 0
         fpp2_sum = 0
         fpp3_sum = 0
+        fpp_system_sum = 0
+        fpp2_system_sum = 0
+        fpp3_system_sum = 0
         nfpp_sum = 0
         probs_total_df = None
-        scenarios_num = len(validation_results[0][4])
+        scenarios_num = len(validation_results[0][7])
         star_num = np.zeros((5, scenarios_num))
         u1 = np.zeros((5, scenarios_num))
         u2 = np.zeros((5, scenarios_num))
@@ -249,13 +303,15 @@ class Validator(ToolWithCandidate):
         target.fluxratio_comp = np.zeros(scenarios_num)
         logging.info("Computing final probabilities from the %s scenarios", scenarios)
         fpps = [validation_result[0] for validation_result in validation_results]
+        fpps_system = [validation_result[4] for validation_result in validation_results]
         nfpps = [validation_result[1] for validation_result in validation_results]
         fpp_err = np.std(fpps)
+        fpp_system_err = np.std(fpps_system)
         nfpp_err = np.std(nfpps)
         i = 0
         with open(save_dir + "/validation.csv", 'w') as the_file:
-            the_file.write("scenario,FPP,NFPP,FPP2,FPP3+\n")
-            for fpp, nfpp, fpp2, fpp3, probs_df, star_num_arr, u1_arr, u2_arr, fluxratio_EB_arr, fluxratio_comp_arr \
+            the_file.write("scenario,FPP,FPP2,FPP3+,FPP_sys,FPP2_sys,FPP3+_sys,NFPP\n")
+            for fpp, nfpp, fpp2, fpp3, fpp_system, fpp2_system, fpp3_system, probs_df, star_num_arr, u1_arr, u2_arr, fluxratio_EB_arr, fluxratio_comp_arr \
                     in validation_results:
                 if probs_total_df is None:
                     probs_total_df = probs_df
@@ -264,32 +320,43 @@ class Validator(ToolWithCandidate):
                 fpp_sum = fpp_sum + fpp
                 fpp2_sum = fpp2_sum + fpp2
                 fpp3_sum = fpp3_sum + fpp3
+                fpp_system_sum = fpp_system_sum + fpp_system
+                fpp2_system_sum = fpp2_system_sum + fpp2_system
+                fpp3_system_sum = fpp3_system_sum + fpp3_system
                 nfpp_sum = nfpp_sum + nfpp
                 star_num[i] = star_num_arr
                 u1[i] = u1_arr
                 u2[i] = u2_arr
                 fluxratio_EB[i] = fluxratio_EB_arr
                 fluxratio_comp[i] = fluxratio_comp_arr
-                the_file.write(str(i) + "," + str(fpp) + "," + str(nfpp) + "," + str(fpp2) + "," + str(fpp3) + "\n")
+                the_file.write(str(i) + "," + str(fpp) + "," + str(fpp2) + "," + str(fpp3) + "," + str(fpp_system) +
+                               "," + str(fpp2_system) + "," + str(fpp3_system) + "," + str(nfpp) + "\n")
                 i = i + 1
             for i in range(0, scenarios_num):
-                target.star_num[i] = np.mean(star_num[:, i])
                 target.u1[i] = np.mean(u1[:, i])
                 target.u2[i] = np.mean(u2[:, i])
                 target.fluxratio_EB[i] = np.mean(fluxratio_EB[:, i])
                 target.fluxratio_comp[i] = np.mean(fluxratio_comp[:, i])
             fpp_sum = fpp_sum / scenarios
-            nfpp_sum = nfpp_sum / scenarios
             fpp2_sum = fpp2_sum / scenarios
             fpp3_sum = fpp3_sum / scenarios
-            the_file.write("MEAN" + "," + str(fpp_sum) + "," + str(nfpp_sum) + "," + str(fpp2_sum) + "," +
-                           str(fpp3_sum))
+            fpp_system_sum = fpp_system_sum / scenarios
+            fpp2_system_sum = fpp2_system_sum / scenarios
+            fpp3_system_sum = fpp3_system_sum / scenarios
+            nfpp_sum = nfpp_sum / scenarios
+            the_file.write("MEAN" + "," + str(fpp_sum) + "," + str(fpp2_sum) + "," +
+                           str(fpp3_sum) + "," + str(fpp_system_sum) + "," + str(fpp2_system_sum) +
+                           "," + str(fpp3_system_sum) + "," + str(nfpp_sum))
         logging.info("Plotting mean scenario outputs")
-        Validator.plot_triceratops_output([fpp_sum], [nfpp_sum], [fpp_err], [nfpp_err], save_dir)
+        if fpp_sum != fpp_system_sum:
+            Validator.plot_triceratops_output([fpp_sum, fpp_system_sum], [nfpp_sum] * 2,
+                                              [fpp_err, fpp_system_err], [nfpp_err] * 2, save_dir,
+                                              labels=['FPP', 'FPP_system'])
+        else:
+            Validator.plot_triceratops_output([fpp_sum], [nfpp_sum],
+                                              [fpp_err], [nfpp_err], save_dir)
         probs_total_df = probs_total_df.groupby(["ID", "scenario"], as_index=False).mean()
         target.probs = probs_total_df
-        target.plot_fits(save=True, fname=save_dir + "/scenario_fits", time=bin_centers, flux_0=bin_means,
-                         flux_err_0=sigma)
         probs_total_df["scenario"] = pd.Categorical(probs_total_df["scenario"], ["TP", "EB", "EBx2P", "PTP", "PEB",
                                                                                  "PEBx2P", "STP", "SEB", "SEBx2P",
                                                                                  "DTP", "DEB", "DEBx2P", "BTP", "BEB",
@@ -300,9 +367,12 @@ class Validator(ToolWithCandidate):
         logging.info("Final probabilities computed")
         logging.info("---------------------------------")
         logging.info("FPP=%s", fpp_sum)
-        logging.info("NFPP=%s", nfpp_sum)
         logging.info("FPP2(Lissauer et al, 2012)=%s", fpp2_sum)
         logging.info("FPP3+(Lissauer et al, 2012)=%s", fpp3_sum)
+        logging.info("FPP_system=%s", fpp_system_sum)
+        logging.info("FPP2_system(Lissauer et al, 2012)=%s", fpp2_system_sum)
+        logging.info("FPP3+_system(Lissauer et al, 2012)=%s", fpp3_system_sum)
+        logging.info("NFPP=%s", nfpp_sum)
         return save_dir
 
     @staticmethod
@@ -376,7 +446,7 @@ class Validator(ToolWithCandidate):
     #         shutil.rmtree(vespa_dir, ignore_errors=True)
     #     os.mkdir(vespa_dir)
     #     lc = pd.read_csv(lc_file, header=0)
-    #     time, flux, flux_err = lc["#time"].values, lc["flux"].values, lc["flux_err"].values
+    #     time, flux, flux_err = lc["time"].values, lc["flux"].values, lc["flux_err"].values
     #     lc_len = len(time)
     #     zeros_lc = np.zeros(lc_len)
     #     logging.info("Preparing validation light curve for target")
@@ -548,20 +618,64 @@ class TriceratopsThreadValidator:
         input.target.stars.loc[0, 'plx'] = 0
         input.target.calc_probs(time=input.time, flux_0=input.flux, flux_err_0=input.sigma, P_orb=float(input.period),
                                 contrast_curve_file=input.contrast_curve, parallel=True)
-        fpp2 = 1 - 25 * (1 - input.target.FPP) / (25 * (1 - input.target.FPP) + input.target.FPP)
-        fpp3 = 1 - 50 * (1 - input.target.FPP) / (50 * (1 - input.target.FPP) + input.target.FPP)
-        input.target.probs.to_csv(input.save_dir + "/validation_" + str(input.run) + "_scenarios.csv", index=False)
+        indexes = list(input.target.probs.index)
+        if input.ignore_ebs:
+            indexes = input.target.probs.loc[~input.target.probs['scenario'].str.contains('EB', na=False)].index
+            for index, row in input.target.probs.iloc[~indexes].iterrows():
+                logging.info(f"Ignore EBs is enabled. Ignoring scenario: Star {row['ID']}, scenario {row['scenario']}")
+        if input.resolved_companion == 'yes':
+            new_indexes = input.target.probs.loc[(~((input.target.probs['scenario'] == 'TP') |
+                                                 (input.target.probs['scenario'] == 'EB') |
+                                                 (input.target.probs['scenario'] == 'EBx2P'))) & ~((input.target.probs['ID'].isin([int(star) for star in input.bound_stars])) & ((input.target.probs['scenario'] == 'NTP') |
+                                                 (input.target.probs['scenario'] == 'NEB') |
+                                                 (input.target.probs['scenario'] == 'NEBx2P')))].index
+            for index, row in input.target.probs.iloc[~new_indexes].iterrows():
+                logging.info(f"Resolved companion is set to `yes`. Ignoring scenario: Star {row['ID']}, scenario {row['scenario']}")
+            indexes = list(set(indexes) & set(new_indexes))
+        if input.ignore_background_stars:
+            new_indexes = input.target.probs.loc[~((input.target.probs['scenario'] == 'DTP') |
+                                                 (input.target.probs['scenario'] == 'DEB') |
+                                                 (input.target.probs['scenario'] == 'DEBx2P') |
+                                                   (input.target.probs['scenario'] == 'BTP') |
+                                                   (input.target.probs['scenario'] == 'BEB') |
+                                                   (input.target.probs['scenario'] == 'BEBx2P')
+                                                   )].index
+            for index, row in input.target.probs.iloc[~new_indexes].iterrows():
+                logging.info(f"Ignore background stars is enabled: Star {row['ID']}, scenario {row['scenario']}")
+            indexes = list(set(indexes) & set(new_indexes))
+        #if input.resolved_companion == 'no':
+        probs = input.target.probs.loc[indexes]
+        star_num = input.target.star_num[indexes]
+        u1 = input.target.u1[indexes]
+        u2 = input.target.u2[indexes]
+        fluxratio_EB = input.target.fluxratio_EB[indexes]
+        fluxratio_comp = input.target.fluxratio_comp[indexes]
+        probs_sum = probs['prob'].sum()
+        probs.loc[:, 'prob'] = probs.loc[:, 'prob'] / probs_sum
+        fpp = 1 - probs.loc[(probs['scenario'].str.startswith("TP")) | (probs['scenario'].str.startswith("PTP")) |
+                            (probs['scenario'].str.startswith("DTP")), 'prob'].sum()
+        nfpp = probs.loc[
+            (probs['scenario'].str.startswith("NTP")) | (probs['scenario'].str.startswith("NEB")), 'prob'].sum()
+        fpp2 = 1 - 25 * (1 - fpp) / (25 * (1 - fpp) + fpp)
+        fpp3 = 1 - 50 * (1 - fpp) / (50 * (1 - fpp) + fpp)
+        fpp_system = 1 - probs.loc[(probs['scenario'].str.startswith("TP")) | (probs['scenario'].str.startswith("PTP")) |
+                            (probs['scenario'].str.startswith("DTP")) | (probs['scenario'].str.startswith("STP")), 'prob'].sum()
+        fpp2_system = 1 - 25 * (1 - fpp_system) / (25 * (1 - fpp_system) + fpp_system)
+        fpp3_system = 1 - 50 * (1 - fpp_system) / (50 * (1 - fpp_system) + fpp_system)
+        input.target.probs.to_csv(input.save_dir + "/validation_" + str(input.run) + "_scenarios_original.csv", index=False)
+        probs.to_csv(input.save_dir + "/validation_" + str(input.run) + "_scenarios.csv", index=False)
         input.target.plot_fits(save=True, fname=input.save_dir + "/scenario_" + str(input.run) + "_fits",
                                time=input.time, flux_0=input.flux, flux_err_0=input.sigma)
-        return input.target.FPP, input.target.NFPP, fpp2, fpp3, input.target.probs, input.target.star_num, \
-               input.target.u1, input.target.u2, input.target.fluxratio_EB, input.target.fluxratio_comp
+        return fpp, nfpp, fpp2, fpp3, fpp_system, fpp2_system, fpp3_system, probs, star_num, u1, u2, fluxratio_EB, fluxratio_comp
 
 
 class ValidatorInput:
     """
     Wrapper class for input arguments of TriceratopsThreadValidator.
     """
-    def __init__(self, save_dir, target, time, flux, sigma, period, depth, apertures, run, contrast_curve):
+    def __init__(self, save_dir, target, time, flux, sigma, period, depth, apertures, run, contrast_curve,
+                 ignore_ebs=False, resolved_companion=None, ignore_background_stars=False,
+                 bound_stars=[]):
         self.save_dir = save_dir
         self.target = target
         self.time = time
@@ -572,3 +686,7 @@ class ValidatorInput:
         self.apertures = apertures
         self.run = run
         self.contrast_curve = contrast_curve
+        self.ignore_ebs = ignore_ebs
+        self.resolved_companion = resolved_companion
+        self.ignore_background_stars = ignore_background_stars
+        self.bound_stars = bound_stars
