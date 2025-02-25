@@ -45,7 +45,7 @@ def run_vet(object_dir, candidate, properties, cpus=os.cpu_count() - 1, run_iats
     transits_df = None
     if candidate is None:
         user_properties = common.load_from_yaml(properties)
-        candidate = pd.DataFrame(columns=['id', 'period', 'depth', 't0', 'sectors', 'number', 'lc'])
+        candidate = pd.DataFrame(columns=['id', 'period', 'depth', 't0', 'sectors', 'number', 'curve', 'rp_rs', 'a'])
         candidate = candidate.append(user_properties, ignore_index=True)
         candidate['id'] = star_df.iloc[0]["obj_id"]
     else:
