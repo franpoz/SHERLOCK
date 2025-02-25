@@ -63,7 +63,8 @@ def save_transit_plot(object_id: str, title: str, plot_dir: str, file: str, time
     if isinstance(tls_results.folded_phase, (list, np.ndarray)):
         folded_phase = tls_results.folded_phase[folded_phase_zoom_mask]
         folded_y = tls_results.folded_y[folded_phase_zoom_mask]
-        axs[1].set_ylim(np.min([np.min(folded_y), np.min(tls_results.model_folded_model)]),
+        if len(folded_y) > 1 and len(tls_results.model_folded_model) > 1:
+            axs[1].set_ylim(np.min([np.min(folded_y), np.min(tls_results.model_folded_model)]),
                      np.max([np.max(folded_y), np.max(tls_results.model_folded_model)]))
         plt.ticklabel_format(useOffset=False)
         bins = 80
