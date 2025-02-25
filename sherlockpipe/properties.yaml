@@ -49,13 +49,13 @@ PREPARE_ALGORITHM:
 UPPER_OUTLIERS_SIGMA: 3
 # User defined sigma threshold for lower-outliers clipping
 LOWER_OUTLIERS_SIGMA:
-# The lightkurve 'author' to be used for the download. ELEANOR is also supported for long cadence TESS data.
-AUTHOR:
-# Cadence of data to be retrieved
-EXPTIME:
-# Number of cadences to be binned together (e.g. EXPTIME_BINNING: 4 for EXPTIME: 120 will mean a binned curve with 500
-#cadence)
-EXPTIME_BINNING: 1
+# The lightkurve 'authors' to be used for the download. ELEANOR is also supported for long cadence TESS data.
+AUTHOR: [SPOC, TESS-SPOC, Kepler]
+# A list of available cadences of data to be retrieved
+EXPTIME: []
+# Bin size in days for light curve binning (e.g. EXPTIME_BINNING: 0.1 will average data around a window of 0.1 days,
+# so only 10 points will be available for each day)
+EXPTIME_BINNING: 0
 ######################################################################################################################
 ### TRANSIT ADJUST SETUP
 ######################################################################################################################
