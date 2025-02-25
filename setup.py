@@ -37,7 +37,7 @@ setuptools.setup(
                         'pdf2image==1.16.2',
                         'pytransit==2.5.21', #Validation
                         'pytz', # Observation plan: Not using version because it gets the DB updated with each release
-                        "requests==2.25.1", # OIs management
+                        "requests==2.32.3", # OIs management
                         "rebound==4.4.1", # Stability
                         "reproject==0.13.0",
                         "seaborn==0.11.1",
@@ -46,6 +46,7 @@ setuptools.setup(
                         'statsmodels==0.13.5', # Allesfitter dependency, might conflict with lcbuilder dependency for autocorrelation
                         'timezonefinder==5.2.0', # Observation plan
                         'tqdm==4.56.0',
-                        'uncertainties==3.1.5' # Observation plan
+                        'uncertainties==3.1.5', # Observation plan
+                        'urllib3==2.2.3'
     ]
 )
