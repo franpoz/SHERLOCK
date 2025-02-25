@@ -40,3 +40,6 @@ class MastCatalog:
         stars_df.to_csv("/home/martin/Downloads/status_2023-9-27_tic.csv")
         duplicated_df.sort_values(by=['GAIA', 'ID'], ascending=True, inplace=True)
         return stars_df, duplicated_df
+
+# stars_df, duplicated_df = MastCatalog.gaia_to_tic([1185968739624622848])
+# print(stars_df.to_string())
