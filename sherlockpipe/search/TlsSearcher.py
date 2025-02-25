@@ -47,7 +47,7 @@ class TlsSearcher(Searcher):
         transit_count = results.distinct_transit_count
         # Recalculating duration because of tls issue https://github.com/hippke/tls/issues/83
         intransit_folded_model = np.where(results['model_folded_model'] < 1.)[0]
-        if len(intransit_folded_model) > 0:
+        if len(intransit_folded_model) > 1:
             duration = results['period'] * (results['model_folded_phase'][intransit_folded_model[-1]]
                                             - results['model_folded_phase'][intransit_folded_model[0]])
         else:
