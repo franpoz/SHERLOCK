@@ -93,10 +93,10 @@ class Fitter(ToolWithCandidate):
         run = int(candidate_df['number'].iloc[0])
         # We load the unprocessed raw PDCSAP flux curve
         lc = pd.read_csv(self.object_dir + '/lc.csv', header=0)
-        time, flux, flux_err = lc["#time"].values, lc["flux"].values, lc["flux_err"].values
-        #time, flux, flux_err = self.mask_previous_candidates(time, flux, flux_err, run)
-        lc = pd.DataFrame(columns=['#time', 'flux', 'flux_err'])
-        lc['#time'] = time
+        time, flux, flux_err = lc["time"].values, lc["flux"].values, lc["flux_err"].values
+        time, flux, flux_err = self.mask_previous_candidates(time, flux, flux_err, run)
+        lc = pd.DataFrame(columns=['time', 'flux', 'flux_err'])
+        lc['time'] = time
         lc['flux'] = flux
         lc['flux_err'] = flux_err
         curve_rms = np.nanstd(flux)
@@ -143,8 +143,8 @@ class Fitter(ToolWithCandidate):
                     f.truncate()
             time, flux, flux_err = self.mask_non_fit_candidates(time, flux, flux_err, candidate_df, fit_candidate_df)
             # time, flux, flux_err = self.mask_previous_candidates(time, flux, flux_err, run)
-            lc = pd.DataFrame(columns=['#time', 'flux', 'flux_err'])
-            lc['#time'] = time
+            lc = pd.DataFrame(columns=['time', 'flux', 'flux_err'])
+            lc['time'] = time
             lc['flux'] = flux
             lc['flux_err'] = flux_err
             curve_rms = np.nanstd(flux)
