@@ -247,15 +247,18 @@ class ValidationReport:
             story.append(Spacer(1, 15))
         validation_file = self.data_dir + "/validation.csv"
         if os.path.exists(validation_file):
-            table_data = [['Scenario', 'FPP', 'NFPP', 'FPP2', 'FPP3+']]
+            table_data = [['Scenario', 'FPP', 'FPP2', 'FPP3+', 'FPP sys', 'FPP2 sys', 'FPP3+ sys', 'NFPP']]
             metrics_df = pd.read_csv(validation_file)
             for index, metric_row in metrics_df.iterrows():
                 table_data.append([metric_row['scenario'],
                                    round(metric_row['FPP'], 6),
-                                   round(metric_row['NFPP'], 6),
                                    round(metric_row['FPP2'], 6),
-                                   round(metric_row['FPP3+'], 6)])
-            table_colwidth = [4 * cm, 4 * cm, 3.5 * cm]
+                                   round(metric_row['FPP3+'], 6),
+                                   round(metric_row['FPP_sys'], 6),
+                                   round(metric_row['FPP2_sys'], 6),
+                                   round(metric_row['FPP3+_sys'], 6),
+                                   round(metric_row['NFPP'], 6)])
+            table_colwidth = [2.5 * cm, 2.5 * cm, 2.5 * cm, 2.5 * cm, 2.5 * cm, 2.5 * cm, 2.5 * cm, 2.5 * cm]
             table_number_rows = len(table_data)
             table = Table(table_data, table_colwidth, table_number_rows * [0.5 * cm])
             table.setStyle(table_style)
