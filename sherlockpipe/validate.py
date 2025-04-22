@@ -10,7 +10,7 @@ def validation_args_parse(arguments=None):
     ap.add_argument('--candidate', type=int, default=None, help="The candidate signal to be used.", required=False)
     ap.add_argument('--properties', help="The YAML file to be used as input.", required=False)
     ap.add_argument('--cpus', type=int, default=None, help="The number of CPU cores to be used.", required=False)
-    ap.add_argument('--bins', type=int, default=100, help="The number of bins to be used for the folded curve "
+    ap.add_argument('--bins', type=int, default=200, help="The number of bins to be used for the folded curve "
                                                           "validation.", required=False)
     ap.add_argument('--sigma_mode', type=str, default='flux_err', help="The way to calculate the sigma value for the "
                                                                        "validation. [flux_err|binning]", required=False)
