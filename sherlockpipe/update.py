@@ -27,23 +27,26 @@ class Updater:
         :param ois: Specifies whether the OIs metadata is the only one to be refreshed (ignoring ELEANOR and LATTE)
         :param force: Specifies whether the last download timestamp should be ignored and proceed as if a refresh was needed.
         """
-        ois_manager = OisManager(self.cache_dir)
-        timestamp_ois_path = os.path.join(self.cache_dir, '.sherlockpipe/timestamp_ois.txt')
-        ois_timestamp = 0
-        force = force or clean
-        if os.path.exists(timestamp_ois_path):
-            with open(timestamp_ois_path, 'r+') as f:
-                ois_timestamp = f.read()
-        if force or time.time() - float(ois_timestamp) > 3600 * 24 * 7:
-            logging.info("------------------ Reloading TOIs ------------------")
-            ois_manager.update_tic_csvs()
-            logging.info("------------------ Reloading KOIs ------------------")
-            ois_manager.update_kic_csvs()
-            logging.info("------------------ Reloading EPICs ------------------")
-            ois_manager.update_epic_csvs()
-            with open(os.path.join(os.path.expanduser('~'), '.sherlockpipe/timestamp_ois.txt'), 'w+') as f:
-                f.write(str(time.time()))
-        print("DONE")
+        try:
+            ois_manager = OisManager(self.cache_dir)
+            timestamp_ois_path = os.path.join(self.cache_dir, '.sherlockpipe/timestamp_ois.txt')
+            ois_timestamp = 0
+            force = force or clean
+            if os.path.exists(timestamp_ois_path):
+                with open(timestamp_ois_path, 'r+') as f:
+                    ois_timestamp = f.read()
+            if force or time.time() - float(ois_timestamp) > 3600 * 24 * 7:
+                logging.info("------------------ Reloading TOIs ------------------")
+                ois_manager.update_tic_csvs()
+                logging.info("------------------ Reloading KOIs ------------------")
+                ois_manager.update_kic_csvs()
+                logging.info("------------------ Reloading EPICs ------------------")
+                ois_manager.update_epic_csvs()
+                with open(os.path.join(os.path.expanduser('~'), '.sherlockpipe/timestamp_ois.txt'), 'w+') as f:
+                    f.write(str(time.time()))
+            print("DONE")
+        except Exception:
+            logging.exception("Updating OIs failed")
 
 
 if __name__ == '__main__':
