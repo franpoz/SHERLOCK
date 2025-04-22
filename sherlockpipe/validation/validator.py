@@ -252,6 +252,7 @@ class Validator(ToolWithCandidate):
         valid_apertures = {}
         for sector, aperture in apertures.items():
             if sector in sectors:
+                aperture = Watson.get_aperture_for_sector(apertures, sector)
                 valid_apertures[sector] = aperture
                 target.plot_field(save=True, fname=save_dir + "/field_S" + str(sector), sector=sector,
                                   ap_pixels=aperture)
@@ -265,7 +266,7 @@ class Validator(ToolWithCandidate):
             target.stars.loc[0, 'rad'] = star_df['R_star']
         if np.isnan(target.stars.loc[0, 'Teff']):
             target.stars.loc[0, 'Teff'] = star_df['Teff']
-        bound_stars = additional_stars_df.loc[additional_stars_df['bound'] == True, 'obj_id'].tolist()
+        bound_stars = additional_stars_df.loc[additional_stars_df['bound'] == True, 'obj_id'].tolist() if additional_stars_df is not None else []
         logging.info("Preparing validation processes inputs")
         input_n_times = [ValidatorInput(save_dir, copy.deepcopy(target), bin_centers, bin_means, sigma, period, depth,
                                         valid_apertures, value, contrast_curve_file, ignore_ebs=ignore_ebs,
