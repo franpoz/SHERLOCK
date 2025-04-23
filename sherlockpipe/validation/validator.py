@@ -247,7 +247,8 @@ class Validator(ToolWithCandidate):
                     target.stars.loc[target.stars['ID'] == target_id, 'PA (E of N)'] = row['PA']
         # TODO allow user input apertures
         logging.info("Reading apertures from directory")
-        apertures = yaml.load(open(self.object_dir + "/apertures.yaml"), yaml.SafeLoader)
+        with open(self.object_dir + "/apertures.yaml") as f:
+            apertures = yaml.load(f, yaml.SafeLoader)
         apertures = apertures["sectors"]
         valid_apertures = {}
         for sector, aperture in apertures.items():
