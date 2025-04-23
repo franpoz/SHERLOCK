@@ -27,10 +27,11 @@ class TestsEntrypoints(unittest.TestCase):
         args.additional_stars = None
         args.resolved_companion = None
         args.ignore_ebs = None
+        args.ignore_background_stars = False
         validation_dir = object_dir + '/validate_1'
         try:
             run_validate(args)
-            self.assertEquals(6, len(os.listdir(validation_dir + '/triceratops')))
+            self.assertEquals(8, len(os.listdir(validation_dir + '/triceratops')))
         finally:
             shutil.rmtree(validation_dir, ignore_errors=True)
 
