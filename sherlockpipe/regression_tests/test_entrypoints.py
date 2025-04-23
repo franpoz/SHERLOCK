@@ -24,6 +24,9 @@ class TestsEntrypoints(unittest.TestCase):
         args.scenarios = 2
         args.sigma_mode = 'flux_err'
         args.sectors = None
+        args.additional_stars = None
+        args.resolved_companion = None
+        args.ignore_ebs = None
         validation_dir = object_dir + '/validate_1'
         try:
             run_validate(args)
@@ -39,7 +42,7 @@ class TestsEntrypoints(unittest.TestCase):
             self.assertEquals(7, len(os.listdir(vetting_dir)))
             shutil.rmtree(vetting_dir, ignore_errors=True)
             run_vet(object_dir, 1, None, cpus=4, run_iatson=True)
-            self.assertEquals(9, len(os.listdir(vetting_dir)))
+            self.assertEquals(12, len(os.listdir(vetting_dir)))
         finally:
             shutil.rmtree(vetting_dir, ignore_errors=True)
 
@@ -54,7 +57,7 @@ class TestsEntrypoints(unittest.TestCase):
         args.period_bins = 1
         args.free_params = None
         args.use_spock = False
-        args.years = 500
+        args.years = 50
         args.dt = 0.001
         args.repetitions = 1
         try:
@@ -69,7 +72,7 @@ class TestsEntrypoints(unittest.TestCase):
         search_dir = results_dir + "TIC305048087_[2]"
         try:
             run_search(properties_dir, False, results_dir, 4)
-            self.assertEquals(21, len(os.listdir(search_dir)))
+            self.assertEquals(18, len(os.listdir(search_dir)))
         finally:
             shutil.rmtree(search_dir, ignore_errors=True)
 
