@@ -1,6 +1,8 @@
 import os
 import shutil
 import unittest
+
+import lcbuilder.constants
 from lcbuilder.star.starinfo import StarInfo
 from lcbuilder.objectinfo.MissionObjectInfo import MissionObjectInfo
 
@@ -129,7 +131,9 @@ class TestsSherlock(unittest.TestCase):
     def test_run(self):
         run_dir = "TIC181804752_[9]"
         try:
-            Sherlock([SherlockTarget(MissionObjectInfo([9], "TIC 181804752", cadence=1800, smooth_enabled=False,
+            Sherlock([SherlockTarget(MissionObjectInfo([9], "TIC 181804752", cadence=[1800],
+                                                       author=[lcbuilder.constants.TESS_SPOC_AUTHOR],
+                                                       smooth_enabled=False,
                                                             high_rms_enabled=False, initial_mask=[[1900, 1901]]),
                                      detrends_number=1, max_runs=1, oversampling=0.05)]).run()
             self.__assert_run_files(run_dir, assert_rms_mask=False)
@@ -139,7 +143,9 @@ class TestsSherlock(unittest.TestCase):
     def test_run_with_rms_mask(self):
         run_dir = "TIC181804752_[9]"
         try:
-            Sherlock([SherlockTarget(MissionObjectInfo([9], "TIC 181804752", cadence=1800, high_rms_enabled=True),
+            Sherlock([SherlockTarget(MissionObjectInfo([9], "TIC 181804752",
+                                                       cadence=[1800], author=[lcbuilder.constants.TESS_SPOC_AUTHOR],
+                                                       high_rms_enabled=True),
                                      max_runs=1, oversampling=0.05)]).run()
             self.__assert_run_files(run_dir)
         finally:
@@ -148,11 +154,13 @@ class TestsSherlock(unittest.TestCase):
     def test_run_with_explore(self):
         run_dir = None
         try:
-            Sherlock([SherlockTarget(MissionObjectInfo([9], "TIC 181804752", cadence=1800, high_rms_enabled=True),
+            Sherlock([SherlockTarget(MissionObjectInfo([9], "TIC 181804752",
+                                                       cadence=[1800], author=[lcbuilder.constants.TESS_SPOC_AUTHOR],
+                                                       high_rms_enabled=True),
                                      detrends_number=1, oversampling=0.05)], True).run()
             run_dir = "TIC181804752_[9]_explore"
             self.assertTrue(os.path.exists(run_dir))
-            self.assertTrue(os.path.exists(run_dir + "/Periodogram_Initial_TIC181804752_[9].png"))
+            self.assertTrue(os.path.exists(run_dir + "/periodicity/Periodogram_Initial_TIC181804752_[9].png"))
             self.assertFalse(os.path.exists(run_dir + "/1"))
         finally:
             self.__clean(run_dir)
@@ -160,7 +168,9 @@ class TestsSherlock(unittest.TestCase):
     def test_run_with_autodetrend(self):
         run_dir = None
         try:
-            Sherlock([SherlockTarget(MissionObjectInfo([5], "TIC 259377017", cadence=1800, auto_detrend_enabled=True),
+            Sherlock([SherlockTarget(MissionObjectInfo([5], "TIC 259377017",
+                                                       cadence=[1800], author=[lcbuilder.constants.TESS_SPOC_AUTHOR],
+                                                       auto_detrend_enabled=True),
                                      detrends_number=1, max_runs=1, oversampling=0.05)], True).run()
             run_dir = "TIC259377017_[5]_explore"
             self.assertTrue(os.path.exists(run_dir))
@@ -171,12 +181,14 @@ class TestsSherlock(unittest.TestCase):
     def test_run_epic_ffi(self):
         run_dir = None
         try:
-            Sherlock([SherlockTarget(MissionObjectInfo('all', "EPIC 249631677", cadence=1800, high_rms_enabled=True,
+            Sherlock([SherlockTarget(MissionObjectInfo('all', "EPIC 249631677",
+                                                       cadence=[1800], author=[lcbuilder.constants.K2_AUTHOR],
+                                                       high_rms_enabled=True,
                                                        auto_detrend_enabled=False),
                                      detrends_number=1, max_runs=1, oversampling=0.05)], False).run()
             run_dir = "EPIC249631677_all"
             self.assertTrue(os.path.exists(run_dir))
-            self.assertTrue(os.path.exists(run_dir + "/Periodogram_Initial_EPIC249631677_all.png"))
+            self.assertTrue(os.path.exists(run_dir + "/periodicity/Periodogram_Initial_EPIC249631677_all.png"))
             self.assertTrue(os.path.exists(run_dir + "/1"))
         finally:
             self.__clean(run_dir)
@@ -184,7 +196,8 @@ class TestsSherlock(unittest.TestCase):
     def test_run_with_star_info(self):
         run_dir = None
         try:
-            Sherlock([SherlockTarget(MissionObjectInfo([9], "TIC 181804752", high_rms_enabled=True, cadence=1800,
+            Sherlock([SherlockTarget(MissionObjectInfo([9], "TIC 181804752", high_rms_enabled=True,
+                                                       cadence=[1800], author=[lcbuilder.constants.TESS_SPOC_AUTHOR],
                                                             star_info=StarInfo(ld_coefficients=(0.15, 0.25),
                                                                                teff=4000,
                                                                                lum=1.50, logg=0.15, radius=0.4,
@@ -194,7 +207,7 @@ class TestsSherlock(unittest.TestCase):
                                      detrends_number=1, max_runs=1, oversampling=0.05)], True).run()
             run_dir = "TIC181804752_[9]_explore"
             self.assertTrue(os.path.exists(run_dir))
-            self.assertTrue(os.path.exists(run_dir + "/Periodogram_Initial_TIC181804752_[9].png"))
+            self.assertTrue(os.path.exists(run_dir + "/periodicity/Periodogram_Initial_TIC181804752_[9].png"))
             self.assertFalse(os.path.exists(run_dir + "/1"))
             with open(run_dir + '/TIC181804752_[9]_report.log') as f:
                 content = f.read()
@@ -215,7 +228,8 @@ class TestsSherlock(unittest.TestCase):
         run_dir = None
         try:
             sherlock = Sherlock([SherlockTarget(
-                MissionObjectInfo([9], "TIC 181804752", cadence=1800, high_rms_enabled=True),
+                MissionObjectInfo([9], "TIC 181804752", cadence=[1800],
+                                  author=[lcbuilder.constants.TESS_SPOC_AUTHOR], high_rms_enabled=True),
                 detrends_number=1, max_runs=1, oversampling=0.1, t0_fit_margin=0.09,
                 duration_grid_step=1.075, fit_method="bls",
                 best_signal_algorithm="quorum", quorum_strength=0.31)], False)\
@@ -235,8 +249,8 @@ class TestsSherlock(unittest.TestCase):
 
     def __assert_run_files(self, object_dir, assert_rms_mask=True):
         run_dir = object_dir + "/1"
-        periodogram_file = object_dir + "/Periodogram_Initial_TIC181804752_[9].png"
-        periodogram_file1 = object_dir + "/Periodogram_Final_TIC181804752_[9].png"
+        periodogram_file = object_dir + "/periodicity/Periodogram_Initial_TIC181804752_[9].png"
+        periodogram_file1 = object_dir + "/periodicity/Periodogram_Final_TIC181804752_[9].png"
         rms_mask_file = object_dir + "/rms_mask/High_RMS_Mask_TIC181804752_[9].png"
         lc_file = object_dir + "/lc.csv"
         report_file = object_dir + "/TIC181804752_[9]_report.log"
