@@ -46,7 +46,6 @@ setuptools.setup(
                         'statsmodels==0.13.5', # Allesfitter dependency, might conflict with lcbuilder dependency for autocorrelation
                         'timezonefinder==5.2.0', # Observation plan
                         'tqdm==4.56.0',
-                        'uncertainties==3.1.5', # Observation plan
                         'urllib3==2.2.3'
     ]
 )
