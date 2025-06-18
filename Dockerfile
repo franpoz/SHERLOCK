@@ -1,4 +1,4 @@
-FROM python:3.10.10
+FROM python:3.11.13
 
 RUN apt-get update && DEBIAN_FRONTEND=noninteractive apt-get install -y build-essential libssl-dev \
     libbz2-dev libssl-dev libreadline-dev \
@@ -19,6 +19,6 @@ RUN python3 -m pip install setuptools -U
 RUN python3 -m pip install extension-helpers -U
 RUN python3 -m pip install wheel -U
 RUN python3 -m pip install Cython
-RUN python3 -m pip install numpy==1.23.5
+RUN python3 -m pip install numpy==2.1.1
 RUN python3 -m pip install sherlockpipe
 CMD ["/bin/bash"]

@@ -54,7 +54,7 @@ if ! [[ -z ${tests_results} ]]; then
   conda create -n sherlockpipe-reqs python=3.10 -y
   conda activate sherlockpipe-reqs
   python3 -m pip install pip -U
-  python3 -m pip install numpy==1.23.5
+  python3 -m pip install numpy==2.1.1
   sed -i '6s/.*/version = "'${git_tag}'"/' setup.py
   sed -i '1s/.*/__version__ = "'${git_tag}'"/' sherlockpipe/__init__.py
   python3 -m pip install -e .

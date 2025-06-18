@@ -3,7 +3,7 @@ import setuptools
 with open("README.md", "r") as fh:
     long_description = fh.read()
 
-version = "0.47.3"
+version = "1.0.0"
 setuptools.setup(
     name="sherlockpipe", # Replace with your own username
     version=version,
@@ -20,7 +20,7 @@ setuptools.setup(
         "License :: OSI Approved :: MIT License",
         "Operating System :: OS Independent",
     ],
-    python_requires='>=3.10',
+    python_requires='>=3.11',
     install_requires=['arviz==0.12.1', # Validation required (pytransit, from triceratops)
                         'astroplan==0.8',
                         "astroquery==0.4.6",
@@ -29,7 +29,7 @@ setuptools.setup(
                         'beautifulsoup4==4.9.3', # Parsing HTML and XML, for OIs extraction
                         "celerite==0.4.0", # Allesfitter dependency
                         "corner==2.2.2", # Allesfitter dependency
-                        "dearwatson==0.14.0", # Vetting
+                        "dearwatson==0.14.1", # Vetting
                         "dynesty==1.0.1", # Allesfitter dependency
                         "emcee==3.0.2", # Allesfitter dependency
                         "h5py==3.10.0", # Allesfitter dependency
