@@ -23,7 +23,6 @@ setuptools.setup(
     python_requires='>=3.11',
     install_requires=['arviz==0.12.1', # Validation required (pytransit, from triceratops)
                         'astroplan==0.8',
-                        "astroquery==0.4.6",
                         "alexfitter==1.2.16", # Fit
                         'argparse==1.4.0', # All modules
                         'beautifulsoup4==4.9.3', # Parsing HTML and XML, for OIs extraction
