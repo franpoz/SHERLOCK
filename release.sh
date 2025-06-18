@@ -14,7 +14,7 @@ set -e
 git_tag=$1
 echo "GIT TAG IS " ${git_tag}
 echo "Run regression tests"
-tox -r -e py310-local > tests.log
+tox -r -e py311-local > tests.log
 tests_results=$(cat tests.log | grep "congratulations")
 if ! [[ -z ${tests_results} ]]; then
   echo "Run all tests"
@@ -27,7 +27,7 @@ if ! [[ -z ${tests_results} ]]; then
   conda remove -n sherlockpipe-reqs --all -y
   rm -R *egg-info
   set -e
-  tox -r -e py310-gha > tests.log
+  tox -r -e py311-gha > tests.log
 else
   echo "TESTS FAILED. See tests.log"
   set +e
@@ -51,7 +51,7 @@ if ! [[ -z ${tests_results} ]]; then
   rm -R *egg-info
   conda remove -n sherlockpipe-reqs --all -y
   set -e
-  conda create -n sherlockpipe-reqs python=3.10 -y
+  conda create -n sherlockpipe-reqs python=3.11 -y
   conda activate sherlockpipe-reqs
   python3 -m pip install pip -U
   python3 -m pip install numpy==2.1.1

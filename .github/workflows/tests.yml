@@ -17,12 +17,12 @@ jobs:
         os:
           - Ubuntu
         py:
-          - "3.10"
+          - "3.11"
         toxenv:
-          - "py310-gha"
-        exclude:
-          - py: "3.10"
-            toxenv: "py39-gha"
+          - "py311-gha"
+#        exclude:
+#          - py: "3.11"
+#            toxenv: "py39-gha"
     steps:
       - name: Setup python for test ${{ matrix.py }}
         uses: actions/setup-python@v2
