@@ -25,7 +25,6 @@ setuptools.setup(
                         'astroplan==0.8',
                         "alexfitter==1.2.16", # Fit
                         'argparse==1.4.0', # All modules
-                        'beautifulsoup4==4.9.3', # Parsing HTML and XML, for OIs extraction
                         "celerite==0.4.0", # Allesfitter dependency
                         "corner==2.2.2", # Allesfitter dependency
                         "dearwatson==0.14.1", # Vetting
