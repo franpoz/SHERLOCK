@@ -32,7 +32,7 @@ class ObservationReport:
                  period_low_err, period_up_err, duration, duration_low_err, duration_up_err, depth, depth_low_err,
                  depth_up_err, observable, min_dist, max_dist, min_altitude, max_days, v, j, h, k):
         self.df = df
-        self.df_observatories = df_observatories.drop('tz', 1)
+        self.df_observatories = df_observatories.drop(['tz'], axis=1)
         self.alert_date = alert_date
         self.object_id = object_id
         self.name = name

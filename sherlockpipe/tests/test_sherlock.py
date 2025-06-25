@@ -1,5 +1,6 @@
 import os
 import shutil
+import time
 import unittest
 
 import lcbuilder.constants
@@ -17,6 +18,12 @@ from sherlockpipe.search.sherlock_target import SherlockTarget
 
 
 class TestsSherlock(unittest.TestCase):
+
+    def setUp(self):
+        super().setUp()
+        print(f"\n[pytest] Sleeping 10s")
+        time.sleep(10)
+
     def test_setup_files(self):
         sherlock = Sherlock(None)
         sherlock.setup_files(False, False, False, "inner/")

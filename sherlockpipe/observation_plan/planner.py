@@ -207,7 +207,8 @@ class Planner:
         observables = [item[1] for item in alert_dates_and_observables]
         for observable in observables:
             if observable is not None:
-                observables_df = observables_df.append(observable, ignore_index=True)
+                observables_df = pd.concat([observables_df, pd.DataFrame([observable])], ignore_index=True)
+
         observables_df = observables_df.sort_values(["midtime", "observatory"], ascending=True)
         observables_df.to_csv(plan_dir + "/observation_plan.csv", index=False)
         print("Observation plan created in directory: " + object_dir)

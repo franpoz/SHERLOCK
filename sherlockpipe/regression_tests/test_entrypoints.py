@@ -1,8 +1,10 @@
 import os
 import shutil
+import time
 import types
 import unittest
 import pkg_resources
+import pytest
 from astropy.time import Time
 
 from sherlockpipe.observation_plan.run import run_plan
@@ -10,6 +12,12 @@ from sherlockpipe.search.run import run_search
 from sherlockpipe.system_stability.run import run_stability
 from sherlockpipe.validation.run import run_validate
 from sherlockpipe.vetting.run import run_vet
+
+
+@pytest.fixture(autouse=True)
+def delay_between_tests():
+    print("Sleeping for 1 second before next test")
+    time.sleep(10)
 
 
 class TestsEntrypoints(unittest.TestCase):
