@@ -48,9 +48,9 @@ setuptools.setup(
                         'astroplan==0.10.1',
                         "alexfitter==1.2.17", # Fit
                         'argparse==1.4.0', # All modules
-                        "celerite==0.4.0", # Allesfitter dependency
+                        "celerite==0.4.3", # Allesfitter dependency
                         "corner==2.2.2", # Allesfitter dependency
-                        "dearwatson==0.15.2", # Vetting
+                        "dearwatson==0.15.3", # Vetting
                         "dynesty==1.0.1", # Allesfitter dependency
                         "emcee==3.0.2", # Allesfitter dependency
                         "mock==4.0.3",

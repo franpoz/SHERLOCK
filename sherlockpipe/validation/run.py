@@ -53,7 +53,7 @@ def run_validate(args):
         candidates = candidates.rename(columns={'Object Id': 'id'})
         candidates['number'] = 1
         candidate = candidates.iloc[[candidate_selection - 1]]
-        candidate.iloc[:]['number'] = candidate_selection
+        candidate.loc[:, 'number'] = candidate_selection
         logging.info("Selected signal number " + str(candidate_selection))
     if args.sectors is not None:
         candidate['sectors'] = args.sectors
