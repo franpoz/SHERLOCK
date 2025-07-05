@@ -22,8 +22,6 @@ class CustomBuildPy(build_py):
         self.mkpath(target_dir)
         shutil.copy2(so_path, os.path.join(target_dir, 'libellc.so'))
         super().run()
-
-version = "1.0.0"
 setuptools.setup(
     name="sherlockpipe", # Replace with your own username
     version=version,
