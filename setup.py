@@ -3,7 +3,7 @@ from setuptools.command.build_py import build_py
 import platform
 import os
 import shutil
-version = "1.0.1"
+version = "1.0.2"
 
 with open("README.md", "r") as fh:
     long_description = fh.read()
