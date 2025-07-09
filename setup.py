@@ -42,18 +42,16 @@ setuptools.setup(
         'build_py': CustomBuildPy,
     },
     python_requires='>=3.11',
-    install_requires=['arviz==0.21.0', # Validation required (pytransit, from triceratops)
+    install_requires=[
                         'astroplan==0.10.1',
                         "alexfitter==1.2.17", # Fit
                         'argparse==1.4.0', # All modules
                         "celerite==0.4.3", # Allesfitter dependency
                         "corner==2.2.2", # Allesfitter dependency
-                        "dearwatson==0.15.3", # Vetting
+                        "dearwatson==1.0.0", # Vetting
                         "dynesty==1.0.1", # Allesfitter dependency
                         "emcee==3.0.2", # Allesfitter dependency
                         "mock==4.0.3",
-                        'pdf2image==1.16.2',
-                        'pytransit==2.6.14', #Triceratops
                         'pytz', # Observation plan: Not using version because it gets the DB updated with each release
                         "requests==2.32.3", # OIs management
                         "rebound==4.4.1", # Stability
