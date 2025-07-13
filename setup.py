@@ -48,7 +48,7 @@ setuptools.setup(
                         'argparse==1.4.0', # All modules
                         "celerite==0.4.3", # Allesfitter dependency
                         "corner==2.2.2", # Allesfitter dependency
-                        "dearwatson==1.0.0", # Vetting
+                        "dearwatson==0.16.1", # Vetting
                         "dynesty==1.0.1", # Allesfitter dependency
                         "emcee==3.0.2", # Allesfitter dependency
                         "mock==4.0.3",
