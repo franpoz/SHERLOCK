@@ -11,7 +11,14 @@ from sherlockpipe.vetting.vetter import Vetter
 
 
 def run_vet(object_dir, candidate, properties, cpus=os.cpu_count() - 1, run_iatson=False, run_gpt=False, gpt_key=None,
-            only_summary=False):
+            only_summary=False, triceratops_bins=100, triceratops_scenarios=5,
+            triceratops_curve_file=None, triceratops_contrast_curve_file=None,
+            triceratops_additional_stars_file=None,
+            triceratops_sigma_mode='flux_err',
+            triceratops_ignore_ebs=False,
+            triceratops_resolved_companion=None,
+            triceratops_ignore_background_stars=False,
+            sectors=None):
     object_dir = os.getcwd() if object_dir is None else object_dir
     candidates = pd.read_csv(object_dir + "/candidates.csv")
     if candidate is not None:
@@ -70,4 +77,14 @@ def run_vet(object_dir, candidate, properties, cpus=os.cpu_count() - 1, run_iats
         transits_mask.append({"P": candidates.iloc[i]["period"], "T0": candidates.iloc[i]["t0"],
                               "D": candidates.iloc[i]["duration"] * 2})
     vetter.run(cpus, candidate=candidate, star_df=star_df.iloc[0], transits_df=transits_df, transits_mask=transits_mask,
-               iatson_enabled=run_iatson, gpt_enabled=run_gpt, gpt_api_key=gpt_key, only_summary=only_summary)
+               iatson_enabled=run_iatson, gpt_enabled=run_gpt, gpt_api_key=gpt_key, only_summary=only_summary,
+               triceratops_bins=triceratops_bins, triceratops_scenarios=triceratops_scenarios,
+               triceratops_curve_file=triceratops_curve_file,
+               triceratops_contrast_curve_file=triceratops_contrast_curve_file,
+               triceratops_additional_stars_file=triceratops_additional_stars_file,
+               triceratops_sigma_mode=triceratops_sigma_mode,
+               triceratops_ignore_ebs=triceratops_ignore_ebs,
+               triceratops_resolved_companion=triceratops_resolved_companion,
+               triceratops_ignore_background_stars=triceratops_ignore_background_stars,
+               sectors=sectors
+               )
