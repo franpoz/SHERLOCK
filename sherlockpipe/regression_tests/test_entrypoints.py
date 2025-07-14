@@ -10,7 +10,6 @@ from astropy.time import Time
 from sherlockpipe.observation_plan.run import run_plan
 from sherlockpipe.search.run import run_search
 from sherlockpipe.system_stability.run import run_stability
-from sherlockpipe.validation.run import run_validate
 from sherlockpipe.vetting.run import run_vet
 
 

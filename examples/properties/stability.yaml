@@ -4,40 +4,61 @@
 # eccentricity will be sampled in 2 bins from 0 to 0.1
 # 1: A planet with a period of 15 days and a lowest mass of 2R_earth and highest mass of 2.4R_earth. The
 # eccentricity lowest value is 0 and the highest is 0.1.
-#STAR:
-#  M: 1.1
-#  M_LOW: 0.1
-#  M_UP: 0.2
-#  M_BINS: 2
+STAR:
+  M: 0.82
+  M_LOW: 0.0
+  M_UP: 0.0
+  M_BINS: 1
 BODIES:
-  - P: 15
-    P_LOW: 0.05
-    P_UP: 0.05
-    M: 1.5
+  - P: 4.23452
+    P_LOW: 0.0
+    P_UP: 0.0
+    P_BINS: 1
+#    R: 2.95
+#    R_LOW: 0.2
+#    R_UP: 0.2
+    M_BINS: 1
+    M: 22.25
     M_LOW: 0.0
     M_UP: 0.0
-    E: 0.05
+    E: 0.06
     E_LOW: 0
-    E_UP: 0.1
+    E_UP: 0
+    E_BINS: 0
+    I: 0
+    I_LOW: 1
+    I_UP: 1
+    O: rand
+    O_LOW: 10
+    O_UP: 10
+    O_BINS: 1
+    OM: rand
+    OM_LOW: 10
+    OM_UP: 10
+    OM_BINS: 1
+  - P: 6.596
+    P_LOW: 0
+    P_UP: 0
+    P_BINS: 1
+    R: 1.97
+    R_LOW: 0.2
+    R_UP: 0.2
+    M_BINS: 2
+#    M: 2.2
+#    M_LOW: 0.2
+#    M_UP: 0.2
+    E: 0.3
+    E_LOW: 0.3
+    E_UP: 0.3
     E_BINS: 2
-    I: 89
+    I: 0
     I_LOW: 1
     I_UP: 1
-    O: 0
+    O: rand
     O_LOW: 10
     O_UP: 10
-  - P: 10
-    P_LOW: 0.04
-    P_UP: 0.04
-    M: 2.2
-    M_LOW: 0.2
-    M_UP: 0.2
-    E: 0.05
-    E_LOW: 0.05
-    E_UP: 0.05
-    I: 89
-    I_LOW: 1
-    I_UP: 1
-    O: 0
-    O_LOW: 10
-    O_UP: 10
+    O_BINS: 1
+    OM: rand
+    OM_LOW: 10
+    OM_UP: 10
+    OM_BINS: 1
