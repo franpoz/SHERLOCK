@@ -1,5 +1,13 @@
 __version__ = "1.0.3"
 
+import sys
+
+#Patching ellc with submodule
+import sherlockpipe.ellc as _mypackage_ellc
+
+# Override the 'ellc' name in sys.modules to point to your internal package module
+sys.modules['ellc'] = _mypackage_ellc
+
 # Patching all errors due to SSL certificates
 import requests
 import warnings
