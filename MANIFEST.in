@@ -1,3 +1,2 @@
 include tox.ini sherlockpipe/properties.yaml sherlockpipe/maxsector.py
 graft sherlockpipe/resources
-graft prebuilt

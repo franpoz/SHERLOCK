@@ -8,6 +8,10 @@ import pandas as pd
 
 from sherlockpipe.loading import common
 from sherlockpipe.vetting.vetter import Vetter
+from sherlockpipe.bayesian_fit.allesfitter_data_extractor import AllesfitterDataExtractor
+import alexfitter
+import lcbuilder.helper.LcbuilderHelper
+import astropy.units as u
 
 
 def run_vet(object_dir, candidate, properties, cpus=os.cpu_count() - 1, run_iatson=False, run_gpt=False, gpt_key=None,
@@ -49,12 +53,13 @@ def run_vet(object_dir, candidate, properties, cpus=os.cpu_count() - 1, run_iats
     logger.addHandler(handler)
     logging.info("Starting vetting")
     star_df = pd.read_csv(vetter.object_dir() + "/params_star.csv")
+    star_df = star_df.iloc[0]
     transits_df = None
     if candidate is None:
         user_properties = common.load_from_yaml(properties)
         candidate = pd.DataFrame(columns=['id', 'period', 'depth', 'depth_err' ,'t0', 'sectors', 'number', 'curve', 'rp_rs', 'a'])
         candidate = candidate.append(user_properties, ignore_index=True)
-        candidate['id'] = star_df.iloc[0]["obj_id"]
+        candidate['id'] = star_df["obj_id"]
     else:
         candidate_selection = int(candidate)
         if candidate_selection < 1 or candidate_selection > len(candidates.index):
@@ -64,19 +69,37 @@ def run_vet(object_dir, candidate, properties, cpus=os.cpu_count() - 1, run_iats
         candidate = candidates.iloc[[candidate_selection - 1]]
         candidate.loc[:, 'number'] = candidate_selection
         transits_df_file = vetter.object_dir() + "/transits_stats.csv"
+        fit_results_dir = vetter.object_dir() + f"/fit_[{candidate_number}]"
         if os.path.exists(transits_df_file):
             transits_df = pd.read_csv(vetter.object_dir() + "/transits_stats.csv")
             transits_df = transits_df[transits_df["candidate"] == candidate_selection - 1]
             if len(transits_df) == 0:
                 logging.info("Not NAN transits found for candidate in transits_stats.csv file")
                 transits_df = None
-        # watson.data_dir = watson.object_dir
+        if os.path.exists(fit_results_dir):
+            logging.info("Reading fit results from " + fit_results_dir)
+            ns_derived_file = object_dir + "/results/ns_derived_table.csv"
+            ns_file = object_dir + "/results/ns_table.csv"
+            fit_derived_results = pd.read_csv(object_dir + "/results/ns_derived_table.csv")
+            fit_results = pd.read_csv(object_dir + "/results/ns_table.csv")
+            alles = alexfitter.allesclass(object_dir)
+            candidates_count = len(fit_results[fit_results["#name"].str.contains("_period")])
+            candidate_no = 0
+            candidate.loc[:, 'period'] = AllesfitterDataExtractor.extract_period(candidate_no, fit_results, alles)
+            candidate.loc[:, 't0'] = AllesfitterDataExtractor.extract_epoch(candidate_no, fit_results, alles)
+            candidate.loc[:, 'duration'] = AllesfitterDataExtractor.extract_duration(candidate_no, fit_derived_results)
+            candidate.loc[:, 'depth'] = AllesfitterDataExtractor.extract_depth(candidate_no, fit_derived_results)
+            candidate.loc[:, 'a'] = AllesfitterDataExtractor.extract_semimajor_axis(candidate_no, fit_derived_results)
+            rp = AllesfitterDataExtractor.extract_radius(candidate_no, fit_results)
+            candidate.loc[:, 'rp_rs'] = (AllesfitterDataExtractor.extract_radius(candidate_no, fit_results) /
+                                         LcbuilderHelper.convert_from_to(star_df["radius"], u.Rsun, u.Rearth))
+
         logging.info("Selected signal number " + str(candidate_selection))
     transits_mask = []
     for i in range(0, int(candidate['number']) - 1):
         transits_mask.append({"P": candidates.iloc[i]["period"], "T0": candidates.iloc[i]["t0"],
                               "D": candidates.iloc[i]["duration"] * 2})
-    vetter.run(cpus, candidate=candidate, star_df=star_df.iloc[0], transits_df=transits_df, transits_mask=transits_mask,
+    vetter.run(cpus, candidate=candidate, star_df=star_df, transits_df=transits_df, transits_mask=transits_mask,
                iatson_enabled=run_iatson, gpt_enabled=run_gpt, gpt_api_key=gpt_key, only_summary=only_summary,
                triceratops_bins=triceratops_bins, triceratops_scenarios=triceratops_scenarios,
                triceratops_curve_file=triceratops_curve_file,
