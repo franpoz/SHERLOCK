@@ -1,1 +1,4 @@
 
+[submodule "sherlockpipe/ellc"]
+	path = sherlockpipe/ellc
+	url = https://github.com/pmaxted/ellc.git
