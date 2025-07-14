@@ -8,6 +8,21 @@ version = "1.0.3"
 with open("README.md", "r") as fh:
     long_description = fh.read()
 
+# Hack to include ellc.so proper library for linux 64
+class CustomBuildPy(build_py):
+    def run(self):
+        # Detect current platform
+        system = platform.system()
+        arch = platform.machine()
+        if system == "Linux" and arch == "x86_64":
+            so_path = os.path.abspath("prebuilt/linux_x86_64/libellc.so")
+        else:
+            raise RuntimeError(f"No prebuilt libellc.so available for {system} {arch}")
+        target_dir = os.path.join(self.build_lib, 'ellc')
+        self.mkpath(target_dir)
+        shutil.copy2(so_path, os.path.join(target_dir, 'libellc.so'))
+        super().run()
+
 setuptools.setup(
     name="sherlockpipe", # Replace with your own username
     version=version,
@@ -24,6 +39,9 @@ setuptools.setup(
         "License :: OSI Approved :: MIT License",
         "Operating System :: OS Independent",
     ],
+    cmdclass={
+        'build_py': CustomBuildPy,
+    },
     python_requires='>=3.11',
     install_requires=[
                         'astroplan==0.10.1',
@@ -33,6 +51,7 @@ setuptools.setup(
                         "corner==2.2.2", # Allesfitter dependency
                         "dearwatson==0.16.3", # Vetting
                         "dynesty==1.0.1", # Allesfitter dependency
+                        "ellc=1.8.11", # Allesfitter dependency
                         "emcee==3.0.2", # Allesfitter dependency
                         "mock==4.0.3",
                         'pytz', # Observation plan: Not using version because it gets the DB updated with each release
