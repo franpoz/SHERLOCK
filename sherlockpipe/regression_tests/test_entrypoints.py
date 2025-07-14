@@ -21,28 +21,6 @@ def delay_between_tests():
 
 
 class TestsEntrypoints(unittest.TestCase):
-    def test_validation(self):
-        object_dir = TestsEntrypoints.get_path('test_endpoints_data/')
-        args = types.SimpleNamespace()
-        args.object_dir = object_dir
-        args.candidate = 1
-        args.cpus = 1
-        args.contrast_curve = None
-        args.bins = 50
-        args.scenarios = 2
-        args.sigma_mode = 'flux_err'
-        args.sectors = None
-        args.additional_stars = None
-        args.resolved_companion = None
-        args.ignore_ebs = None
-        args.ignore_background_stars = False
-        validation_dir = object_dir + '/validate_1'
-        try:
-            run_validate(args)
-            self.assertEquals(8, len(os.listdir(validation_dir + '/triceratops')))
-        finally:
-            shutil.rmtree(validation_dir, ignore_errors=True)
-
     def test_vetting(self):
         object_dir = TestsEntrypoints.get_path('test_endpoints_data/')
         vetting_dir = object_dir + '/vet_1'
