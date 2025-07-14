@@ -32,7 +32,7 @@ setuptools.setup(
         "Operating System :: OS Independent",
     ],
     cmdclass={
-        'build_py': build_py,
+        'build_py': CustomBuildPy,
     },
     python_requires='>=3.11',
     install_requires=[
@@ -43,7 +43,6 @@ setuptools.setup(
                         "corner==2.2.2", # Allesfitter dependency
                         "dearwatson==0.16.3", # Vetting
                         "dynesty==1.0.1", # Allesfitter dependency
-                        "ellc=1.8.11", # Allesfitter dependency
                         "emcee==3.0.2", # Allesfitter dependency
                         "mock==4.0.3",
                         'pytz', # Observation plan: Not using version because it gets the DB updated with each release
