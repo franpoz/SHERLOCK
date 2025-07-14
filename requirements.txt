@@ -1,7 +1,7 @@
 absl-py==2.3.1
 aiobotocore==2.23.0
 aiohappyeyeballs==2.6.1
-aiohttp==3.12.13
+aiohttp==3.12.14
 aioitertools==0.12.0
 aiosignal==1.4.0
 alexfitter==1.2.17
@@ -11,7 +11,7 @@ arviz==0.21.0
 astroplan==0.10.1
 astropy==7.0.1
 astropy_healpix==1.1.2
-astropy-iers-data==0.2025.6.30.0.39.40
+astropy-iers-data==0.2025.7.14.0.40.29
 astroquery==0.4.10
 astunparse==1.6.3
 attrs==25.3.0
@@ -37,15 +37,14 @@ cryptography==45.0.5
 cycler==0.12.1
 Cython==3.0.6
 dask==2025.5.1
-dearwatson==0.15.3
+dearwatson==0.16.3
 Deprecated==1.2.18
 distro==1.9.0
 donfig==0.8.1.post1
 dynesty==1.0.1
-ellc==1.8.11
 emcee==3.0.2
 everest-pipeline==2.0.12
-exoml==1.2.5
+exoml==1.2.6
 extension-helpers==0.1
 fbpca==1.0
 filelock==3.18.0
@@ -104,7 +103,7 @@ msgpack==1.1.1
 multidict==6.6.3
 multipledispatch==1.0.0
 namex==0.1.0
-narwhals==1.45.0
+narwhals==1.46.0
 ndindex==1.10.0
 networkx==3.5
 numba==0.61.2
@@ -174,7 +173,7 @@ seaborn==0.13.2
 SecretStorage==3.3.3
 semantic-version==2.10.0
 setuptools==78.1.1
-sherlockpipe==1.0.2
+sherlockpipe==1.0.3
 siphash24==1.7
 six==1.17.0
 sklearn==0.0
@@ -209,7 +208,7 @@ Werkzeug==3.1.3
 wheel==0.45.1
 wotan==1.9
 wrapt==1.17.2
-xarray==2025.7.0
+xarray==2025.7.1
 xarray-einstats==0.9.1
 xyzservices==2025.4.0
 yarl==1.20.1
