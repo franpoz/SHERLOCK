@@ -1,3 +1,5 @@
+import pandas as pd
+
 class AllesfitterDataExtractor:
     def __init__(self):
         pass
