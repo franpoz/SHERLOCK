@@ -4,24 +4,16 @@ import platform
 import os
 import shutil
 version = "1.0.3"
+import subprocess
 
 with open("README.md", "r") as fh:
     long_description = fh.read()
 
-# Hack to include ellc.so proper library for linux 64
 class CustomBuildPy(build_py):
     def run(self):
-        # Detect current platform
-        system = platform.system()
-        arch = platform.machine()
-        if system == "Linux" and arch == "x86_64":
-            so_path = os.path.abspath("prebuilt/linux_x86_64/libellc.so")
-        else:
-            raise RuntimeError(f"No prebuilt libellc.so available for {system} {arch}")
-        target_dir = os.path.join(self.build_lib, 'ellc')
-        self.mkpath(target_dir)
-        shutil.copy2(so_path, os.path.join(target_dir, 'libellc.so'))
-        super().run()
+        ellc_dir = os.path.join(os.path.dirname(__file__), 'sherlockpipe', 'ellc')
+        subprocess.check_call(['make'], cwd=ellc_dir)
+        build_py.run(self)
 
 setuptools.setup(
     name="sherlockpipe", # Replace with your own username
@@ -40,7 +32,7 @@ setuptools.setup(
         "Operating System :: OS Independent",
     ],
     cmdclass={
-        'build_py': CustomBuildPy,
+        'build_py': build_py,
     },
     python_requires='>=3.11',
     install_requires=[
