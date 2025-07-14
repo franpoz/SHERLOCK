@@ -10,7 +10,7 @@ from sherlockpipe.loading import common
 from sherlockpipe.vetting.vetter import Vetter
 from sherlockpipe.bayesian_fit.allesfitter_data_extractor import AllesfitterDataExtractor
 import alexfitter
-import lcbuilder.helper.LcbuilderHelper
+from lcbuilder.helper import LcbuilderHelper
 import astropy.units as u
 
 

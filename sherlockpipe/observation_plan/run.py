@@ -37,10 +37,10 @@ def run_plan(args):
     since = Time.now() if args.since is None else Time(args.since, scale='utc')
     percentile = 99.7 if args.error_sigma == 3 else 95 if args.error_sigma == 2 else 68
     for i in np.arange(0, candidates_count):
-        period, period_low_err, period_up_err = AllesfitterDataExtractor.extract_period(i, fit_results, alles)
-        epoch, epoch_low_err, epoch_up_err = AllesfitterDataExtractor.extract_epoch(i, fit_results, alles)
-        duration, duration_low_err, duration_up_err = AllesfitterDataExtractor.extract_duration(i, fit_derived_results, alles)
-        depth, depth_low_err, depth_up_err = AllesfitterDataExtractor.extract_depth(i, fit_derived_results, alles)
+        period, period_low_err, period_up_err = AllesfitterDataExtractor.extract_period(i, fit_results, alles, percentile)
+        epoch, epoch_low_err, epoch_up_err = AllesfitterDataExtractor.extract_epoch(i, fit_results, alles, percentile)
+        duration, duration_low_err, duration_up_err = AllesfitterDataExtractor.extract_duration(i, fit_derived_results)
+        depth, depth_low_err, depth_up_err = AllesfitterDataExtractor.extract_depth(i, fit_derived_results)
         period_row = fit_results[fit_results["#name"].str.contains("_period")].iloc[i]
         name = object_id + "_" + period_row["#name"].replace("_period", "")
         mission, mission_prefix, id_int = LcBuilder().parse_object_info(object_id)
