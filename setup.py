@@ -1,5 +1,5 @@
 import setuptools
-from setuptools.command.build_py import build_py
+from setuptools.command.install import install
 import platform
 import os
 import shutil
@@ -9,11 +9,14 @@ import subprocess
 with open("README.md", "r") as fh:
     long_description = fh.read()
 
-class CustomBuildPy(build_py):
+class CustomInstall(install):
     def run(self):
-        ellc_dir = os.path.join(os.path.dirname(__file__), 'sherlockpipe', 'ellc')
-        subprocess.check_call(['make'], cwd=ellc_dir)
-        build_py.run(self)
+        here = os.path.abspath(os.path.dirname(__file__))
+        ellc_dir = os.path.join(here, 'sherlockpipe', 'ellc')
+        print(f"=== Running make in {ellc_dir} ===")
+        subprocess.check_call(['make', '-B'], cwd=ellc_dir)
+        shutil.copy(ellc_dir + '/libellc.so', os.path.join(ellc_dir, 'ellc') + '/libellc.so')
+        super().run()
 
 setuptools.setup(
     name="sherlockpipe", # Replace with your own username
@@ -24,20 +27,18 @@ setuptools.setup(
     long_description=long_description,
     long_description_content_type="text/markdown",
     url="https://github.com/franpoz/SHERLOCK",
-    packages=setuptools.find_packages(),
+    packages=setuptools.find_packages() + ['sherlockpipe.ellc'],
     include_package_data=True,
     classifiers=[
         "Programming Language :: Python :: 3",
         "License :: OSI Approved :: MIT License",
         "Operating System :: OS Independent",
     ],
-    cmdclass={
-        'build_py': CustomBuildPy,
-    },
+    cmdclass={'install': CustomInstall},
     python_requires='>=3.11',
     install_requires=[
                         'astroplan==0.10.1',
-                        "alexfitter==1.2.17", # Fit
+                        "alexfitter==1.2.19", # Fit
                         'argparse==1.4.0', # All modules
                         "celerite==0.4.3", # Allesfitter dependency
                         "corner==2.2.3", # Allesfitter dependency

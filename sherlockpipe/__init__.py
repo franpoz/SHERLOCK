@@ -3,7 +3,7 @@ __version__ = "1.0.6"
 import sys
 
 #Patching ellc with submodule
-import sherlockpipe.ellc as _mypackage_ellc
+import sherlockpipe.ellc.ellc as _mypackage_ellc
 
 # Override the 'ellc' name in sys.modules to point to your internal package module
 sys.modules['ellc'] = _mypackage_ellc

@@ -3,3 +3,5 @@ graft sherlockpipe/resources
 graft sherlockpipe/ellc
 prune sherlockpipe/ellc/doc
 prune sherlockpipe/ellc/examples
+prune sherlockpipe/ellc/.git
+prune sherlockpipe/ellc/.gitignore
