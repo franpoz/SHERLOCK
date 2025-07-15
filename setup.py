@@ -3,7 +3,7 @@ from setuptools.command.build_py import build_py
 import platform
 import os
 import shutil
-version = "1.0.4"
+version = "1.0.5"
 import subprocess
 
 with open("README.md", "r") as fh:
