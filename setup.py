@@ -40,10 +40,10 @@ setuptools.setup(
                         "alexfitter==1.2.17", # Fit
                         'argparse==1.4.0', # All modules
                         "celerite==0.4.3", # Allesfitter dependency
-                        "corner==2.2.2", # Allesfitter dependency
+                        "corner==2.2.3", # Allesfitter dependency
                         "dearwatson==0.16.3", # Vetting
-                        "dynesty==1.0.1", # Allesfitter dependency
-                        "emcee==3.0.2", # Allesfitter dependency
+                        "dynesty==2.1.5", # Allesfitter dependency
+                        "emcee==3.1.6", # Allesfitter dependency
                         "mock==4.0.3",
                         'pytz', # Observation plan: Not using version because it gets the DB updated with each release
                         "requests==2.32.3", # OIs management
