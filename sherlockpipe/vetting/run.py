@@ -69,7 +69,7 @@ def run_vet(object_dir, candidate, properties, cpus=os.cpu_count() - 1, run_iats
         candidate = candidates.iloc[[candidate_selection - 1]]
         candidate.loc[:, 'number'] = candidate_selection
         transits_df_file = vetter.object_dir() + "/transits_stats.csv"
-        fit_results_dir = vetter.object_dir() + f"/fit_[{candidate_number}]"
+        fit_results_dir = vetter.object_dir() + f"/fit_[{candidate_selection}]"
         if os.path.exists(transits_df_file):
             transits_df = pd.read_csv(vetter.object_dir() + "/transits_stats.csv")
             transits_df = transits_df[transits_df["candidate"] == candidate_selection - 1]
@@ -78,22 +78,19 @@ def run_vet(object_dir, candidate, properties, cpus=os.cpu_count() - 1, run_iats
                 transits_df = None
         if os.path.exists(fit_results_dir):
             logging.info("Reading fit results from " + fit_results_dir)
-            ns_derived_file = object_dir + "/results/ns_derived_table.csv"
-            ns_file = object_dir + "/results/ns_table.csv"
-            fit_derived_results = pd.read_csv(object_dir + "/results/ns_derived_table.csv")
-            fit_results = pd.read_csv(object_dir + "/results/ns_table.csv")
-            alles = alexfitter.allesclass(object_dir)
-            candidates_count = len(fit_results[fit_results["#name"].str.contains("_period")])
+            ns_derived_file = fit_results_dir + "/results/ns_derived_table.csv"
+            ns_file = fit_results_dir + "/results/ns_table.csv"
+            fit_derived_results = pd.read_csv(ns_derived_file)
+            fit_results = pd.read_csv(ns_file)
+            alles = alexfitter.allesclass(fit_results_dir)
             candidate_no = 0
-            candidate.loc[:, 'period'] = AllesfitterDataExtractor.extract_period(candidate_no, fit_results, alles)
-            candidate.loc[:, 't0'] = AllesfitterDataExtractor.extract_epoch(candidate_no, fit_results, alles)
-            candidate.loc[:, 'duration'] = AllesfitterDataExtractor.extract_duration(candidate_no, fit_derived_results)
-            candidate.loc[:, 'depth'] = AllesfitterDataExtractor.extract_depth(candidate_no, fit_derived_results)
-            candidate.loc[:, 'a'] = AllesfitterDataExtractor.extract_semimajor_axis(candidate_no, fit_derived_results)
-            rp = AllesfitterDataExtractor.extract_radius(candidate_no, fit_results)
-            candidate.loc[:, 'rp_rs'] = (AllesfitterDataExtractor.extract_radius(candidate_no, fit_results) /
-                                         LcbuilderHelper.convert_from_to(star_df["radius"], u.Rsun, u.Rearth))
-
+            candidate.loc[:, 'period'], _, _ = AllesfitterDataExtractor.extract_period(candidate_no, fit_results, alles)
+            candidate.loc[:, 't0'], _, _ = AllesfitterDataExtractor.extract_epoch(candidate_no, fit_results, alles)
+            candidate.loc[:, 'duration'], _, _ = AllesfitterDataExtractor.extract_duration(candidate_no, fit_derived_results)
+            candidate.loc[:, 'depth'], _, _ = AllesfitterDataExtractor.extract_depth(candidate_no, fit_derived_results)
+            candidate.loc[:, 'a'], _, _ = AllesfitterDataExtractor.extract_semimajor_axis(candidate_no, fit_derived_results)
+            rp, _, _ = AllesfitterDataExtractor.extract_radius(candidate_no, fit_results)
+            candidate.loc[:, 'rp_rs'] = rp / LcbuilderHelper.convert_from_to(star_df["radius"], u.Rsun, u.Rearth)
         logging.info("Selected signal number " + str(candidate_selection))
     transits_mask = []
     for i in range(0, int(candidate['number']) - 1):
