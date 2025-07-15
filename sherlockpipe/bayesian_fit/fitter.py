@@ -166,6 +166,7 @@ class Fitter(ToolWithCandidate):
                 except Exception as e:
                     logging.exception(str(e))
             logging.info("Generating custom plots")
+            plt.close()
             # TODO fix custom_plot for all candidates
             # Fitter.custom_plot(candidate_row["name"], candidate_row["period"], fit_width, allesfit_dir, "posterior")
 
