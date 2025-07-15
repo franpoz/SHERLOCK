@@ -36,7 +36,7 @@ crc32c==2.7.1
 cryptography==45.0.5
 cycler==0.12.1
 Cython==3.0.6
-dask==2025.5.1
+dask==2025.7.0
 dearwatson==0.16.3
 Deprecated==1.2.18
 distro==1.9.0
@@ -103,7 +103,7 @@ msgpack==1.1.1
 multidict==6.6.3
 multipledispatch==1.0.0
 namex==0.1.0
-narwhals==1.46.0
+narwhals==1.47.0
 ndindex==1.10.0
 networkx==3.5
 numba==0.61.2
