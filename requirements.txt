@@ -173,7 +173,7 @@ seaborn==0.13.2
 SecretStorage==3.3.3
 semantic-version==2.10.0
 setuptools==78.1.1
-sherlockpipe==1.0.3
+sherlockpipe==1.0.4
 siphash24==1.7
 six==1.17.0
 sklearn==0.0
@@ -212,5 +212,5 @@ xarray==2025.7.1
 xarray-einstats==0.9.1
 xyzservices==2025.4.0
 yarl==1.20.1
-zarr==3.0.10
+zarr==3.1.0
 zipp==3.23.0
