@@ -87,9 +87,11 @@ def run_vet(object_dir, candidate, properties, cpus=os.cpu_count() - 1, run_iats
             candidate.loc[:, 'period'], _, _ = AllesfitterDataExtractor.extract_period(candidate_no, fit_results, alles)
             candidate.loc[:, 't0'], _, _ = AllesfitterDataExtractor.extract_epoch(candidate_no, fit_results, alles)
             candidate.loc[:, 'duration'], _, _ = AllesfitterDataExtractor.extract_duration(candidate_no, fit_derived_results)
+            candidate.loc[:, 'duration'] = candidate.loc[:, 'duration'] * 60
             candidate.loc[:, 'depth'], _, _ = AllesfitterDataExtractor.extract_depth(candidate_no, fit_derived_results)
+            candidate.loc[:, 'depth'] = candidate.loc[:, 'depth'] / 1000
             candidate.loc[:, 'a'], _, _ = AllesfitterDataExtractor.extract_semimajor_axis(candidate_no, fit_derived_results)
-            rp, _, _ = AllesfitterDataExtractor.extract_radius(candidate_no, fit_results)
+            rp, _, _ = AllesfitterDataExtractor.extract_radius(candidate_no, fit_derived_results)
             candidate.loc[:, 'rp_rs'] = rp / LcbuilderHelper.convert_from_to(star_df["radius"], u.Rsun, u.Rearth)
         logging.info("Selected signal number " + str(candidate_selection))
     transits_mask = []
