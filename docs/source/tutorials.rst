@@ -11,6 +11,7 @@ Tutorials
    :maxdepth: 1
    :caption: Contents:
 
+   complete-workflow
    toi-178-programmatical
    README_270.md
    README_540.md

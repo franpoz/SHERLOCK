@@ -24,6 +24,10 @@ In most of cases the user only needs to provide with a ``KIC-ID``, ``EPIC-ID``, 
    installation
    the-pipeline
    api
+   fit-module
+   vet-module
+   stability-module
+   plan-module
    tutorials
    about-us
 
