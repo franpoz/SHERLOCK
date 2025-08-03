@@ -13,6 +13,6 @@ We will show the `sherlock` capabilities when searching for and vetting promisin
    :maxdepth: 1
    :caption: Contents:
 
-   TOI-175/TOI-175-search
-   TOI-175/TOI-175-vetting
+   TOI-175/TOI-175-search.ipynb
+   TOI-175/TOI-175-vetting.ipynb
 

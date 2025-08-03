@@ -13,8 +13,8 @@ We will show the `sherlock` capabilities when searching for, vetting and validat
    :maxdepth: 1
    :caption: Contents:
 
-   TOI-1798/TOI-1798-search
-   TOI-1798/TOI-1798-vetting
-   TOI-1798/TOI-1798-vetting2
-   TOI-1798/TOI-1798-validation
+   TOI-1798/TOI-1798-search.ipynb
+   TOI-1798/TOI-1798-vetting.ipynb
+   TOI-1798/TOI-1798-vetting2.ipynb
+   TOI-1798/TOI-1798-validation.ipynb
 
