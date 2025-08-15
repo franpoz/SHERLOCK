@@ -18,8 +18,8 @@ build:
     - tk-dev
     - libpng-dev
     - libfreetype6-dev
-    - llvm-9
-    - llvm-9-dev
+    - llvm-15
+    - llvm-15-dev
     - gfortran
     - gcc
     - locales
