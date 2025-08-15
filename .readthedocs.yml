@@ -32,7 +32,7 @@ sphinx:
   configuration: docs/source/conf.py
 
 submodules:
-  exclude: all
+  include: all
 
 python:
   install:
