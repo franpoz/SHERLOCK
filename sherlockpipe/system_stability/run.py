@@ -50,61 +50,77 @@ def run_stability(args):
     free_params = args.free_params.split(",") if args.free_params is not None else []
     planets_params = []
     if args.properties is None:
-        candidates = pd.read_csv(object_dir + "/../candidates.csv")
-        ns_derived_file = object_dir + "/results/ns_derived_table.csv"
-        ns_file = object_dir + "/results/ns_table.csv"
-        if not os.path.exists(ns_derived_file) or not os.path.exists(ns_file):
-            raise ValueError("Bayesian fit posteriors files {" + ns_file + ", " + ns_derived_file + "} not found")
-        fit_derived_results = pd.read_csv(object_dir + "/results/ns_derived_table.csv")
-        fit_results = pd.read_csv(object_dir + "/results/ns_table.csv")
-        candidates_count = len(fit_results[fit_results["#name"].str.contains("_period")])
-        ecc_rows = fit_derived_results[fit_derived_results["#property"].str.contains("Eccentricity")]
-        arg_periastron_rows = fit_derived_results[
-            fit_derived_results["#property"].str.contains("Argument of periastron")]
-        for i in arange(0, candidates_count):
-            period_row = fit_results[fit_results["#name"].str.contains("_period")].iloc[i]
-            period = float(period_row["median"])
-            period_low_err = float(period_row["lower_error"])
-            period_up_err = float(period_row["upper_error"])
-            inc_row = fit_derived_results[fit_derived_results["#property"].str.contains("Inclination")].iloc[i]
-            inclination = float(inc_row["value"])
-            inc_low_err = float(inc_row["lower_error"])
-            inc_up_err = float(inc_row["upper_error"])
-            duration_row = \
-            fit_derived_results[fit_derived_results["#property"].str.contains("Total transit duration")].iloc[i]
-            duration = float(duration_row["value"])
-            duration_low_err = float(duration_row["lower_error"])
-            duration_up_err = float(duration_row["upper_error"])
-            radius_row = fit_derived_results[fit_derived_results["#property"].str.contains("R_\{\\\\oplus}")].iloc[i]
-            radius = float(radius_row["value"])
-            radius_low_err = float(radius_row["lower_error"])
-            radius_up_err = float(radius_row["upper_error"])
-            if len(ecc_rows) > 0:
-                ecc_row = ecc_rows.iloc[i]
-                eccentricity = float(ecc_row["value"])
-                ecc_low_err = float(ecc_row["lower_error"])
-                ecc_up_err = float(ecc_row["upper_error"])
+        candidates = pd.read_csv(object_dir + "/candidates.csv")
+        candidates_selection = [int(candidate) for candidate in args.candidate.split(",")]
+        for candidate_selection in candidates_selection:
+            fit_results_dir = object_dir + f"/fit_[{candidate_selection}]"
+            if os.path.exists(fit_results_dir):
+                ns_derived_file = fit_results_dir + "/results/ns_derived_table.csv"
+                ns_file = fit_results_dir + "/results/ns_table.csv"
+                fit_derived_results = pd.read_csv(ns_derived_file)
+                fit_results = pd.read_csv(ns_file)
+                ecc_rows = fit_derived_results[fit_derived_results["#property"].str.contains("Eccentricity")]
+                arg_periastron_rows = fit_derived_results[
+                    fit_derived_results["#property"].str.contains("Argument of periastron")]
+                period_row = fit_results[fit_results["#name"].str.contains("_period")].iloc[0]
+                period = float(period_row["median"])
+                period_low_err = float(period_row["lower_error"])
+                period_up_err = float(period_row["upper_error"])
+                inc_row = fit_derived_results[fit_derived_results["#property"].str.contains("Inclination")].iloc[0]
+                inclination = float(inc_row["value"])
+                inc_low_err = float(inc_row["lower_error"])
+                inc_up_err = float(inc_row["upper_error"])
+                radius_row = fit_derived_results[fit_derived_results["#property"].str.contains("R_\{\\\\oplus}")].iloc[0]
+                radius = float(radius_row["value"])
+                radius_low_err = float(radius_row["lower_error"])
+                radius_up_err = float(radius_row["upper_error"])
+                if len(ecc_rows) > 0:
+                    ecc_row = ecc_rows.iloc[0]
+                    eccentricity = float(ecc_row["value"])
+                    ecc_low_err = float(ecc_row["lower_error"])
+                    ecc_up_err = float(ecc_row["upper_error"])
+                else:
+                    eccentricity = args.ecc_max / 2
+                    ecc_low_err = args.ecc_max
+                    ecc_up_err = 0
+                if len(arg_periastron_rows) > 0:
+                    arg_periastron_row = arg_periastron_rows.iloc[0]
+                    arg_periastron = float(arg_periastron_row["value"])
+                    arg_periastron_low_err = float(arg_periastron_row["lower_error"])
+                    arg_periastron_up_err = float(arg_periastron_row["upper_error"])
+                else:
+                    arg_periastron = 'rand'
+                    arg_periastron_low_err = 20.0
+                    arg_periastron_up_err = 20.0
             else:
-                eccentricity = 0.0
-                ecc_low_err = 0.1
-                ecc_up_err = 0.1
-            if len(arg_periastron_rows) > 0:
-                arg_periastron_row = arg_periastron_rows.iloc[i]
-                arg_periastron = float(arg_periastron_row["value"])
-                arg_periastron_low_err = float(arg_periastron_row["lower_error"])
-                arg_periastron_up_err = float(arg_periastron_row["upper_error"])
-            else:
-                arg_periastron = 0.0
+                candidate_row = candidates.iloc[[candidate_selection - 1]]
+                period = candidate_row["period"]
+                period_low_err = candidate_row["per_err"]
+                period_up_err = candidate_row["per_err"]
+                radius = candidate_row["rad_p"]
+                radius_low_err = 0.1 * radius
+                radius_up_err = 0.1 * radius
+                eccentricity = args.ecc_max / 2
+                ecc_low_err = args.ecc_max
+                ecc_up_err = 0
+                arg_periastron = 'rand'
                 arg_periastron_low_err = 20.0
                 arg_periastron_up_err = 20.0
+                inclination = 0.0
+                inc_low_err = 1.0
+                inc_up_err = 1.0
             planets_params.append(
                 PlanetInput(period=period, period_low_err=period_low_err, period_up_err=period_up_err,
                             radius=radius, radius_low_err=radius_low_err, radius_up_err=radius_up_err,
                             eccentricity=eccentricity, ecc_low_err=ecc_low_err, ecc_up_err=ecc_up_err,
                             inclination=inclination, inc_low_err=inc_low_err, inc_up_err=inc_up_err,
                             omega=arg_periastron, omega_low_err=arg_periastron_low_err,
-                            omega_up_err=arg_periastron_up_err, mass_bins=args.mass_bins, period_bins=args.period_bins,
-                            ecc_bins=args.ecc_bins, inc_bins=args.inc_bins, omega_bins=args.omega_bins))
+                            omega_up_err=arg_periastron_up_err, mass_bins=args.mass_bins,
+                            period_bins=args.period_bins,
+                            ecc_bins=args.ecc_bins, inc_bins=args.inc_bins, omega_bins=args.omega_bins,
+                            omega_big='rand', omega_big_low_err=20.0, omega_big_up_err=20.0,
+                            omega_big_bins=args.omega_bins))
+
     else:
         user_properties = common.load_from_yaml(args.properties)
         user_planet_params = []

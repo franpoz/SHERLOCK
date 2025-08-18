@@ -9,10 +9,12 @@ def stability_args_parse(args=None):
     ap.add_argument('--max_ecc', type=float, default=0.1,
                     help="Upper limit for the eccentricity grid.",
                     required=False)
+    ap.add_argument('--candidate', type=str, default=None, help="The candidate signal to be used.", required=False)
     ap.add_argument('--properties', help="The YAML file to be used as input.", required=False)
     ap.add_argument('--cpus', type=int, default=4, help="The number of CPU cores to be used.", required=False)
     ap.add_argument('--period_bins', type=int, default=1, help="The number of period bins to use.", required=False)
     ap.add_argument('--ecc_bins', type=int, default=1, help="The number of eccentricity bins to use.", required=False)
+    ap.add_argument('--ecc_max', type=int, default=0.5, help="The maximum eccentricity to explore.", required=False)
     ap.add_argument('--inc_bins', type=int, default=1, help="The number of inclination bins to use.", required=False)
     ap.add_argument('--omega_bins', type=int, default=1, help="The number of argument of periastron bins to use.",
                     required=False)
