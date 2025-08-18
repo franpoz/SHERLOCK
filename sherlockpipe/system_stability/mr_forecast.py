@@ -12,6 +12,8 @@ from astropy import units as u
 resources_dir = path.join(path.dirname(__file__))
 resources_dir = str(Path(resources_dir).parent.absolute())
 
+'''Cite https://ui.adsabs.harvard.edu/abs/2017ApJ...834...17C
+'''
 class MrForecast:
     N_POPS: int = 4
     ## boundary
