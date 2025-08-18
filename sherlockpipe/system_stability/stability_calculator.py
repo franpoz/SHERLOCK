@@ -244,12 +244,12 @@ class StabilityCalculator(ABC):
                 # using arange instead of linspace because 0 and 360 are the same, so we exclude 360
                 omega_big_grid = np.arange(0, 360, 360 // planet_param.omega_big_bins)
             elif planet_param.omega_big_bins == 1 or planet_param.omega_big_low_err == planet_param.omega_big_up_err == 0:
-                omega_grid = np.full(1, planet_param.omega_big)
+                omega_big_grid = np.full(1, planet_param.omega_big)
             else:
-                omega_grid = np.linspace(planet_param.omega_big - planet_param.omega_big_low_err,
+                omega_big_grid = np.linspace(planet_param.omega_big - planet_param.omega_big_low_err,
                                          planet_param.omega_big + planet_param.omega_big_up_err,
                                          planet_param.omega_big_bins)
-            planet_omega_big.append(omega_grid)
+            planet_omega_big.append(omega_big_grid)
         period_grid = np.array(np.meshgrid(*np.array(planet_period, dtype=object))).T.reshape(-1, len(planet_period))
         masses_grid = np.array(np.meshgrid(*np.array(planet_masses, dtype=object))).T.reshape(-1, len(planet_masses))
         ecc_grid = np.array(np.meshgrid(*np.array(planet_ecc, dtype=object))).T.reshape(-1, len(planet_ecc))
