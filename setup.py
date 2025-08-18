@@ -3,7 +3,7 @@ from setuptools.command.install import install
 import platform
 import os
 import shutil
-version = "1.2.0"
+version = "1.2.1"
 import subprocess
 
 with open("README.md", "r") as fh:
