@@ -11,7 +11,7 @@ Tutorials
    :maxdepth: 1
    :caption: Contents:
 
-   complete-workflow
+   complete-workflow-tutorial.ipynb
    toi-178-programmatical
    README_270.md
    README_540.md
