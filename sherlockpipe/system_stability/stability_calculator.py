@@ -160,12 +160,14 @@ class StabilityCalculator(ABC):
             min_period = min_period if period > min_period else period
             ecc = simulation_input.ecc_arr[planet_key]
             inc = np.deg2rad(simulation_input.inc_arr[planet_key])
-            if simulation_input.omega_arr[planet_key] == 'rand':
-                simulation_input.omega_arr[planet_key] = random.uniform(0, 360)
-            omega = np.deg2rad(simulation_input.omega_arr[planet_key])
-            if simulation_input.omega_big_arr[planet_key] == 'rand':
-                simulation_input.omega_big_arr[planet_key] = random.uniform(0, 360)
-            omega_big = np.deg2rad(simulation_input.omega_big_arr[planet_key])
+            omega = simulation_input.omega_arr[planet_key]
+            if omega == 'rand':
+                omega = random.uniform(0, 360)
+            omega = np.deg2rad(omega)
+            omega_big = simulation_input.omega_big_arr[planet_key]
+            if omega_big == 'rand':
+                omega_big = random.uniform(0, 360)
+            omega_big = np.deg2rad(omega_big)
             sim.add(m=LcbuilderHelper.convert_from_to(mass, u.M_earth, u.M_sun) / simulation_input.star_mass,
                     P=LcbuilderHelper.convert_from_to(period, u.day, u.year), e=ecc, omega=omega, Omega=omega_big, inc=inc)
         sim.dt = LcbuilderHelper.convert_from_to(min_period, u.day, u.year) * self.dt

@@ -81,8 +81,8 @@ def run_stability(args):
                     ecc_up_err = float(ecc_row["upper_error"])
                 else:
                     eccentricity = args.ecc_max / 2
-                    ecc_low_err = args.ecc_max
-                    ecc_up_err = 0
+                    ecc_low_err = args.ecc_max / 2 - 1e-6
+                    ecc_up_err = args.ecc_max / 2
                 if len(arg_periastron_rows) > 0:
                     arg_periastron_row = arg_periastron_rows.iloc[0]
                     arg_periastron = float(arg_periastron_row["value"])
@@ -101,8 +101,8 @@ def run_stability(args):
                 radius_low_err = 0.1 * radius
                 radius_up_err = 0.1 * radius
                 eccentricity = args.ecc_max / 2
-                ecc_low_err = args.ecc_max
-                ecc_up_err = 0
+                ecc_low_err = args.ecc_max / 2 - 1e-6
+                ecc_up_err = args.ecc_max / 2
                 arg_periastron = 'rand'
                 arg_periastron_low_err = 20.0
                 arg_periastron_up_err = 20.0
