@@ -5,6 +5,7 @@ from matplotlib.colors import LinearSegmentedColormap
 from scipy import stats
 import pandas as pd
 from sherlockpipe.search.transitresult import TransitResult
+from scipy.ndimage import median_filter
 
 
 def save_transit_plot(object_id: str, title: str, plot_dir: str, file: str, time, lc, transit_result: TransitResult,
@@ -203,6 +204,45 @@ def plot_stability(masses, eccentricities, megnos, save_dir):
     ebb = 0.27 - (1.50*ecc)
     plt.plot(ecc, ebb, '-', color="black")
     plt.savefig(save_dir + '/stability_megno.png', bbox_inches='tight', dpi=200)
+
+def plot_stability_by_ecc(results_dir: str, smooth_size: int = 3, limits=[[4.95, 'red'], [4.0, 'white']]):
+    df = pd.read_csv(results_dir)
+    eccentricity_pairs = []
+    megno_values = []
+    for _, row in df.iterrows():
+        e1, e2 = map(float, row['eccentricities'].split(','))
+        eccentricity_pairs.append((e1, e2))
+        megno_values.append(float(row['megno']))
+    eccentricity_pairs = np.array(eccentricity_pairs)
+    megno_values = np.array(megno_values)
+    e1_unique = np.sort(np.unique(eccentricity_pairs[:, 0]))
+    e2_unique = np.sort(np.unique(eccentricity_pairs[:, 1]))
+    megno_grid = np.zeros((len(e1_unique), len(e2_unique)))
+    megno_grid[:] = np.nan
+    for (e1, e2), megno in zip(eccentricity_pairs, megno_values):
+        i = np.where(e1_unique == e1)[0][0]
+        j = np.where(e2_unique == e2)[0][0]
+        megno_grid[i, j] = megno
+    megno_grid = median_filter(megno_grid, size=smooth_size)
+    fig, ax = plt.subplots(figsize=(10, 8))
+    im = ax.imshow(megno_grid,
+                   origin='lower',
+                   extent=[min(e2_unique), max(e2_unique), min(e1_unique), max(e1_unique)],
+                   aspect='auto',
+                   cmap='viridis_r')
+    for limit in limits:
+        contour = ax.contour(
+            e2_unique,  # X grid
+            e1_unique,  # Y grid
+            megno_grid,  # Z grid
+            levels=[limit[0]],  # Contour at MEGNO = 5
+            colors=limit[1],
+            linewidths=2,
+            linestyles='--'
+        )
+    ax.clabel(contour, inline=True, fontsize=15, fmt='%.2f')
+    cbar = plt.colorbar(im, ax=ax)
+    cbar.set_label('MEGNO Value', rotation=270, labelpad=15)
 
 # megno_df = pd.read_csv("/home/martin/Downloads/sherlock/sherlock_confusion_matrix/cps/done/TIC461239485_all/stability_stability/stability_megno.csv")
 # megno_df[['mass1', 'mass2']] = megno_df['masses'].str.split(',', expand=True)

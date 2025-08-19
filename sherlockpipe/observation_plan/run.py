@@ -19,6 +19,7 @@ def run_plan(args):
     if args.observatories is None and (args.lat is None or args.lon is None or args.alt is None):
         raise ValueError("You either need to set the 'observatories' property or the lat, lon and alt.")
     object_dir = os.getcwd() if args.object_dir is None else args.object_dir
+    object_dir = object_dir + f"/fit_[{args.candidate}]"
     ns_derived_file = object_dir + "/results/ns_derived_table.csv"
     ns_file = object_dir + "/results/ns_table.csv"
     if not os.path.exists(ns_derived_file) or not os.path.exists(ns_file):

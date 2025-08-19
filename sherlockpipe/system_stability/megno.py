@@ -79,40 +79,4 @@ class MegnoStabilityCalculator(StabilityCalculator):
         results_df = results_df.sort_values('megno')
         results_df.to_csv(result_file, index=False)
 
-    def plot_stored_results(self, results_dir: str):
-        df = pd.read_csv(results_dir)
-        eccentricity_pairs = []
-        megno_values = []
-        for _, row in df.iterrows():
-            e1, e2 = map(float, row['eccentricities'].split(','))
-            eccentricity_pairs.append((e1, e2))
-            megno_values.append(float(row['megno']))
-        eccentricity_pairs = np.array(eccentricity_pairs)
-        megno_values = np.array(megno_values)
-        e1_unique = np.sort(np.unique(eccentricity_pairs[:, 0]))
-        e2_unique = np.sort(np.unique(eccentricity_pairs[:, 1]))
-        megno_grid = np.zeros((len(e1_unique), len(e2_unique)))
-        megno_grid[:] = np.nan
-        for (e1, e2), megno in zip(eccentricity_pairs, megno_values):
-            i = np.where(e1_unique == e1)[0][0]
-            j = np.where(e2_unique == e2)[0][0]
-            megno_grid[i, j] = megno
-        fig, ax = plt.subplots(figsize=(10, 8))
-        im = ax.imshow(megno_grid,
-                       origin='lower',
-                       extent=[min(e2_unique), max(e2_unique), min(e1_unique), max(e1_unique)],
-                       aspect='auto',
-                       cmap='viridis_r')
-        cbar = plt.colorbar(im, ax=ax)
-        cbar.set_label('MEGNO Value', rotation=270, labelpad=15)
-        ax.set_xlabel('Eccentricity of Planet 2')
-        ax.set_ylabel('Eccentricity of Planet 1')
-        ax.set_title('System Stability (MEGNO) as a Function of Planetary Eccentricities')
-        text_x = 0.5
-        text_y = -0.15
-        plt.figtext(text_x, text_y,
-                    "MEGNO Interpretation: Values close to 2 indicate regular orbits (stable),\n"
-                    "Values significantly > 2 indicate chaotic orbits (unstable).",
-                    ha='center', fontsize=10)
-        plt.tight_layout()
-        plt.show()
+
