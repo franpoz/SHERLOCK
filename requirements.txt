@@ -19,7 +19,7 @@ autograd==1.8.0
 backports.tarfile==1.2.0
 batman-package==2.5.3
 beautifulsoup4==4.13.4
-blosc2==3.7.1
+blosc2==3.7.2
 bokeh==3.7.3
 botocore==1.39.11
 celerite==0.4.3
@@ -69,7 +69,7 @@ imageio==2.9.0
 importlib_metadata==8.7.0
 jaraco.classes==3.4.0
 jaraco.context==6.0.1
-jaraco.functools==4.2.1
+jaraco.functools==4.3.0
 jeepney==0.9.0
 Jinja2==3.1.6
 jmespath==1.0.1
@@ -173,7 +173,7 @@ seaborn==0.13.2
 SecretStorage==3.3.3
 semantic-version==2.10.0
 setuptools==78.1.1
-sherlockpipe==1.2.1
+sherlockpipe==1.2.2
 siphash24==1.7
 six==1.17.0
 sklearn==0.0
