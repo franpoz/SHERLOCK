@@ -67,7 +67,7 @@ def run_stability(args):
                 period_low_err = float(period_row["lower_error"])
                 period_up_err = float(period_row["upper_error"])
                 inc_row = fit_derived_results[fit_derived_results["#property"].str.contains("Inclination")].iloc[0]
-                inclination = float(inc_row["value"])
+                inclination = 90 - float(inc_row["value"])
                 inc_low_err = float(inc_row["lower_error"])
                 inc_up_err = float(inc_row["upper_error"])
                 radius_row = fit_derived_results[fit_derived_results["#property"].str.contains("R_\{\\\\oplus}")].iloc[0]

@@ -62,8 +62,8 @@ class MegnoStabilityCalculator(StabilityCalculator):
                 "eccentricities": ",".join([str(ecc_value) for ecc_value in simulation_input.ecc_arr]),
                 "arg_periastron": ",".join([str(om_value) for om_value in simulation_input.omega_arr]),
                 "long_asc_node": ",".join([str(om_big_value) for om_big_value in simulation_input.omega_big_arr]),
-                "last_year": np.nanmean(final_year),
-                "megno": np.nanmean(final_megno)}
+                "last_year": np.nanmedian(final_year),
+                "megno": np.nanmedian(final_megno)}
 
     def store_simulation_results(self, simulation_results: List[Dict], results_dir: str):
         """
