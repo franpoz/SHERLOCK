@@ -26,6 +26,8 @@ from scipy import stats
 from scipy.interpolate import interp1d
 from scipy.signal import argrelextrema
 import matplotlib.pyplot as plt
+import pandas as pd
+from sherlockpipe.search.sherlock import Sherlock
 
 G = 6.674e-11  # m3 kg-1 s-2
 AU_TO_RSUN = 215.032
@@ -147,7 +149,15 @@ class ExoMoonLeastSquares:
 
         def neg_loglike(theta):
             m = model(theta, time)
-            return 0.5 * np.sum(((flux - m) / flux_err) ** 2)
+            res = (flux - m) / flux_err
+            # penaliza geometrías sin tránsito (b>1) para evitar modelo plano
+            # b = (a * cos i) / R*  con i en radianes:
+            _, a, inc, _ = theta
+            b = a * np.cos(np.deg2rad(inc))
+            penalty = 0.0
+            if b > 1.0:
+                penalty += 1e6 * (b - 1.0) ** 2  # empuja lejos del "no-tránsito"
+            return 0.5 * np.sum(res ** 2) + penalty
         if len(time > 0):
             res = minimize(neg_loglike, guess_params, method='Powell', bounds=guess_params_bounds)
             best_theta = res.x
@@ -179,8 +189,8 @@ class ExoMoonLeastSquares:
             guess_params_bounds = [(time.min(), time.max()),
                       (guess_params[1] - guess_params[1] / 100, guess_params[1] + guess_params[1] / 100),
                       (guess_params[2] - self.planet_inc_err, guess_params[2] + self.planet_inc_err),
-                                   (guess_params[3] - self.planet_ecc_err,
-                                    guess_params[3] + self.planet_ecc_err)]
+                                   (guess_params[3] - self.planet_radius_err / star_radius_rearth,
+                                    guess_params[3] + self.planet_radius_err / star_radius_rearth)]
             best_theta, best_model = ExoMoonLeastSquares.fit_single_transit(time[mask], flux[mask], flux_err[mask],
                                                                             guess_params, guess_params_bounds, params)
             best_t0 = best_theta[0]
@@ -223,8 +233,7 @@ class ExoMoonLeastSquares:
         params.per = self.planet_period
         params.ecc = self.planet_ecc  # eccentricity
         params.w = self.planet_arg_periastron  # longitude of periastron (deg)
-        params.rp = self.planet_radius / LcbuilderHelper.convert_from_to(self.star_radius, u.R_sun,
-                                                                         u.R_earth)  # planet radius / stellar radius
+        params.rp = self.planet_radius / star_radius_rearth  # planet radius / stellar radius
         params.limb_dark = "quadratic"
         self.ttvs = []
         for t0 in self.bary_t0s:
@@ -236,14 +245,15 @@ class ExoMoonLeastSquares:
                 params.a = self.planet_semimajor_axis / LcbuilderHelper.convert_from_to(self.star_radius, u.R_sun,
                                                                                         u.au)  # semi-major axis / stellar radius
                 params.u = self.ab  # limb darkening coefficients
+                #b = a * np.cos(np.deg2rad(inc)) ensure b = 1 to calculate minimum inclination
+                min_inc = np.rad2deg(np.arccos(1 / params.a))
                 guess_params = [t0, params.a, params.inc, params.rp]
                 guess_params_bounds = [(time[mask].min(), time[mask].max()),
                                        (guess_params[1] - guess_params[1] / 100,
                                         guess_params[1] + guess_params[1] / 100),
-                                       (guess_params[2] - self.planet_inc_err,
-                                        guess_params[2] + self.planet_inc_err),
-                                       (guess_params[3] - self.planet_ecc_err,
-                                        guess_params[3] + self.planet_ecc_err)]
+                                       (90 - min_inc, 90),
+                                       (guess_params[3] - self.planet_radius_err / star_radius_rearth,
+                                        guess_params[3] + self.planet_radius_err / star_radius_rearth)]
                 best_theta, best_model = ExoMoonLeastSquares.fit_single_transit(time[mask], flux[mask], flux_err[mask],
                                                                                 guess_params, guess_params_bounds, params)
                 best_t0 = best_theta[0]
@@ -1068,73 +1078,99 @@ handler = logging.StreamHandler(sys.stdout)
 handler.setLevel(logging.INFO)
 handler.setFormatter(formatter)
 logger.addHandler(handler)
-target_name = "TIC 26547036"
-object_dir = target_name + "_EMLS/"
-if not os.path.exists(object_dir):
-    os.mkdir(object_dir)
+
+
 lc_builder = LcBuilder()
-object_info = lc_builder.build_object_info(target_name=target_name, author=['SPOC'], sectors="all", file=None, cadence=[120],
-                              initial_mask=[], initial_transit_mask=None, star_info=None, aperture=None,
-                              eleanor_corr_flux="pdcsap_flux", outliers_sigma=3, high_rms_enabled=False,
-                              high_rms_threshold=1.5, high_rms_bin_hours=4, smooth_enabled=False, binning=0,
-                              auto_detrend_enabled=False, auto_detrend_method="cosine", auto_detrend_ratio=0.25,
-                              auto_detrend_period=None, prepare_algorithm=None, reduce_simple_oscillations=False,
-                              oscillation_snr_threshold=4, oscillation_amplitude_threshold=0.1, oscillation_ws_scale=60,
-                              oscillation_min_period=0.002, oscillation_max_period=0.2)
-lc_build = lc_builder.build(object_info, object_dir)
-planet_t0 = 2458712.30168 - 2457000
-
-star_mass = lc_build.star_info.mass
-star_radius = lc_build.star_info.radius
-times = lc_build.lc.time.value
-flux = lc_build.lc.flux.value
-flux_err = lc_build.lc.flux_err.value
-ld_coeffs = lc_build.star_info.ld_coefficients
-
-# star_mass = 0.88
-# star_radius = 0.878413
-# times = np.linspace(planet_t0 - 5, planet_t0 + 1000, 1005 * 60 * 24 // 2)
-# flux = np.random.normal(1, 0.001, len(times))
-# flux_err = np.random.normal(0.001, 0.0001, len(times))
-# ld_coeffs = [0.4136, 0.1999]
-
-planet_radius = 11.8142656578
-planet_radius_err = 1.00
-planet_period = 141.834025
-planet_duration = 8.681 / 24
-planet_inc = 89.903
-planet_inc_err = 0.5
-planet_ecc = 0.212
-planet_ecc_err = 0.022
-planet_arg_periastron = 0
-planet_mass = 408.727
-planet_semimajor_axis = ExoMoonLeastSquares.compute_semimajor_axis(star_mass, planet_period)
-planet_impact_param = LcbuilderHelper.convert_from_to(planet_semimajor_axis, u.au, u.R_sun) / star_radius * np.cos(np.deg2rad(planet_inc))
-min_radius = 1
-max_radius = 3
-flux_err = np.ma.filled(flux_err, 0)
-flux = wotan.flatten(times, flux, method="biweight", window_length=planet_duration * 5)
-t0s = [i for i in np.arange(planet_t0, np.max(times), planet_period)]
-P1 = planet_period * u.day
-a = np.cbrt((ac.G * star_mass * u.M_sun * P1 ** 2) / (4 * np.pi ** 2)).to(u.au)
-moon_radius = 2
-moon_mass = 4
-moon_period = 2.5
-moon_alpha = 0
 max_moon_density = 5.5
-# https://exofop.ipac.caltech.edu/tess/view_toi.php CP or KP, period > 50, sort by SNR desc
-emls = ExoMoonLeastSquares(object_dir, 4, star_mass, star_radius, ld_coeffs,
-                           planet_radius, planet_radius_err, planet_mass, planet_period, planet_t0, planet_duration,
-                           planet_semimajor_axis, planet_inc, planet_inc_err, planet_ecc, planet_ecc_err, planet_arg_periastron, planet_impact_param,
-                           min_radius, max_radius, t0s, times, flux, flux_err, max_moon_density,
-                           period_grid_size=10000, radius_grid_size=20)
-#emls.fit_single_transits(times, flux, flux_err)
-# emls.flux = emls.inject_moon(emls.time, emls.flux, emls.flux_err, emls.bary_t0s, planet_semimajor_axis,
-#                             planet_ecc, moon_radius, moon_period, moon_mass, plot=True, initial_alpha=moon_alpha,
-#                              inject_planet=False, inject_moon=False)
-#emls.fit_single_transits(times, flux, flux_err, plot=True)
-emls.planet_mass_grid = [planet_mass]
-emls.moon_inc_grid = [90]
-emls.moon_ecc_grid = [0]
-emls.moon_arg_periastron_grid = [0]
-emls.run(plot=True)
+tois_df = pd.read_csv("/home/martin/.sherlockpipe/tois.csv")
+confirmed_tois_df = tois_df.loc[((tois_df['Disposition'] == 'CP') | (tois_df['Disposition'] == 'KP')) & (tois_df['Period (days)'] > 50)]
+confirmed_tois_df = confirmed_tois_df.sort_values(by='Planet SNR', ascending=False)
+#confirmed_tois_df = confirmed_tois_df.loc[confirmed_tois_df['Object Id'] == 'TIC 309792357']
+confirmed_tois_df = confirmed_tois_df.iloc[0:5]
+for index, row in confirmed_tois_df.iterrows():
+    target_name = row['Object Id']
+    object_dir = target_name + "_EMLS/"
+    if not os.path.exists(object_dir):
+        os.mkdir(object_dir)
+    object_info = lc_builder.build_object_info(target_name=target_name, author=['SPOC'], sectors="all", file=None, cadence=[120],
+                                  initial_mask=[[2198, 2202]], initial_transit_mask=None, star_info=None, aperture=None,
+                                  eleanor_corr_flux="pdcsap_flux", outliers_sigma=3, high_rms_enabled=False,
+                                  high_rms_threshold=1.5, high_rms_bin_hours=4, smooth_enabled=False, binning=0,
+                                  auto_detrend_enabled=False, auto_detrend_method="cosine", auto_detrend_ratio=0.25,
+                                  auto_detrend_period=None, prepare_algorithm=None, reduce_simple_oscillations=False,
+                                  oscillation_snr_threshold=4, oscillation_amplitude_threshold=0.1, oscillation_ws_scale=60,
+                                  oscillation_min_period=0.002, oscillation_max_period=0.2)
+    lc_build = lc_builder.build(object_info, object_dir)
+    star_mass = lc_build.star_info.mass
+    star_radius = lc_build.star_info.radius
+    times = lc_build.lc.time.value
+    flux = lc_build.lc.flux.value
+    flux_err = lc_build.lc.flux_err.value
+    ld_coeffs = lc_build.star_info.ld_coefficients
+
+    companions_df = tois_df.loc[(tois_df['Object Id'] == target_name) & (tois_df['OI'] != row['OI'])]
+    for companion_index, companion_row in companions_df.iterrows():
+        logging.info(f"Masking companion {companion_row['OI']}")
+        companion_t0 = companion_row['Epoch (BJD)'] - 2457000
+        companion_period = companion_row['Period (days)']
+        companion_duration = companion_row['Duration (hours)'] / 24 * 2
+        times, flux, flux_err = LcbuilderHelper.mask_transits(times, flux, companion_period, companion_duration,
+                                                             companion_t0, flux_err=flux_err)
+
+    # star_mass = 0.88
+    # star_radius = 0.878413
+    # times = np.linspace(planet_t0 - 5, planet_t0 + 1000, 1005 * 60 * 24 // 2)
+    # flux = np.random.normal(1, 0.001, len(times))
+    # flux_err = np.random.normal(0.001, 0.0001, len(times))
+    # ld_coeffs = [0.4136, 0.1999]
+
+    planet_radius = row['Planet Radius (R_Earth)']
+    planet_radius_err = row['Planet Radius (R_Earth) err']
+    planet_period = row['Period (days)']
+    planet_t0 = row['Epoch (BJD)'] - 2457000
+    planet_t0 = times[0] + (planet_t0 - times[0]) % planet_period
+    planet_duration = row['Duration (hours)'] / 24
+    planet_inc = 90
+    planet_inc_err = 3
+    planet_ecc = 0.15
+    planet_ecc_err = 0.15
+    planet_arg_periastron = 0
+    planet_mass = row['Predicted Mass (M_Earth)']
+    if np.isnan(planet_mass) or planet_mass is None:
+        planet_mass = planet_radius ** 1.5
+    planet_semimajor_axis = ExoMoonLeastSquares.compute_semimajor_axis(star_mass, planet_period)
+    planet_impact_param = LcbuilderHelper.convert_from_to(planet_semimajor_axis, u.au, u.R_sun) / star_radius * np.cos(np.deg2rad(planet_inc))
+    min_radius = planet_radius / 10
+    max_radius = planet_radius / 5
+
+    # planet_radius = 11.8142656578
+    # planet_radius_err = 1.00
+    # planet_period = 141.834025
+    # planet_duration = 8.681 / 24
+    # planet_inc = 89.903
+    # planet_inc_err = 0.5
+    # planet_ecc = 0.212
+    # planet_ecc_err = 0.022
+    # planet_arg_periastron = 0
+    # planet_mass = 408.727
+    # min_radius = 1
+    # max_radius = 3
+
+    flux_err = np.ma.filled(flux_err, 0)
+    flux = wotan.flatten(times, flux, method="biweight", window_length=planet_duration * 5)
+    t0s = [i for i in np.arange(planet_t0, np.max(times), planet_period)]
+    emls = ExoMoonLeastSquares(object_dir, 4, star_mass, star_radius, ld_coeffs,
+                               planet_radius, planet_radius_err, planet_mass, planet_period, planet_t0, planet_duration,
+                               planet_semimajor_axis, planet_inc, planet_inc_err, planet_ecc, planet_ecc_err, planet_arg_periastron, planet_impact_param,
+                               min_radius, max_radius, t0s, times, flux, flux_err, max_moon_density,
+                               period_grid_size=10000, radius_grid_size=20)
+    #emls.fit_single_transits(times, flux, flux_err)
+    # emls.flux = emls.inject_moon(emls.time, emls.flux, emls.flux_err, emls.bary_t0s, planet_semimajor_axis,
+    #                             planet_ecc, moon_radius, moon_period, moon_mass, plot=True, initial_alpha=moon_alpha,
+    #                              inject_planet=False, inject_moon=False)
+    #emls.fit_single_transits(times, flux, flux_err, plot=True)
+    emls.planet_mass_grid = [planet_mass]
+    emls.moon_inc_grid = [90]
+    emls.moon_ecc_grid = [0]
+    emls.moon_arg_periastron_grid = [0]
+    emls.run(plot=True)
