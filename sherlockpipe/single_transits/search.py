@@ -42,7 +42,7 @@ class MoriartySearch(ToolWithCandidate):
         model_dir = f"{model_dir}/SANTO_model"
         predictions, spectra, target_stats_df = SANTO().predict(self.object_dir, ['/lc.csv'],
                                                                 f"{model_dir}/SANTO_model_chk.h5",
-                                                                batch_size=self.batch_size, plot=True,
+                                                                batch_size=self.batch_size, plot=False,
                                                                 plot_positives=False,
                                                                 tagged_data=False,
                                                                 smooth=False, sherlock=True,
@@ -52,7 +52,6 @@ class MoriartySearch(ToolWithCandidate):
         if os.path.exists(moriarty_dir):
             shutil.rmtree(moriarty_dir)
         os.mkdir(moriarty_dir)
-        shutil.move(f"{self.object_dir}/lc.csv.png", f"{moriarty_dir}/scores.png")
         lc_file = f"{self.object_dir}/lc.csv"
         lc_data_file = f"{self.object_dir}/lc_data.csv"
         apertures_file = f"{self.object_dir}/apertures.yaml"
@@ -66,7 +65,11 @@ class MoriartySearch(ToolWithCandidate):
         cadence = np.median(np.diff(time)) * 24 * 3600
         lc_data_time = lc_data['time'].values
         predictions = predictions['/lc.csv']
+        spectra = spectra['/lc.csv']
         np.savetxt(f"{moriarty_dir}/predictions.csv", predictions, delimiter=',')
+        np.savetxt(f"{moriarty_dir}/periodic_spectra.csv", predictions, delimiter=',')
+        self.plot_lc_preds_spectrum_broken_x(time, flux, predictions, spectra[0], spectra[1],
+                                        1e-7, moriarty_dir, self.object_id)
         is_positive = predictions >= 0.5
         diff = np.diff(is_positive.astype(int))
         positive_starts = np.where(diff == 1)[0] + 1
@@ -106,8 +109,6 @@ class MoriartySearch(ToolWithCandidate):
             elif self.in_transit_mask(stats_row['t0'], duration_points):
                 logging.info(f"Ignoring epoch {stats_row['t0']} with in-transit flag")
                 continue
-            min_it_index = int(np.max([t0_index - half_duration_points]))
-            max_it_index = int(np.min([t0_index + half_duration_points, len(time) - 1]))
             Watson.plot_single_transit(SingleTransitProcessInput(self.object_dir, self.object_id, 0, f"{self.object_dir}/lc.csv",
                                                                  f"{self.object_dir}/lc_data.csv", f"{self.object_dir}/tpfs",
                                                                  apertures, stats_row['t0'], 1 - stats_row['depth'],
@@ -246,23 +247,176 @@ class MoriartySearch(ToolWithCandidate):
                 ax.set_yticklabels([])
             ax.tick_params(axis='x', labelrotation=0, labelsize=9)
             ax.set_xlabel("TBJD" if k == len(segs) - 1 else "")
-
         # Shared Y across panels
         ylo, yhi = np.nanmin(ymins), np.nanmax(ymaxs)
         for ax in axes:
             ax.set_ylim(ylo, yhi)
         axes[0].set_ylabel("Flux norm.")
-
-        # Annotate real gaps between shown panels
-        for k in range(len(segs) - 1):
-            s_prev, e_prev, _ = segs[k]
-            s_next, e_next, _ = segs[k + 1]
-            gap = time[s_next] - time[e_prev]
-            axes[k].text(axes[k].get_xlim()[1], yhi, f"gap≈{gap:.2f}",
-                         ha="right", va="bottom", fontsize=9)
-
         out_path = f"{moriarty_dir}/{object_id}_t0_{stats_row['t0']}_all.png"
         plt.savefig(out_path, bbox_inches='tight')
+        plt.close()
+        return out_path
+
+    def plot_lc_preds_spectrum_broken_x(self, time, flux, predictions, power_x, spectra,
+                                        zero_epsilon, lcs_dir, target_file,
+                                        gap_threshold=0.5,
+                                        max_panels=6,
+                                        min_points_per_panel=200,
+                                        marker_size=1,
+                                        dpi=300):
+        """
+        Figura 3x1 con 'broken X' en las dos primeras filas (curva de luz y predicciones)
+        y el espectro completo en la tercera fila.
+
+        - No se colapsa el eje tiempo: se divide en segmentos (columnas) por huecos > gap_threshold.
+        - Se muestran hasta 'max_panels' segmentos (los mayores), en orden cronológico.
+        - La tercera fila (espectro) ocupa todo el ancho (no se divide).
+
+        Parámetros clave:
+          time, flux, predictions: arrays 1D (se usan hasta N puntos = len(predictions)).
+          power_x, spectra: arrays para el espectro (no dependen de time).
+          zero_epsilon: umbral para calcular límites Y robustos del panel de flux.
+        """
+
+        # ---------- helpers ----------
+        def add_break_marks(ax_left, ax_right, size=0.02, lw=0.8):
+            # Dos rayitas diagonales en los bordes contiguos para indicar el corte
+            d = size
+            # borde derecho del eje izquierdo
+            kwargs = dict(transform=ax_left.transAxes, color='k', clip_on=False, lw=lw)
+            ax_left.plot((1 - d, 1 + d), (-d, d), **kwargs)
+            ax_left.plot((1 - d, 1 + d), (1 - d, 1 + d), **kwargs)
+            # borde izquierdo del eje derecho
+            kwargs = dict(transform=ax_right.transAxes, color='k', clip_on=False, lw=lw)
+            ax_right.plot((-d, d), (-d, d), **kwargs)
+            ax_right.plot((-d, d), (1 - d, 1 + d), **kwargs)
+
+        # ---------- saneamiento básico ----------
+        N = np.asarray(predictions).shape[0]
+        time = np.asarray(time)[:N]
+        flux = np.asarray(flux)[:N]
+        predictions = np.asarray(predictions)[:N]
+
+        if time.ndim != 1 or flux.ndim != 1 or predictions.ndim != 1:
+            raise ValueError("time, flux y predictions deben ser 1D.")
+        if not (len(time) == len(flux) == len(predictions)):
+            raise ValueError("time, flux y predictions deben tener la misma longitud (N).")
+        n = len(time)
+        if n == 0:
+            raise ValueError("Arrays vacíos.")
+
+        # ordenar por tiempo por si acaso
+        order = np.argsort(time)
+        time = time[order]
+        flux = flux[order]
+        predictions = predictions[order]
+
+        # ---------- segmentación por huecos grandes ----------
+        dt = np.diff(time)
+        cuts = np.where(dt > gap_threshold)[0]  # gap entre i -> i+1 si i está en cuts
+        starts = np.r_[0, cuts + 1]
+        ends = np.r_[cuts, n - 1]
+        segments = [(s, e, e - s + 1) for s, e in zip(starts, ends)]
+
+        # filtrar segmentos muy pequeños; si se eliminan todos, usar todos
+        segs = [seg for seg in segments if seg[2] >= min_points_per_panel] or segments
+        # elegir los mayores y luego ordenar cronológicamente
+        segs.sort(key=lambda x: x[2], reverse=True)
+        segs = segs[:max_panels]
+        segs.sort(key=lambda x: x[0])
+        n_cols = len(segs)
+
+        # ---------- anchos proporcionales a la duración temporal ----------
+        durations = np.array([float(time[e] - time[s]) for (s, e, _) in segs], dtype=float)
+        durations = np.maximum(durations, 1e-6)  # evitar ratios ~0
+
+        # ---------- figura y gridspec (control manual de espacios) ----------
+        fig = plt.figure(figsize=(16, 8), constrained_layout=False)
+        gs = GridSpec(
+            3, n_cols, figure=fig,
+            height_ratios=[1.0, 1.0, 1.2],
+            width_ratios=durations,
+            wspace=0.005
+        )
+        # márgenes ajustados (casi sin espacio horizontal)
+        fig.subplots_adjust(left=0.07, right=0.995, top=0.93, bottom=0.08, wspace=0.005, hspace=0.08)
+
+        # ---------- límites Y robustos ----------
+        # Fila 0 (flux)
+        keys_gt_zero = np.argwhere(flux > zero_epsilon).flatten()
+        if keys_gt_zero.size > 0:
+            y0_min = np.nanmin(flux[keys_gt_zero])
+            y0_max = np.nanmax(flux[keys_gt_zero])
+        else:
+            y0_min = np.nanmin(flux)
+            y0_max = np.nanmax(flux)
+        if not np.isfinite(y0_min) or not np.isfinite(y0_max) or y0_min == y0_max:
+            y0_min, y0_max = np.nanmin(flux), np.nanmax(flux)
+
+        # Fila 1 (predictions)
+        y1_min = np.nanpercentile(predictions, 1)
+        y1_max = np.nanpercentile(predictions, 99)
+        if not np.isfinite(y1_min) or not np.isfinite(y1_max) or y1_min == y1_max:
+            y1_min, y1_max = np.nanmin(predictions), np.nanmax(predictions)
+
+        # ---------- FILA 0: curva de luz ----------
+        axes_lc = []
+        for k, (s, e, _) in enumerate(segs):
+            ax = fig.add_subplot(gs[0, k])
+            axes_lc.append(ax)
+            ax.scatter(time[s:e + 1], flux[s:e + 1], s=marker_size)
+            ax.set_xlim(time[s], time[e])
+            ax.margins(x=0)  # sin margen extra en X
+            ax.tick_params(axis='both', labelsize=8)
+            ax.yaxis.set_ticks_position('both')
+            ax.tick_params(axis='y', labelleft=True, labelright=True)
+
+            # Anotar tamaño real del hueco a la derecha del panel, si existe siguiente
+            if k < n_cols - 1:
+                _, e_prev, _ = segs[k]
+                s_next, _, _ = segs[k + 1]
+                gap = time[s_next] - time[e_prev]
+
+        if axes_lc:
+            axes_lc[0].set_ylabel("Flux")
+
+        # ---------- FILA 1: predicciones ----------
+        axes_pred = []
+        for k, (s, e, _) in enumerate(segs):
+            ax = fig.add_subplot(gs[1, k])
+            axes_pred.append(ax)
+            ax.plot(time[s:e + 1], predictions[s:e + 1])
+            ax.set_xlim(time[s], time[e])
+            ax.margins(x=0)
+            ax.tick_params(axis='both', labelsize=8)
+            ax.yaxis.set_ticks_position('both')
+            ax.tick_params(axis='y', labelleft=True, labelright=True)
+            if k == 0:
+                ax.set_ylabel("Pred.")
+            ax.set_xlabel("TBJD")
+
+        # Repetir anotación de gaps (suave) en fila 1
+        for k in range(n_cols - 1):
+            _, e_prev, _ = segs[k]
+            s_next, _, _ = segs[k + 1]
+            gap = time[s_next] - time[e_prev]
+        # ---------- Break marks entre columnas (filas 0 y 1) ----------
+        for k in range(n_cols - 1):
+            add_break_marks(axes_lc[k], axes_lc[k + 1])
+            add_break_marks(axes_pred[k], axes_pred[k + 1])
+
+        # ---------- FILA 2: espectro a todo el ancho ----------
+        ax_spec = fig.add_subplot(gs[2, :])
+        ax_spec.plot(power_x, spectra)
+        ax_spec.set_xscale('log')
+        ax_spec.set_xlabel("Frecuencia (log)")
+        ax_spec.set_ylabel("Power")
+        fig.suptitle(target_file)
+
+        # ---------- guardar ----------
+        out_path = f"{lcs_dir}/{target_file}.png"
+        plt.savefig(out_path, bbox_inches='tight', dpi=dpi)
+        plt.clf();
         plt.close()
         return out_path
 

@@ -191,7 +191,7 @@ class MoriartyReport:
         pat = re.compile(
             rf"[a-zA-Z]+ [0-9]+_t0_(-?\d+(?:\.\d+)?)_focus\.png$"
         )
-        story.append(Image(f"{self.data_dir}/scores.png", width=14 * cm, height=10 * cm))
+        story.append(Image(f"{self.data_dir}/{self.object_id}.png", width=14 * cm, height=10 * cm))
         descripcion = '<font name="HELVETICA" size="9"><strong>Figure ' + str(
             figure) + ': </strong>Above, the complete light curve. Center, the MORIARTY scores spectrum. Bottom, the autocorrelation of MORIARTY scores showing periodicity.</font>'
         story.append(Spacer(1, 5))
