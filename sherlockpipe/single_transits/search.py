@@ -9,6 +9,7 @@ import requests
 from exoml.santo.SANTO import SANTO
 import numpy as np
 import pandas as pd
+from lcbuilder.helper import LcbuilderHelper
 from matplotlib.gridspec import GridSpec
 from watson.watson import Watson, SingleTransitProcessInput
 
@@ -40,7 +41,8 @@ class MoriartySearch(ToolWithCandidate):
             z = zipfile.ZipFile(io.BytesIO(r.content))
             z.extractall(f'{model_dir}/')
         model_dir = f"{model_dir}/SANTO_model"
-        predictions, spectra, target_stats_df = SANTO().predict(self.object_dir, ['/lc.csv'],
+        santo = SANTO()
+        predictions, spectra, target_stats_df = santo.predict(self.object_dir, ['/lc.csv'],
                                                                 f"{model_dir}/SANTO_model_chk.h5",
                                                                 batch_size=self.batch_size, plot=False,
                                                                 plot_positives=False,
@@ -65,10 +67,19 @@ class MoriartySearch(ToolWithCandidate):
         cadence = np.median(np.diff(time)) * 24 * 3600
         lc_data_time = lc_data['time'].values
         predictions = predictions['/lc.csv']
+        #TODO mask predictions, time and flux
         spectra = spectra['/lc.csv']
         np.savetxt(f"{moriarty_dir}/predictions.csv", predictions, delimiter=',')
-        np.savetxt(f"{moriarty_dir}/periodic_spectra.csv", predictions, delimiter=',')
-        self.plot_lc_preds_spectrum_broken_x(time, flux, predictions, spectra[0], spectra[1],
+        time_predictions = time[:len(predictions)]
+        time_filled, flux_filled, cadence_days = santo.fill_data_gaps(time_predictions, predictions)
+        power_x, spectra = santo.compute_autocorrelation(flux_filled, cadence_s=cadence)
+        for transit_mask in self.transits_mask:
+            period = transit_mask['P']
+            duration = transit_mask['D']
+            t0 = transit_mask['T0']
+            time_predictions, predictions, _ = LcbuilderHelper.mask_transits(time_predictions, predictions, period, duration * 2 / 24 / 60, t0)
+            time, flux, _ = LcbuilderHelper.mask_transits(time, flux, period, duration * 2 / 24 / 60, t0)
+        self.plot_lc_preds_spectrum_broken_x(time, flux, predictions, power_x, spectra,
                                         1e-7, moriarty_dir, self.object_id)
         is_positive = predictions >= 0.5
         diff = np.diff(is_positive.astype(int))
@@ -433,7 +444,7 @@ class MoriartySearch(ToolWithCandidate):
                 break
         return in_transit
 
-    def nearest_epoch_offset(ts, t0, P, signed=True):
+    def nearest_epoch_offset(self, ts, t0, P, signed=True):
         """
         Devuelve la diferencia temporal entre ts y el t0 periódico más cercano.
         ts, t0, P en las mismas unidades (p.ej., días BJD_TDB).

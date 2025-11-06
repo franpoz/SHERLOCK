@@ -11,4 +11,4 @@ if __name__ == '__main__':
     ap.add_argument('--batch_size', type=int, default=256, help="The candidate signal to be used.", required=False)
     ap.add_argument('--threshold', type=float, default=0.5, help="The candidate signal to be used.", required=False)
     args = ap.parse_args()
-    run_moriarty(args.object_dir, [int(candidate) - 1 for candidate in args.mask_candidate], args.batch_size, args.threshold)
+    run_moriarty(args.object_dir, [int(candidate) - 1 for candidate in args.mask_candidate.split(',')], args.batch_size, args.threshold)
