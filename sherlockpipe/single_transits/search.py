@@ -4,15 +4,21 @@ import logging
 import os
 import shutil
 import zipfile
+
+from scipy.stats import binned_statistic
+from uncertainties import ufloat
+import batman
 import matplotlib.pyplot as plt
 import requests
+import wotan
+from astropy.timeseries import BoxLeastSquares
 from exoml.santo.SANTO import SANTO
 import numpy as np
 import pandas as pd
 from lcbuilder.helper import LcbuilderHelper
 from matplotlib.gridspec import GridSpec
 from watson.watson import Watson, SingleTransitProcessInput
-
+import astropy.units as u
 from sherlockpipe.constants import MOMENTUM_DUMP_QUALITY_FLAG
 from sherlockpipe.loading.common import load_from_yaml
 from sherlockpipe.loading.tool_with_candidate import ToolWithCandidate
@@ -101,6 +107,8 @@ class MoriartySearch(ToolWithCandidate):
                             'snr': [snr], 't0': [t0], 'duration_points': [end - start],
                             'max_score': [np.max(region_preds)]}
             stats_df = pd.concat([stats_df, pd.DataFrame.from_dict(target_stats)], ignore_index=True)
+        fit_df = pd.DataFrame(columns=['target_file', 'type', 'depth', 'depth_err', 'snr', 't0', 'duration(h)',
+                                       'duration_err(h)', 'max_score', 'rp', 'rp_err', 'period', 'period_err'])
         for index, stats_row in stats_df.iterrows():
             t0_index = np.abs(time - stats_row['t0']).argmin()
             duration_points = stats_row['duration_points']
@@ -120,24 +128,53 @@ class MoriartySearch(ToolWithCandidate):
             elif self.in_transit_mask(stats_row['t0'], duration_points):
                 logging.info(f"Ignoring epoch {stats_row['t0']} with in-transit flag")
                 continue
-            Watson.plot_single_transit(SingleTransitProcessInput(self.object_dir, self.object_id, 0, f"{self.object_dir}/lc.csv",
-                                                                 f"{self.object_dir}/lc_data.csv", f"{self.object_dir}/tpfs",
-                                                                 apertures, stats_row['t0'], 1 - stats_row['depth'],
-                                                                 duration_points * cadence / 60, 10, 0.05, 10, None))
-            single_transit_file_name = "single_transit_" + str(0) + "_T0_" + str(stats_row['t0']) + ".png"
-            shutil.move(self.object_dir + '/' + single_transit_file_name,
-                        f"{moriarty_dir}/{self.object_id}_t0_{stats_row['t0']}_st.png")
+            #TODO fit transit
+            duration_days = duration_points * cadence / 3600 / 24
+            detrended_flux = wotan.flatten(time[min_index:max_index], flux[min_index:max_index], method='biweight',
+                                           window_length=duration_days * 16)
+            bls = BoxLeastSquares(time[min_index:max_index], detrended_flux)
+            bls_result = bls.power([100], np.linspace(duration_days / 2, duration_days * 4, 10))
+            bls_dur_points = bls_result['duration'][0] * 3600 * 24 / 120
+            subset_time = time[min_index:max_index]
+            bls_snr = (bls_result['depth'][0] / np.nanstd(detrended_flux) *
+                       np.sqrt(len(np.argwhere((bls_result['transit_time'][0] - bls_result['duration'][0] / 2 < subset_time) &
+                                               (subset_time > bls_result['transit_time'][0] + bls_result['duration'][0] / 2))))
+                       )
+            star_rad_uncertain = ufloat(star_df.loc[0, 'radius'],
+                                        max(star_df.loc[0, 'R_star_lerr'], star_df.loc[0, 'R_star_uerr']))
+            depth_uncertain = ufloat(bls_result['depth'][0], bls_result['depth_err'][0] * bls_result['depth'][0])
+            rp_uncertain = ((star_rad_uncertain ** 2) * depth_uncertain) ** (0.5)
+            rp = LcbuilderHelper.convert_from_to(rp_uncertain.n, u.R_sun, u.R_earth)
+            periods, periods_summary = self.sample_periods_single_transit(
+                star_df.loc[0, 'mass'],
+                star_df.loc[0, 'radius'],
+                bls_result['duration'][0],
+                T14_err_days=bls_result['duration'][0] / 2,
+                R_p_earth=rp)
+            target_fit = {'target_file': ['lc.csv'], 'type': ['p'], 'depth': [bls_result['depth'][0]],
+                          'depth_err': [bls_result['depth_err'][0] * bls_result['depth'][0]],
+                          'snr': [bls_snr], 't0': [bls_result['transit_time'][0]], 'duration(h)': [bls_result['duration'][0] * 24],
+                          'duration_err(h)': [bls_result['duration'][0] * 24 / 2],
+                          'max_score': [stats_row['max_score']],
+                          'rp': [rp],
+                          'rp_err': [LcbuilderHelper.convert_from_to(rp_uncertain.s, u.R_sun, u.R_earth)],
+                          'period': periods_summary['median_days'],
+                          'period_min': [periods_summary['p16_days']],
+                          'period_max': [periods_summary['p84_days']]
+            }
+            fit_df = pd.concat([fit_df, pd.DataFrame.from_dict(target_fit)], ignore_index=True)
             min_large_index = int(np.max([0, t0_index - half_duration_points * 100]))
             max_large_index = int(np.min([t0_index + half_duration_points * 100, len(time) - 1]))
             self.plot_light_curve_broken_x(time[min_large_index:max_large_index], flux[min_large_index:max_large_index],
-                                      half_duration_points, stats_row['t0'],
-                                      cadence, stats_row, moriarty_dir, self.object_id,
+                                      half_duration_points, target_fit['t0'][0],
+                                      cadence, moriarty_dir, self.object_id, target_fit,
+                                      f"{moriarty_dir}/{self.object_id}_t0_{stats_row['t0']}_all.png",
                                       gap_threshold=0.5,
                                       max_panels=6,  # límite de paneles
                                       min_points_per_panel=200)
             fig, axs = plt.subplots(1, 1, figsize=(14, 7), constrained_layout=True)
-            fig.suptitle(f"{stats_row['target_file']} T0={stats_row['t0']} Duration(h)={round(stats_row['duration_points'] * cadence / 3600, 2)} "
-                         f"S/N={round(stats_row['snr'], 2)} Max Score={round(stats_row['max_score'], 2)}")
+            fig.suptitle(f"{stats_row['target_file']} T0={round(bls_result['transit_time'][0], 3)} Duration(h)={round(bls_result['duration'][0] * 24, 2)} "
+                         f"S/N={round(bls_snr, 2)} Max Score={round(stats_row['max_score'], 2)}")
             window_time = time[min_index:max_index]
             window_flux = flux[min_index:max_index]
             center_point_window = len(window_time) // 2
@@ -148,12 +185,45 @@ class MoriartySearch(ToolWithCandidate):
             axs.scatter(
                 window_time[center_point_window - half_duration_points:center_point_window + half_duration_points],
                 window_flux[center_point_window - half_duration_points:center_point_window + half_duration_points],
-                color='red')
+                color='purple')
+            y_binned, edges, _ = binned_statistic(window_time, window_flux, statistic='mean', bins=40)
+            x_binned = 0.5 * (edges[1:] + edges[:-1])
+            bin_stds, _, _ = binned_statistic(window_time, window_flux, statistic='std', bins=40)
+            bin_width = (edges[1] - edges[0])
+            bin_centers = edges[1:] - bin_width / 2
+            axs.errorbar(x_binned, y_binned, yerr=bin_stds / 2, xerr=bin_width / 2, marker='o', markersize=6,
+                         color='darkorange', alpha=1, linestyle='none')
+            focus_it_fit_indexes = np.argwhere((bls_result['transit_time'][0] + bls_result['duration'][0] / 2 > window_time) &
+                                               (bls_result['transit_time'][0] - bls_result['duration'][0] / 2 < window_time))
+            focus_at_fit_indexes = np.argwhere((bls_result['transit_time'][0] + bls_result['duration'][0] / 2 < window_time))
+            focus_bt_fit_indexes = np.argwhere((bls_result['transit_time'][0] - bls_result['duration'][0] / 2 > window_time))
+            concat_times = np.concatenate((window_time[focus_bt_fit_indexes], window_time[focus_it_fit_indexes], window_time[focus_at_fit_indexes]))
+            axs.plot(concat_times,
+                     np.concatenate((np.ones(len(window_flux[focus_bt_fit_indexes])),
+                                     np.full(len(window_flux[focus_it_fit_indexes]), 1 - bls_result['depth'][0]),
+                                     np.ones(len(window_flux[focus_at_fit_indexes])))), color='red')
             #axs.plot(time[min_index:max_index], model_for_target[min_index:max_index], color='red')
             axs.set_xlabel("Time (TBJD)", size=30)
             axs.set_ylabel("Flux norm.", size=30)
             plt.savefig(f"{moriarty_dir}/{self.object_id}_t0_{stats_row['t0']}_focus.png", bbox_inches='tight')
             plt.close()
+            # Watson.plot_single_transit(
+            #     SingleTransitProcessInput(self.object_dir, self.object_id, 0, f"{self.object_dir}/lc.csv",
+            #                               f"{self.object_dir}/lc_data.csv", f"{self.object_dir}/tpfs",
+            #                               apertures, stats_row['t0'], 1 - stats_row['depth'],
+            #                               duration_points * cadence / 60, 10, 0.05, 10, None))
+            # single_transit_file_name = "single_transit_" + str(0) + "_T0_" + str(stats_row['t0']) + ".png"
+            # shutil.move(self.object_dir + '/' + single_transit_file_name,
+            #             f"{moriarty_dir}/{self.object_id}_t0_{stats_row['t0']}_st.png")
+            Watson.plot_single_transit(
+                SingleTransitProcessInput(self.object_dir, self.object_id, 0, f"{self.object_dir}/lc.csv",
+                                          f"{self.object_dir}/lc_data.csv", f"{self.object_dir}/tpfs",
+                                          apertures, bls_result['transit_time'][0], bls_result['depth'][0],
+                                          bls_dur_points * cadence / 60, 10, 0.05, 10, None))
+            single_transit_file_name = "single_transit_" + str(0) + "_T0_" + str(bls_result['transit_time'][0]) + ".png"
+            shutil.move(self.object_dir + '/' + single_transit_file_name,
+                        f"{moriarty_dir}/{self.object_id}_t0_{stats_row['t0']}_st.png")
+        fit_df.to_csv(f"{moriarty_dir}/{self.object_id}_fit.csv", index=False)
         MoriartyReport(moriarty_dir, self.object_id,
               star_df['ra'].iloc[0],
               star_df['dec'].iloc[0],
@@ -165,7 +235,7 @@ class MoriartySearch(ToolWithCandidate):
             os.remove(f)
 
     def plot_light_curve_broken_x(self, time, flux, half_duration_points, t0,
-                              cadence, stats_row, moriarty_dir, object_id,
+                              cadence, moriarty_dir, object_id, target_fit, out_path,
                               gap_threshold=0.5,
                               max_panels=6,
                               min_points_per_panel=200,
@@ -223,11 +293,11 @@ class MoriartySearch(ToolWithCandidate):
         fig = plt.figure(figsize=(25, 8), constrained_layout=True)
         gs = GridSpec(1, len(segs), figure=fig, wspace=0.05)
         fig.suptitle(
-            f"{stats_row['target_file']} "
-            f"T0={stats_row['t0']} "
-            f"Duration(h)={round(stats_row['duration_points'] * cadence / 3600, 2)} "
-            f"S/N={round(stats_row['snr'], 2)} "
-            f"Max Score={round(stats_row['max_score'], 2)}"
+            f"{object_id} "
+            f"T0={round(target_fit['t0'][0], 3)} "
+            f"Duration(h)={round(target_fit['duration(h)'][0], 2)} "
+            f"S/N={round(target_fit['snr'][0], 2)} "
+            f"Max Score={round(target_fit['max_score'][0], 2)}"
         )
 
         ymins, ymaxs, axes = [], [], []
@@ -263,7 +333,6 @@ class MoriartySearch(ToolWithCandidate):
         for ax in axes:
             ax.set_ylim(ylo, yhi)
         axes[0].set_ylabel("Flux norm.")
-        out_path = f"{moriarty_dir}/{object_id}_t0_{stats_row['t0']}_all.png"
         plt.savefig(out_path, bbox_inches='tight')
         plt.close()
         return out_path
@@ -453,6 +522,144 @@ class MoriartySearch(ToolWithCandidate):
         n = np.rint((np.asarray(ts) - t0) / P).astype(int)
         dt = np.asarray(ts) - (t0 + n * P)
         return dt if signed else np.abs(dt)
+
+    def sample_periods_single_transit(
+            self,
+            M_star_sun,
+            R_star_sun,
+            T14_days,
+            T14_err_days=None,
+            R_p_earth=1.0,
+            n_samples=100000,
+            b_max=0.9,
+            geometric_b_prior=True,
+            random_state=None,
+    ):
+        """
+        Estima una distribución de períodos plausibles para un tránsito único,
+        asumiendo órbita circular y aproximación geométrica simple.
+
+        Parámetros
+        ----------
+        M_star_sun : float
+            Masa estelar en masas solares.
+        R_star_sun : float
+            Radio estelar en radios solares.
+        T14_days : float
+            Duración del tránsito (1º a 4º contacto) en días.
+        T14_err_days : float or None
+            Incertidumbre (1 sigma) en la duración, en días. Si None, se toma fija.
+        R_p_earth : float
+            Radio planetario (valor más probable) en radios terrestres.
+        n_samples : int
+            Número de muestras Monte Carlo.
+        b_max : float
+            Máximo valor de parámetro de impacto que permitimos (en unidades de R*).
+        geometric_b_prior : bool
+            Si True, usa prior geométrico p(b) ∝ b en [0, b_max].
+            Si False, prior uniforme en b.
+        random_state : int or None
+            Semilla para reproducibilidad.
+
+        Devuelve
+        --------
+        periods_days : np.ndarray
+            Array de períodos en días (filtrado a valores físicos).
+        summary : dict
+            Diccionario con estadísticos (median, p16, p84, etc.).
+        """
+        G = 6.67430e-11  # m^3 kg^-1 s^-2
+        M_SUN = 1.98847e30  # kg
+        R_SUN = 6.957e8  # m
+        R_EARTH = 6.371e6
+        rng = np.random.default_rng(random_state)
+
+        # Pasar a unidades SI
+        M_star = M_star_sun * M_SUN
+        R_star = R_star_sun * R_SUN
+        R_p = R_p_earth * R_EARTH
+
+        # k = Rp/R*
+        k = R_p / R_star
+
+        # Muestras de T14
+        if T14_err_days is not None and T14_err_days > 0:
+            T14_samples_days = rng.normal(T14_days, T14_err_days, size=n_samples)
+        else:
+            T14_samples_days = np.full(n_samples, T14_days)
+
+        # Filtramos duraciones no físicas (negativas o cero)
+        T14_samples_days = T14_samples_days[T14_samples_days > 0]
+        if len(T14_samples_days) == 0:
+            raise ValueError("Todas las muestras de T14 son no físicas (<= 0).")
+
+        # Si se reduce el número de muestras, ajustamos n_samples
+        n_eff = len(T14_samples_days)
+
+        # Muestras de b
+        if geometric_b_prior:
+            # p(b) ∝ b en [0, b_max]  -> b = b_max * sqrt(u)
+            u = rng.random(n_eff)
+            b_samples = b_max * np.sqrt(u)
+        else:
+            # Uniforme en [0, b_max]
+            b_samples = rng.uniform(0, b_max, size=n_eff)
+
+        # Convertimos T14 a segundos
+        T14_samples_sec = T14_samples_days * 86400.0
+
+        # Calculamos períodos usando la fórmula aproximada invertida
+        # T14 = (P/pi) * (R*/a) * sqrt((1+k)^2 - b^2)
+        # con a = (G M P^2 / (4 pi^2))^(1/3)
+        # => P = [ (pi * T14) / (R* * sqrt((1+k)^2 - b^2) * (4 pi^2 / (G M))^(1/3)) ]^3
+
+        # Factor común que no depende de P ni de b
+        factor_kepler = (4 * np.pi ** 2) / (G * M_star)  # (1/s^2) / m^3
+        factor_kepler_13 = factor_kepler ** (1.0 / 3.0)
+
+        S = np.sqrt((1.0 + k) ** 2 - b_samples ** 2)  # sqrt((1+k)^2 - b^2)
+        # Evitar valores no físicos cuando b > 1+k (por redondeos)
+        valid = S > 0
+
+        T14_valid = T14_samples_sec[valid]
+        b_valid = b_samples[valid]
+        S_valid = S[valid]
+
+        num_valid = len(T14_valid)
+        if num_valid == 0:
+            raise RuntimeError("No quedan combinaciones físicas de T14 y b.")
+
+        # C = R* * S * (4 pi^2 / (G M))^(1/3)
+        C = R_star * S_valid * factor_kepler_13  # unidades: s^{-2/3}
+
+        # P^(1/3) = (pi * T14) / C
+        P13 = (np.pi * T14_valid) / C
+
+        # P en segundos
+        P_sec = P13 ** 3
+
+        # Convertimos a días y filtramos valores positivos
+        P_days = P_sec / 86400.0
+        P_days = P_days[P_days > 0]
+
+        if len(P_days) == 0:
+            raise RuntimeError("No se obtuvo ningún período positivo.")
+
+        # Estadísticos resumen
+        median = np.median(P_days)
+        p16, p84 = np.percentile(P_days, [16, 84])
+        p5, p95 = np.percentile(P_days, [5, 95])
+
+        summary = {
+            "median_days": median,
+            "p16_days": p16,
+            "p84_days": p84,
+            "p5_days": p5,
+            "p95_days": p95,
+            "n_samples": len(P_days),
+        }
+
+        return P_days, summary
 
     def object_dir(self):
         return self.object_dir

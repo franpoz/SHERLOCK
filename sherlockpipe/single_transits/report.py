@@ -196,6 +196,34 @@ class MoriartyReport:
             figure) + ': </strong>Above, the complete light curve. Center, the MORIARTY scores spectrum. Bottom, the autocorrelation of MORIARTY scores showing periodicity.</font>'
         story.append(Spacer(1, 5))
         story.append(Paragraph(descripcion, styles["ParagraphAlignCenter"]))
+
+        story.append(Spacer(1, 30))
+
+        fit_df = pd.read_csv(f"{self.data_dir}/{self.object_id}_fit.csv")
+        tabla1_data = [['T0 (TBJD)', 'Depth (ppt)', 'Dur. (h)', 'S/N', '1σ Min. P (d)', 'Mean P (d)', '1σ Max P (d)', 'Rp (Earth)']]
+        # Generamos la tabla 2 con los parámetros:
+        for index, row in fit_df.iterrows():
+            tabla1_data.append([
+                round(row['t0'], 3),
+                ufloat(row['depth'] * 1000, row['depth_err'] * 1000).format(".3uP"),
+                ufloat(row['duration(h)'], row['duration_err(h)']).format(".3uP"),
+                round(row['snr'], 2),
+                round(row['period_min'], 2),
+                round(row['period'], 2),
+                round(row['period_max'], 2),
+                ufloat(row['rp'], row['rp_err']).format(".3uP")]
+            )
+        table1_colwidth = [2 * cm, 2.5 * cm, 2.5 * cm, 1 * cm, 2.5 * cm, 2 * cm, 2.5 * cm, 2 * cm]
+        table1_number_rows = len(tabla1_data)
+        tabla1 = Table(tabla1_data, table1_colwidth, table1_number_rows * [0.75 * cm])
+        tabla1.setStyle(table_style)
+        story.append(tabla1)
+        table1_descripcion = ('<font name="HELVETICA" size="9"><strong>Table 2: </strong>\
+                        The proposed single-transits box-shape best-fit parameters. The period is an estimation from'
+                              'random sampling the priors using different geometric approaches.</font>')
+        story.append(Spacer(1, 5))
+        story.append(Paragraph(table1_descripcion, styles["ParagraphAlignCenter"]))
+        story.append(Spacer(1, 30))
         story.append(PageBreak())
         figure = figure + 1
         for file in files:
@@ -203,16 +231,19 @@ class MoriartyReport:
             if match:
                 t0 = float(match.group(1))
             story.append(Image(file, width=16 * cm, height=10 * cm))
-            descripcion = '<font name="HELVETICA" size="9"><strong>Figure ' + str(
-                figure) + ': </strong>Focused single transit view at T=' + str(round(t0, 3)) + '.</font>'
+            descripcion = ('<font name="HELVETICA" size="9"><strong>Figure ' + str(
+                figure) + ': </strong>Focused single transit view at T=' + str(round(t0, 3)) +
+                           ('. The red points are the MORIARTY positives. '
+                            'In orange, the binned datapoints are plotted. In red, the best box-shaped fast-fit.</font>'))
             story.append(Spacer(1, 5))
             story.append(Paragraph(descripcion, styles["ParagraphAlignCenter"]))
             story.append(Spacer(1, 15))
             figure = figure + 1
             story.append(
                 Image(f"{self.data_dir}/{self.object_id}_t0_" + str(t0) + "_all.png", width=16 * cm, height=8 * cm))
-            descripcion = '<font name="HELVETICA" size="9"><strong>Figure ' + str(
-                figure) + ': </strong>Global single transit view at T=' + str(round(t0, 3)) + '.</font>'
+            descripcion = ('<font name="HELVETICA" size="9"><strong>Figure ' + str(
+                figure) + ': </strong>Global single transit view at T=' + str(round(t0, 3)) +
+                           '. The red points are those within the best box-shaped fast-fit.</font>')
             story.append(Spacer(1, 5))
             story.append(Paragraph(descripcion, styles["ParagraphAlignCenter"]))
             story.append(Spacer(1, 15))
