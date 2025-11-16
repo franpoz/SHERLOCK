@@ -140,17 +140,31 @@ class MoriartySearch(ToolWithCandidate):
                        np.sqrt(len(np.argwhere((bls_result['transit_time'][0] - bls_result['duration'][0] / 2 < subset_time) &
                                                (subset_time > bls_result['transit_time'][0] + bls_result['duration'][0] / 2))))
                        )
-            star_rad_uncertain = ufloat(star_df.loc[0, 'radius'],
-                                        max(star_df.loc[0, 'R_star_lerr'], star_df.loc[0, 'R_star_uerr']))
+            star_rad = star_df.loc[0, 'radius']
+            star_rad_err = max(star_df.loc[0, 'R_star_lerr'], star_df.loc[0, 'R_star_uerr'])
+            star_mass = star_df.loc[0, 'mass']
+            star_rad_err = star_rad_err if not np.isnan(star_rad_err) else 0
+            star_rad_uncertain = ufloat(star_rad, star_rad_err)
             depth_uncertain = ufloat(bls_result['depth'][0], bls_result['depth_err'][0] * bls_result['depth'][0])
             rp_uncertain = ((star_rad_uncertain ** 2) * depth_uncertain) ** (0.5)
             rp = LcbuilderHelper.convert_from_to(rp_uncertain.n, u.R_sun, u.R_earth)
-            periods, periods_summary = self.sample_periods_single_transit(
-                star_df.loc[0, 'mass'],
-                star_df.loc[0, 'radius'],
-                bls_result['duration'][0],
-                T14_err_days=bls_result['duration'][0] / 2,
-                R_p_earth=rp)
+            period_median_days = 0
+            period_84_days = 0
+            period_16_days = 0
+            if not np.isnan(star_rad) and not np.isnan(star_mass):
+                periods, periods_summary = self.sample_periods_single_transit(
+                    star_mass,
+                    star_rad,
+                    bls_result['duration'][0],
+                    T14_err_days=bls_result['duration'][0] / 2,
+                    R_p_earth=rp)
+                period_roche_limit = self.roche_limit_period(star_mass, star_rad)
+                if periods_summary['p84_days'] < period_roche_limit:
+                    logging.info(f"Ignoring epoch {stats_row['t0']} with unphysical period ({periods_summary['p84_days']} < {period_roche_limit}) flag")
+                    continue
+                period_median_days = periods_summary['median_days']
+                period_16_days = periods_summary['p16_days']
+                period_84_days = periods_summary['p84_days']
             target_fit = {'target_file': ['lc.csv'], 'type': ['p'], 'depth': [bls_result['depth'][0]],
                           'depth_err': [bls_result['depth_err'][0] * bls_result['depth'][0]],
                           'snr': [bls_snr], 't0': [bls_result['transit_time'][0]], 'duration(h)': [bls_result['duration'][0] * 24],
@@ -158,9 +172,9 @@ class MoriartySearch(ToolWithCandidate):
                           'max_score': [stats_row['max_score']],
                           'rp': [rp],
                           'rp_err': [LcbuilderHelper.convert_from_to(rp_uncertain.s, u.R_sun, u.R_earth)],
-                          'period': periods_summary['median_days'],
-                          'period_min': [periods_summary['p16_days']],
-                          'period_max': [periods_summary['p84_days']]
+                          'period': [period_median_days],
+                          'period_min': [period_16_days],
+                          'period_max': [period_84_days]
             }
             fit_df = pd.concat([fit_df, pd.DataFrame.from_dict(target_fit)], ignore_index=True)
             min_large_index = int(np.max([0, t0_index - half_duration_points * 100]))
@@ -660,6 +674,59 @@ class MoriartySearch(ToolWithCandidate):
         }
 
         return P_days, summary
+
+    def roche_limit_period(
+            self,
+            M_star_sun,
+            R_star_sun,
+            rho_p=5500.0
+    ):
+        """
+        Approximate orbital period (in days) at the fluid Roche limit
+        for a planet orbiting a star, assuming a fiducial planet density.
+
+        Uses the classical fluid Roche limit:
+            a_R = 2.44 * R_star * (rho_star / rho_p)**(1/3)
+
+        and Kepler's third law:
+            P = 2π * sqrt(a_R^3 / (G * M_star))
+
+        Parameters
+        ----------
+        M_star_sun : float
+            Stellar mass in solar masses.
+        R_star_sun : float
+            Stellar radius in solar radii.
+        rho_p : float, optional
+            Assumed mean planetary density in kg/m^3.
+            Default is 5500 kg/m^3 (Earth-like).
+
+        Returns
+        -------
+        P_roche_days : float
+            Orbital period at the Roche limit in days.
+        """
+        # Physical constants
+        G = 6.67430e-11  # m^3 kg^-1 s^-2
+        M_SUN = 1.98847e30  # kg
+        R_SUN = 6.957e8  # m
+        SECONDS_PER_DAY = 86400.0
+
+        # Convert star mass & radius to SI
+        M_star = M_star_sun * M_SUN
+        R_star = R_star_sun * R_SUN
+
+        # Stellar mean density rho_star
+        rho_star = M_star / ((4.0 / 3.0) * np.pi * R_star ** 3)
+
+        # Fluid Roche limit
+        a_roche = 2.44 * R_star * (rho_star / rho_p) ** (1.0 / 3.0)
+
+        # Kepler's law for the orbital period
+        P_roche_sec = 2.0 * np.pi * np.sqrt(a_roche ** 3 / (G * M_star))
+        P_roche_days = P_roche_sec / SECONDS_PER_DAY
+
+        return P_roche_days
 
     def object_dir(self):
         return self.object_dir
