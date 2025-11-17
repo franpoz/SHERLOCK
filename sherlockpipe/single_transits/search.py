@@ -165,6 +165,12 @@ class MoriartySearch(ToolWithCandidate):
                 period_median_days = periods_summary['median_days']
                 period_16_days = periods_summary['p16_days']
                 period_84_days = periods_summary['p84_days']
+                greater_than_snr_projected, snr_proj = (
+                    self.greater_than_snr_projected(period_84_days, bls_result['depth'][0], bls_result['duration'][0] * 24 * 3600,
+                                                time, np.nanstd(flux), bls_snr, t0=bls_result['transit_time'][0]))
+                if greater_than_snr_projected:
+                    logging.info(f"Ignoring epoch {stats_row['t0']} with phase-folded detectable period flag ({periods_summary['p84_days']}, with projected SNR {snr_proj})")
+                    continue
             target_fit = {'target_file': ['lc.csv'], 'type': ['p'], 'depth': [bls_result['depth'][0]],
                           'depth_err': [bls_result['depth_err'][0] * bls_result['depth'][0]],
                           'snr': [bls_snr], 't0': [bls_result['transit_time'][0]], 'duration(h)': [bls_result['duration'][0] * 24],
@@ -727,6 +733,53 @@ class MoriartySearch(ToolWithCandidate):
         P_roche_days = P_roche_sec / SECONDS_PER_DAY
 
         return P_roche_days
+
+    def greater_than_snr_projected(self, max_period, depth, duration_s, time_array,
+                                   flux_std, single_snr, t0=0, projected_snr=10):
+        """
+        Check if projected SNR for a given period exceeds the threshold.
+
+        For a given orbital period, this function estimates how many transits
+        could occur within the observation window and calculates the projected SNR
+        from combining multiple transits.
+
+        Projected SNR = single_snr * sqrt(n_transits)
+
+        Returns True if projected_snr > threshold (reject the candidate).
+
+        Parameters
+        ----------
+        max_period : float
+            Maximum orbital period to consider (days)
+        depth_ppt : float
+            Transit depth in parts per thousand
+        duration_h : float
+            Transit duration in hours
+        time_array : np.ndarray
+            Time array of observations (days)
+        flux_std : float
+            Flux standard deviation (ppt)
+        single_snr : float
+            Single-transit SNR
+        t0 : float
+            Transit epoch (days, default 0)
+        projected_snr : float
+            SNR threshold (default 10)
+
+        Returns
+        -------
+        bool
+            True if projected SNR exceeds threshold (reject), False otherwise
+        """
+        if max_period <= 0 or duration_s <= 0:
+            return False
+        duration_days = duration_s / 86400.0
+        phase = np.mod(time_array - t0, max_period)
+        transit_half_duration = duration_days / 2.0
+        in_transit = (phase <= transit_half_duration) | (phase >= (max_period - transit_half_duration))
+        n_points_in_transit = np.sum(in_transit)
+        snr_proj = depth / flux_std * np.sqrt(n_points_in_transit)
+        return snr_proj > projected_snr, snr_proj
 
     def object_dir(self):
         return self.object_dir
