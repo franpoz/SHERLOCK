@@ -48,7 +48,7 @@ def run_moriarty(object_dir, ignore_candidates: list[int], batch_size, threshold
     transits_mask = []
     if candidates is not None:
         for index, candidate_row in candidates.iterrows():
-            fit_results_dir = moriarty.object_dir + f'/fit_[{ignore_candidates[index] + 1}]'
+            fit_results_dir = moriarty.object_dir + f'/fit_[{ignore_candidates[index] + 1}]/main'
             if os.path.exists(fit_results_dir):
                 logging.info("Reading fit results from " + fit_results_dir)
                 ns_derived_file = fit_results_dir + "/results/ns_derived_table.csv"

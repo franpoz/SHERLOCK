@@ -53,7 +53,7 @@ def run_stability(args):
         candidates = pd.read_csv(object_dir + "/candidates.csv")
         candidates_selection = [int(candidate) for candidate in args.candidate.split(",")]
         for candidate_selection in candidates_selection:
-            fit_results_dir = object_dir + f"/fit_[{candidate_selection}]"
+            fit_results_dir = object_dir + f"/fit_[{candidate_selection}]/main"
             if os.path.exists(fit_results_dir):
                 ns_derived_file = fit_results_dir + "/results/ns_derived_table.csv"
                 ns_file = fit_results_dir + "/results/ns_table.csv"

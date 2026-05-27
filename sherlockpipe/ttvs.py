@@ -52,7 +52,8 @@ class TtvFitter:
     def _fix_time_params(self):
         logging.info("Fixing epochs and periods")
         params_df = pd.read_csv(ttvs_dir + "/params.csv")
-        ns_table_df = pd.read_csv(object_dir + "/results/ns_table.csv")
+        fit_dir = object_dir + "/main"
+        ns_table_df = pd.read_csv(fit_dir + "/results/ns_table.csv")
         candidates_count = len(ns_table_df[ns_table_df["#name"].str.contains("_period")])
         for i in arange(0, candidates_count):
             period_row = ns_table_df[ns_table_df["#name"].str.contains("_period")].iloc[i]

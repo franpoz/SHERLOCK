@@ -69,7 +69,7 @@ def run_vet(object_dir, candidate, properties, cpus=os.cpu_count() - 1, run_iats
         candidate = candidates.iloc[[candidate_selection - 1]]
         candidate.loc[:, 'number'] = candidate_selection
         transits_df_file = vetter.object_dir() + "/transits_stats.csv"
-        fit_results_dir = vetter.object_dir() + f"/fit_[{candidate_selection}]"
+        fit_results_dir = vetter.object_dir() + f"/fit_[{candidate_selection}]/main"
         if os.path.exists(transits_df_file):
             transits_df = pd.read_csv(vetter.object_dir() + "/transits_stats.csv")
             transits_df = transits_df[transits_df["candidate"] == candidate_selection - 1]
