@@ -27,6 +27,8 @@ def run_fit(args):
     if os.path.exists(fitting_dir) or os.path.isdir(fitting_dir):
         shutil.rmtree(fitting_dir, ignore_errors=True)
     os.mkdir(fitting_dir)
+    if args.odd_even:
+        os.mkdir(fitting_dir + "/main")
     file_dir = fitting_dir + "/fit.log"
     if os.path.exists(file_dir):
         os.remove(file_dir)
@@ -101,9 +103,16 @@ def run_fit(args):
     else:
         fit_candidate_numbers = [int(candidate_number) for candidate_number in str(args.only_fit_candidate).split(',')]
         only_fit_candidate_df = selected_candidates_df.loc[selected_candidates_df['number'].isin(fit_candidate_numbers)]
+    if args.odd_even:
+        odd_even_dir = fitting_dir
+        fitting_dir = fitting_dir + "/main"
+    else:
+        odd_even_dir = None
     fitter = Fitter(object_dir, fitting_dir, args.only_initial, len(selected_candidates_df) == 1, candidates_df,
                     args.mcmc, args.detrend, rho_err_multi=args.rho_err_multi, sigma_err_multi=args.sigma_err_multi,
-                    yerr_err_multi=args.yerr_err_multi)
+                    yerr_err_multi=args.yerr_err_multi, odd_even=args.odd_even, odd_even_dir=odd_even_dir,
+                    odd_even_tolerance=args.odd_even_tolerance if args.odd_even_tolerance is not None
+                    else args.tolerance)
     fitter.fit(selected_candidates_df, only_fit_candidate_df, star_df, cpus, fitting_dir, args.tolerance, args.fit_orbit)
     FitReport(fitting_dir,
               star_df['obj_id'].iloc[0],

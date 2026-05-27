@@ -35,5 +35,9 @@ jobs:
         run: python -m pip install tox
       - name: Run test suite
         run: tox -vv -e "${{ matrix.toxenv }}"
-        env:
-          PYTEST_ADDOPTS: "-vv --durations=10"
+      - name: Upload test logs
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-logs-${{ matrix.py }}
+          path: sherlockpipe/tests/pytest_output.log

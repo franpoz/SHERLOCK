@@ -39,7 +39,8 @@ class Fitter(ToolWithCandidate):
     """
 
     def __init__(self, object_dir, fit_dir, only_initial, is_candidate_from_search, candidates_df, mcmc=False,
-                 detrend=None, estimate_noise=True, rho_err_multi=5.0, sigma_err_multi=5.0, yerr_err_multi=5.0):
+                 detrend=None, estimate_noise=True, rho_err_multi=5.0, sigma_err_multi=5.0, yerr_err_multi=5.0,
+                 odd_even=False, odd_even_dir=None, odd_even_tolerance=None):
         super().__init__(is_candidate_from_search, candidates_df)
         self.object_dir = os.getcwd() if object_dir is None else object_dir
         self.data_dir = fit_dir
@@ -50,6 +51,10 @@ class Fitter(ToolWithCandidate):
         self.rho_err_multi = rho_err_multi
         self.sigma_err_multi = sigma_err_multi
         self.yerr_err_multi = yerr_err_multi
+        self.odd_even = odd_even
+        self.odd_even_dir = odd_even_dir
+        self.odd_even_tolerance = odd_even_tolerance
+        self._noise_distribution_params = None
 
     def mask_non_fit_candidates(self, time, flux, flux_err, candidate_df, fit_candidate_df):
         """
@@ -135,6 +140,7 @@ class Fitter(ToolWithCandidate):
                                    lnrho=noise_estimation['gp_ln_rho_median'],
                                    lnrho_lower_err=noise_estimation['gp_ln_rho_ll'],
                                    lnrho_upper_err=noise_estimation['gp_ln_rho_ul'])
+                self._noise_distribution_params = noise_distribution_params
                 self.overwrite_settings(settings_file, cpus, fit_candidate_df, tolerance, "multi")
                 with open(params_file, 'w') as f:
                     f.write(self.fill_candidates_params(fit_candidate_df, star_df, fit_orbit, self.detrend,
@@ -169,9 +175,70 @@ class Fitter(ToolWithCandidate):
             plt.close()
             # TODO fix custom_plot for all candidates
             # Fitter.custom_plot(candidate_row["name"], candidate_row["period"], fit_width, allesfit_dir, "posterior")
+            if self.odd_even:
+                self._fit_odd_even(candidate_df, fit_candidate_df, star_df, cpus, fit_orbit)
 
+    def _fit_odd_even(self, candidate_df, fit_candidate_df, star_df, cpus, fit_orbit):
+        distribution_params = self._noise_distribution_params \
+            if self._noise_distribution_params is not None else DistributionParams()
+        distribution = 'normal' if self._noise_distribution_params is not None else 'uniform'
+        for variant_name, epoch_shift in [("odd", 0), ("even", 1.0)]:
+            variant_dir = self.odd_even_dir + "/" + variant_name
+            os.mkdir(variant_dir)
+            shutil.copyfile(self.odd_even_dir + "/main/lc.csv", variant_dir + "/lc.csv")
+            sherlock_star_file = self.object_dir + "/params_star.csv"
+            if os.path.exists(sherlock_star_file) and os.path.isfile(sherlock_star_file):
+                shutil.copyfile(sherlock_star_file, variant_dir + "/params_star.csv")
+            self.overwrite_settings(variant_dir + "/settings.csv", cpus, fit_candidate_df,
+                                    self.odd_even_tolerance, "multi")
+            params_text = self.fill_candidates_params(fit_candidate_df, star_df, fit_orbit, self.detrend,
+                                                       distribution=distribution,
+                                                       distribution_params=distribution_params)
+            for _, candidate_row in fit_candidate_df.iterrows():
+                orig_period = candidate_row["period"]
+                per_err = candidate_row["per_err"]
+                orig_t0 = candidate_row["t0"]
+                name = str(candidate_row["name"])
+                new_period = orig_period * 2
+                new_t0 = orig_t0 + orig_period * epoch_shift
+                params_text = re.sub(
+                    r'\b' + re.escape(name) + r'_epoch,([^\n,]+),([^\n,]+),uniform ([^\n ]+) ([^\n ]+),([^\n,]+),([^\n,]+)',
+                    name + '_epoch,' + str(new_t0) + r',\2,uniform '
+                    + str(new_t0 - 0.02) + ' ' + str(new_t0 + 0.02) + r',\5,\6',
+                    params_text
+                )
+                params_text = re.sub(
+                    r'\b' + re.escape(name) + r'_period,([^\n,]+),([^\n,]+),uniform ([^\n ]+) ([^\n ]+),([^\n,]+),([^\n,]+)',
+                    name + '_period,' + str(new_period) + r',\2,uniform '
+                    + str(new_period - 2 * per_err) + ' ' + str(new_period + 2 * per_err) + r',\5,\6',
+                    params_text
+                )
+            with open(variant_dir + "/params.csv", 'w') as f:
+                f.write(params_text)
+                f.truncate()
+            logging.info("Running %s transit fit (P=%.4fd, T0=%.4f)", variant_name, new_period, new_t0)
+            try:
+                alexfitter.show_initial_guess(variant_dir)
+            except Exception as e:
+                logging.exception(str(e))
+            if not self.only_initial:
+                if not self.mcmc:
+                    logging.info("Running dynamic nested sampling for %s", variant_name)
+                    try:
+                        alexfitter.ns_fit(variant_dir)
+                        alexfitter.ns_output(variant_dir)
+                    except Exception as e:
+                        logging.exception(str(e))
+                else:
+                    logging.info("Running MCMC for %s", variant_name)
+                    try:
+                        alexfitter.mcmc_fit(variant_dir)
+                        alexfitter.mcmc_output(variant_dir)
+                    except Exception as e:
+                        logging.exception(str(e))
 
-    def overwrite_settings(self, settings_file, cpus, candidate_df, tolerance, boundaries="single"):
+    def overwrite_settings(self, settings_file, cpus, candidate_df, tolerance, boundaries="single",
+                           secondary_eclipse="True"):
         shutil.copyfile(resources_dir + "/resources/allesfitter/settings2.csv", settings_file)
         fit_width = Fitter.select_fit_width(candidate_df)
         with open(settings_file, 'r+') as f:
@@ -182,6 +249,7 @@ class Fitter(ToolWithCandidate):
             text = re.sub('\\${sherlock:names}', ' '.join(candidate_df["name"].astype('str')), text)
             text = re.sub('\\${sherlock:boundaries}', str(boundaries), text)
             text = re.sub('\\${sherlock:tolerance}', str(tolerance), text)
+            text = re.sub('\\${sherlock:secondary_eclipse}', str(secondary_eclipse), text)
             if self.detrend == 'hybrid_spline':
                 detrend_param = "baseline_flux_lc,hybrid_spline"
             elif self.detrend == 'gp':
@@ -286,6 +354,7 @@ ${sherlock:name}_epoch,${sherlock:t0},1,uniform ${sherlock:t0_min} ${sherlock:t0
 ${sherlock:name}_period,${sherlock:period},1,uniform ${sherlock:period_min} ${sherlock:period_max},$P_b$,$\mathrm{d}$
 ${sherlock:name}_f_c,0.0,${sherlock:fit_orbit},uniform -1.0 1.0,$\sqrt{e_b} \cos{\omega_b}$,
 ${sherlock:name}_f_s,0.0,${sherlock:fit_orbit},uniform -1.0 1.0,$\sqrt{e_b} \sin{\omega_b}$,
+${sherlock:name}_sbratio_lc,0.001,1,uniform 0.0 1.0,$J_\mathrm{b; lc}$,
 """
         candidate_params = re.sub('\\${sherlock:t0}', str(candidate_row["t0"]), candidate_params)
         candidate_params = re.sub('\\${sherlock:t0_min}', str(candidate_row["t0"] - 0.02), candidate_params)

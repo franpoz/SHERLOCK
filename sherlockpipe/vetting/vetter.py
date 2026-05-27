@@ -24,7 +24,10 @@ class Vetter(ToolWithCandidate):
                                       triceratops_ignore_ebs=kwargs['triceratops_ignore_ebs'],
                                       triceratops_resolved_companion=kwargs['triceratops_resolved_companion'],
                                       triceratops_ignore_background_stars=kwargs['triceratops_ignore_background_stars'],
-                                      sectors=kwargs['sectors']
+                                      sectors=kwargs['sectors'],
+                                      main_fit_dir=kwargs.get('main_fit_dir'),
+                                      odd_fit_dir=kwargs.get('odd_fit_dir'),
+                                      even_fit_dir=kwargs.get('even_fit_dir')
                                       )
 
     def object_dir(self):

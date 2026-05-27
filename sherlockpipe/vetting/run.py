@@ -98,6 +98,11 @@ def run_vet(object_dir, candidate, properties, cpus=os.cpu_count() - 1, run_iats
     for i in range(0, int(candidate['number']) - 1):
         transits_mask.append({"P": candidates.iloc[i]["period"], "T0": candidates.iloc[i]["t0"],
                               "D": candidates.iloc[i]["duration"] * 2})
+    candidate_selection_val = locals().get('candidate_selection')
+    odd_even_fit_dir = vetter.object_dir() + f"/fit_[{candidate_selection_val}]" if candidate_selection_val is not None else None
+    main_fit_dir = odd_even_fit_dir + "/main" if odd_even_fit_dir and os.path.exists(odd_even_fit_dir + "/main") else None
+    odd_fit_dir = odd_even_fit_dir + "/odd" if odd_even_fit_dir and os.path.exists(odd_even_fit_dir + "/odd") else None
+    even_fit_dir = odd_even_fit_dir + "/even" if odd_even_fit_dir and os.path.exists(odd_even_fit_dir + "/even") else None
     vetter.run(cpus, candidate=candidate, star_df=star_df, transits_df=transits_df, transits_mask=transits_mask,
                iatson_enabled=run_iatson, gpt_enabled=run_gpt, gpt_api_key=gpt_key, only_summary=only_summary,
                triceratops_bins=triceratops_bins, triceratops_scenarios=triceratops_scenarios,
@@ -108,5 +113,6 @@ def run_vet(object_dir, candidate, properties, cpus=os.cpu_count() - 1, run_iats
                triceratops_ignore_ebs=triceratops_ignore_ebs,
                triceratops_resolved_companion=triceratops_resolved_companion,
                triceratops_ignore_background_stars=triceratops_ignore_background_stars,
-               sectors=sectors
+               sectors=sectors,
+               main_fit_dir=main_fit_dir, odd_fit_dir=odd_fit_dir, even_fit_dir=even_fit_dir
                )

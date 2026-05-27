@@ -24,6 +24,12 @@ def fit_parse_args(args=None):
                     required=False, choices=['no', 'gp'])
     ap.add_argument('--fit_orbit', dest='fit_orbit', action='store_true', help="Whether to fit eccentricity and "
                                                                                "argument of periastron")
+    ap.add_argument('--disable_odd_even', dest='odd_even', action='store_false',
+                    help="Whether to disable odd/even transit fits (disabled when flag is set)")
+    ap.set_defaults(odd_even=True)
+    ap.add_argument('--odd_even_tolerance', type=float, default=None,
+                    help="The tolerance for odd/even nested sampling (defaults to --tolerance if not set).",
+                    required=False)
     ap.add_argument('--properties', help="The YAML file to be used as input.", required=False)
     return ap.parse_args(args)
 

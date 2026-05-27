@@ -13,7 +13,7 @@ multiprocess,True
 multiprocess_cores,${sherlock:cores}
 fast_fit,True
 fast_fit_width,${sherlock:fit_width}
-secondary_eclipse,False
+secondary_eclipse,${sherlock:secondary_eclipse}
 phase_curve,False
 shift_epoch,True
 #inst_for_${sherlock:name}_epoch,all
