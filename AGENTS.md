@@ -200,6 +200,17 @@ pytest --forked -n 1 -v -x sherlockpipe/tests/
 pytest --forked -n 1 -v -x sherlockpipe/regression_tests/
 ```
 
+## TOI / KOI Target Resolution
+
+When a user asks to search, vet, fit, or explore a **TOI** or **KOI** target by its catalog name (e.g. "TOI-2079", "KOI-1234"), you MUST first resolve it to its underlying mission ID:
+
+1. **Look up the TIC or KIC ID** at [https://exofop.ipac.caltech.edu/](https://exofop.ipac.caltech.edu/). Search by TOI/KOI name; the target page will show the corresponding TIC (TESS) or KIC (Kepler) identifier.
+2. **Retrieve the known candidates/planets** from the same ExoFOP page. Record each confirmed or candidate planet's period, epoch (t0), duration, and depth. These are needed for masking (`INITIAL_TRANSIT_MASK`) or fitting/vetting configuration.
+3. **Use the resolved TIC/KIC ID** when constructing `MissionObjectInfo` or the properties YAML — SHERLOCK downloads data by mission ID, not by TOI/KOI alias.
+4. **Populate `INITIAL_TRANSIT_MASK`** with the period, t0, and duration from ExoFOP to mask known signals during the search, or set `INITIAL_OIS_MASK: True` to auto-mask from the built-in OI catalog.
+
+Example: "TOI-2079" → TIC 27989529 (from ExoFOP) → uses "TIC 27989529" as the target ID in the YAML.
+
 ## Execution Recipes
 
 > **CRITICAL**: The `bash` tool defaults to a 120s timeout when `timeout` is omitted. You MUST explicitly pass `timeout=0` (or a huge value). See the [CRITICAL section](#critical-never-timeout-shell-commands) at the top. SHERLOCK executions can take hours to days.
