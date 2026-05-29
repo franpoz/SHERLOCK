@@ -11,9 +11,41 @@ class AverageSpectrumSignalSelector(SignalSelector):
     Selects the signal with best SNR by summing all the residuals from each detrend search and then computing the SDE.
     """
     def __init__(self):
+        """Initialize the average-spectrum signal selector."""
         super().__init__()
 
     def select(self, id_run, sherlock_target, star_info, transits_min_count, time, lcs, transit_results, wl, cadence):
+        """Select the best signal by averaging the residuals of all detrended searches.
+
+        The chi2 residuals from each detrended curve are averaged into a single
+        spectrum, from which the SDE and maximum power period are computed.
+
+        Parameters
+        ----------
+        id_run : int
+            The current SHERLOCK run number.
+        sherlock_target : SherlockTarget
+            The target configuration.
+        star_info : StarInfo
+            The star information.
+        transits_min_count : int
+            The minimum number of transits required.
+        time : ndarray
+            The time array of the light curve.
+        lcs : dict
+            Dictionary of detrended light curve flux arrays.
+        transit_results : dict
+            Dictionary mapping curve indices to TransitResult objects.
+        wl : float
+            The window length used for detrending.
+        cadence : float
+            The cadence of the observations.
+
+        Returns
+        -------
+        AvgSpectrumSignalSelection
+            The selection result with the averaged spectrum information.
+        """
         non_nan_result_args = np.argwhere(np.array([1 if result.results is not None else 0 for result in transit_results.values()]) == 1).flatten()
         non_nan_results_count = len(non_nan_result_args)
         if non_nan_results_count == 0:
@@ -51,12 +83,33 @@ class AverageSpectrumSignalSelector(SignalSelector):
 
 
 class AvgSpectrumSignalSelection:
+    """Container for the result of an average-spectrum signal selection."""
+
     def __init__(self, score, curve_index, transit_result):
+        """Initialize the average-spectrum signal selection.
+
+        Parameters
+        ----------
+        score : float
+            The selection score.
+        curve_index : int
+            The index of the detrended curve with the best signal.
+        transit_result : TransitResult
+            The transit result object for the selected signal.
+        """
         self.score = score
         self.curve_index = curve_index
         self.transit_result = transit_result
 
     def get_message(self):
+        """Return a human-readable summary of the average-spectrum signal selection.
+
+        Returns
+        -------
+        str
+            A string describing the chosen signal with its name, period,
+            SNR, SDE, FAP, and border score.
+        """
         curve_name = "PDCSAP_FLUX" if self.curve_index == 0 else str(self.curve_index - 1)
         return "Chosen signal with AVERAGE-SPECTRUM algorithm --> NAME: " + curve_name + \
                "\tPeriod:" + str(self.transit_result.period) + \

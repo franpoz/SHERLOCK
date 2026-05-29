@@ -35,13 +35,37 @@ resources_dir = path.join(path.dirname(__file__))
 
 
 def replace_sub(match):
+    """
+    Replaces LaTeX subscript content with HTML ``<sub>`` tags for ReportLab rendering.
+
+    Parameters
+    ----------
+    match : re.Match
+        The regex match object containing a subscript group.
+
+    Returns
+    -------
+    str
+        The HTML subscript-tagged string.
+    """
     inner = match.group(1)
-    # Return the reformatted date
     return f"<sub>{inner}</sub>"
 
 def replace_mathrm(match):
+    """
+    Strips the LaTeX ``\\mathrm`` wrapper and keeps only the inner content.
+
+    Parameters
+    ----------
+    match : re.Match
+        The regex match object containing text inside ``\\mathrm{...}``.
+
+    Returns
+    -------
+    str
+        The inner content wrapped in braces.
+    """
     inner = match.group(1)
-    # Return the reformatted date
     return f"{{{inner}}}"
 
 class FitReport:
@@ -52,6 +76,30 @@ class FitReport:
     CANDIDATE_COLORS = ['firebrick', 'cornflowerblue', 'pink', 'limegreen', 'sandybrown', 'turquoise', 'violet']
 
     def __init__(self, data_dir, object_id, ra, dec, v, j, h, k, candidates_df):
+        """
+        Initializes the fit report generator.
+
+        Parameters
+        ----------
+        data_dir : str
+            The directory containing the allesfitter fit results.
+        object_id : str
+            The target object identifier.
+        ra : float
+            Right ascension in degrees.
+        dec : float
+            Declination in degrees.
+        v : float
+            V-band magnitude.
+        j : float
+            J-band magnitude.
+        h : float
+            H-band magnitude.
+        k : float
+            K-band magnitude.
+        candidates_df : pandas.DataFrame
+            DataFrame containing the candidate planet parameters.
+        """
         self.data_dir = data_dir
         self.object_id = object_id
         self.ra = ra
@@ -65,6 +113,16 @@ class FitReport:
 
     @staticmethod
     def row_colors(df, table_object):
+        """
+        Applies alternating row background colors to a ReportLab table.
+
+        Parameters
+        ----------
+        df : pandas.DataFrame
+            The data frame whose rows determine the number of styled rows.
+        table_object : reportlab.platypus.Table
+            The ReportLab table to style.
+        """
         data_len = len(df)
         for each in range(1, data_len + 1):
             if each % 2 == 1:
@@ -74,6 +132,16 @@ class FitReport:
             table_object.setStyle(TableStyle([('BACKGROUND', (0, each), (-1, each), bg_color)]))
 
     def create_header(self, canvas, doc):
+        """
+        Draws the header section of each PDF page including the logo, report title, and date.
+
+        Parameters
+        ----------
+        canvas : reportlab.pdfgen.canvas.Canvas
+            The ReportLab canvas to draw on.
+        doc : reportlab.platypus.BaseDocTemplate
+            The document template providing page context.
+        """
         canvas.saveState()
 
         # Logo:
@@ -99,6 +167,16 @@ class FitReport:
         canvas.restoreState()
 
     def create_footer(self, canvas, doc):
+        """
+        Draws the footer section of each PDF page including the powered-by line and page number.
+
+        Parameters
+        ----------
+        canvas : reportlab.pdfgen.canvas.Canvas
+            The ReportLab canvas to draw on.
+        doc : reportlab.platypus.BaseDocTemplate
+            The document template providing page context.
+        """
         canvas.saveState()
 
         # if doc.page == 1:
@@ -134,6 +212,19 @@ class FitReport:
         canvas.restoreState()
 
     def is_float(self, element: any) -> bool:
+        """
+        Checks whether a given element can be converted to a float.
+
+        Parameters
+        ----------
+        element : any
+            The value to check.
+
+        Returns
+        -------
+        bool
+            True if the element can be cast to float, False otherwise.
+        """
         # If you expect None to be passed:
         if element is None:
             return False
@@ -144,6 +235,11 @@ class FitReport:
             return False
 
     def create_report(self):
+        """
+        Generates the full PDF fit report including target parameters, global and per-companion
+        fitted parameters with uncertainties, folded transit curves, and habitability predictions.
+        The report is saved as ``<object_id>_fit.pdf`` in the data directory.
+        """
         f = gzip.GzipFile(os.path.join(self.data_dir, 'results/save_ns.pickle.gz'), 'rb')
         allesfitter_results = pickle.load(f)
         alles = alexfitter.allesclass(self.data_dir)
@@ -459,6 +555,22 @@ class FitReport:
         doc.build(story)
 
     def replace_latex(self, content):
+        """
+        Converts LaTeX math expressions in a string to HTML/ReportLab-friendly markup.
+
+        Substitutions include: ``\\mathrm{...}`` to plain braces, subscripts to ``<sub>`` tags,
+        Greek letter commands to ``<greek>`` tags, and unit macros to readable text.
+
+        Parameters
+        ----------
+        content : str
+            The string containing LaTeX math markup.
+
+        Returns
+        -------
+        str
+            The converted string with HTML-compatible markup.
+        """
         content = re.sub('\\\\mathrm{(.*)}', replace_mathrm, content)
         content = re.sub('\\\\mathrm{(.*)}', replace_mathrm, content)
         content = re.sub('\\\\mathrm{(.*)}', replace_mathrm, content)

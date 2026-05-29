@@ -18,8 +18,27 @@ class PhaseCoverageInput:
 
 
 class PhaseCoverage:
+    """
+    Computes and plots the phase coverage of a time series over a grid of trial periods.
+
+    Phase coverage measures what fraction of each orbital phase is sampled by the
+    observations, which is useful for assessing signal detectability.
+    """
     @staticmethod
     def phase_coverage(phase_coverage_input: PhaseCoverageInput):
+        """
+        Computes the phase coverage for a single trial period.
+
+        Parameters
+        ----------
+        phase_coverage_input : PhaseCoverageInput
+            Container with the time array and trial period.
+
+        Returns
+        -------
+        float
+            The phase coverage fraction (0 to 1).
+        """
         if phase_coverage_input.period == 0:
             return 1
         else:
@@ -36,6 +55,20 @@ class PhaseCoverage:
 
     @staticmethod
     def compute_phase_coverage(dir: str, time: List[float], period_grid: List[float], cpus=1):
+        """
+        Computes the phase coverage over the full period grid and saves a plot.
+
+        Parameters
+        ----------
+        dir : str
+            Output directory where the phase coverage plot is saved.
+        time : list of float
+            Time array of the observations in days.
+        period_grid : list of float
+            Array of trial periods in days.
+        cpus : int
+            Number of CPU cores for parallel computation.
+        """
         logging.info("Computing period grid phase coverage")
         period_grid = np.sort(period_grid)
         phase_coverage_inputs = []

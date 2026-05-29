@@ -3,6 +3,18 @@ from sherlockpipe.bayesian_fit.run import run_fit
 
 
 def fit_parse_args(args=None):
+    """Parse command-line arguments for the SHERLOCK Bayesian transit fitting task.
+
+    Parameters
+    ----------
+    args : list of str, optional
+        Argument list to parse (defaults to ``sys.argv[1:]``).
+
+    Returns
+    -------
+    argparse.Namespace
+        Parsed arguments with fit configuration options.
+    """
     ap = ArgumentParser(description='Fitting of Sherlock objects of interest')
     ap.add_argument('--object_dir',
                     help="If the object directory is not your current one you need to provide the ABSOLUTE path",

@@ -31,6 +31,69 @@ class ObservationReport:
     def __init__(self, df_observatories, df, alert_date, object_id, name, working_path, ra, dec, t0, t0_low_err, t0_up_err, period,
                  period_low_err, period_up_err, duration, duration_low_err, duration_up_err, depth, depth_low_err,
                  depth_up_err, observable, min_dist, max_dist, min_altitude, max_days, v, j, h, k):
+        """Initialize the observation report.
+
+        Parameters
+        ----------
+        df_observatories : DataFrame
+            DataFrame containing observatory information.
+        df : DataFrame
+            DataFrame containing the observation events.
+        alert_date : str or None
+            The date after which error propagation makes observations unreliable.
+        object_id : str
+            The target object identifier.
+        name : str
+            The name for the output report file.
+        working_path : str
+            The directory where the report will be saved.
+        ra : float
+            Right ascension of the target in degrees.
+        dec : float
+            Declination of the target in degrees.
+        t0 : float
+            The transit epoch.
+        t0_low_err : float
+            The lower error of the transit epoch.
+        t0_up_err : float
+            The upper error of the transit epoch.
+        period : float
+            The orbital period in days.
+        period_low_err : float
+            The lower error of the orbital period.
+        period_up_err : float
+            The upper error of the orbital period.
+        duration : float
+            The transit duration in hours.
+        duration_low_err : float
+            The lower error of the transit duration.
+        duration_up_err : float
+            The upper error of the transit duration.
+        depth : float
+            The transit depth in ppt.
+        depth_low_err : float
+            The lower error of the transit depth.
+        depth_up_err : float
+            The upper error of the transit depth.
+        observable : float
+            The minimum transit observability fraction.
+        min_dist : float
+            The minimum moon distance in degrees for new moon.
+        max_dist : float
+            The minimum moon distance in degrees for full moon.
+        min_altitude : float
+            The minimum altitude above the horizon in degrees.
+        max_days : int
+            The maximum number of days to search for observables.
+        v : float
+            The V-band magnitude of the target.
+        j : float
+            The J-band magnitude of the target.
+        h : float
+            The H-band magnitude of the target.
+        k : float
+            The K-band magnitude of the target.
+        """
         self.df = df
         self.df_observatories = df_observatories.drop(['tz'], axis=1)
         self.alert_date = alert_date
@@ -154,6 +217,15 @@ class ObservationReport:
 
     @staticmethod
     def row_colors(df, table_object):
+        """Apply alternating row colors to a ReportLab table.
+
+        Parameters
+        ----------
+        df : DataFrame
+            The dataframe whose rows are used to determine the number of rows.
+        table_object : Table
+            The ReportLab Table object to style.
+        """
         data_len = len(df)
         for each in range(1, data_len + 1):
             if each % 2 == 1:

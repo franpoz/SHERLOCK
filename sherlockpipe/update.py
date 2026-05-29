@@ -17,6 +17,14 @@ class Updater:
     recent operations.
     """
     def __init__(self, cache_dir=os.path.expanduser('~') + "/"):
+        """Initialize the updater with a cache directory.
+
+        Parameters
+        ----------
+        cache_dir : str, optional
+            Base directory for storing downloaded metadata.
+            Defaults to the user home directory.
+        """
         self.cache_dir = cache_dir
 
     def update(self, clean, ois, force):

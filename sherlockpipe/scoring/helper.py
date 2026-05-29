@@ -3,6 +3,26 @@ from scipy.ndimage.interpolation import shift
 
 
 def compute_border_score(time, result, intransit, cadence):
+    """Compute a border score penalizing transits that fall near observation edges.
+
+    The score ranges from 0 (all transits near edges) to 1 (no transits near edges).
+
+    Parameters
+    ----------
+    time : ndarray
+        The time array of the light curve.
+    result : TransitResult
+        The transit result containing transit depths.
+    intransit : ndarray
+        Boolean array indicating in-transit points.
+    cadence : float
+        The cadence in seconds.
+
+    Returns
+    -------
+    float
+        The border score between 0 and 1, where 1 means no transits near edges.
+    """
     shift_cadences = 3600 / cadence
     edge_limit_days = 0.05
     transit_depths = np.nan_to_num(result.transit_depths)
@@ -25,10 +45,42 @@ def compute_border_score(time, result, intransit, cadence):
     return border_score if border_score >= 0 else 0
 
 def find_nearest(array, value):
+    """Find the index and value nearest to a given value in an array.
+
+    Parameters
+    ----------
+    array : ndarray
+        The array to search in.
+    value : float
+        The target value to find the nearest neighbor for.
+
+    Returns
+    -------
+    tuple
+        A tuple of (index, nearest_value) where index is the position in the
+        array and nearest_value is the closest array element to the input value.
+    """
     idx = (np.abs(array - value)).argmin()
     return idx, array[idx]
 
 def harmonic_spectrum(periods, spectrum):
+    """Compute a harmonic spectrum by averaging SDE at harmonic periods.
+
+    For each period in the input grid, the average SDE at harmonic ratios
+    (1/4, 1/3, 1/2, 1, 2, 3, 4) is computed to detect harmonic patterns.
+
+    Parameters
+    ----------
+    periods : ndarray
+        The array of periods from the search grid.
+    spectrum : ndarray
+        The SDE/power spectrum values corresponding to each period.
+
+    Returns
+    -------
+    ndarray
+        The harmonic spectrum with the same length as the input periods.
+    """
     harmonics = [1 / 4, 1 / 3, 1 / 2, 1, 2, 3, 4]
     harmonic_spectrum = np.zeros(len(periods))
     for index, period in enumerate(periods):

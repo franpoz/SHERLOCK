@@ -65,11 +65,60 @@ class MoonIlluminationSeparationConstraint(Constraint):
 
 
 class PlannerInput:
+    """Input data class for a single observation planning event."""
+
     def __init__(self, observatory_row, midtransit_time, observer_site, midtransit_times, ingress_egress_times,
                  constraints, moon_for_midtransit_times, moon_dist_midtransit_times, moon_phase_midtransit_times,
                  transits_since_epoch, midtransit_time_low_err, midtransit_time_up_err, low_err_delta,
                  up_err_delta, i, plan_dir, target, min_altitude, transit_fraction, baseline,
                  error_alert) -> None:
+        """Initialize the planner input.
+
+        Parameters
+        ----------
+        observatory_row : Series
+            The observatory data row from the observatories DataFrame.
+        midtransit_time : Time
+            The midtransit time for this event.
+        observer_site : Observer
+            The astroplan Observer object for the observatory.
+        midtransit_times : Time
+            Array of all midtransit times.
+        ingress_egress_times : list
+            List of ingress/egress time pairs.
+        constraints : list
+            List of astroplan observation constraints.
+        moon_for_midtransit_times : SkyCoord
+            The moon coordinates at midtransit times.
+        moon_dist_midtransit_times : Quantity
+            The moon-target angular distance at each midtransit time.
+        moon_phase_midtransit_times : ndarray
+            The moon illumination phase at each midtransit time.
+        transits_since_epoch : ndarray
+            The number of transits since the epoch for each midtransit.
+        midtransit_time_low_err : ndarray
+            Lower error of midtransit times in hours.
+        midtransit_time_up_err : ndarray
+            Upper error of midtransit times in hours.
+        low_err_delta : TimeDelta
+            The lower error as an astropy time delta.
+        up_err_delta : TimeDelta
+            The upper error as an astropy time delta.
+        i : int
+            The index of this midtransit in the array.
+        plan_dir : str
+            The output directory for plan artifacts.
+        target : FixedTarget
+            The astroplan FixedTarget object.
+        min_altitude : float
+            The minimum altitude in degrees.
+        transit_fraction : float
+            The required transit observable fraction.
+        baseline : float
+            The baseline time in hours.
+        error_alert : bool
+            Whether to raise an error alert when uncertainty is too large.
+        """
         self.observatory_row = observatory_row
         self.midtransit_time = midtransit_time
         self.observer_site = observer_site
@@ -216,6 +265,23 @@ class Planner:
 
     @staticmethod
     def plan_event(planner_input: PlannerInput):
+        """Compute the observability of a single transit event.
+
+        Evaluates whether a transit event is observable given the constraints,
+        generates an airmass plot, and returns the observability data.
+
+        Parameters
+        ----------
+        planner_input : PlannerInput
+            The input data for the observation event.
+
+        Returns
+        -------
+        tuple
+            A tuple of (alert_date, observable_dict) where alert_date is a Time
+            object if the event uncertainty is too large (or None), and
+            observable_dict contains the observation details (or None if not observable).
+        """
         try:
             twilight_evening = None
             twilight_morning = None

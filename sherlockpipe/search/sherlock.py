@@ -396,6 +396,23 @@ class Sherlock:
             logging.exception("Unexpected exception")
 
     def noise(self, time, flux, signal_power):
+        """
+        Computes the signal-to-noise ratio from the periodogram and Welch power spectrum.
+
+        Parameters
+        ----------
+        time : numpy.ndarray
+            Time array (unused, retained for interface compatibility).
+        flux : numpy.ndarray
+            Flux measurements.
+        signal_power : float
+            The signal power to compare against.
+
+        Returns
+        -------
+        float
+            The SNR computed from the periodogram.
+        """
         from scipy.signal import periodogram, welch
         f_p, psd_p = periodogram(flux)
         f_w, psd_w = welch(flux)
@@ -853,10 +870,38 @@ class Sherlock:
         return clean_time, np.array(clean_lcs)
 
     def run_multiprocessing(self, n_processors, func, func_input):
+        """
+        Helper to execute a function over a list of inputs using a multiprocessing pool.
+
+        Parameters
+        ----------
+        n_processors : int
+            Number of worker processes.
+        func : callable
+            The function to map over inputs.
+        func_input : list
+            List of inputs for the function.
+
+        Returns
+        -------
+        list
+            Results of ``func`` applied to each input element.
+        """
         with Pool(processes=n_processors) as pool:
             return pool.map(func, func_input)
 
     class KoiInput:
+        """
+        Input container for a Kepler Object of Interest (KOI) to be processed by SHERLOCK.
+        """
         def __init__(self, star_id, kic_id):
+            """
+            Parameters
+            ----------
+            star_id : str
+                The star identifier.
+            kic_id : str
+                The Kepler Input Catalog identifier.
+            """
             self.star_id = star_id
             self.kic_id = kic_id

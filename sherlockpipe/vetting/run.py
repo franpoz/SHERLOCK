@@ -23,6 +23,51 @@ def run_vet(object_dir, candidate, properties, cpus=os.cpu_count() - 1, run_iats
             triceratops_resolved_companion=None,
             triceratops_ignore_background_stars=False,
             sectors=None):
+    """
+    Run vetting on a transit candidate using WATSON and TRICERATOPS.
+
+    Loads star and candidate data from disk, configures the Vetter, and executes
+    the vetting pipeline including IATSON, GPT, and TRICERATOPS analyses.
+
+    Parameters
+    ----------
+    object_dir : str or None
+        Directory containing the object's results. Defaults to current directory.
+    candidate : int or None
+        Candidate number to vet. If None, properties file is used.
+    properties : str or None
+        Path to YAML properties file for non-search candidates.
+    cpus : int, optional
+        Number of CPUs to use. Default is all minus one.
+    run_iatson : bool, optional
+        Whether to run deep-learning IATSON validation.
+    run_gpt : bool, optional
+        Whether to run GPT-based validation.
+    gpt_key : str, optional
+        API key for GPT services.
+    only_summary : bool, optional
+        Whether to produce only a summary report.
+    triceratops_bins : int, optional
+        Number of TRICERATOPS bins. Default is 100.
+    triceratops_scenarios : int, optional
+        Number of TRICERATOPS scenarios. Default is 5.
+    triceratops_curve_file : str, optional
+        Path to a contrast curve file for TRICERATOPS.
+    triceratops_contrast_curve_file : str, optional
+        Path to a contrast curve file.
+    triceratops_additional_stars_file : str, optional
+        Path to a file listing additional nearby stars.
+    triceratops_sigma_mode : str, optional
+        TRICERATOPS sigma mode. Default is 'flux_err'.
+    triceratops_ignore_ebs : bool, optional
+        Whether to ignore eclipsing binaries during TRICERATOPS.
+    triceratops_resolved_companion : float, optional
+        Separation in arcseconds of a resolved companion.
+    triceratops_ignore_background_stars : bool, optional
+        Whether to ignore background stars during TRICERATOPS.
+    sectors : list, optional
+        List of TESS sectors to use.
+    """
     object_dir = os.getcwd() if object_dir is None else object_dir
     candidates = pd.read_csv(object_dir + "/candidates.csv")
     if candidate is not None:

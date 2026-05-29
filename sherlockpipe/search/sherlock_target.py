@@ -43,6 +43,86 @@ class SherlockTarget:
                  cache_dir=os.path.expanduser('~') + "/",
                  ignore_original=False, pickle_mode='none', use_harmonics_spectra=False,
                  ois_mask=False, min_transits_count=2, compute_phase_coverage=False, search_engine='cpu'):
+        """
+        Configuration container for a single transiting planet search target.
+
+        Parameters
+        ----------
+        object_info : lcbuilder.objectinfo.ObjectInfo.ObjectInfo
+            The mission object information (TIC, KIC, EPIC, etc.).
+        detrend_method : str
+            Detrending method ('biweight' or 'gp').
+        detrend_l_min : float or None
+            Minimum detrend window length / kernel size in days.
+        detrend_l_max : float or None
+            Maximum detrend window length / kernel size in days.
+        detrends_number : int
+            Number of detrend models to apply.
+        detrend_cores : int
+            Number of CPU cores for detrending.
+        custom_selection_algorithm : callable or None
+            Custom signal selection algorithm.
+        custom_transit_template : callable or None
+            Custom transit template generator for TLS.
+        search_zone : str or None
+            Predefined search zone ('hz', 'ohz', or None).
+        custom_search_zone : object or None
+            Custom search zone resolver.
+        snr_min : float
+            Minimum SNR threshold for a signal to be considered.
+        sde_min : float
+            Minimum SDE threshold for a signal to be considered.
+        min_sectors : int
+            Minimum number of sectors required.
+        max_sectors : int
+            Maximum number of sectors allowed.
+        bin_minutes : int
+            Binning size in minutes for detrend plots.
+        mask_mode : str
+            Signal masking mode ('mask' or 'subtract').
+        cpu_cores : int
+            Number of CPU cores for the search and fit.
+        max_runs : int
+            Maximum number of iterative search runs.
+        period_min : float
+            Minimum search period in days.
+        period_max : float
+            Maximum search period in days.
+        period_protect : float
+            Period protection window in days for detrending.
+        best_signal_algorithm : str
+            Algorithm used to select the best signal among detrended curves.
+        quorum_strength : float
+            Voting strength for quorum-based signal selectors.
+        min_quorum : int
+            Minimum votes for quorum-based signal selectors.
+        fit_method : str
+            Transit fit method ('tls', 'bls', 'bls-periodogram', 'grazing', 'tailed', etc.).
+        oversampling : float
+            Oversampling factor for the period grid.
+        t0_fit_margin : float
+            Margin in days for T0 fitting.
+        duration_grid_step : float
+            Step size for the duration grid.
+        source_properties_file : str or None
+            Path to the source YAML properties file.
+        cache_dir : str
+            Directory for caching downloaded data.
+        ignore_original : bool
+            If True, skip searching the original (undetrended) light curve.
+        pickle_mode : str
+            Pickle output mode ('none', 'all', or 'selected').
+        use_harmonics_spectra : bool
+            If True, compute harmonic spectra for detected signals.
+        ois_mask : bool
+            If True, mask known Objects of Interest in the light curve.
+        min_transits_count : int
+            Minimum number of transits required for a valid signal.
+        compute_phase_coverage : bool
+            If True, compute the phase coverage over the period grid.
+        search_engine : str
+            Search engine backend ('cpu', 'gpu', or 'gpu_approximate').
+        """
         self.min_sectors = min_sectors
         self.max_sectors = max_sectors
         self.bin_minutes = bin_minutes

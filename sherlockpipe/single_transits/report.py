@@ -36,11 +36,37 @@ resources_dir = path.join(path.dirname(__file__))
 
 
 def replace_sub(match):
+    """
+    Replace a regex match with a subscript-wrapped version for LaTeX rendering.
+
+    Parameters
+    ----------
+    match : re.Match
+        Regex match object whose group(1) is the substring to subscript.
+
+    Returns
+    -------
+    str
+        Formatted string with the matched content in subscripts.
+    """
     inner = match.group(1)
     # Return the reformatted date
     return f"<sub>{inner}</sub>"
 
 def replace_mathrm(match):
+    """
+    Replace a regex match with a mathrm-wrapped version for LaTeX rendering.
+
+    Parameters
+    ----------
+    match : re.Match
+        Regex match object whose group(1) is the substring to wrap.
+
+    Returns
+    -------
+    str
+        Formatted string with the matched content in mathrm braces.
+    """
     inner = match.group(1)
     # Return the reformatted date
     return f"{{{inner}}}"
@@ -53,7 +79,30 @@ class MoriartyReport:
     CANDIDATE_COLORS = ['firebrick', 'cornflowerblue', 'pink', 'limegreen', 'sandybrown', 'turquoise', 'violet']
 
     def __init__(self, data_dir, object_id, ra, dec, v, j, h, k, candidates_df):
-        self.data_dir = data_dir
+        """
+        Initialize the Moriarty PDF report generator.
+
+        Parameters
+        ----------
+        data_dir : str
+            Directory containing the single-transit search results.
+        object_id : str
+            Target identifier.
+        ra : float
+            Right ascension in degrees.
+        dec : float
+            Declination in degrees.
+        v : float
+            V-band magnitude.
+        j : float
+            J-band magnitude.
+        h : float
+            H-band magnitude.
+        k : float
+            K-band magnitude.
+        candidates_df : pandas.DataFrame
+            DataFrame of known SHERLOCK candidates for context.
+        """
         self.object_id = object_id
         self.ra = ra
         self.dec = dec
@@ -65,7 +114,16 @@ class MoriartyReport:
 
     @staticmethod
     def row_colors(df, table_object):
-        data_len = len(df)
+        """
+        Apply alternating row colors to a ReportLab table.
+
+        Parameters
+        ----------
+        df : pandas.DataFrame
+            DataFrame whose length determines the number of rows to color.
+        table_object : reportlab.platypus.Table
+            The table to which background colors will be applied.
+        """
         for each in range(1, data_len + 1):
             if each % 2 == 1:
                 bg_color = colors.whitesmoke
@@ -74,7 +132,16 @@ class MoriartyReport:
             table_object.setStyle(TableStyle([('BACKGROUND', (0, each), (-1, each), bg_color)]))
 
     def create_header(self, canvas, doc):
-        canvas.saveState()
+        """
+        Draw the page header with logo, title, and date for the PDF report.
+
+        Parameters
+        ----------
+        canvas : reportlab.pdfgen.canvas.Canvas
+            ReportLab canvas to draw on.
+        doc : reportlab.platypus.BaseDocTemplate
+            The document template.
+        """
 
         # Logo:
         canvas.drawImage(self.LOGO_IMAGE, x=1.5 * cm, y=26.8 * cm, height=2 * cm, width=2 * cm,
@@ -99,7 +166,16 @@ class MoriartyReport:
         canvas.restoreState()
 
     def create_footer(self, canvas, doc):
-        canvas.saveState()
+        """
+        Draw the page footer with page number and attribution for the PDF report.
+
+        Parameters
+        ----------
+        canvas : reportlab.pdfgen.canvas.Canvas
+            ReportLab canvas to draw on.
+        doc : reportlab.platypus.BaseDocTemplate
+            The document template.
+        """
 
         # if doc.page == 1:
         #     # Footer con superíndice:
@@ -134,7 +210,19 @@ class MoriartyReport:
         canvas.restoreState()
 
     def is_float(self, element: any) -> bool:
-        # If you expect None to be passed:
+        """
+        Check whether a value can be converted to a float.
+
+        Parameters
+        ----------
+        element : any
+            The value to test.
+
+        Returns
+        -------
+        bool
+            True if the value can be converted to float, False otherwise.
+        """
         if element is None:
             return False
         try:
@@ -144,7 +232,12 @@ class MoriartyReport:
             return False
 
     def create_report(self):
-        styles = getSampleStyleSheet()
+        """
+        Build the Moriarty single-transit search PDF report.
+
+        Reads fit results and diagnostic plots from the data directory, compiles
+        tables of parameters and figures, and outputs the final PDF document.
+        """
         styles.add(ParagraphStyle(name="ParagraphAlignCenter", alignment=TA_CENTER))
         styles.add(ParagraphStyle(name="ParagraphAlignJustify", alignment=TA_JUSTIFY))
         styles.wordWrap = 'LTR'

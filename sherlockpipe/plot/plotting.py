@@ -103,6 +103,30 @@ def save_transit_plot(object_id: str, title: str, plot_dir: str, file: str, time
 
 
 def plot_system_architecture(sistemas, temperaturas_estrellas, tamaños_estrellas, periodos_orbitales, tamaños_planetas, candidatos, save_dir) -> None:
+    """Plot a multi-planet system architecture diagram.
+
+    Produces a scatter plot showing stars and their confirmed/candidate planets
+    ordered by stellar temperature, with planet size shown by marker size and
+    stellar temperature shown by color.
+
+    Parameters
+    ----------
+    sistemas : list of str
+        List of system names.
+    temperaturas_estrellas : list of float
+        List of stellar temperatures in Kelvin.
+    tamaños_estrellas : list of float
+        List of stellar radii relative to the Sun.
+    periodos_orbitales : list of list of float
+        Nested list of orbital periods in days per system.
+    tamaños_planetas : list of list of float
+        Nested list of planet radii in Earth units per system.
+    candidatos : dict
+        Dictionary mapping system names to candidate planets with keys
+        ``'radios'`` and ``'periodos'``.
+    save_dir : str
+        Directory where the output plot will be saved.
+    """
     sistemas_info = list(zip(sistemas, periodos_orbitales, tamaños_planetas, temperaturas_estrellas, tamaños_estrellas))
     sistemas_info.sort(key=lambda x: x[3])
     sistemas_ordenados, periodos_orbitales_ordenados, tamaños_planetas_ordenados, temperaturas_estrellas_ordenadas, tamaños_estrellas_ordenados = zip(*sistemas_info)
@@ -111,6 +135,19 @@ def plot_system_architecture(sistemas, temperaturas_estrellas, tamaños_estrella
     separacion = 1.1
     ylim_superior = len(sistemas_ordenados) * separacion + 0.5
     def color_planeta(tamaño):
+        """Map a planet radius to a color for the system architecture plot.
+
+        Parameters
+        ----------
+        tamaño : float
+            The planet radius in Earth units.
+
+        Returns
+        -------
+        str
+            ``'brown'`` for super-Earths (R < 2), ``'green'`` for sub-Neptunes
+            (2 <= R <= 5), ``'blue'`` for larger planets (R > 5).
+        """
         if tamaño < 2:
             return 'brown'
         elif 2 <= tamaño <= 5:
@@ -171,6 +208,19 @@ def plot_system_architecture(sistemas, temperaturas_estrellas, tamaños_estrella
 
 
 def plot_stability(masses, eccentricities, megnos, save_dir):
+    """Plot a MEGNO stability grid over mass-eccentricity parameter space.
+
+    Parameters
+    ----------
+    masses : ndarray
+        Array of planet mass values in Earth masses.
+    eccentricities : ndarray
+        Array of orbital eccentricity values.
+    megnos : ndarray
+        Array of MEGNO values corresponding to each mass-eccentricity pair.
+    save_dir : str
+        Directory where the output plot will be saved.
+    """
     unique_masses = np.unique(masses)
     unique_eccs = np.unique(eccentricities)
     results = np.full((len(unique_masses), len(unique_eccs)), 10.0)
@@ -206,6 +256,22 @@ def plot_stability(masses, eccentricities, megnos, save_dir):
     plt.savefig(save_dir + '/stability_megno.png', bbox_inches='tight', dpi=200)
 
 def plot_stability_by_ecc(results_dir: str, smooth_size: int = 3, limits=[[4.95, 'red'], [4.0, 'white']]):
+    """Plot a MEGNO stability grid over eccentricity-pair parameter space.
+
+    Reads a CSV file of stability results and plots the MEGNO values as a
+    function of two eccentricity parameters with configurable contour levels.
+
+    Parameters
+    ----------
+    results_dir : str
+        Path to the CSV file containing stability results with columns
+        ``'eccentricities'`` and ``'megno'``.
+    smooth_size : int, optional
+        Size of the median filter window for smoothing, by default 3.
+    limits : list of list, optional
+        Contour levels and colors to draw on the plot. Each entry is
+        ``[value, color]``, by default ``[[4.95, 'red'], [4.0, 'white']]``.
+    """
     df = pd.read_csv(results_dir)
     eccentricity_pairs = []
     megno_values = []

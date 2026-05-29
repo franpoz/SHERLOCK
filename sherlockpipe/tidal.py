@@ -9,6 +9,18 @@ from sherlockpipe.loading import common
 
 
 def tidal_args_parse(args=None):
+    """Parse command-line arguments for the SHERLOCK tidal locking computation task.
+
+    Parameters
+    ----------
+    args : list of str, optional
+        Argument list to parse (defaults to ``sys.argv[1:]``).
+
+    Returns
+    -------
+    argparse.Namespace
+        Parsed arguments with tidal configuration options.
+    """
     ap = ArgumentParser(description='Validation of system stability')
     ap.add_argument('--object_dir', help="If the object directory is not your current one you need to provide the "
                                          "ABSOLUTE path", required=False)
@@ -18,6 +30,22 @@ def tidal_args_parse(args=None):
 
 
 def run_tidal(object_dir, candidate, properties):
+    """Compute the tidal locking time for a detected exoplanet candidate.
+
+    Reads search results and star parameters, then calculates the time
+    required for the planet to become tidally locked using the formalism of
+    Holman & Tremaine (2001).
+
+    Parameters
+    ----------
+    object_dir : str, optional
+        Absolute path to the object directory containing search results.
+        Defaults to the current working directory if ``None``.
+    candidate : int, optional
+        Index of the candidate signal (1-based) from ``candidates.csv``.
+    properties : str, optional
+        Path to a YAML properties file defining planet and star parameters.
+    """
     object_dir = os.getcwd() if object_dir is None else object_dir
     candidates = pd.read_csv(object_dir + "/candidates.csv")
     if not isinstance(logging.root, logging.RootLogger):

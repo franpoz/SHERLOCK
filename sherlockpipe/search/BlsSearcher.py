@@ -11,8 +11,45 @@ from sherlockpipe.search.transitresult import TransitResult
 
 
 class BlsSearcher(Searcher):
+    """
+    Box Least Squares (BLS) search engine using ``lightkurve``.
+
+    Searches for periodic box-shaped transit signals in a light curve and returns
+    a :class:`~sherlockpipe.search.transitresult.TransitResult` with the best-fit parameters.
+    """
     def search(self, sherlock_target, time, lc, star_info: StarInfo, transits_min_count: int,
                run_results, report, cadence, period_grid, detrend_source_period):
+        """
+        Runs the BLS periodogram search on the light curve.
+
+        Parameters
+        ----------
+        sherlock_target : SherlockTarget
+            The target configuration.
+        time : numpy.ndarray
+            Time array in days.
+        lc : numpy.ndarray
+            Flux array.
+        star_info : StarInfo
+            Stellar parameters.
+        transits_min_count : int
+            Minimum number of transits for a valid detection.
+        run_results : dict
+            Results from previous runs.
+        report : dict
+            The object report dictionary.
+        cadence : float
+            Observing cadence in seconds.
+        period_grid : numpy.ndarray
+            Array of trial periods.
+        detrend_source_period : float or None
+            Source period used for detrending.
+
+        Returns
+        -------
+        TransitResult
+            The best-fit BLS transit result.
+        """
         bls_results = lightkurve.LightCurve(time=time, flux=lc).to_periodogram(method='bls', period=period_grid)
         max_power_index = np.argmax(bls_results.power)
         results = type('', (object,), {"foo": 1})()

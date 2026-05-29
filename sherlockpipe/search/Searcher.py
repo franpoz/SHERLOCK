@@ -5,9 +5,46 @@ from lcbuilder.star.starinfo import StarInfo
 import numpy as np
 
 class Searcher(ABC):
+    """
+    Abstract base class for transit search engines used by SHERLOCK.
+
+    Subclasses must implement :meth:`search` to run a specific search algorithm
+    (e.g. TLS or BLS) on a detrended light curve.
+    """
     @abstractmethod
     def search(self, sherlock_target, time, lc, star_info: StarInfo, transits_min_count: int,
                run_results, report, cadence, period_grid, detrend_source_period):
+        """
+        Runs the transit search algorithm on a given light curve.
+
+        Parameters
+        ----------
+        sherlock_target : SherlockTarget
+            The target configuration.
+        time : numpy.ndarray
+            Time array in days.
+        lc : numpy.ndarray
+            Detrended flux array.
+        star_info : StarInfo
+            Stellar parameters.
+        transits_min_count : int
+            Minimum number of transits for a valid detection.
+        run_results : dict
+            Results from previous runs, used for harmonic detection.
+        report : dict
+            The object report dictionary.
+        cadence : float
+            Observing cadence in seconds.
+        period_grid : numpy.ndarray
+            Array of trial periods.
+        detrend_source_period : float or None
+            Source period used for detrending (rotation period).
+
+        Returns
+        -------
+        TransitResult
+            The detected transit result.
+        """
         pass
 
     def _is_harmonic(self, tls_results, run_results, report, detrend_source_period):

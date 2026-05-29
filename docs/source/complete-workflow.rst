@@ -23,7 +23,7 @@ The SHERLOCK pipeline provides a comprehensive suite of tools for the complete e
 This tutorial demonstrates how these modules can be used together in a coordinated workflow.
 
 Step 1: Candidate Detection
---------------------------
+---------------------------
 
 First, we use the search module to identify transit candidates:
 
@@ -36,7 +36,7 @@ First, we use the search module to identify transit candidates:
    # `<https://github.com/franpoz/SHERLOCK/tree/master/examples/properties>`_
 
 Step 2: Parameter Fitting
-------------------------
+-------------------------
 
 Next, move into the target directory and use the fit module to estimate physical parameters for the detected candidate:
 
@@ -49,7 +49,7 @@ Next, move into the target directory and use the fit module to estimate physical
    # python3 -m sherlockpipe.fit --input fit_config.yaml
 
 Step 3: Candidate Vetting
-------------------------
+-------------------------
 
 Validate that the candidate is likely a real planet using the vet module:
 
@@ -62,7 +62,7 @@ Validate that the candidate is likely a real planet using the vet module:
    # python3 -m sherlockpipe.vet --input vet_config.yaml
 
 Step 4: Stability Analysis
--------------------------
+--------------------------
 
 For multi-planet systems, assess orbital stability using the stability module:
 
@@ -75,7 +75,7 @@ For multi-planet systems, assess orbital stability using the stability module:
    # `<https://github.com/franpoz/SHERLOCK/blob/master/examples/properties/stability.yaml>`_
 
 Step 5: Observation Planning
---------------------------
+----------------------------
 
 Finally, plan follow-up observations using the observation plan module:
 
@@ -91,7 +91,7 @@ Finally, plan follow-up observations using the observation plan module:
    # python3 -m sherlockpipe.plan --input plan_config.yaml
 
 Complete Pipeline Integration
----------------------------
+-----------------------------
 
 All these steps can be integrated into a single workflow script or shell script that executes the entire process from candidate detection to follow-up planning. Here's an example of a simple shell script that would run the complete workflow:
 

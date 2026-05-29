@@ -39,6 +39,17 @@ autosummary_generate = True  # Turn on sphinx.ext.autosummary
 autosummary_mock_imports = [
     'sherlockpipe.tests',
     'sherlockpipe.regression_tests',
+    'pandoramoon',
+    'cupy',
+    'cupy.cuda',
+    'spock',
+    'apscheduler',
+    'apscheduler.executors.pool',
+]
+autodoc_mock_imports = [
+    'pandoramoon',
+    'cupy',
+    'spock',
 ]
 #autosummary_imported_members = True
 

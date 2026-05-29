@@ -26,11 +26,41 @@ from sherlockpipe.single_transits.report import MoriartyReport
 
 
 class MoriartySearch(ToolWithCandidate):
+    """
+    Searches for single transit events using the SANTO neural network model.
+
+    Extends ToolWithCandidate to perform single transit detection: loads a pre-trained
+    SANTO model, predicts transit probabilities over the light curve, identifies
+    positive regions, fits box-shaped transit models, and estimates orbital periods.
+    """
+
     watson = None
 
     def __init__(self, object_dir, object_id, is_candidate_from_search, candidates_df, transits_mask=[],
                  batch_size=256, threshold=0.5,
                  cache_dir=os.path.expanduser('~') + "/") -> None:
+        """
+        Initialize the Moriarty single-transit search.
+
+        Parameters
+        ----------
+        object_dir : str or None
+            Directory containing the object's data files.
+        object_id : str
+            Identifier for the target object.
+        is_candidate_from_search : bool
+            Whether the candidate comes from a SHERLOCK search.
+        candidates_df : pandas.DataFrame
+            DataFrame of candidate information for transit masking.
+        transits_mask : list of dict, optional
+            List of transit masks with keys 'P', 'T0', 'D' to exclude known transits.
+        batch_size : int, optional
+            Batch size for SANTO predictions. Default is 256.
+        threshold : float, optional
+            Probability threshold for single-transit classification. Default is 0.5.
+        cache_dir : str, optional
+            Directory to cache downloaded models. Default is user home.
+        """
         super().__init__(is_candidate_from_search, candidates_df)
         self.cache_dir = cache_dir
         self.object_dir = os.getcwd() if object_dir is None else object_dir
@@ -40,6 +70,20 @@ class MoriartySearch(ToolWithCandidate):
         self.threshold = threshold
 
     def run(self, cpus, **kwargs):
+        """
+        Execute the single-transit search pipeline.
+
+        Downloads the SANTO model if needed, runs predictions on the light curve,
+        identifies positive regions, fits box-shaped transit models, estimates
+        orbital periods, generates diagnostic plots, and creates a PDF report.
+
+        Parameters
+        ----------
+        cpus : int
+            Number of CPUs to use.
+        \*\*kwargs : dict
+            Additional keyword arguments (currently unused).
+        """
         model_dir = f"{self.cache_dir}/.sherlockpipe/moriarty/0.0.1"
         if not os.path.exists(model_dir) or len(os.listdir(f"{model_dir}/SANTO_model")) != 9:
             r = requests.get(
@@ -380,7 +424,20 @@ class MoriartySearch(ToolWithCandidate):
 
         # ---------- helpers ----------
         def add_break_marks(ax_left, ax_right, size=0.02, lw=0.8):
-            # Dos rayitas diagonales en los bordes contiguos para indicar el corte
+            """
+            Draw diagonal break marks between two adjacent axes to indicate a time gap.
+
+            Parameters
+            ----------
+            ax_left : matplotlib.axes.Axes
+                Left axis to add break marks on its right edge.
+            ax_right : matplotlib.axes.Axes
+                Right axis to add break marks on its left edge.
+            size : float, optional
+                Size of break marks in axes coordinates. Default is 0.02.
+            lw : float, optional
+                Line width of break marks. Default is 0.8.
+            """
             d = size
             # borde derecho del eje izquierdo
             kwargs = dict(transform=ax_left.transAxes, color='k', clip_on=False, lw=lw)
@@ -521,7 +578,21 @@ class MoriartySearch(ToolWithCandidate):
         return out_path
 
     def in_transit_mask(self, t0, duration_mins):
-        in_transit = False
+        """
+        Check if a given time and duration overlaps with any masked transit windows.
+
+        Parameters
+        ----------
+        t0 : float
+            Transit epoch in days.
+        duration_mins : float
+            Transit duration in minutes.
+
+        Returns
+        -------
+        bool
+            True if the transit overlaps with any existing transit mask, False otherwise.
+        """
         duration_days = duration_mins / 60 / 24
         for transit_mask in self.transits_mask:
             transit_t0 = transit_mask['T0']
@@ -782,4 +853,12 @@ class MoriartySearch(ToolWithCandidate):
         return snr_proj > projected_snr, snr_proj
 
     def object_dir(self):
+        """
+        Return the object data directory.
+
+        Returns
+        -------
+        str
+            Path to the object's data directory.
+        """
         return self.object_dir

@@ -16,6 +16,18 @@ from sherlockpipe.system_stability.stability_calculator import PlanetInput
 
 
 def run_stability(args):
+    """
+    Run system stability validation using MEGNO.
+
+    Reads star and planet parameters from candidates or a YAML properties file,
+    constructs MEGNO simulation scenarios, and writes stability results to disk.
+
+    Parameters
+    ----------
+    args : argparse.Namespace
+        Command-line arguments including candidate selection, stability parameters,
+        and optional YAML properties file.
+    """
     object_dir = os.getcwd() if args.object_dir is None else args.object_dir
     stability_dir = object_dir + "/stability" if args.properties is None else object_dir + "/stability_" + str(Path(args.properties).stem)
     if os.path.exists(stability_dir) or os.path.isdir(stability_dir):

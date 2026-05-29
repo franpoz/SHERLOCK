@@ -12,9 +12,15 @@ from astropy import units as u
 resources_dir = path.join(path.dirname(__file__))
 resources_dir = str(Path(resources_dir).parent.absolute())
 
-'''Cite https://ui.adsabs.harvard.edu/abs/2017ApJ...834...17C
-'''
 class MrForecast:
+    """
+    Mass-radius forecasting model based on the probabilistic broken power-law
+    relation of Chen & Kipping (2017, ApJ, 834, 17).
+
+    Provides methods to convert between mass and radius distributions for planets
+    across four populations: Terran, Neptunian, Jovian, and Stellar.
+    """
+
     N_POPS: int = 4
     ## boundary
     M_LOWER: float = 3e-4
@@ -22,6 +28,14 @@ class MrForecast:
 
     @staticmethod
     def read_parameters():
+        """
+        Read the M-R forecaster hyperparameter file.
+
+        Returns
+        -------
+        ndarray
+            Array of hyperparameters from the fitted posterior distribution.
+        """
         ## read parameter file
         hyper_file = resources_dir + '/resources/mr_forecaster/fitting_parameters.h5'
         h5 = h5py.File(hyper_file, 'r')
@@ -94,6 +108,7 @@ class MrForecast:
             Standard deviation of mass.
         sample_size: int (optional)
             Number of mass samples to draw with the mean and std provided.
+
         Returns
         ---------------
         mean: float

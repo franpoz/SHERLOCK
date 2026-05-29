@@ -6,6 +6,7 @@ class SignalSelector(ABC):
     Base class to perform a selection of the best candidate signal among a list of them.
     """
     def __init__(self):
+        """Initialize the signal selector."""
         pass
 
     @abstractmethod
@@ -22,13 +23,35 @@ class SignalSelector(ABC):
         """
         pass
 
+
 class SignalSelection:
+    """Container for the result of a signal selection."""
+
     def __init__(self, score, curve_index, transit_result):
+        """Initialize the signal selection.
+
+        Parameters
+        ----------
+        score : float
+            The selection score (1 if thresholds are met, 0 otherwise).
+        curve_index : int
+            The index of the detrended curve that produced the best signal.
+        transit_result : TransitResult
+            The transit result object for the selected signal.
+        """
         self.score = score
         self.curve_index = curve_index
         self.transit_result = transit_result
 
     def get_message(self):
+        """Return a human-readable summary of the signal selection.
+
+        Returns
+        -------
+        str
+            A string describing the chosen signal with its name, period,
+            SNR, SDE, FAP, and border score.
+        """
         curve_name = "PDCSAP_FLUX" if self.curve_index == 0 else str(self.curve_index - 1)
         return "Chosen signal with BASIC algorithm --> NAME: " + curve_name + \
                "\tPeriod:" + str(self.transit_result.period) + \

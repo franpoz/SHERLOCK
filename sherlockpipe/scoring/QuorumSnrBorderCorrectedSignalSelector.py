@@ -14,12 +14,52 @@ class QuorumSnrBorderCorrectedSignalSelector(BasicSignalSelector):
     increased by the number of votes.
     """
     def __init__(self, strength=1, min_quorum=0):
+        """Initialize the quorum SNR border-corrected signal selector.
+
+        Parameters
+        ----------
+        strength : int, optional
+            The strength factor applied to the voting correction, by default 1.
+        min_quorum : int, optional
+            The minimum fraction of votes required for a signal to be selected, by default 0.
+        """
         super().__init__()
         self.strength = strength
         self.min_quorum = min_quorum
         self.zero_epsilon = 1e-6
 
     def select(self, id_run, sherlock_target, star_info, transits_min_count, time, lcs, transit_results, wl, cadence):
+        """Select the best signal using quorum voting with SNR border correction.
+
+        Signals with the same period and epoch vote for the same candidate,
+        increasing its SNR proportionally by the number of votes.
+
+        Parameters
+        ----------
+        id_run : int
+            The current SHERLOCK run number.
+        sherlock_target : SherlockTarget
+            The target configuration.
+        star_info : StarInfo
+            The star information.
+        transits_min_count : int
+            The minimum number of transits required.
+        time : ndarray
+            The time array of the light curve.
+        lcs : dict
+            Dictionary of detrended light curve flux arrays.
+        transit_results : dict
+            Dictionary mapping curve indices to TransitResult objects.
+        wl : float
+            The window length used for detrending.
+        cadence : float
+            The cadence of the observations.
+
+        Returns
+        -------
+        CorrectedQuorumBorderSignalSelection
+            The selection result with vote counts and corrected values.
+        """
         basic_signal_selection = super().select(id_run, sherlock_target, star_info, transits_min_count, time, lcs,
                                                 transit_results, wl, cadence)
         index_snr_period_t0_array = [[key, transit_result.snr * (transit_result.border_score * self.zero_epsilon),
@@ -70,13 +110,42 @@ class QuorumSnrBorderCorrectedSignalSelector(BasicSignalSelector):
                                                     votes_counts[best_signal_snr_index])
 
 class CorrectedQuorumBorderSignalSelection(CorrectedBorderSignalSelection):
+    """Container for the result of a quorum SNR border-corrected signal selection."""
+
     def __init__(self, score, corrected_snr, original_curve_index, original_transit_result, final_curve_index,
                  final_transit_result, votes):
+        """Initialize the corrected quorum border signal selection.
+
+        Parameters
+        ----------
+        score : float
+            The selection score.
+        corrected_snr : float
+            The quorum-corrected SNR value of the final selection.
+        original_curve_index : int
+            The curve index of the original (non-corrected) selection.
+        original_transit_result : TransitResult
+            The transit result of the original (non-corrected) selection.
+        final_curve_index : int
+            The curve index of the final (corrected) selection.
+        final_transit_result : TransitResult
+            The transit result of the final (corrected) selection.
+        votes : int
+            The number of votes received by the selected signal.
+        """
         super().__init__(score, corrected_snr, original_curve_index, original_transit_result, final_curve_index,
                          final_transit_result)
         self.votes = votes
 
     def get_message(self):
+        """Return a human-readable summary of the quorum SNR signal selection.
+
+        Returns
+        -------
+        str
+            A string describing the elected signal with its vote count,
+            corrected SNR, and the original signal proposed by the basic algorithm.
+        """
         curve_name = "PDCSAP_FLUX" if self.curve_index == 0 else str(self.curve_index - 1)
         original_curve_name = "PDCSAP_FLUX" if self.original_curve_index == 0 else str(self.original_curve_index - 1)
         return "Elected signal with QUORUM algorithm from " + str(self.votes) + " VOTES --> NAME: " + curve_name + \

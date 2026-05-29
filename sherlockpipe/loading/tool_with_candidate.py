@@ -11,6 +11,15 @@ class ToolWithCandidate:
     """
 
     def __init__(self, is_candidate_from_search, candidates_df) -> None:
+        """Initialize the tool with candidate context.
+
+        Parameters
+        ----------
+        is_candidate_from_search : bool
+            Whether the candidate originates from a SHERLOCK search.
+        candidates_df : DataFrame
+            The DataFrame containing previously found candidates.
+        """
         super().__init__()
         self.is_candidate_from_search = is_candidate_from_search
         self.search_candidates_df = candidates_df

@@ -13,6 +13,21 @@ from contextlib import redirect_stdout
 
 
 def get_from_user(target, key):
+    """Extract a value from a dictionary by key, returning ``None`` if not present.
+
+    Parameters
+    ----------
+    target : dict
+        The dictionary to search.
+    key : str
+        The key to look up.
+
+    Returns
+    -------
+    object or None
+        The value associated with *key*, or ``None`` if *target* is not a
+        dictionary or the key is missing.
+    """
     value = None
     if isinstance(target, dict) and key in target:
         value = target[key]
@@ -20,13 +35,50 @@ def get_from_user(target, key):
 
 
 class TtvFitter:
+    """Fit transit timing variations (TTVs) using allesfitter's nested sampling.
+
+    Prepares the fitting directory, fixes ephemeris parameters to the
+    previously obtained best-fit values, and launches dynamic nested
+    sampling to measure TTVs.
+
+    Parameters
+    ----------
+    only_initial : bool
+        If ``True``, only display the initial TTV guess without running the fit.
+    ttvs_error : float
+        The error window (in days) for each single transit TTV fit.
+    fit_dir : str
+        Path to the main fit results directory.
+    ttvs_dir : str
+        Path to the TTV-specific working directory.
+    """
+
     def __init__(self, only_initial, ttvs_error, fit_dir, ttvs_dir):
+        """Initialize the TTV fitter.
+
+        Parameters
+        ----------
+        only_initial : bool
+            If ``True``, only display the initial TTV guess without running the fit.
+        ttvs_error : float
+            The error window (in days) for each single transit TTV fit.
+        fit_dir : str
+            Path to the main fit results directory.
+        ttvs_dir : str
+            Path to the TTV-specific working directory.
+        """
         self.only_initial = only_initial
         self.fit_dir = fit_dir
         self.ttvs_dir = ttvs_dir
         self.ttvs_error = ttvs_error
 
     def fit(self):
+        """Run the TTV fitting workflow.
+
+        Copies necessary files, fixes ephemeris parameters from the
+        previous best-fit results, prepares TTV parameters, and runs
+        allesfitter nested sampling.
+        """
         shutil.copy(self.fit_dir + "/lc.csv", self.ttvs_dir + "/lc.csv")
         shutil.copy(self.fit_dir + "/params.csv", self.ttvs_dir + "/params.csv")
         shutil.copy(self.fit_dir + "/params_star.csv", self.ttvs_dir + "/params_star.csv")

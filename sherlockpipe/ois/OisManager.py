@@ -37,6 +37,14 @@ class OisManager:
     """OIS DataFrame"""
 
     def __init__(self, cache_dir):
+        """Initialize the OisManager.
+
+        Parameters
+        ----------
+        cache_dir : str
+            The parent directory for the OI cache (``.sherlockpipe/`` will be
+            created inside it).
+        """
         self.cache_dir = cache_dir
         home = self.cache_dir + "/.sherlockpipe/"
         if not os.path.exists(home):

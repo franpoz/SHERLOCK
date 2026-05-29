@@ -8,6 +8,7 @@ class SearchZone(ABC):
     Abstract class to be implemented for calculating minimum and maximum search periods for an input star.
     """
     def __init__(self):
+        """Initialize the search zone."""
         pass
 
     @abstractmethod

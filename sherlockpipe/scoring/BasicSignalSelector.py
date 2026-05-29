@@ -8,9 +8,38 @@ class BasicSignalSelector(SignalSelector):
     Selects the signal with best SNR
     """
     def __init__(self):
+        """Initialize the Basic signal selector."""
         super().__init__()
 
     def select(self, id_run, sherlock_target, star_info, transits_min_count, time, lcs, transit_results, wl, cadence):
+        """Select the signal with the highest SNR among all detrended curves.
+
+        Parameters
+        ----------
+        id_run : int
+            The current SHERLOCK run number.
+        sherlock_target : SherlockTarget
+            The target configuration.
+        star_info : StarInfo
+            The star information.
+        transits_min_count : int
+            The minimum number of transits required.
+        time : ndarray
+            The time array of the light curve.
+        lcs : dict
+            Dictionary of detrended light curve flux arrays.
+        transit_results : dict
+            Dictionary mapping curve indices to TransitResult objects.
+        wl : float
+            The window length used for detrending.
+        cadence : float
+            The cadence of the observations.
+
+        Returns
+        -------
+        SignalSelection
+            The selection result with score, curve index, and transit result.
+        """
         detrends_snr = np.nan_to_num([transit_result.snr
                                       for key, transit_result in transit_results.items()])
         best_signal_snr = np.nanmax(detrends_snr)

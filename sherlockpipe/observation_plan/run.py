@@ -14,6 +14,17 @@ from sherlockpipe.bayesian_fit.allesfitter_data_extractor import AllesfitterData
 
 
 def run_plan(args):
+    """Run the observation planning workflow for a fitted candidate.
+
+    Reads the Bayesian fit posteriors, computes observation windows for all
+    planetary candidates, and generates a PDF observation report.
+
+    Parameters
+    ----------
+    args : argparse.Namespace
+        Parsed command-line arguments containing observatories, candidate
+        number, object directory, observation constraints, and plan parameters.
+    """
     if not isinstance(logging.root, logging.RootLogger):
         logging.root = logging.RootLogger(logging.INFO)
     if args.observatories is None and (args.lat is None or args.lon is None or args.alt is None):

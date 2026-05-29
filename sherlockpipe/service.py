@@ -23,12 +23,47 @@ from sherlockpipe.vetting.run import run_vet
 
 
 def move_input_to_working(running_file, working_dir):
+    """Move a file from the input drop to the working directory.
+
+    Parameters
+    ----------
+    running_file : str
+        Absolute path to the input file.
+    working_dir : str
+        Destination working directory.
+
+    Returns
+    -------
+    str
+        Absolute path of the file in the working directory.
+    """
     filename = os.path.basename(running_file)
     working_file = working_dir + '/' + filename
     shutil.move(running_file, working_file)
     return working_file
 
 def run_script(input_dir, output_dir, working_dir, cpus, pa):
+    """Poll the input directory for YAML job files and run the requested SHERLOCK tasks.
+
+    Iterates over files in *input_dir*. For YAML files, launches a search;
+    for directories, inspects presence of ``fit.yaml``, ``vet.yaml``,
+    ``validate.yaml``, ``plan.yaml``, and ``stability.yaml`` and executes
+    the corresponding tasks sequentially.  Optionally sends an email
+    notification upon completion.
+
+    Parameters
+    ----------
+    input_dir : str
+        Directory where users drop job YAML files or pre-built object directories.
+    output_dir : str
+        Directory where completed results are moved.
+    working_dir : str
+        Temporary directory where files are processed.
+    cpus : int
+        Number of CPU cores to allocate.
+    pa : str
+        Email app password for SMTP notifications.
+    """
     running_file = None
     working_file = None
     working_target_dir = None
@@ -120,6 +155,17 @@ def run_script(input_dir, output_dir, working_dir, cpus, pa):
 
 
 def send_email(filename, receiver_address, pa):
+    """Send a completion notification email via Gmail SMTP.
+
+    Parameters
+    ----------
+    filename : str
+        Absolute path of the completed output directory.
+    receiver_address : str
+        Recipient email address.
+    pa : str
+        Sender Gmail application password.
+    """
     try:
         sender_address = 'sherlockpipeline@gmail.com'
         sender_pass = pa
@@ -150,6 +196,13 @@ def send_email(filename, receiver_address, pa):
 
 
 def clean_old_outputs(output_dir):
+    """Remove output directories older than 14 days.
+
+    Parameters
+    ----------
+    output_dir : str
+        Directory to scan for expired output subdirectories.
+    """
     current_time = time.time()
     max_days = 14
     files = os.listdir(output_dir)

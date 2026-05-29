@@ -22,6 +22,12 @@ resources_dir = str(Path(resources_dir).parent.absolute())
 
 @dataclasses.dataclass
 class DistributionParams:
+    """
+    Container for noise distribution parameters used by the GP detrend model in the Bayesian fit.
+
+    These values are estimated from out-of-transit data and control the flux error scale,
+    GP amplitude (lnsigma), and GP timescale (lnrho).
+    """
     yerr: float = -7.0
     yerr_lower_err: float = -15.0
     yerr_upper_err: float = 0.0
@@ -41,6 +47,40 @@ class Fitter(ToolWithCandidate):
     def __init__(self, object_dir, fit_dir, only_initial, is_candidate_from_search, candidates_df, mcmc=False,
                  detrend=None, estimate_noise=True, rho_err_multi=5.0, sigma_err_multi=5.0, yerr_err_multi=5.0,
                  odd_even=False, odd_even_dir=None, odd_even_tolerance=None):
+        """
+        Initializes the Fitter with the search results and fit configuration.
+
+        Parameters
+        ----------
+        object_dir : str
+            The SHERLOCK object directory containing the search results.
+        fit_dir : str
+            The directory where the fit output will be written.
+        only_initial : bool
+            If True, only the initial guess is computed without full sampling.
+        is_candidate_from_search : bool
+            Whether the candidates come from a SHERLOCK search.
+        candidates_df : pandas.DataFrame
+            DataFrame of candidate planets.
+        mcmc : bool
+            If True, use MCMC sampling instead of nested sampling.
+        detrend : str or None
+            The detrend method used (e.g. 'gp', 'hybrid_spline').
+        estimate_noise : bool
+            If True, estimate noise parameters from out-of-transit data.
+        rho_err_multi : float
+            Multiplier for the lnrho error in the normal distribution fit.
+        sigma_err_multi : float
+            Multiplier for the lnsigma error in the normal distribution fit.
+        yerr_err_multi : float
+            Multiplier for the yerr error in the normal distribution fit.
+        odd_even : bool
+            If True, run separate fits on odd and even transits.
+        odd_even_dir : str or None
+            Directory for odd/even transit fit results.
+        odd_even_tolerance : float or None
+            Nested sampling tolerance for the odd/even fits.
+        """
         super().__init__(is_candidate_from_search, candidates_df)
         self.object_dir = os.getcwd() if object_dir is None else object_dir
         self.data_dir = fit_dir
@@ -239,6 +279,24 @@ class Fitter(ToolWithCandidate):
 
     def overwrite_settings(self, settings_file, cpus, candidate_df, tolerance, boundaries="single",
                            secondary_eclipse="True"):
+        """
+        Writes the allesfitter settings CSV by filling template placeholders with the fit configuration.
+
+        Parameters
+        ----------
+        settings_file : str
+            Path to the settings CSV file to write.
+        cpus : int
+            Number of CPU cores to use.
+        candidate_df : pandas.DataFrame
+            The candidate planets to include in the fit.
+        tolerance : float
+            The nested sampling tolerance threshold.
+        boundaries : str
+            The fit boundaries mode (e.g. 'single', 'multi').
+        secondary_eclipse : str
+            Whether to fit a secondary eclipse ('True' or 'False').
+        """
         shutil.copyfile(resources_dir + "/resources/allesfitter/settings2.csv", settings_file)
         fit_width = Fitter.select_fit_width(candidate_df)
         with open(settings_file, 'r+') as f:
@@ -412,6 +470,7 @@ ${sherlock:name}_sbratio_lc,0.001,1,uniform 0.0 1.0,$J_\mathrm{b; lc}$,
         :param detrend_mode: type of detrend to be used
         :param distribution: distribution: uniform or normal
         :param distribution_params : if set, chooses the baseline fit values
+
         :return: the allesfitter instrument params
         """
         instrument_params = """#limb darkening coefficients per instrument,,,,,

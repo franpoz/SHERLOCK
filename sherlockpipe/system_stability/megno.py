@@ -13,6 +13,18 @@ class MegnoStabilityCalculator(StabilityCalculator):
     Runs the stability computations by calculating the MEGNO score.
     """
     def __init__(self, years, dt, repetitions):
+        """
+        Initialize the MEGNO-based stability calculator.
+
+        Parameters
+        ----------
+        years : float
+            Maximum integration time in years.
+        dt : float
+            Fraction of the minimum orbital period used as the integration timestep.
+        repetitions : int
+            Number of simulation repetitions per scenario.
+        """
         super().__init__(dt)
         self.years = years
         self.repetitions = repetitions

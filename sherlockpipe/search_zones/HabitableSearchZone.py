@@ -9,6 +9,7 @@ class HabitableSearchZone(SearchZone):
     Implementation for calculating minimum and maximum search periods for the habitable zone of an input star.
     """
     def __init__(self):
+        """Initialize the conservative habitable search zone."""
         super().__init__()
 
     def calculate_period_range(self, star_info: StarInfo):

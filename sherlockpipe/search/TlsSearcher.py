@@ -9,8 +9,45 @@ from sherlockpipe.search.transitresult import TransitResult
 
 
 class TlsSearcher(Searcher):
+    """
+    Transit Least Squares (TLS) search engine using ``foldedleastsquares``.
+
+    Provides the default transit search for SHERLOCK, supporting custom transit templates,
+    limb-darkened models, and GPU-accelerated modes.
+    """
     def search(self, sherlock_target, time, lc, star_info: StarInfo, transits_min_count: int,
                run_results, report, cadence, period_grid, detrend_source_period):
+        """
+        Runs the TLS search on the light curve and returns the best-fit transit parameters.
+
+        Parameters
+        ----------
+        sherlock_target : SherlockTarget
+            The target configuration.
+        time : numpy.ndarray
+            Time array in days.
+        lc : numpy.ndarray
+            Flux array.
+        star_info : StarInfo
+            Stellar parameters including mass, radius, and limb-darkening coefficients.
+        transits_min_count : int
+            Minimum number of transits for a valid detection.
+        run_results : dict
+            Results from previous runs for harmonic detection.
+        report : dict
+            The object report dictionary.
+        cadence : float
+            Observing cadence in seconds.
+        period_grid : numpy.ndarray
+            Array of trial periods.
+        detrend_source_period : float or None
+            Source period used for detrending (rotation period).
+
+        Returns
+        -------
+        TransitResult
+            The best-fit TLS transit result.
+        """
         model = tls.transitleastsquares(time, lc)
         power_args = {"transit_template": sherlock_target.fit_method, "period_min": sherlock_target.period_min,
                       "period_max": sherlock_target.period_max, "n_transits_min": transits_min_count,

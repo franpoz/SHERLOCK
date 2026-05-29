@@ -3,6 +3,18 @@ from sherlockpipe.system_stability.run import run_stability
 
 
 def stability_args_parse(args=None):
+    """Parse command-line arguments for the SHERLOCK system stability analysis task.
+
+    Parameters
+    ----------
+    args : list of str, optional
+        Argument list to parse (defaults to ``sys.argv[1:]``).
+
+    Returns
+    -------
+    argparse.Namespace
+        Parsed arguments with stability configuration options.
+    """
     ap = ArgumentParser(description='Validation of system stability')
     ap.add_argument('--object_dir', help="If the object directory is not your current one you need to provide the "
                                          "ABSOLUTE path", required=False)

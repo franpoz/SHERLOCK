@@ -14,6 +14,18 @@ from sherlockpipe.loading import common
 
 
 def run_fit(args):
+    """
+    Entry point for running a Bayesian transit fit from CLI arguments.
+
+    Reads search results from the object directory, configures the allesfitter fit,
+    runs it via :class:`~sherlockpipe.bayesian_fit.fitter.Fitter`, and generates
+    a PDF fit report via :class:`~sherlockpipe.bayesian_fit.fit_report.FitReport`.
+
+    Parameters
+    ----------
+    args : argparse.Namespace
+        Parsed command-line arguments containing fit configuration.
+    """
     object_dir = os.getcwd() if args.object_dir is None else args.object_dir
     candidates_df = pd.read_csv(object_dir + "/candidates.csv")
     candidate_selections = []

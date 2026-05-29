@@ -16,6 +16,23 @@ import astropy.units as u
 
 
 def run_moriarty(object_dir, ignore_candidates: list[int], batch_size, threshold):
+    """
+    Run the Moriarty single-transit search on a set of candidates.
+
+    Loads candidate data from disk, configures known transit masks from
+    previous SHERLOCK results, and launches the MoriartySearch pipeline.
+
+    Parameters
+    ----------
+    object_dir : str or None
+        Directory containing the object's results. Defaults to current directory.
+    ignore_candidates : list of int
+        Candidates to mask as known transits.
+    batch_size : int
+        Batch size for SANTO model predictions.
+    threshold : float
+        Probability threshold for single-transit classification.
+    """
     object_dir = os.getcwd() if object_dir is None else object_dir
     candidates = pd.read_csv(object_dir + "/candidates.csv")
     object_id = candidates.loc[0, 'Object Id']

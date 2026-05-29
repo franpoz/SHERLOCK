@@ -27,6 +27,66 @@ class PlanetInput:
                  omega_big=None, omega_big_low_err=None, omega_big_up_err=None,
                  mass=None, mass_low_err=None, mass_up_err=None, period_bins=3,
                  mass_bins=3, ecc_bins=3, inc_bins=3, omega_bins=3, omega_big_bins=3):
+        """
+        Initialize planet parameters for stability calculations.
+
+        Parameters
+        ----------
+        period : float
+            Orbital period in days.
+        period_low_err : float
+            Lower error on the orbital period in days.
+        period_up_err : float
+            Upper error on the orbital period in days.
+        radius : float
+            Planet radius in Earth radii.
+        radius_low_err : float
+            Lower error on the planet radius in Earth radii.
+        radius_up_err : float
+            Upper error on the planet radius in Earth radii.
+        eccentricity : float
+            Orbital eccentricity.
+        ecc_low_err : float
+            Lower error on the eccentricity.
+        ecc_up_err : float
+            Upper error on the eccentricity.
+        inclination : float
+            Orbital inclination in degrees.
+        inc_low_err : float
+            Lower error on the inclination in degrees.
+        inc_up_err : float
+            Upper error on the inclination in degrees.
+        omega : float
+            Argument of periastron in degrees.
+        omega_low_err : float
+            Lower error on the argument of periastron in degrees.
+        omega_up_err : float
+            Upper error on the argument of periastron in degrees.
+        omega_big : float, optional
+            Longitude of ascending node in degrees.
+        omega_big_low_err : float, optional
+            Lower error on the longitude of ascending node in degrees.
+        omega_big_up_err : float, optional
+            Upper error on the longitude of ascending node in degrees.
+        mass : float, optional
+            Planet mass in Earth masses. If not provided, estimated from radius.
+        mass_low_err : float, optional
+            Lower error on the planet mass in Earth masses.
+        mass_up_err : float, optional
+            Upper error on the planet mass in Earth masses.
+        period_bins : int, optional
+            Number of bins for the period grid. Default is 3.
+        mass_bins : int, optional
+            Number of bins for the mass grid. Default is 3.
+        ecc_bins : int, optional
+            Number of bins for the eccentricity grid. Default is 3.
+        inc_bins : int, optional
+            Number of bins for the inclination grid. Default is 3.
+        omega_bins : int, optional
+            Number of bins for the argument of periastron grid. Default is 3.
+        omega_big_bins : int, optional
+            Number of bins for the longitude of ascending node grid. Default is 3.
+        """
         self.period = period
         self.period_low_err = period_low_err
         self.period_up_err = period_up_err
@@ -62,6 +122,28 @@ class SimulationInput:
     """
 
     def __init__(self, star_mass, mass_arr, planet_periods, ecc_arr, inc_arr, omega_arr, omega_big_arr, index):
+        """
+        Initialize a simulation scenario with sampled parameters.
+
+        Parameters
+        ----------
+        star_mass : float
+            Stellar mass in solar masses.
+        mass_arr : ndarray
+            Array of planet masses in Earth masses.
+        planet_periods : ndarray
+            Array of planet orbital periods in days.
+        ecc_arr : ndarray
+            Array of planet eccentricities.
+        inc_arr : ndarray
+            Array of planet inclinations in degrees.
+        omega_arr : ndarray
+            Array of planet arguments of periastron in degrees.
+        omega_big_arr : ndarray
+            Array of planet longitudes of ascending node in degrees.
+        index : int
+            Scenario identifier.
+        """
         self.star_mass = star_mass
         self.mass_arr = mass_arr
         self.planet_periods = planet_periods
@@ -97,6 +179,15 @@ class StabilityCalculator(ABC):
     """
 
     def __init__(self, dt=0.05):
+        """
+        Initialize the stability calculator.
+
+        Parameters
+        ----------
+        dt : float, optional
+            Fraction of the minimum orbital period used as the integration timestep.
+            Default is 0.05.
+        """
         self.dt = dt
 
     @staticmethod
@@ -326,6 +417,26 @@ class StabilityCalculator(ABC):
         pass
 
     def plot_simulation(self, simulation_input_df, save_dir, scenario_name, xlim=None, ylim=None):
+        """
+        Generate an orbit plot for a single simulation scenario row.
+
+        Reads planet parameters from a DataFrame row, initializes a rebound
+        simulation, integrates forward, and saves an orbit plot image.
+
+        Parameters
+        ----------
+        simulation_input_df : pandas.Series
+            Series with keys 'eccentricities', 'inclinations', 'arg_periastron',
+            'periods', 'masses', and 'star_mass'.
+        save_dir : str
+            Directory where the plot image will be saved.
+        scenario_name : str
+            Name used to construct the output filename.
+        xlim : tuple, optional
+            X-axis limits for the orbit plot.
+        ylim : tuple, optional
+            Y-axis limits for the orbit plot.
+        """
         eccs = simulation_input_df["eccentricities"].split(",")
         eccs = [float(i) for i in eccs]
         incs = simulation_input_df["inclinations"].split(",")
