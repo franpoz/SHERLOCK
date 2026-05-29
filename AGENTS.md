@@ -211,6 +211,16 @@ When a user asks to search, vet, fit, or explore a **TOI** or **KOI** target by 
 
 Example: "TOI-2079" → TIC 27989529 (from ExoFOP) → uses "TIC 27989529" as the target ID in the YAML.
 
+## Search Configuration — Mandatory Prompts
+
+**CRITICAL: Before running ANY search (`--properties` without `--explore`), you MUST ask the user for:**
+
+- **`PERIOD_MIN`** and **`PERIOD_MAX`** (days) — the search period grid boundaries. Defaults in `properties.yaml` are 0.5–33 d but the user may want a narrower or wider range.
+- **`MAX_RUNS`** — how many iterative search runs. Default is 10.
+- **`SNR_MIN`** and **`SDE_MIN`** — signal detection thresholds. Defaults are 5.0 for both.
+
+Do NOT start a search without explicit confirmation of these values. Explore-only mode (`--explore`) is exempt since it performs no transit search.
+
 ## Execution Recipes
 
 > **CRITICAL**: The `bash` tool defaults to a 120s timeout when `timeout` is omitted. You MUST explicitly pass `timeout=0` (or a huge value). See the [CRITICAL section](#critical-never-timeout-shell-commands) at the top. SHERLOCK executions can take hours to days.
