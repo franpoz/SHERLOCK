@@ -219,7 +219,7 @@ Example: "TOI-2079" → TIC 27989529 (from ExoFOP) → uses "TIC 27989529" as th
 - **`MAX_RUNS`** — how many iterative search runs. Default is 10.
 - **`SNR_MIN`** and **`SDE_MIN`** — signal detection thresholds. Defaults are 5.0 for both.
 
-Do NOT start a search without explicit confirmation of these values. Explore-only mode (`--explore`) is exempt since it performs no transit search.
+Do NOT start a search or explore without explicit confirmation of these values.
 
 ## Execution Recipes
 
