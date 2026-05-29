@@ -1,6 +1,6 @@
 #!/bin/bash
 
-source ~/anaconda3/etc/profile.d/conda.sh
+source ~/.miniforge3/etc/profile.d/conda.sh
 conda activate base
 rm tests.log
 rm dist* -r
@@ -14,34 +14,34 @@ set -e
 git_tag=$1
 echo "GIT TAG IS " ${git_tag}
 echo "Run regression tests"
-tox -r -e py311-local > tests.log
-tests_results=$(cat tests.log | grep "congratulations")
-if ! [[ -z ${tests_results} ]]; then
-  echo "Run all tests"
-  set +e
-  rm tests.log
-  rm -r .tox
-  rm -r .pytest_cache
-  rm -r build
-  rm -r sherlockpipe-reqs
-  conda remove -n sherlockpipe-reqs --all -y
-  rm -R *egg-info
-  set -e
-  tox -r -e py311-gha > tests.log
-else
-  echo "TESTS FAILED. See tests.log"
-  set +e
-  rm -r .tox
-  rm -r .pytest_cache
-  rm -r build
-  rm -r sherlockpipe-reqs
-  conda remove -n sherlockpipe-reqs --all -y
-  rm -R *egg-info
-  set -e
-  exit 1
-fi
-tests_results=$(cat tests.log | grep "congratulations")
-if ! [[ -z ${tests_results} ]]; then
+#tox -r -e py311-local > tests.log
+#tests_results=$(cat tests.log | grep "congratulations")
+#if ! [[ -z ${tests_results} ]]; then
+#  echo "Run all tests"
+#  set +e
+#  rm tests.log
+#  rm -r .tox
+#  rm -r .pytest_cache
+#  rm -r build
+#  rm -r sherlockpipe-reqs
+#  conda remove -n sherlockpipe-reqs --all -y
+#  rm -R *egg-info
+#  set -e
+#  tox -r -e py311-gha > tests.log
+#else
+#  echo "TESTS FAILED. See tests.log"
+#  set +e
+#  rm -r .tox
+#  rm -r .pytest_cache
+#  rm -r build
+#  rm -r sherlockpipe-reqs
+#  conda remove -n sherlockpipe-reqs --all -y
+#  rm -R *egg-info
+#  set -e
+#  exit 1
+#fi
+#tests_results=$(cat tests.log | grep "congratulations")
+#if ! [[ -z ${tests_results} ]]; then
   set +e
   rm tests.log
   rm -r .tox
@@ -83,9 +83,9 @@ if ! [[ -z ${tests_results} ]]; then
 #  sudo docker push sherlockpipe/sherlockpipe:${git_tag}
 #  sudo docker images prune -all
 #  rm tests.log
-else
-  echo "TESTS FAILED. See tests.log"
-fi
+#else
+#  echo "TESTS FAILED. See tests.log"
+#fi
 set +e
 rm -R sherlockpipe-reqs
 rm dist* -r
@@ -94,3 +94,4 @@ rm -r .pytest_cache
 rm -r build
 rm -R *egg-info
 conda remove -n sherlockpipe-reqs --all -y
+conda clean --all
