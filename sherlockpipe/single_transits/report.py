@@ -179,6 +179,9 @@ class MoriartyReport:
             The document template.
         """
 
+        canvas.saveState()
+
+
         # if doc.page == 1:
         #     # Footer con superíndice:
         #     textobject = canvas.beginText()
