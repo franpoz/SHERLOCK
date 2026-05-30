@@ -103,6 +103,7 @@ class MoriartyReport:
         candidates_df : pandas.DataFrame
             DataFrame of known SHERLOCK candidates for context.
         """
+        self.data_dir = data_dir
         self.object_id = object_id
         self.ra = ra
         self.dec = dec
@@ -143,6 +144,7 @@ class MoriartyReport:
             The document template.
         """
 
+        canvas.saveState()
         # Logo:
         canvas.drawImage(self.LOGO_IMAGE, x=1.5 * cm, y=26.8 * cm, height=2 * cm, width=2 * cm,
                          preserveAspectRatio=True)
@@ -238,6 +240,7 @@ class MoriartyReport:
         Reads fit results and diagnostic plots from the data directory, compiles
         tables of parameters and figures, and outputs the final PDF document.
         """
+        styles = getSampleStyleSheet()
         styles.add(ParagraphStyle(name="ParagraphAlignCenter", alignment=TA_CENTER))
         styles.add(ParagraphStyle(name="ParagraphAlignJustify", alignment=TA_JUSTIFY))
         styles.wordWrap = 'LTR'
