@@ -24,6 +24,7 @@ build:
     - gcc
     - locales
     - python3-tk
+    - poppler-utils
   tools:
     python: "3.11"
 
