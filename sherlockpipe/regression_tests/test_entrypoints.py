@@ -20,16 +20,15 @@ def delay_between_tests():
 
 
 class TestsEntrypoints(unittest.TestCase):
-    @unittest.skip("Alexfitter pickle format incompatible with current version")
     def test_vetting(self):
         object_dir = TestsEntrypoints.get_path('test_endpoints_data/')
         vetting_dir = object_dir + '/vet_1'
         try:
             run_vet(object_dir, 1, None, cpus=4, run_iatson=False)
-            self.assertEquals(7, len(os.listdir(vetting_dir)))
+            self.assertEquals(8, len(os.listdir(vetting_dir)))
             shutil.rmtree(vetting_dir, ignore_errors=True)
             run_vet(object_dir, 1, None, cpus=4, run_iatson=True)
-            self.assertEquals(12, len(os.listdir(vetting_dir)))
+            self.assertEquals(13, len(os.listdir(vetting_dir)))
         finally:
             shutil.rmtree(vetting_dir, ignore_errors=True)
 
@@ -59,11 +58,10 @@ class TestsEntrypoints(unittest.TestCase):
         search_dir = results_dir + "TIC305048087_[2]"
         try:
             run_search(properties_dir, False, results_dir, 4)
-            self.assertEquals(18, len(os.listdir(search_dir)))
+            self.assertEquals(19, len(os.listdir(search_dir)))
         finally:
             shutil.rmtree(search_dir, ignore_errors=True)
 
-    @unittest.skip("Allesfitter pickle format incompatible with current version")
     def test_plan(self):
         object_dir = TestsEntrypoints.get_path('test_endpoints_data/')
         fit_dir = object_dir + 'fit_[1]/'

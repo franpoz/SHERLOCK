@@ -1,3 +1,6 @@
+import logging
+import os
+
 from watson.watson import Watson
 
 from sherlockpipe.loading.tool_with_candidate import ToolWithCandidate
@@ -43,6 +46,14 @@ class Vetter(ToolWithCandidate):
             Vetting parameters passed to watson.vetting_with_data, including
             candidate, star_df, transits_df, transits_mask, and TRICERATOPS options.
         """
+        if kwargs['iatson_enabled']:
+            os.environ["CUDA_VISIBLE_DEVICES"] = "-1"
+            try:
+                import tensorflow as tf
+                tf.config.set_visible_devices([], "GPU")
+            except RuntimeError:
+                logging.warning("TensorFlow GPU state was already initialized; IATSON may not run on CPU.")
+
         self.watson.vetting_with_data(kwargs['candidate'], kwargs['star_df'], kwargs['transits_df'],
                                       cpus, transits_mask=kwargs["transits_mask"],
                                       iatson_enabled=kwargs['iatson_enabled'], iatson_inputs_save=True,

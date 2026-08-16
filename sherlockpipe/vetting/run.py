@@ -9,6 +9,7 @@ import pandas as pd
 from sherlockpipe.loading import common
 from sherlockpipe.vetting.vetter import Vetter
 from sherlockpipe.bayesian_fit.allesfitter_data_extractor import AllesfitterDataExtractor
+from sherlockpipe.bayesian_fit.alexfitter_compat import load_alexfitter_results
 import alexfitter
 from lcbuilder.helper import LcbuilderHelper
 import astropy.units as u
@@ -127,7 +128,7 @@ def run_vet(object_dir, candidate, properties, cpus=os.cpu_count() - 1, run_iats
             ns_file = fit_results_dir + "/results/ns_table.csv"
             fit_derived_results = pd.read_csv(ns_derived_file)
             fit_results = pd.read_csv(ns_file)
-            alles = alexfitter.allesclass(fit_results_dir)
+            alles = load_alexfitter_results(fit_results_dir)
             candidate_no = 0
             candidate.loc[:, 'period'], _, _ = AllesfitterDataExtractor.extract_period(candidate_no, fit_results, alles)
             candidate.loc[:, 't0'], _, _ = AllesfitterDataExtractor.extract_epoch(candidate_no, fit_results, alles)
