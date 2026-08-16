@@ -85,6 +85,24 @@ You can run SHERLOCK PIPEline as a standalone package by using:
 
 ```python3 -m sherlockpipe --properties my_properties.yaml```
 
+### GPU setup
+
+Requires an NVIDIA GPU and CUDA 13 driver.
+
+```bash
+conda activate sherlock311
+python -m pip install gputls==0.4.4 cupy-cuda13x==14.1.1 \
+  nvidia-cuda-nvrtc==13.0.88 nvidia-cuda-runtime==13.0.96
+python -c "import cupy; print(cupy.cuda.runtime.getDeviceCount())"
+```
+
+Set these properties:
+
+```yaml
+SEARCH_ENGINE: 'gpu'
+GPU_DEVICE_ID: 0
+```
+
 You only need to provide a YAML file with any of the properties contained in the internal 
 [properties.yaml](https://github.com/franpoz/SHERLOCK/blob/master/sherlockpipe/properties.yaml)
 provided by the pipeline. The most important keys to be defined in your YAML file are those under

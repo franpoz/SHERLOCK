@@ -44,6 +44,7 @@ setuptools.setup(
                         "corner==2.2.3", # Allesfitter dependency
                         "dearwatson==1.1.0", # Vetting
                         "dynesty==2.1.5", # Allesfitter dependency
+                        "gputls==0.4.4", # GPU TLS search
                         "emcee==3.1.6", # Allesfitter dependency
                         "mock==4.0.3",
                         'pytz', # Observation plan: Not using version because it gets the DB updated with each release

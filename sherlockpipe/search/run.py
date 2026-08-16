@@ -182,6 +182,7 @@ def run_search(properties: str, explore: bool, results_dir: None, cpus: int = No
             compute_phase_coverage = get_from_user_or_config_or_default(target_configs, sherlock_user_properties,
                                                                         "COMPUTE_PHASE_COVERAGE", False)
             search_engine = get_from_user_or_config_or_default(target_configs, sherlock_user_properties, 'SEARCH_ENGINE', 'cpu')
+            gpu_device_id = get_from_user_or_config_or_default(target_configs, sherlock_user_properties, 'GPU_DEVICE_ID', 0)
             if sectors != "all" and len(np.array(sectors).shape) > 1:
                 if mode == "GLOBAL" or mode == "BOTH":
                     for sectors_subset in sectors:
@@ -223,7 +224,7 @@ def run_search(properties: str, explore: bool, results_dir: None, cpus: int = No
                                                          pickle_mode, use_harmonics_spectra, ois_mask=initial_ois_mask,
                                                          min_transits_count=min_transits_count,
                                                          compute_phase_coverage=compute_phase_coverage,
-                                                         search_engine=search_engine)
+                                                          search_engine=search_engine, gpu_device_id=gpu_device_id)
                         sherlock_targets.append(sherlock_target)
                 if mode == "SECTOR" or mode == "BOTH" and isinstance(built_object_info, MissionObjectInfo.MissionObjectInfo):
                     if sectors == 'all':
@@ -266,7 +267,7 @@ def run_search(properties: str, explore: bool, results_dir: None, cpus: int = No
                                                          pickle_mode, use_harmonics_spectra, ois_mask=initial_ois_mask,
                                                          min_transits_count=min_transits_count,
                                                          compute_phase_coverage=compute_phase_coverage,
-                                                         search_engine=search_engine)
+                                                          search_engine=search_engine, gpu_device_id=gpu_device_id)
                         sherlock_targets.append(sherlock_target)
             else:
                 built_object_info = lcbuilder.build_object_info(target, author, sectors, file, exptime,
@@ -303,7 +304,7 @@ def run_search(properties: str, explore: bool, results_dir: None, cpus: int = No
                                                  ignore_original, pickle_mode, use_harmonics_spectra,
                                                  ois_mask=initial_ois_mask, min_transits_count=min_transits_count,
                                                  compute_phase_coverage=compute_phase_coverage,
-                                                 search_engine=search_engine)
+                                                  search_engine=search_engine, gpu_device_id=gpu_device_id)
                 if mode == "GLOBAL" or mode == "BOTH":
                     sherlock_targets.append(sherlock_target)
                 if mode == "SECTOR" or mode == "BOTH" and isinstance(built_object_info, MissionObjectInfo.MissionObjectInfo):
@@ -346,7 +347,7 @@ def run_search(properties: str, explore: bool, results_dir: None, cpus: int = No
                                                          pickle_mode, use_harmonics_spectra, ois_mask=initial_ois_mask,
                                                          min_transits_count=min_transits_count,
                                                          compute_phase_coverage=compute_phase_coverage,
-                                                         search_engine=search_engine)
+                                                          search_engine=search_engine, gpu_device_id=gpu_device_id)
                         sherlock_targets.append(sherlock_target)
                 if mode != "GLOBAL" and mode != "BOTH" and not (mode == "SECTOR" or mode == "BOTH" and
                                                                 isinstance(built_object_info, MissionObjectInfo.MissionObjectInfo)):

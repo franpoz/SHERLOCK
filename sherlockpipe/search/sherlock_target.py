@@ -14,6 +14,7 @@ from sherlockpipe.scoring.SnrBorderCorrectedSignalSelector import SnrBorderCorre
 from sherlockpipe.search.BlsSearcher import BlsSearcher
 from sherlockpipe.search.Searcher import Searcher
 from sherlockpipe.search.TlsSearcher import TlsSearcher
+from sherlockpipe.search.GtlsSearcher import GtlsSearcher
 from sherlockpipe.search_zones.HabitableSearchZone import HabitableSearchZone
 from sherlockpipe.search_zones.OptimisticHabitableSearchZone import OptimisticHabitableSearchZone
 
@@ -42,7 +43,8 @@ class SherlockTarget:
                  source_properties_file=None,
                  cache_dir=os.path.expanduser('~') + "/",
                  ignore_original=False, pickle_mode='none', use_harmonics_spectra=False,
-                 ois_mask=False, min_transits_count=2, compute_phase_coverage=False, search_engine='cpu'):
+                  ois_mask=False, min_transits_count=2, compute_phase_coverage=False, search_engine='cpu',
+                  gpu_device_id=0):
         """
         Configuration container for a single transiting planet search target.
 
@@ -170,7 +172,6 @@ class SherlockTarget:
                                            quorum_strength, min_quorum),
                                        self.VALID_SIGNAL_SELECTORS[6]: AverageSpectrumSignalSelector(),
                                        "user": custom_selection_algorithm}
-        self.searchers: Dict[str, Searcher] = {'bls-periodogram': BlsSearcher(), 'default': TlsSearcher()}
         self.best_signal_algorithm = best_signal_algorithm if custom_selection_algorithm is None else "user"
         self.fit_method = "default"
         if fit_method is not None and fit_method.lower() == 'bls':
@@ -195,4 +196,13 @@ class SherlockTarget:
         self.ois_mask = ois_mask
         self.min_transits_count = min_transits_count
         self.compute_phase_coverage = compute_phase_coverage
+        if search_engine not in ('cpu', 'gpu', 'gpu_approximate'):
+            raise ValueError("Provided search engine is not allowed: " + str(search_engine))
+        if search_engine == 'gpu_approximate':
+            raise ValueError("gpu_approximate is not supported by GTLS; use SEARCH_ENGINE='gpu'.")
         self.search_engine = search_engine
+        self.gpu_device_id = gpu_device_id
+        self.searchers: Dict[str, Searcher] = {
+            'bls-periodogram': BlsSearcher(),
+            'default': GtlsSearcher() if search_engine == 'gpu' else TlsSearcher()
+        }

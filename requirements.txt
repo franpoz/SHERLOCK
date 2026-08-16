@@ -49,6 +49,10 @@ fbpca==1.0
 filelock==3.29.0
 flatbuffers==25.12.19
 foldedleastsquares==1.1.11
+gputls==0.4.4
+cupy-cuda13x==14.1.1
+nvidia-cuda-nvrtc==13.0.88
+nvidia-cuda-runtime==13.0.96
 fonttools==4.63.0
 frozenlist==1.8.0
 fsspec==2026.4.0
