@@ -4,6 +4,7 @@ import shutil
 import sys
 import os
 import subprocess
+import time
 
 # Determine the path to libellc.so
 ellc_path = os.path.join(os.path.dirname(__file__), 'ellc')
@@ -52,6 +53,8 @@ def _patched_create_urllib3_context(ssl_version=None, cert_reqs=None, options=No
         ssl_maximum_version = ssl.TLSVersion.TLSv1_2
     if ssl_minimum_version is None:
         ssl_minimum_version = ssl.TLSVersion.TLSv1_2
+    if ciphers is None:
+        ciphers = 'DEFAULT@SECLEVEL=1'
     return _original_create_urllib3_context(
         ssl_version=ssl_version, cert_reqs=cert_reqs, options=options,
         ciphers=ciphers, ssl_minimum_version=ssl_minimum_version,
@@ -87,6 +90,15 @@ def no_verify_request(self, *args, **kwargs):
         The HTTP response returned by the original request method.
     """
     kwargs.setdefault("verify", False)  # solo cambia si no se pasa ya 'verify'
-    return _original_request(self, *args, **kwargs)
+    url = args[1] if len(args) > 1 else kwargs.get("url", "")
+    retries = 3 if "mast.stsci.edu" in str(url) else 1
+    for attempt in range(retries):
+        try:
+            return _original_request(self, *args, **kwargs)
+        except requests.exceptions.SSLError:
+            if attempt == retries - 1:
+                raise
+            self.close()
+            time.sleep(2 ** attempt)
 # Apply patch
 requests.Session.request = no_verify_request
