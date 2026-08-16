@@ -86,9 +86,17 @@ class OisManager:
         if os.path.exists(self.epic_csv):
             epic_data = pd.read_csv(self.epic_csv)
             ois = pd.concat([ois, epic_data]) if ois is not None else epic_data
-        toi_data['Sectors'] = [x.strip('()').split(',') for x in toi_data['Sectors']]
-        toi_data["Sectors"] = toi_data["Sectors"].apply(lambda x: [int(i) for i in x])
+        if "Sectors" in toi_data:
+            toi_data["Sectors"] = toi_data["Sectors"].apply(self._parse_sectors)
         return ois
+
+    @staticmethod
+    def _parse_sectors(value):
+        if value is None or (isinstance(value, float) and pd.isna(value)):
+            return []
+        if isinstance(value, (list, tuple)):
+            return [int(sector) for sector in value]
+        return [int(sector) for sector in str(value).strip("()").split(",") if sector.strip()]
 
     def update_tic_csvs(self):
         """
@@ -141,6 +149,10 @@ class OisManager:
             kic_star_csv.write(request.content)
             kic_star_csv.close()
             koi_data = pd.read_csv(self.kois_csv)
+            if 'kepid' not in koi_data.columns:
+                if 'Object Id' not in koi_data.columns:
+                    logging.warning("KOI response does not contain the expected kepid column.")
+                return self
             koi_data['kepid'] = 'KIC ' + koi_data['kepid'].astype(str)
             koi_data['ra_str'] = koi_data['ra_str'].astype(str).replace("h", ":").replace("m", ":").replace("s", "")
             koi_data['dec_str'] = koi_data['dec_str'].astype(str).replace("d", ":").replace("m", ":").replace("s", "")
@@ -154,7 +166,7 @@ class OisManager:
             koi_data = koi_data.rename(columns={'kepoi_name': 'OI', 'kepid': 'Object Id',
                                                 'koi_disposition': 'Disposition', 'koi_duration': 'Duration (hours)',
                                                 'koi_duration_err1': 'Duration (hours) err',
-                                                'koi_period': 'Period (days) err', 'koi_period_err1': 'Period (days) err',
+                                                'koi_period': 'Period (days)', 'koi_period_err1': 'Period (days) err',
                                                 'koi_time0bk': 'Epoch (BJD)', 'koi_time0bk_err1': 'Epoch (BJD) err',
                                                 'koi_depth': 'Depth (ppm)', 'koi_depth_err1': 'Depth (ppm) err',
                                                 'koi_insol': 'Planet Insolation (Earth Flux)',
