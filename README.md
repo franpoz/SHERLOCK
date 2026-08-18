@@ -93,6 +93,7 @@ Requires an NVIDIA GPU and CUDA 13 driver.
 conda activate sherlock311
 python -m pip install gputls==0.4.4 cupy-cuda13x==14.1.1 \
   nvidia-cuda-nvrtc==13.0.88 nvidia-cuda-runtime==13.0.96
+rm -rf ~/.cupy/kernel_cache
 python -c "import cupy; print(cupy.cuda.runtime.getDeviceCount())"
 ```
 
