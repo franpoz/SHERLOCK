@@ -15,7 +15,8 @@ from lcbuilder.helper import LcbuilderHelper
 import astropy.units as u
 
 
-def run_moriarty(object_dir, ignore_candidates: list[int], batch_size, threshold):
+def run_moriarty(object_dir, ignore_candidates: list[int], batch_size, threshold,
+                 disable_snr_projected=False, lc_file: str = 'lc_predetrends.csv'):
     """
     Run the Moriarty single-transit search on a set of candidates.
 
@@ -32,12 +33,21 @@ def run_moriarty(object_dir, ignore_candidates: list[int], batch_size, threshold
         Batch size for SANTO model predictions.
     threshold : float
         Probability threshold for single-transit classification.
+    disable_snr_projected : bool, optional
+        If True, skip the projected SNR check. Default False.
+    lc_file : str, optional
+        light curve file to use. Default lc_predetrends.csv
     """
     object_dir = os.getcwd() if object_dir is None else object_dir
     candidates = pd.read_csv(object_dir + "/candidates.csv")
-    object_id = candidates.loc[0, 'Object Id']
+    if len(candidates) > 0:
+        object_id = candidates.loc[0, 'Object Id']
+    else:
+        dir_name = os.path.basename(object_dir.rstrip('/'))
+        object_id = dir_name.split('_')[0].replace('TIC', 'TIC ').replace('KIC', 'KIC ').replace('EPIC', 'EPIC ')
+        logging.info("Empty candidates.csv, using directory name for object ID: " + object_id)
     moriarty = MoriartySearch(object_dir, object_id, True, candidates, batch_size=batch_size,
-                              threshold=threshold)
+                              threshold=threshold, disable_snr_projected=disable_snr_projected, lc_file=lc_file)
     file_dir = moriarty.object_dir + "/moriarty.log"
     if os.path.exists(file_dir):
         os.remove(file_dir)
@@ -57,7 +67,7 @@ def run_moriarty(object_dir, ignore_candidates: list[int], batch_size, threshold
     handler.setFormatter(formatter)
     logger.addHandler(handler)
     logging.info("Starting single transits search")
-    if ignore_candidates is not None:
+    if ignore_candidates is not None and len(ignore_candidates) > 0:
         candidates = candidates.iloc[ignore_candidates]
         candidates.reset_index(drop=True, inplace=True)
     else:

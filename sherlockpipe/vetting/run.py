@@ -21,9 +21,10 @@ def run_vet(object_dir, candidate, properties, cpus=os.cpu_count() - 1, run_iats
             triceratops_additional_stars_file=None,
             triceratops_sigma_mode='flux_err',
             triceratops_ignore_ebs=False,
-            triceratops_resolved_companion=None,
-            triceratops_ignore_background_stars=False,
-            sectors=None):
+             triceratops_resolved_companion=None,
+             triceratops_ignore_background_stars=False,
+             sectors=None, triceratops_external_lc_files=None,
+             triceratops_filt_lcs=None):
     """
     Run vetting on a transit candidate using WATSON and TRICERATOPS.
 
@@ -68,6 +69,10 @@ def run_vet(object_dir, candidate, properties, cpus=os.cpu_count() - 1, run_iats
         Whether to ignore background stars during TRICERATOPS.
     sectors : list, optional
         List of TESS sectors to use.
+    triceratops_external_lc_files : list, optional
+        Ground-based three-column light-curve files for TRICERATOPS+.
+    triceratops_filt_lcs : list, optional
+        Filters corresponding to ``triceratops_external_lc_files``.
     """
     object_dir = os.getcwd() if object_dir is None else object_dir
     candidates = pd.read_csv(object_dir + "/candidates.csv")
@@ -160,5 +165,7 @@ def run_vet(object_dir, candidate, properties, cpus=os.cpu_count() - 1, run_iats
                triceratops_resolved_companion=triceratops_resolved_companion,
                triceratops_ignore_background_stars=triceratops_ignore_background_stars,
                sectors=sectors,
+               triceratops_external_lc_files=triceratops_external_lc_files,
+               triceratops_filt_lcs=triceratops_filt_lcs,
                main_fit_dir=main_fit_dir, odd_fit_dir=odd_fit_dir, even_fit_dir=even_fit_dir
                )
