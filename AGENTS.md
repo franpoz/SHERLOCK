@@ -37,6 +37,10 @@ Long-running commands should be delegated to a subagent via `task(subagent_type=
 
 The `master` branch tracks `origin/master`. When committing changes, always verify the target with `git branch -vv` before pushing.
 
+## Before Making Changes
+
+Always understand the user's question or command fully before writing any code. If there is any ambiguity or doubt about what to change, ask clarifying questions. Only make edits when the action is clear and unambiguous. Do not assume intent — confirm it.
+
 ## Project Intent
 
 **SHERLOCK** (Search for Hints of Exoplanets fRom Lightcurves Of spaCe-based seeKers) is an end-to-end Python pipeline for exploring TESS, Kepler, and K2 data to search for exoplanetary transit candidates. It can recover known candidates (TOIs, KOIs, EPICs), search for new ones, vet signals, perform Bayesian transit fitting, statistical validation, dynamical stability checks, and compute ground-based observational windows.
@@ -207,7 +211,8 @@ When a user asks to search, vet, fit, or explore a **TOI** or **KOI** target by 
 1. **Look up the TIC or KIC ID** at [https://exofop.ipac.caltech.edu/](https://exofop.ipac.caltech.edu/). Search by TOI/KOI name; the target page will show the corresponding TIC (TESS) or KIC (Kepler) identifier.
 2. **Retrieve the known candidates/planets** from the same ExoFOP page. Record each confirmed or candidate planet's period, epoch (t0), duration, and depth. These are needed for masking (`INITIAL_TRANSIT_MASK`) or fitting/vetting configuration.
 3. **Use the resolved TIC/KIC ID** when constructing `MissionObjectInfo` or the properties YAML — SHERLOCK downloads data by mission ID, not by TOI/KOI alias.
-4. **Populate `INITIAL_TRANSIT_MASK`** with the period, t0, and duration from ExoFOP to mask known signals during the search, or set `INITIAL_OIS_MASK: True` to auto-mask from the built-in OI catalog.
+4. **Populate `INITIAL_TRANSIT_MASK`** with the period, t0, and duration from ExoFOP to mask known signals during the search, or set `INITIAL_OIS_MASK: True` to auto-mask from the built-in OI catalog. **Only enable masking if the user explicitly requests it. Never mask by default.**
+5. **Never set `MAX_RUNS` to 0.** The minimum is 1.
 
 Example: "TOI-2079" → TIC 27989529 (from ExoFOP) → uses "TIC 27989529" as the target ID in the YAML.
 
@@ -216,7 +221,7 @@ Example: "TOI-2079" → TIC 27989529 (from ExoFOP) → uses "TIC 27989529" as th
 **CRITICAL: Before running ANY search (`--properties` without `--explore`), you MUST ask the user for:**
 
 - **`PERIOD_MIN`** and **`PERIOD_MAX`** (days) — the search period grid boundaries. Defaults in `properties.yaml` are 0.5–33 d but the user may want a narrower or wider range.
-- **`MAX_RUNS`** — how many iterative search runs. Default is 10.
+- **`MAX_RUNS`** — how many iterative search runs. Default is 5. **Never set MAX_RUNS to 0.**
 - **`SNR_MIN`** and **`SDE_MIN`** — signal detection thresholds. Defaults are 5.0 for both.
 
 Do NOT start a search or explore without explicit confirmation of these values.
