@@ -63,14 +63,12 @@ class GtlsSearcher(Searcher):
         if run_results is not None:
             harmonic = self._is_harmonic(results, run_results, report, detrend_source_period)
         harmonic_power = harmonic_spectrum(results.periods, results.power)
-
         return TransitResult(
             power_args, results, results.period, results.period_uncertainty,
             results.duration, results.T0, results.transit_times,
             results.transit_depths, results.transit_depths_uncertainties,
             (1 - np.nanmean(results.transit_depths)) * 1000,
-            np.sqrt(np.nansum(results.transit_depths_uncertainties ** 2)) /
-            max(len(results.transit_depths_uncertainties), 1),
+            self._depth_error_ppt(results.transit_depths_uncertainties),
             results.odd_even_mismatch,
             (1 - results.depth_mean_even[0]) * 1000,
             (1 - results.depth_mean_odd[0]) * 1000,
@@ -78,6 +76,11 @@ class GtlsSearcher(Searcher):
             results.FAP, border_score, in_transit, harmonic, harmonic_power,
             mode="tls"
         )
+
+    @staticmethod
+    def _depth_error_ppt(depth_errors):
+        """Combine per-transit flux errors and convert normalized flux to ppt."""
+        return np.sqrt(np.nansum(np.asarray(depth_errors, dtype=float) ** 2)) * 1000 / max(len(depth_errors), 1)
 
     @staticmethod
     def _template(fit_method):
