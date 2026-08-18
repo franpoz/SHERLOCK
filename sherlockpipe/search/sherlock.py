@@ -8,10 +8,13 @@ from typing import List
 import pandas
 import wotan
 import matplotlib.pyplot as plt
-import foldedleastsquares as tls
 import numpy as np
 import os
 import sys
+
+from watson.watson import Watson
+
+import foldedleastsquares as tls
 
 from lcbuilder.HarmonicSelector import HarmonicSelector
 from lcbuilder.helper import LcbuilderHelper
@@ -21,8 +24,6 @@ from lcbuilder.curve_preparer.Flattener import FlattenInput
 from lcbuilder.objectinfo.MissionObjectInfo import MissionObjectInfo
 from lcbuilder.objectinfo.InvalidNumberOfSectorsError import InvalidNumberOfSectorsError
 from lcbuilder.objectinfo.preparer.mission_data_preparer import MissionDataPreparer
-from watson.watson import Watson
-
 from sherlockpipe.ois.OisManager import OisManager
 from lcbuilder.star.HabitabilityCalculator import HabitabilityCalculator
 
@@ -285,6 +286,12 @@ class Sherlock:
                                      lc_build.star_info)
             lcs = np.concatenate(([flux], lcs), axis=0)
             object_info = sherlock_target.object_info
+            lc_df = pandas.DataFrame(columns=['time', 'flux', 'flux_err'])
+            args = np.argwhere(~np.isnan(flux)).flatten()
+            lc_df['time'] = time[args]
+            lc_df['flux'] = flux[args]
+            lc_df['flux_err'] = np.array(flux_err[args])
+            lc_df.to_csv(object_dir + "/lc_predetrends.csv", index=False)
             i = 0
             for lc in lcs:
                 lc_df = pandas.DataFrame(columns=['time', 'flux', 'flux_err'])
@@ -298,6 +305,11 @@ class Sherlock:
                 i = i + 1
             wl = np.concatenate(([0], wl), axis=0)
             transits_stats_df = pandas.DataFrame(columns=['candidate', 't0', 'depth', 'depth_err'])
+            if self.explore:
+                candidates_df = pandas.DataFrame(columns=['curve', 'period', 'per_err', 'duration', 't0', 'depth',
+                                                          'snr', 'sde', 'border_score', 'oi', 'rad_p', 'rp_rs',
+                                                          'a', 'hz'])
+                candidates_df.to_csv(object_dir + "candidates.csv", index=False)
             while not self.explore and best_signal_score == 1 and id_run <= sherlock_target.max_runs:
                 self.__setup_object_logging(sherlock_id, False)
                 object_report = {}

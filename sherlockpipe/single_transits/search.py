@@ -38,7 +38,9 @@ class MoriartySearch(ToolWithCandidate):
 
     def __init__(self, object_dir, object_id, is_candidate_from_search, candidates_df, transits_mask=[],
                  batch_size=256, threshold=0.5,
-                 cache_dir=os.path.expanduser('~') + "/") -> None:
+                 cache_dir=os.path.expanduser('~') + "/",
+                 disable_snr_projected=False,
+                 lc_file='lc_predetrends.csv') -> None:
         """
         Initialize the Moriarty single-transit search.
 
@@ -60,6 +62,9 @@ class MoriartySearch(ToolWithCandidate):
             Probability threshold for single-transit classification. Default is 0.5.
         cache_dir : str, optional
             Directory to cache downloaded models. Default is user home.
+        disable_snr_projected : bool, optional
+            If True, skip the projected SNR check that filters out
+            phase-folded detectable periods. Default is False (check enabled).
         """
         super().__init__(is_candidate_from_search, candidates_df)
         self.cache_dir = cache_dir
@@ -68,6 +73,8 @@ class MoriartySearch(ToolWithCandidate):
         self.transits_mask = transits_mask
         self.batch_size = batch_size
         self.threshold = threshold
+        self.disable_snr_projected = disable_snr_projected
+        self.lc_file_name = lc_file
 
     def run(self, cpus, **kwargs):
         """
@@ -92,19 +99,19 @@ class MoriartySearch(ToolWithCandidate):
             z.extractall(f'{model_dir}/')
         model_dir = f"{model_dir}/SANTO_model"
         santo = SANTO()
-        predictions, spectra, target_stats_df = santo.predict(self.object_dir, ['/lc.csv'],
+        predictions, spectra, target_stats_df = santo.predict(self.object_dir, [self.lc_file_name],
                                                                 f"{model_dir}/SANTO_model_chk.h5",
                                                                 batch_size=self.batch_size, plot=False,
                                                                 plot_positives=False,
                                                                 tagged_data=False,
                                                                 smooth=False, sherlock=True,
                                                                 threshold=self.threshold)
-        moriarty_dir = f"{self.object_dir}/moriarty" if len(self.search_candidates_df) == 0 else \
+        moriarty_dir = f"{self.object_dir}/moriarty" if self.search_candidates_df is None or len(self.search_candidates_df) == 0 else \
             f"{self.object_dir}/moriarty_{','.join(self.search_candidates_df['run'].astype(int).astype(str))}"
         if os.path.exists(moriarty_dir):
             shutil.rmtree(moriarty_dir)
         os.mkdir(moriarty_dir)
-        lc_file = f"{self.object_dir}/lc.csv"
+        lc_file = f"{self.object_dir}/{self.lc_file_name}"
         lc_data_file = f"{self.object_dir}/lc_data.csv"
         apertures_file = f"{self.object_dir}/apertures.yaml"
         star_df = pd.read_csv(f"{self.object_dir}/params_star.csv")
@@ -116,9 +123,9 @@ class MoriartySearch(ToolWithCandidate):
         flux = lc_df['flux'].values
         cadence = np.median(np.diff(time)) * 24 * 3600
         lc_data_time = lc_data['time'].values
-        predictions = predictions['/lc.csv']
+        predictions = predictions[self.lc_file_name]
         #TODO mask predictions, time and flux
-        spectra = spectra['/lc.csv']
+        spectra = spectra[self.lc_file_name]
         np.savetxt(f"{moriarty_dir}/predictions.csv", predictions, delimiter=',')
         time_predictions = time[:len(predictions)]
         time_filled, flux_filled, cadence_days = santo.fill_data_gaps(time_predictions, predictions)
@@ -147,7 +154,7 @@ class MoriartySearch(ToolWithCandidate):
             t0 = np.nanmedian(time[start:end][len(region_preds) // 2])
             depth = np.nanmedian(flux[start:end][len(region_preds) // 2])
             snr = (1 - depth) / std * np.sqrt(len(region_preds))
-            target_stats = {'target_file': ['lc.csv'], 'type': ['p'], 'depth': [depth], 'std': [std],
+            target_stats = {'target_file': [lc_file], 'type': ['p'], 'depth': [depth], 'std': [std],
                             'snr': [snr], 't0': [t0], 'duration_points': [end - start],
                             'max_score': [np.max(region_preds)]}
             stats_df = pd.concat([stats_df, pd.DataFrame.from_dict(target_stats)], ignore_index=True)
@@ -209,13 +216,14 @@ class MoriartySearch(ToolWithCandidate):
                 period_median_days = periods_summary['median_days']
                 period_16_days = periods_summary['p16_days']
                 period_84_days = periods_summary['p84_days']
-                greater_than_snr_projected, snr_proj = (
-                    self.greater_than_snr_projected(period_84_days, bls_result['depth'][0], bls_result['duration'][0] * 24 * 3600,
-                                                time, np.nanstd(flux), bls_snr, t0=bls_result['transit_time'][0]))
-                if greater_than_snr_projected:
-                    logging.info(f"Ignoring epoch {stats_row['t0']} with phase-folded detectable period flag ({periods_summary['p84_days']}, with projected SNR {snr_proj})")
-                    continue
-            target_fit = {'target_file': ['lc.csv'], 'type': ['p'], 'depth': [bls_result['depth'][0]],
+                if not self.disable_snr_projected:
+                    greater_than_snr_projected, snr_proj = (
+                        self.greater_than_snr_projected(period_84_days, bls_result['depth'][0], bls_result['duration'][0] * 24 * 3600,
+                                                    time, np.nanstd(flux), bls_snr, t0=bls_result['transit_time'][0]))
+                    if greater_than_snr_projected:
+                        logging.info(f"Ignoring epoch {stats_row['t0']} with phase-folded detectable period flag ({periods_summary['p84_days']}, with projected SNR {snr_proj})")
+                        continue
+            target_fit = {'target_file': [lc_file], 'type': ['p'], 'depth': [bls_result['depth'][0]],
                           'depth_err': [bls_result['depth_err'][0] * bls_result['depth'][0]],
                           'snr': [bls_snr], 't0': [bls_result['transit_time'][0]], 'duration(h)': [bls_result['duration'][0] * 24],
                           'duration_err(h)': [bls_result['duration'][0] * 24 / 2],
@@ -280,7 +288,7 @@ class MoriartySearch(ToolWithCandidate):
             # shutil.move(self.object_dir + '/' + single_transit_file_name,
             #             f"{moriarty_dir}/{self.object_id}_t0_{stats_row['t0']}_st.png")
             Watson.plot_single_transit(
-                SingleTransitProcessInput(self.object_dir, self.object_id, 0, f"{self.object_dir}/lc.csv",
+                SingleTransitProcessInput(self.object_dir, self.object_id, 0, f"{self.object_dir}/{self.lc_file_name}",
                                           f"{self.object_dir}/lc_data.csv", f"{self.object_dir}/tpfs",
                                           apertures, bls_result['transit_time'][0], bls_result['depth'][0],
                                           bls_dur_points * cadence / 60, 10, 0.05, 10, None))
@@ -593,6 +601,7 @@ class MoriartySearch(ToolWithCandidate):
         bool
             True if the transit overlaps with any existing transit mask, False otherwise.
         """
+        in_transit = False
         duration_days = duration_mins / 60 / 24
         for transit_mask in self.transits_mask:
             transit_t0 = transit_mask['T0']
