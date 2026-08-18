@@ -15,8 +15,8 @@ if __name__ == '__main__':
     ap.add_argument('--gpt_key', type=str, default=None, help="The GPT api key.", required=False)
     ap.add_argument('--triceratops_bins', type=int, default=200, help="The number of bins to be used for the folded curve "
                                                           "triceratops validation.", required=False)
-    ap.add_argument('--triceratops_sigma_mode', type=str, default='flux_err', help="The way to calculate the sigma value for the "
-                                                                       "triceratops validation. [flux_err|binning]", required=False)
+    ap.add_argument('--triceratops_sigma_mode', type=str, default='values_snr', help="The way to calculate the sigma value for the "
+                                                                       "triceratops validation. [flux_err|binning|values_snr]", required=False)
     ap.add_argument('--triceratops_scenarios', type=int, default=5, help="The number of scenarios to be used for the triceratops validation",
                     required=False)
     ap.add_argument('--triceratops_light_curve', type=str, default=None, help="The light curve in csv format for the triceratops validation.",
@@ -38,6 +38,12 @@ if __name__ == '__main__':
                     help="Whether an unresolved companion is spotted or discarded for the triceratops validation."
                          " 'yes' means there is a resolved companion, 'no' means there are NO resolved companions. "
                          "This flag should not be set if the companion status is not known on beforehand",
+                     required=False)
+    ap.add_argument('--triceratops_external_lc_files', nargs='+', default=None,
+                    help="Ground-based three-column light-curve files for TRICERATOPS+.",
+                    required=False)
+    ap.add_argument('--triceratops_filt_lcs', nargs='+', default=None,
+                    help="Filters corresponding to the external TRICERATOPS+ light curves.",
                     required=False)
     ap.add_argument('--sectors', type=str, default=None, help="The sectors to be used.", required=False)
     args = ap.parse_args()
@@ -46,5 +52,7 @@ if __name__ == '__main__':
             triceratops_bins=args.triceratops_bins, triceratops_sigma_mode=args.triceratops_sigma_mode,
             triceratops_scenarios=args.triceratops_scenarios, triceratops_curve_file=args.triceratops_light_curve,
             triceratops_contrast_curve_file=args.triceratops_contrast_curve, triceratops_additional_stars_file=args.triceratops_additional_stars,
-            triceratops_ignore_ebs=args.triceratops_ignore_ebs, triceratops_ignore_background_stars=args.triceratops_ignore_background_stars,
-            triceratops_resolved_companion=args.triceratops_resolved_companion, sectors=args.sectors)
+             triceratops_ignore_ebs=args.triceratops_ignore_ebs, triceratops_ignore_background_stars=args.triceratops_ignore_background_stars,
+             triceratops_resolved_companion=args.triceratops_resolved_companion, sectors=args.sectors,
+             triceratops_external_lc_files=args.triceratops_external_lc_files,
+             triceratops_filt_lcs=args.triceratops_filt_lcs)

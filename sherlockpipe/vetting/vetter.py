@@ -68,6 +68,8 @@ class Vetter(ToolWithCandidate):
                                       triceratops_resolved_companion=kwargs['triceratops_resolved_companion'],
                                       triceratops_ignore_background_stars=kwargs['triceratops_ignore_background_stars'],
                                       sectors=kwargs['sectors'],
+                                      triceratops_external_lc_files=kwargs.get('triceratops_external_lc_files'),
+                                      triceratops_filt_lcs=kwargs.get('triceratops_filt_lcs'),
                                       main_fit_dir=kwargs.get('main_fit_dir'),
                                       odd_fit_dir=kwargs.get('odd_fit_dir'),
                                       even_fit_dir=kwargs.get('even_fit_dir')
