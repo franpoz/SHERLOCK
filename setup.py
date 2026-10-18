@@ -3,7 +3,7 @@ from setuptools.command.install import install
 import platform
 import os
 import shutil
-version = "1.5.1"
+version = "1.6.0"
 import subprocess
 
 gtls_source = os.path.join('sherlockpipe', 'gtls', 'src')
