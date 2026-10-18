@@ -6,7 +6,6 @@ import traceback
 from argparse import ArgumentParser
 from sherlockpipe.constants import USER_HOME_ELEANOR_CACHE
 from sherlockpipe.ois.OisManager import OisManager
-from eleanor.maxsector import maxsector
 
 
 class Updater:
