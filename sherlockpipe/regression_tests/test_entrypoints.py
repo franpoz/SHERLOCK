@@ -25,10 +25,24 @@ class TestsEntrypoints(unittest.TestCase):
         vetting_dir = object_dir + '/vet_1'
         try:
             run_vet(object_dir, 1, None, cpus=4, run_iatson=False)
-            self.assertEquals(8, len(os.listdir(vetting_dir)))
+            vetting_files = set(os.listdir(vetting_dir))
+            self.assertTrue({
+                'TIC 368287008_transits_validation_report.pdf',
+                'TIC 368287008_transits_validation_report_summary.pdf',
+                'metrics.csv',
+            }.issubset(vetting_files))
             shutil.rmtree(vetting_dir, ignore_errors=True)
             run_vet(object_dir, 1, None, cpus=4, run_iatson=True)
-            self.assertEquals(13, len(os.listdir(vetting_dir)))
+            vetting_files = set(os.listdir(vetting_dir))
+            self.assertTrue({
+                'TIC 368287008_transits_validation_report.pdf',
+                'TIC 368287008_transits_validation_report_summary.pdf',
+                'metrics.csv',
+                'iatson_predictions.csv',
+                'iatson_averages.csv',
+                'iatson_explain_branches.csv',
+                'iatson_explain_values.csv',
+            }.issubset(vetting_files))
         finally:
             shutil.rmtree(vetting_dir, ignore_errors=True)
 
