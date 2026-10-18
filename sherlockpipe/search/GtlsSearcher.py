@@ -10,7 +10,7 @@ from sherlockpipe.search.transitresult import TransitResult
 
 
 class GtlsSearcher(Searcher):
-    """GPU TLS searcher backed by the PyPI ``gputls`` package."""
+    """GPU TLS searcher backed by SHERLOCK's vendored GTLS module."""
 
     def search(self, sherlock_target, time, lc, star_info: StarInfo, transits_min_count: int,
                run_results, report, cadence, period_grid, detrend_source_period):
@@ -23,7 +23,7 @@ class GtlsSearcher(Searcher):
             from gputls import gtls
         except ImportError as error:
             raise ImportError(
-                "SEARCH_ENGINE='gpu' requires the PyPI package gputls==0.4.4 "
+                "SEARCH_ENGINE='gpu' requires SHERLOCK's bundled GTLS module "
                 "and a compatible CuPy/CUDA installation."
             ) from error
 
@@ -90,7 +90,7 @@ class GtlsSearcher(Searcher):
 
     @staticmethod
     def _gtls_period_grid(periods):
-        """Avoid GTLS 0.4.4's zero batch-size bug for small grids."""
+        """Avoid GTLS's zero batch-size bug for small period grids."""
         if len(periods) >= 100:
             return periods
         lower = float(np.min(periods))

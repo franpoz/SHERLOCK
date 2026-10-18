@@ -38,13 +38,19 @@ distribution):
    libfreetype6-dev
    llvm-9
    llvm-9-dev
-   gfortran
-   gcc
-   locales
+    gfortran
+    gcc
+    poppler-utils
+    locales
    python3-tk
    python3.10-dev
 
 In case you are running a non-Linux distribution you will need to guess your OS packages matching the ones we mention for Linux.
+
+``pdf2image`` uses the Poppler commands ``pdfinfo`` and ``pdftoppm`` when
+WATSON is run through SHERLOCK's vetting module. These commands are required
+to read official mission Data Validation Report PDFs and include them in the
+generated vetting reports; installing the Python package alone is not enough.
 
 Therefore, once you have got the OS tools, the *SHERLOCK* package can be installed in several ways. The cleanest one is by running::
 

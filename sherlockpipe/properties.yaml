@@ -71,7 +71,7 @@ SNR_MIN: 5
 SDE_MIN: 5
 # Number of processes to be spawned by SHERLOCK search.
 CPU_CORES: 7
-# Choose search engine: cpu|gpu (gpu uses PyPI gputls==0.4.4)
+# Choose search engine: cpu|gpu (gpu uses the bundled GTLS 0.5.1 submodule)
 SEARCH_ENGINE: 'cpu'
 # CUDA device index used by GTLS when SEARCH_ENGINE is 'gpu'
 GPU_DEVICE_ID: 0

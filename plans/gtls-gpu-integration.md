@@ -38,14 +38,15 @@ non-search code until the GTLS path is proven equivalent.
 
 ### GTLS API and behavior
 
-The supported SHERLOCK dependency will be the PyPI package `gputls==0.4.4`.
-The GitHub repository currently describes a newer `0.5.1` development state,
-but SHERLOCK must not depend on that unreleased version when installing from
-PyPI.
+SHERLOCK vendors GTLS from its `sherlockpipe/gtls` Git submodule, pinned at
+commit `74e449c325792a763dde4fbffab98039c5e8c111` (GTLS version `0.5.1`) from
+`https://github.com/martindevora/GTLS`. The package build maps the submodule's
+`src/gputls` package into SHERLOCK's wheel and source distribution. There is no
+separate PyPI `gputls` dependency.
 
 All API, result-schema, CUDA-kernel, and runtime observations below must be
-rechecked against the actual `0.4.4` wheel during implementation; newer
-repository-only behavior is not an integration target.
+checked against the pinned submodule commit, not against an independently
+installed `gputls` wheel.
 
 1. Public usage is `from gputls import gtls`, then
    `gtls(t=time, y=flux).power(...)`.
@@ -69,8 +70,9 @@ repository-only behavior is not an integration target.
    its transit-time/depth statistics use GTLS-specific duration and epoch
    conventions. These must be normalized and verified, not copied blindly.
 7. GTLS's `pyproject.toml` declares NumPy, Numba, tqdm, batman-package, and
-   pynvml, but intentionally leaves CuPy to the user. CUDA version, CuPy
-   wheel, NVIDIA driver, and VRAM are deployment requirements.
+   pynvml, but intentionally leaves CuPy to the user. SHERLOCK declares those
+   vendored runtime dependencies itself; CUDA version, CuPy wheel, NVIDIA
+   driver, and VRAM remain deployment requirements.
 8. GTLS uses compiled CUDA kernels, NVML memory inspection, and explicit GPU
    device selection. It can use multiple GPUs through subprocesses, but
    SHERLOCK should initially target one GPU per SHERLOCK process.
@@ -157,15 +159,18 @@ stable and makes backend-specific tests isolated.
 
 ### 4. Dependency and configuration changes
 
-1. Add the pinned PyPI `gputls==0.4.4` dependency and, for the supported CUDA
-   13 deployment used here, `cupy-cuda13x==14.1.1`,
-   `nvidia-cuda-nvrtc==13.0.88`, and `nvidia-cuda-runtime==13.0.96`.
-   Because CuPy is intentionally not declared by GTLS, these GPU packages
-   must be documented as the CUDA 13 installation profile rather than treated
-   as universal CPU requirements.
-2. Pin `gputls==0.4.4` in the GPU dependency path and record the PyPI release
-   metadata used for validation. Do not install the GitHub repository or assume
-   APIs present only in its newer `0.5.1` state.
+1. Pin the GTLS submodule gitlink to the reviewed commit and include its
+   `src/gputls` package and license in both SHERLOCK distribution artifacts.
+   Declare GTLS's Python runtime dependencies in SHERLOCK metadata. For the
+   supported CUDA 13 deployment used here, document
+   `cupy-cuda13x==14.1.1`, `nvidia-cuda-nvrtc==13.0.88`, and
+   `nvidia-cuda-runtime==13.0.96` separately; these GPU packages are not
+   universal CPU requirements.
+2. Record the vendored GTLS commit and `GTLS_VERSION` used for validation.
+   Do not rely on PyPI `gputls` metadata or on code outside the pinned
+   submodule revision. For existing environments that installed standalone
+   `gputls`, uninstall it before upgrading SHERLOCK because both distributions
+   use the same top-level Python import name.
 3. Add optional `GPU_DEVICE_ID` configuration, defaulting to 0, and validate
    it only when GPU mode is selected.
 4. Update `requirements.txt`, installation documentation, Docker/Singularity
@@ -179,7 +184,7 @@ stable and makes backend-specific tests isolated.
 ### Testing deliverables
 
 The implementation is not complete until these tests exist and pass against
-the PyPI `gputls==0.4.4` package:
+the GTLS code packaged from the pinned SHERLOCK submodule:
 
 1. `sherlockpipe/tests/search/test_gtls_searcher.py`: unit-test the adapter
    with a fake GTLS result. Verify argument translation, template mapping,
@@ -189,10 +194,10 @@ the PyPI `gputls==0.4.4` package:
    `cpu` selects foldedleastsquares, `gpu` selects GTLS, and neither GPU mode
    sends foldedleastsquares GPU flags. Verify CPU imports do not load GTLS,
    CuPy, or NVML.
-3. `sherlockpipe/tests/search/test_gtls_contract.py`: install/use the real
-   PyPI wheel in the GPU test environment and verify the exact `0.4.4` public
-   API, accepted keyword arguments, result fields, and version. This test
-   prevents accidentally coding against the newer GitHub `0.5.1` API.
+3. `sherlockpipe/tests/search/test_gtls_contract.py`: verify the vendored
+   `GTLS_VERSION`, packaged module files, public API, accepted keyword
+   arguments, and result fields. This test ensures the wheel uses the pinned
+   submodule rather than a separately installed PyPI package.
 4. `sherlockpipe/tests/search/test_gtls_synthetic.py`: run a deterministic
    injected transit on a CUDA runner and assert finite results, recovered
    period/epoch/duration/depth within tolerances, valid masks, and model
@@ -277,9 +282,10 @@ SHERLOCK and running `SEARCH_ENGINE: cpu` does not require a GPU package.
   compatible CUDA runtime. On the supported RTX 5060 Ti/driver combination,
   CUDA 13 NVRTC/runtime libraries are required; otherwise GTLS fails with
   `CUDA_ERROR_NO_BINARY_FOR_GPU` while compiling its kernels.
-- GTLS 0.4.4 can divide by zero for small period grids. The adapter pads
-  grids below 100 periods for its internal search while preserving the
-  requested range, which is required by SHERLOCK's average-spectrum rerun.
+- The pinned GTLS 0.5.1 single-GPU search can compute a zero batch size for
+  small period grids. The adapter pads grids below 100 periods for its
+  internal search while preserving the requested range, which is required by
+  SHERLOCK's average-spectrum rerun.
 - SHERLOCK currently has one GPU search invocation per detrended curve. A
   single-GPU first implementation avoids GTLS subprocess/multi-GPU conflicts
   and makes VRAM cleanup measurable.

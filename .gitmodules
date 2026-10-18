@@ -2,3 +2,7 @@
 [submodule "sherlockpipe/ellc"]
 	path = sherlockpipe/ellc
 	url = https://github.com/pmaxted/ellc.git
+[submodule "sherlockpipe/gtls"]
+	path = sherlockpipe/gtls
+	url = https://github.com/martindevora/GTLS.git
+	branch = main
