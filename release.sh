@@ -33,6 +33,7 @@ if [[ -n "$(git status --porcelain)" ]]; then
   git status --short >&2
   exit 1
 fi
+git submodule update --init --recursive
 git fetch origin --tags
 if ! git merge-base --is-ancestor origin/master HEAD; then
   echo "HEAD is not a fast-forward of origin/master; refusing to release." >&2
@@ -51,6 +52,10 @@ rm -f tests.log
 rm -rf dist* .tox .pytest_cache build sherlockpipe-reqs *egg-info
 "${CONDA_EXE}" env remove -n sherlockpipe-reqs -y 2>/dev/null || true
 if [[ "${run_tests}" == true ]]; then
+  if ! command -v pdfinfo >/dev/null 2>&1 || ! command -v pdftoppm >/dev/null 2>&1; then
+    echo "The Sherlock regression suite requires Poppler utilities (pdfinfo and pdftoppm)." >&2
+    exit 1
+  fi
   "${CONDA_BASE}/bin/python" -m pip install -q tox-conda
   if "${CONDA_BASE}/bin/python" -m tox -r > tests.log; then
     tests_results=$(grep "congratulations" tests.log || true)

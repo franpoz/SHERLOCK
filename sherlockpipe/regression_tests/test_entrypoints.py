@@ -30,7 +30,7 @@ class TestsEntrypoints(unittest.TestCase):
                 'TIC 368287008_transits_validation_report.pdf',
                 'TIC 368287008_transits_validation_report_summary.pdf',
                 'metrics.csv',
-            }.issubset(vetting_files))
+            }.issubset(vetting_files), sorted(vetting_files))
             shutil.rmtree(vetting_dir, ignore_errors=True)
             run_vet(object_dir, 1, None, cpus=4, run_iatson=True)
             vetting_files = set(os.listdir(vetting_dir))
@@ -42,7 +42,7 @@ class TestsEntrypoints(unittest.TestCase):
                 'iatson_averages.csv',
                 'iatson_explain_branches.csv',
                 'iatson_explain_values.csv',
-            }.issubset(vetting_files))
+            }.issubset(vetting_files), sorted(vetting_files))
         finally:
             shutil.rmtree(vetting_dir, ignore_errors=True)
 
