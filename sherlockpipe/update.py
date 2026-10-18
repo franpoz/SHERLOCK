@@ -4,7 +4,7 @@ import shutil
 import time
 import traceback
 from argparse import ArgumentParser
-from lcbuilder.constants import USER_HOME_ELEANOR_CACHE
+from sherlockpipe.constants import USER_HOME_ELEANOR_CACHE
 from lcbuilder.eleanor_manager import EleanorManager
 from sherlockpipe.ois.OisManager import OisManager
 from eleanor.maxsector import maxsector
