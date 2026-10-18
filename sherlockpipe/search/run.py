@@ -188,8 +188,7 @@ def run_search(properties: str, explore: bool, results_dir: None, cpus: int = No
                     for sectors_subset in sectors:
                         built_object_info = lcbuilder.build_object_info(target, author, sectors_subset, file, exptime,
                                                                         initial_mask, initial_transit_mask,
-                                                                        star_info, aperture, eleanor_corr_flux,
-                                                                        upper_outliers_sigma,
+                                                                        star_info, aperture, upper_outliers_sigma,
                                                                         high_rms_enabled, high_rms_threshold,
                                                                         high_rms_bin_hours,
                                                                         smooth_enabled, auto_detrend_enabled,
@@ -233,8 +232,7 @@ def run_search(properties: str, explore: bool, results_dir: None, cpus: int = No
                     for sector in sectors_unique:
                         object_info = lcbuilder.build_object_info(target, author, [sector], file, exptime,
                                                                   initial_mask, initial_transit_mask,
-                                                                  star_info, aperture, eleanor_corr_flux,
-                                                                  upper_outliers_sigma,
+                                                                  star_info, aperture, upper_outliers_sigma,
                                                                   high_rms_enabled, high_rms_threshold,
                                                                   high_rms_bin_hours,
                                                                   smooth_enabled, auto_detrend_enabled,
@@ -272,8 +270,7 @@ def run_search(properties: str, explore: bool, results_dir: None, cpus: int = No
             else:
                 built_object_info = lcbuilder.build_object_info(target, author, sectors, file, exptime,
                                                                 initial_mask, initial_transit_mask,
-                                                                star_info, aperture, eleanor_corr_flux,
-                                                                upper_outliers_sigma,
+                                                                star_info, aperture, upper_outliers_sigma,
                                                                 high_rms_enabled, high_rms_threshold,
                                                                 high_rms_bin_hours,
                                                                 smooth_enabled, auto_detrend_enabled,
@@ -313,8 +310,7 @@ def run_search(properties: str, explore: bool, results_dir: None, cpus: int = No
                     for sector in sectors:
                         object_info = lcbuilder.build_object_info(target, author, [sector], file, exptime,
                                                                   initial_mask, initial_transit_mask,
-                                                                  star_info, aperture, eleanor_corr_flux,
-                                                                  upper_outliers_sigma,
+                                                                  star_info, aperture, upper_outliers_sigma,
                                                                   high_rms_enabled, high_rms_threshold,
                                                                   high_rms_bin_hours,
                                                                   smooth_enabled, auto_detrend_enabled,
