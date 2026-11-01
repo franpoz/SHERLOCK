@@ -7,6 +7,12 @@
 - Replace the vendored GTLS submodule with the pinned `gputls==0.6.1` PyPI
   dependency. Keep CuPy as an optional, CUDA-specific installation.
 
+### Testing
+
+- Pin pytest 9.1.1 for tox because pytest-forked 1.7.5 fails to serialize
+  reports for the plan/custom-class tests under pytest 9.2.0 in the release
+  environment; the affected tests pass with the pinned runner.
+
 ## 1.6.0 — 2026-10-18
 
 ### Added
