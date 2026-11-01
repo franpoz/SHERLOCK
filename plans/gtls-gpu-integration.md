@@ -1,5 +1,11 @@
 # GTLS GPU Integration Plan
 
+> Historical design notes for the SHERLOCK 1.6.0 GPU integration. Issue
+> [#118](https://github.com/franpoz/SHERLOCK/issues/118) supersedes its
+> vendoring recommendation: SHERLOCK uses the published `gputls==0.6.1`
+> distribution. API observations originating from the 0.5.1 vendored snapshot
+> should be checked against the installed 0.6.1 package before use.
+
 ## Goal
 
 When SHERLOCK is run in GPU mode (`SEARCH_ENGINE: gpu`), use GTLS (`gputls`) as
@@ -38,15 +44,14 @@ non-search code until the GTLS path is proven equivalent.
 
 ### GTLS API and behavior
 
-SHERLOCK vendors GTLS from its `sherlockpipe/gtls` Git submodule, pinned at
-commit `74e449c325792a763dde4fbffab98039c5e8c111` (GTLS version `0.5.1`) from
-`https://github.com/martindevora/GTLS`. The package build maps the submodule's
-`src/gputls` package into SHERLOCK's wheel and source distribution. There is no
-separate PyPI `gputls` dependency.
+SHERLOCK 1.6.0 originally vendored GTLS from `sherlockpipe/gtls`, pinned at
+commit `74e449c325792a763dde4fbffab98039c5e8c111` (version `0.5.1`) from
+`https://github.com/martindevora/GTLS`. Issue #118 replaces that packaging with
+the PyPI dependency `gputls==0.6.1`.
 
-All API, result-schema, CUDA-kernel, and runtime observations below must be
-checked against the pinned submodule commit, not against an independently
-installed `gputls` wheel.
+The API and result-schema notes below were collected against the old submodule
+snapshot; verify them against the installed PyPI distribution when making
+future compatibility changes.
 
 1. Public usage is `from gputls import gtls`, then
    `gtls(t=time, y=flux).power(...)`.
@@ -69,10 +74,10 @@ installed `gputls` wheel.
 6. GTLS depth is returned as a flux-depth value (`1 - transitMean`), while
    its transit-time/depth statistics use GTLS-specific duration and epoch
    conventions. These must be normalized and verified, not copied blindly.
-7. GTLS's `pyproject.toml` declares NumPy, Numba, tqdm, batman-package, and
-   pynvml, but intentionally leaves CuPy to the user. SHERLOCK declares those
-   vendored runtime dependencies itself; CUDA version, CuPy wheel, NVIDIA
-   driver, and VRAM remain deployment requirements.
+7. GTLS 0.6.1 declares NumPy, Numba, tqdm, and batman-package. CuPy is
+   CUDA-specific and remains a separately selected optional installation;
+   CUDA version, CuPy wheel, NVIDIA driver, and VRAM remain deployment
+   requirements.
 8. GTLS uses compiled CUDA kernels, NVML memory inspection, and explicit GPU
    device selection. It can use multiple GPUs through subprocesses, but
    SHERLOCK should initially target one GPU per SHERLOCK process.
@@ -159,23 +164,16 @@ stable and makes backend-specific tests isolated.
 
 ### 4. Dependency and configuration changes
 
-1. Pin the GTLS submodule gitlink to the reviewed commit and include its
-   `src/gputls` package and license in both SHERLOCK distribution artifacts.
-   Declare GTLS's Python runtime dependencies in SHERLOCK metadata. For the
-   supported CUDA 13 deployment used here, document
-   `cupy-cuda13x==14.1.1`, `nvidia-cuda-nvrtc==13.0.88`, and
-   `nvidia-cuda-runtime==13.0.96` separately; these GPU packages are not
-   universal CPU requirements.
-2. Record the vendored GTLS commit and `GTLS_VERSION` used for validation.
-   Do not rely on PyPI `gputls` metadata or on code outside the pinned
-   submodule revision. For existing environments that installed standalone
-   `gputls`, uninstall it before upgrading SHERLOCK because both distributions
-   use the same top-level Python import name.
+1. Remove the GTLS gitlink and vendored package configuration. Pin
+   `gputls==0.6.1` in SHERLOCK metadata and the maintained environment lock.
+   CuPy and CUDA runtime packages are not base requirements; document a
+   CUDA-matched CuPy installation separately for GPU deployments.
+2. Validate the installed distribution version and location from site-packages.
+   The external distribution owns the `gputls` import namespace.
 3. Add optional `GPU_DEVICE_ID` configuration, defaulting to 0, and validate
    it only when GPU mode is selected.
-4. Update `requirements.txt`, installation documentation, Docker/Singularity
-   instructions, and `properties.yaml` comments without making CuPy a CPU
-   requirement.
+4. Update `requirements.txt`, installation documentation, and
+   `properties.yaml` comments without making CuPy a CPU requirement.
 5. Log the selected backend, GTLS version, CUDA device, and relevant GTLS
    mode in the object report so result provenance is visible.
 
@@ -183,8 +181,9 @@ stable and makes backend-specific tests isolated.
 
 ### Testing deliverables
 
-The implementation is not complete until these tests exist and pass against
-the GTLS code packaged from the pinned SHERLOCK submodule:
+The implementation is not complete until CPU-safe contract tests pass against
+the installed PyPI distribution and GPU runtime tests are run where compatible
+CUDA hardware is available:
 
 1. `sherlockpipe/tests/search/test_gtls_searcher.py`: unit-test the adapter
    with a fake GTLS result. Verify argument translation, template mapping,
@@ -194,10 +193,10 @@ the GTLS code packaged from the pinned SHERLOCK submodule:
    `cpu` selects foldedleastsquares, `gpu` selects GTLS, and neither GPU mode
    sends foldedleastsquares GPU flags. Verify CPU imports do not load GTLS,
    CuPy, or NVML.
-3. `sherlockpipe/tests/search/test_gtls_contract.py`: verify the vendored
-   `GTLS_VERSION`, packaged module files, public API, accepted keyword
-   arguments, and result fields. This test ensures the wheel uses the pinned
-   submodule rather than a separately installed PyPI package.
+3. `tests/test_gtls_distribution.py` and
+   `sherlockpipe/tests/search/test_gtls_contract.py`: verify the installed
+   distribution version/location, public API when CUDA dependencies are
+   available, and lazy CPU-side import behavior.
 4. `sherlockpipe/tests/search/test_gtls_synthetic.py`: run a deterministic
    injected transit on a CUDA runner and assert finite results, recovered
    period/epoch/duration/depth within tolerances, valid masks, and model
@@ -282,7 +281,7 @@ SHERLOCK and running `SEARCH_ENGINE: cpu` does not require a GPU package.
   compatible CUDA runtime. On the supported RTX 5060 Ti/driver combination,
   CUDA 13 NVRTC/runtime libraries are required; otherwise GTLS fails with
   `CUDA_ERROR_NO_BINARY_FOR_GPU` while compiling its kernels.
-- The pinned GTLS 0.5.1 single-GPU search can compute a zero batch size for
+- The old GTLS 0.5.1 single-GPU search could compute a zero batch size for
   small period grids. The adapter pads grids below 100 periods for its
   internal search while preserving the requested range, which is required by
   SHERLOCK's average-spectrum rerun.

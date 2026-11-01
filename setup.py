@@ -6,8 +6,6 @@ import shutil
 version = "1.6.0"
 import subprocess
 
-gtls_source = os.path.join('sherlockpipe', 'gtls', 'src')
-
 with open("README.md", "r") as fh:
     long_description = fh.read()
 
@@ -29,13 +27,9 @@ setuptools.setup(
     long_description=long_description,
     long_description_content_type="text/markdown",
     url="https://github.com/franpoz/SHERLOCK",
-    packages=(setuptools.find_packages()
-              + setuptools.find_packages(where=gtls_source)
-              + ['sherlockpipe.ellc']),
-    package_dir={'gputls': os.path.join(gtls_source, 'gputls')},
-    package_data={'gputls': ['*.cu']},
+    packages=setuptools.find_packages() + ['sherlockpipe.ellc'],
     include_package_data=True,
-    license_files=['LICENSE', 'sherlockpipe/gtls/LICENSE'],
+    license_files=['LICENSE'],
     classifiers=[
         "Programming Language :: Python :: 3",
         "License :: OSI Approved :: MIT License",
@@ -47,17 +41,17 @@ setuptools.setup(
                         'astroplan==0.10.1',
                         "alexfitter==1.2.20", # Fit
                         'argparse==1.4.0', # All modules
-                        'batman-package', # Vendored GTLS transit models
+                        'batman-package', # Single-transit models
                         "celerite==0.4.3", # Allesfitter dependency
                         "corner==2.2.3", # Allesfitter dependency
                         "dearwatson==2.0.0", # Vetting
                         "dynesty==2.1.5", # Allesfitter dependency
                         "emcee==3.1.6", # Allesfitter dependency
                         "mock==4.0.3",
-                        'numba', # Vendored GTLS
-                        'numpy', # Vendored GTLS
+                        'numba', # ExoMoon analysis and gputls
+                        'numpy', # Core numerics and gputls
                         'pytz', # Observation plan: Not using version because it gets the DB updated with each release
-                        'pynvml', # Vendored GTLS GPU memory inspection
+                        'gputls==0.6.1', # GPU TLS backend; CuPy is CUDA-specific and optional
                         "requests==2.32.3", # OIs management
                         "rebound==4.4.1", # Stability
                         "reproject==0.13.0",
