@@ -21,12 +21,18 @@ class GtlsSearcher(Searcher):
 
         try:
             from gputls import gtls
-        except ImportError as error:
-            raise ImportError(
-                "SEARCH_ENGINE='gpu' requires gputls==0.6.1 and a compatible "
-                "CuPy/CUDA installation. Install a CuPy build matching the "
-                "CUDA version available to this environment."
-            ) from error
+        except ModuleNotFoundError as error:
+            if error.name == "gputls":
+                raise ImportError(
+                    "SEARCH_ENGINE='gpu' requires gputls==0.6.1. "
+                    "Install it with 'python -m pip install gputls==0.6.1'."
+                ) from error
+            if error.name == "cupy":
+                raise ImportError(
+                    "SEARCH_ENGINE='gpu' requires CuPy. Install a CuPy build "
+                    "matching the CUDA version available to this environment."
+                ) from error
+            raise
 
         template = self._template(sherlock_target.fit_method)
         periods = np.asarray(period_grid, dtype=float)

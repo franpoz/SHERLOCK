@@ -86,16 +86,58 @@ def test_search_translates_period_grid_and_gpu_options(monkeypatch):
     assert result.mode == "tls"
 
 
-def test_missing_pypi_package_or_cuda_runtime_has_install_guidance(monkeypatch):
+@pytest.mark.parametrize(
+    ("missing_module", "expected_message"),
+    [
+        (
+            "gputls",
+            "gputls==0.6.1.*pip install gputls==0.6.1",
+        ),
+        (
+            "cupy",
+            "requires CuPy.*matching the CUDA version",
+        ),
+    ],
+)
+def test_missing_gpu_dependency_has_specific_install_guidance(
+    monkeypatch, missing_module, expected_message
+):
     original_import = builtins.__import__
+    missing_error = ModuleNotFoundError(
+        f"No module named '{missing_module}'", name=missing_module
+    )
 
     def import_without_gtls(name, *args, **kwargs):
         if name == "gputls":
-            raise ModuleNotFoundError("No module named 'cupy'")
+            raise missing_error
         return original_import(name, *args, **kwargs)
 
     monkeypatch.setattr(builtins, "__import__", import_without_gtls)
     target = SimpleNamespace(search_engine="gpu", custom_transit_template=None)
-    with pytest.raises(ImportError, match=r"gputls==0.6.1.*CuPy/CUDA"):
+    with pytest.raises(ImportError, match=expected_message) as error:
         GtlsSearcher().search(target, np.array([]), np.array([]), None, 2,
                               None, None, 120, [1.0, 2.0], None)
+    assert error.value.__cause__ is missing_error
+
+
+@pytest.mark.parametrize(
+    "import_error",
+    [
+        ModuleNotFoundError("No module named 'cupy_backends'", name="cupy_backends"),
+        ImportError("incompatible gputls binary"),
+    ],
+)
+def test_unexpected_gpu_import_errors_propagate_unchanged(monkeypatch, import_error):
+    original_import = builtins.__import__
+
+    def import_with_error(name, *args, **kwargs):
+        if name == "gputls":
+            raise import_error
+        return original_import(name, *args, **kwargs)
+
+    monkeypatch.setattr(builtins, "__import__", import_with_error)
+    target = SimpleNamespace(search_engine="gpu", custom_transit_template=None)
+    with pytest.raises(type(import_error)) as error:
+        GtlsSearcher().search(target, np.array([]), np.array([]), None, 2,
+                              None, None, 120, [1.0, 2.0], None)
+    assert error.value is import_error
