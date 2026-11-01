@@ -65,6 +65,17 @@ An additional installation method is running the next commands::
    python3 -m pip install Cython
    python3 -m pip install sherlockpipe
 
+GPU searches are optional. SHERLOCK installs ``gputls==0.6.1``, but does not
+install CuPy or CUDA runtime packages as base dependencies. To use
+``SEARCH_ENGINE: gpu``, install the CuPy distribution and any CUDA runtime
+libraries compatible with the NVIDIA driver and CUDA environment on the host.
+For example, on a CUDA 13 environment::
+
+   python3 -m pip install cupy-cuda13x==14.1.1 nvidia-cuda-nvrtc==13.0.88 nvidia-cuda-runtime==13.0.96
+
+For other CUDA versions, select the matching CuPy build instead. CPU searches
+do not import the GPU backend or require CuPy.
+
 -------------
 Docker usage
 -------------

@@ -1,11 +1,18 @@
 # Changelog
 
+## Unreleased
+
+### Changed
+
+- Replace the vendored GTLS submodule with the pinned `gputls==0.6.1` PyPI
+  dependency. Keep CuPy as an optional, CUDA-specific installation.
+
 ## 1.6.0 — 2026-10-18
 
 ### Added
 
-- Bundle the reviewed GTLS 0.5.1 submodule and expose it as SHERLOCK's GPU TLS
-  backend, with GPU device selection and packaged backend contract tests.
+- Expose GTLS as SHERLOCK's GPU TLS backend, with GPU device selection and
+  backend contract tests.
 - Add ExoMoon analysis and calibrated EMLS-IR resources, alongside improved
   candidate vetting, scoring, and light-curve handling.
 

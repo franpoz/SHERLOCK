@@ -1,6 +1,6 @@
-from types import SimpleNamespace
+import builtins
 import sys
-from types import ModuleType
+from types import ModuleType, SimpleNamespace
 
 import numpy as np
 import pytest
@@ -84,3 +84,18 @@ def test_search_translates_period_grid_and_gpu_options(monkeypatch):
     assert calls["power"]["GPUDeviceID"] == 2
     assert calls["power"]["transit_template"] == "default"
     assert result.mode == "tls"
+
+
+def test_missing_pypi_package_or_cuda_runtime_has_install_guidance(monkeypatch):
+    original_import = builtins.__import__
+
+    def import_without_gtls(name, *args, **kwargs):
+        if name == "gputls":
+            raise ModuleNotFoundError("No module named 'cupy'")
+        return original_import(name, *args, **kwargs)
+
+    monkeypatch.setattr(builtins, "__import__", import_without_gtls)
+    target = SimpleNamespace(search_engine="gpu", custom_transit_template=None)
+    with pytest.raises(ImportError, match=r"gputls==0.6.1.*CuPy/CUDA"):
+        GtlsSearcher().search(target, np.array([]), np.array([]), None, 2,
+                              None, None, 120, [1.0, 2.0], None)

@@ -10,7 +10,7 @@ from sherlockpipe.search.transitresult import TransitResult
 
 
 class GtlsSearcher(Searcher):
-    """GPU TLS searcher backed by SHERLOCK's vendored GTLS module."""
+    """GPU TLS searcher backed by the pinned PyPI gputls distribution."""
 
     def search(self, sherlock_target, time, lc, star_info: StarInfo, transits_min_count: int,
                run_results, report, cadence, period_grid, detrend_source_period):
@@ -23,8 +23,9 @@ class GtlsSearcher(Searcher):
             from gputls import gtls
         except ImportError as error:
             raise ImportError(
-                "SEARCH_ENGINE='gpu' requires SHERLOCK's bundled GTLS module "
-                "and a compatible CuPy/CUDA installation."
+                "SEARCH_ENGINE='gpu' requires gputls==0.6.1 and a compatible "
+                "CuPy/CUDA installation. Install a CuPy build matching the "
+                "CUDA version available to this environment."
             ) from error
 
         template = self._template(sherlock_target.fit_method)
