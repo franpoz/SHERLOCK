@@ -12,9 +12,9 @@ def test_gtls_comes_from_pinned_pypi_distribution():
 
     assert gtls_distribution.version == "0.6.1"
     package_root = Path(gtls_distribution.locate_file("gputls")).resolve()
-    repository_root = Path(__file__).resolve().parents[3]
     assert package_root.is_dir()
-    assert not package_root.is_relative_to(repository_root)
+    assert package_root.parent.name in {"site-packages", "dist-packages"}
+    assert "sherlockpipe" not in package_root.parts
 
 
 def test_pypi_gtls_public_api_when_cuda_dependency_is_available():
