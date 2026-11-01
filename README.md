@@ -93,6 +93,9 @@ compatible CUDA runtime/driver, and a CuPy build matching that CUDA version.
 CuPy is not installed by SHERLOCK's base dependencies. Select and install the
 appropriate CuPy distribution for your system before enabling
 `SEARCH_ENGINE: 'gpu'`.
+GTLS 0.6.1 has search-refinement changes relative to the previously bundled
+0.5.1. Numerical search results are not claimed to be identical across the
+upgrade; revalidate candidates when comparing results from those versions.
 
 ```bash
 conda activate sherlock311

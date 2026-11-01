@@ -76,6 +76,10 @@ For example, on a CUDA 13 environment::
 For other CUDA versions, select the matching CuPy build instead. CPU searches
 do not import the GPU backend or require CuPy.
 
+GTLS 0.6.1 includes search-refinement changes relative to the previously bundled
+0.5.1. Numerical search results are not expected to be identical across those
+versions; revalidate candidates when comparing historical results.
+
 -------------
 Docker usage
 -------------

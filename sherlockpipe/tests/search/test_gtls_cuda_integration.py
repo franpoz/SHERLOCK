@@ -47,9 +47,13 @@ result = GtlsSearcher().search(
 assert abs(result.period - true_period) <= 0.02, result.period
 assert np.isfinite(result.sde) and result.sde > 0, result.sde
 assert result.count >= 5, result.count
-assert np.isfinite(result.t0)
-assert np.isfinite(result.duration) and result.duration > 0
-assert np.isfinite(result.depth) and result.depth > 0
+phase_error = abs((result.t0 - true_epoch + true_period / 2) % true_period - true_period / 2)
+# These are broad end-to-end smoke tolerances for this cadence/grid fixture,
+# not a calibration or a claim of numerical parity with older GTLS releases.
+assert phase_error < 0.03, phase_error
+assert abs(result.duration - duration) < 0.05, result.duration
+assert abs(result.depth - 0.015 * 1000) < 4.0, result.depth
+print(result.period, result.t0, result.duration, result.depth, result.sde, result.count)
 '''
     environment = os.environ.copy()
     with tempfile.TemporaryDirectory(prefix="sherlock-gtls-cupy-") as cache:
