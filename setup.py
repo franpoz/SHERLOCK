@@ -38,6 +38,7 @@ setuptools.setup(
     cmdclass={'install': CustomInstall},
     python_requires='>=3.11',
     install_requires=[
+        "pandoramoon==1.3",
                         'astroplan==0.10.1',
                         "alexfitter==1.2.20", # Fit
                         'argparse==1.4.0', # All modules

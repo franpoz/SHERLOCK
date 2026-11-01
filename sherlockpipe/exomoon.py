@@ -23,7 +23,6 @@ import astropy.units as u
 import wotan
 from lcbuilder.lcbuilder_class import LcBuilder
 from scipy import stats
-from scipy.interpolate import interp1d
 from scipy.signal import lombscargle, argrelextrema
 import matplotlib.pyplot as plt
 import pandas as pd
@@ -1055,8 +1054,9 @@ class ExoMoonLeastSquares:
             Mean flux at the transit center.
         datapoints : int
             Number of data points.
-        models : list of (float, array_like)
-            Pre-computed model transit shapes as [(radius_Rearth, flux), ...].
+        models : list of (float, array_like, array_like)
+            Pre-computed model transits as
+            [(radius_Rearth, time_days_from_transit_center, flux), ...].
         min_radius : float
             Minimum moon radius in Earth radii.
         max_radius : float
@@ -1083,12 +1083,13 @@ class ExoMoonLeastSquares:
         best_model = model_baseline
         if t0_flux_mean_value < 1 - min_depth:
             radius = np.sqrt(1 - t0_flux_mean_value) * star_radius / R_earth_to_R_sun
-            closest_r, closest_model = min(models, key=lambda x: abs(x[0] - radius))
-            if len(closest_model) < 2:
+            _, template_time, closest_model = min(models, key=lambda x: abs(x[0] - radius))
+            if len(closest_model) < 2 or len(template_time) != len(closest_model):
                 return best_residual, residuals_baseline, best_radius, best_model
-            interpolated = interp1d(np.arange(len(closest_model)), closest_model,
-                                    axis=0, fill_value='extrapolate')
-            model_sample = interpolated(np.linspace(0, len(closest_model), n_it))
+            model_sample = np.interp(it_time, template_time, closest_model, left=1.0, right=1.0)
+            model_depth = 1.0 - np.min(model_sample)
+            if model_depth <= 0.0:
+                return best_residual, residuals_baseline, best_radius, best_model
             scale_factor = (t0_flux_mean_value - 1) / (np.min(model_sample) - 1)
             model_sample_scaled = 1 + (model_sample - 1) * scale_factor
             it_radius_residuals = np.sum(((it_flux - model_sample_scaled) / it_flux_err) ** 2)
@@ -1505,12 +1506,11 @@ class ExoMoonLeastSquares:
             ma.rp = r * R_earth_to_R_sun / self.star_radius
             m = batman.TransitModel(ma, time_model)
             model_r = m.light_curve(ma)
-            trimmed = model_r[model_r < 1]
-            if len(trimmed) > 1:
-                self.models.append((r, trimmed))
+            if np.count_nonzero(model_r < 1) > 1:
+                self.models.append((r, time_model - ma.t0, model_r))
         search_inputs = []
         if len(self.models) == 0:
-            self.models = [(self.min_radius, np.array([0.9999, 0.9999]))]
+            self.models = [(self.min_radius, np.array([-1.0, 1.0]), np.array([0.9999, 0.9999]))]
         alpha_grid_size = 25
         alpha_grid = np.linspace(0, np.pi * 2 - np.pi * 2 / 25, alpha_grid_size)
         #alpha_grid = [0.0]
@@ -2023,7 +2023,7 @@ if __name__ == '__main__':
     handler.setLevel(logging.INFO)
     handler.setFormatter(formatter)
     logger.addHandler(handler)
-    
+
     
     lc_builder = LcBuilder()
     max_moon_density = 5.5
@@ -2248,4 +2248,3 @@ if __name__ == '__main__':
             )
         except Exception as e:
             logging.exception(f"Error in run for target {object_dir}")
-    

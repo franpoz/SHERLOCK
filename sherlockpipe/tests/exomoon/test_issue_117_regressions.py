@@ -12,7 +12,8 @@ def test_identical_observation_times_receive_identical_template_flux():
     times = np.array([0.0, 0.0, 0.0])
     flux = np.array([0.9, 0.9, 0.9])
     flux_err = np.array([0.01, 0.01, 0.01])
-    template = np.array([1.0, 0.8, 1.0])
+    template_time = np.array([-1.0, 0.0, 1.0])
+    template_flux = np.array([1.0, 0.8, 1.0])
 
     _, _, _, model = ExoMoonLeastSquares.calculate_residuals(
         it_time=times,
@@ -23,7 +24,7 @@ def test_identical_observation_times_receive_identical_template_flux():
         oot_flux_err=np.array([]),
         t0_flux_mean_value=0.9,
         datapoints=len(times),
-        models=[(1.0, template)],
+        models=[(1.0, template_time, template_flux)],
         min_radius=1.0,
         max_radius=100.0,
         star_radius=1.0,
