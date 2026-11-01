@@ -3,6 +3,7 @@ from pathlib import Path
 
 
 def test_gtls_comes_from_pinned_pypi_distribution():
+    """Require the supported GTLS version to resolve outside this checkout."""
     gtls_distribution = distribution("gputls")
 
     assert gtls_distribution.version == "0.6.1"
