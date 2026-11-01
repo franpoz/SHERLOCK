@@ -47,6 +47,9 @@ result = GtlsSearcher().search(
 assert abs(result.period - true_period) <= 0.02, result.period
 assert np.isfinite(result.sde) and result.sde > 0, result.sde
 assert result.count >= 5, result.count
+assert np.isfinite(result.t0)
+assert np.isfinite(result.duration) and result.duration > 0
+assert np.isfinite(result.depth) and result.depth > 0
 '''
     environment = os.environ.copy()
     with tempfile.TemporaryDirectory(prefix="sherlock-gtls-cupy-") as cache:
