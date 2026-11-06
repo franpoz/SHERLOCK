@@ -87,20 +87,24 @@ def test_injected_moon_raises_the_detection_statistic(executions):
     assert len(moon.bary_t0s) >= EPOCHS // 2
 
 
-def test_detected_period_is_an_alias_of_the_injected_moon(executions):
-    """Sampling once per planet orbit aliases the moon period, so an alias is what can be expected.
+def test_detected_period_matches_the_expected_alias_of_the_injected_moon(executions):
+    """A regression pin on this fixture, which detects the k=-5 alias of the moon period.
 
-    A dip that keeps no orbital phase across epochs does not land on one. This
-    does not claim the true period was recovered.
+    Sampling once per planet orbit aliases the period. Chance also lands here
+    in some runs without an orbit, so this is neither proof of an orbit nor a
+    claim that the true period was recovered.
     """
     moon = executions[1]
-    aliases = 1 / (1 / MOON['moon_period'] + np.arange(-5, 6) / PLANET_PERIOD)
-    aliases = aliases[aliases > 0]
+    alias = 1 / (1 / MOON['moon_period'] - 5 / PLANET_PERIOD)
 
-    error = np.min(np.abs(aliases - moon.recovered_period)) / moon.recovered_period
+    error = abs(alias - moon.recovered_period) / alias
 
     assert error < 0.01, (f"detected P={moon.recovered_period:.4f} d, alpha={moon.recovered_alpha:.4f} rad, "
-                          f"injected P={MOON['moon_period']} d, aliases={np.round(aliases, 3)}")
+                          f"expected alias {alias:.4f} d of injected P={MOON['moon_period']} d")
+
+
+def test_best_scenario_is_a_dimming(executions):
+    assert executions[1].best_snr_radius > 0
 
 
 def test_repeated_execution_gives_the_same_result(executions, tmp_path):
