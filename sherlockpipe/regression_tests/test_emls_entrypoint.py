@@ -1,4 +1,11 @@
-"""End-to-end EMLS executions launched from ExoMoonLeastSquares.run on synthetic data."""
+"""End-to-end EMLS executions launched from ExoMoonLeastSquares.run on synthetic data.
+
+These check that a full execution finishes, writes its products and behaves
+consistently with and without a moon. Template numerics are covered by
+sherlockpipe/tests/exomoon. The assessment step needs sherlockpipe.exomoon_ir,
+which is not in the repository, so it logs an error and writes no
+emls_assessment.json here. That is a known state, not something asserted.
+"""
 import os
 
 import batman
@@ -64,6 +71,7 @@ def test_execution_finishes_and_writes_results(executions, index):
     assert {'stats.png', 'residuals_map.png'} <= set(written)
     assert sum(name.startswith('SNR ') for name in written) == 5
     assert sum(name.startswith('Residuals ') for name in written) == 5
+    assert sum(name.endswith('_moon_model.png') for name in written) == len(emls.bary_t0s)
     assert np.isfinite(emls.max_snr)
     assert np.isfinite(emls.max_sde)
 
@@ -72,19 +80,27 @@ def test_planet_only_execution_keeps_every_epoch(executions):
     assert len(executions[0].bary_t0s) == EPOCHS
 
 
-@pytest.mark.parametrize('index', [0, 1])
-def test_templates_reach_unity_inside_their_support(executions, index):
-    for _, template_time, template_flux in executions[index].models:
-        assert template_flux[0] == 1.0 and template_flux[-1] == 1.0
-        assert template_time[0] == pytest.approx(-template_time[-1])
-
-
 def test_injected_moon_raises_the_detection_statistic(executions):
     null, moon = executions
 
     assert moon.max_snr > 5 * null.max_snr
-    assert moon.recovered
     assert len(moon.bary_t0s) >= EPOCHS // 2
+
+
+def test_detected_period_is_an_alias_of_the_injected_moon(executions):
+    """Sampling once per planet orbit aliases the moon period, so an alias is what can be expected.
+
+    A dip that keeps no orbital phase across epochs does not land on one. This
+    does not claim the true period was recovered.
+    """
+    moon = executions[1]
+    aliases = 1 / (1 / MOON['moon_period'] + np.arange(-5, 6) / PLANET_PERIOD)
+    aliases = aliases[aliases > 0]
+
+    error = np.min(np.abs(aliases - moon.recovered_period)) / moon.recovered_period
+
+    assert error < 0.01, (f"detected P={moon.recovered_period:.4f} d, alpha={moon.recovered_alpha:.4f} rad, "
+                          f"injected P={MOON['moon_period']} d, aliases={np.round(aliases, 3)}")
 
 
 def test_repeated_execution_gives_the_same_result(executions, tmp_path):
